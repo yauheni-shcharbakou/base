@@ -1,35 +1,36 @@
 import { PlopTypes } from '@turbo/gen';
 import { EventEmitter } from 'events';
 import { mkdir, readdir, rm } from 'fs/promises';
+import * as _ from 'lodash';
+import { JsStrategy } from './strategies/js.strategy';
+import { NestStrategy } from './strategies/nest.strategy';
+import { GrpcStrategy } from './strategies/base/grpc-strategy';
 import { join } from 'path';
 import { Project } from 'ts-morph';
 import { parseProtoTree } from './helpers/utils';
 import { GrpcCompilerAnswers } from './helpers/types';
-import { GrpcAdapter } from './helpers/grpc-adapter';
 import { PROTO_EXT_REG_EXP, PROTO_SRC_ROOT } from './helpers/constants';
-import { JsAdapter } from './js.adapter';
-import { NestAdapter } from './nest.adapter';
 
 export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
-  const adapters: GrpcAdapter[] = [new NestAdapter(), new JsAdapter()];
+  const strategies: GrpcStrategy[] = [new NestStrategy(), new JsStrategy()];
 
   plop.setActionType('cleanup', async (answers: GrpcCompilerAnswers) => {
     await Promise.all(
-      adapters.map(async (adapter) => {
-        await rm(adapter.targetRoot, { recursive: true, force: true });
-        await mkdir(adapter.targetRoot, { recursive: true });
+      _.map(strategies, async (strategy) => {
+        await rm(strategy.targetRoot, { recursive: true, force: true });
+        await mkdir(strategy.targetRoot, { recursive: true });
       }),
     );
 
-    return 'cleanup adapters';
+    return 'cleanup strategies';
   });
 
   plop.setActionType('ts-proto', async (answers: GrpcCompilerAnswers) => {
     const eventEmitter = new EventEmitter();
 
-    adapters.forEach((adapter) => {
-      eventEmitter.on('file', adapter.onFile.bind(adapter));
-      eventEmitter.on('folder', adapter.onFolder.bind(adapter));
+    _.forEach(strategies, (strategy) => {
+      eventEmitter.on('file', strategy.onFile.bind(strategy));
+      eventEmitter.on('folder', strategy.onFolder.bind(strategy));
     });
 
     const protoFiles = await readdir(PROTO_SRC_ROOT, { recursive: true });
@@ -62,13 +63,13 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
   });
 
   plop.setActionType('ts-morph', async (answers: GrpcCompilerAnswers) => {
-    for (const adapter of adapters) {
+    for (const strategy of strategies) {
       const project = new Project();
 
       for (const appFile of answers.files) {
-        const filePath = join(adapter.targetRoot, appFile);
+        const filePath = join(strategy.targetRoot, appFile);
         const sourceFile = project.addSourceFileAtPath(filePath);
-        await adapter.onSourceFile(sourceFile);
+        await strategy.onSourceFile(sourceFile);
         await sourceFile.save();
       }
     }
@@ -79,14 +80,10 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
   plop.setGenerator('compile', {
     description: 'Compile gRPC adapters',
     prompts: async () => ({ files: [], indexExports: [] }),
-    actions: [
-      { type: 'cleanup' },
-      { type: 'ts-proto' },
-      { type: 'ts-morph' },
-      ...adapters.reduce((acc, adapter) => {
-        acc.push(...adapter.getActions());
-        return acc;
-      }, []),
-    ],
+    actions: _.reduce(
+      strategies,
+      (acc: PlopTypes.ActionType[], strategy) => _.concat(acc, strategy.getActions()),
+      [{ type: 'cleanup' }, { type: 'ts-proto' }, { type: 'ts-morph' }],
+    ),
   });
 };

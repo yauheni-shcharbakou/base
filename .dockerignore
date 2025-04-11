@@ -1,0 +1,9 @@
+**/node_modules/
+**/dist
+**/.next
+**/.env
+**/.turbo
+.git
+.idea
+.github
+yarn.lock

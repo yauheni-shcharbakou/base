@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  db1:
+  mongo1:
     image: mongo:latest
     restart: unless-stopped
     ports:
@@ -10,10 +10,10 @@ services:
       - private_network
       - public_network
     volumes:
-      - db_data_1:/data/db
+      - mongo_data_1:/data/db
     entrypoint: [ '/usr/bin/mongod', '--replSet', 'base', '--bind_ip_all', '--port', '27017' ]
 
-  db2:
+  mongo2:
     image: mongo:latest
     restart: unless-stopped
     ports:
@@ -22,10 +22,10 @@ services:
       - private_network
       - public_network
     volumes:
-      - db_data_2:/data/db
+      - mongo_data_2:/data/db
     entrypoint: [ '/usr/bin/mongod', '--replSet', 'base', '--bind_ip_all', '--port', '27018' ]
 
-  db3:
+  mongo3:
     image: mongo:latest
     restart: unless-stopped
     ports:
@@ -34,15 +34,15 @@ services:
       - private_network
       - public_network
     volumes:
-      - db_data_3:/data/db
+      - mongo_data_3:/data/db
     entrypoint: [ '/usr/bin/mongod', '--replSet', 'base', '--bind_ip_all', '--port', '27019' ]
 
-  mongodb-initializer:
+  mongo-initializer:
     image: mongo:latest
     depends_on:
-      - db1
-      - db2
-      - db3
+      - mongo1
+      - mongo2
+      - mongo3
     networks:
       - private_network
     volumes:
@@ -61,6 +61,6 @@ networks:
     driver: bridge
 
 volumes:
-  db_data_1:
-  db_data_2:
-  db_data_3:
+  mongo_data_1:
+  mongo_data_2:
+  mongo_data_3:

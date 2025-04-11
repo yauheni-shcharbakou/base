@@ -12,17 +12,18 @@
     "dev:backend.api-gateway": "turbo run dev --filter=backend.api-gateway",
     "dev:backend.main": "turbo run dev --filter=backend.main",
     "build": "turbo run build",
-    "build:admin": "turbo run build --filter=\"admin.*\"",
-    "build:admin.main": "turbo run build --filter=admin.main",
-    "build:backend": "turbo run build --filter=\"backend.*\"",
-    "build:backend.api-gateway": "turbo run build --filter=backend.api-gateway",
-    "build:backend.public": "turbo run build --filter=backend.public",
+    "build:admin": "turbo run build --filter=\"admin.*\" --env-mode loose",
+    "build:admin.main": "turbo run build --filter=admin.main --env-mode loose",
+    "build:backend": "turbo run build --filter=\"backend.*\" --env-mode loose",
+    "build:backend.api-gateway": "turbo run build --filter=backend.api-gateway --env-mode loose",
+    "build:backend.main": "turbo run build --filter=backend.main --env-mode loose",
+    "build:grpc": "turbo run build --filter=@packages/grpc*",
     "prod": "turbo run prod",
-    "prod:admin": "turbo run prod --filter=\"admin.*\"",
-    "prod:admin.main": "turbo run prod --filter=admin.main",
-    "prod:backend": "turbo run prod --filter=\"backend.*\"",
-    "prod:backend.api-gateway": "turbo run prod --filter=backend.api-gateway",
-    "prod:backend.public": "turbo run prod --filter=backend.public",
+    "prod:admin": "turbo run prod --filter=\"admin.*\" --env-mode loose",
+    "prod:admin.main": "turbo run prod --filter=admin.main --env-mode loose",
+    "prod:backend": "turbo run prod --filter=\"backend.*\" --env-mode loose",
+    "prod:backend.api-gateway": "turbo run prod --filter=backend.api-gateway --env-mode loose",
+    "prod:backend.main": "turbo run prod --filter=backend.main --env-mode loose",
     "format": "turbo run format",
     "gen:package": "turbo gen package && yarn",
     "gen:backend-package": "turbo gen backend-package && yarn",
@@ -30,8 +31,8 @@
     "reset": "turbo run reset && rm -rf .turbo node_modules yarn.lock",
     "reset:admin": "turbo run reset --filter=\"admin.*\"",
     "reset:backend": "turbo run reset --filter=\"backend.*\"",
-    "docker:local": "docker-compose -f docker-compose.local.yml -p base-local up --build",
-    "docker": "docker-compose -f docker-compose.yml -p base up --build"
+    "docker:local": "docker-compose -f docker-compose.yml --profile local up --build",
+    "docker": "docker-compose -f docker-compose.yml --profile all up --build"
   },
   "dependencies": {
     "lodash": "4.17.21",
@@ -54,7 +55,7 @@
     "yarn": "1.22.22"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "packageManager": "yarn@1.22.22",
   "workspaces": [

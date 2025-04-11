@@ -5,10 +5,12 @@
   "license": "MIT",
   "version": "0.0.0",
   "scripts": {
-    "build": "turbo gen compile && turbo run build --filter=@packages/grpc.*"
+    "build": "turbo gen compile"
   },
   "devDependencies": {
     "ts-morph": "24.0.0",
     "ts-proto": "2.2.5"
   }
 }
+
+

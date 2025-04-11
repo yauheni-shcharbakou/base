@@ -1,19 +1,19 @@
 import { PlopTypes } from '@turbo/gen';
 import { writeFileSync } from 'fs';
 import { SourceFile } from 'ts-morph';
-import { COMMON_TEMPLATES_ROOT, TEMPLATES_ROOT } from './constants';
+import { COMMON_TEMPLATES_ROOT, TEMPLATES_ROOT } from '../../helpers/constants';
 import { join } from 'path';
 
-export abstract class GrpcAdapter {
+export abstract class GrpcStrategy {
   public readonly targetRoot: string;
-  protected readonly adapterTemplatesRoot: string;
+  protected readonly strategyTemplatesRoot: string;
 
   protected constructor(
-    protected readonly name: string,
+    public readonly name: string,
     protected readonly root: string,
   ) {
-    this.targetRoot = join(root, 'src');
-    this.adapterTemplatesRoot = join(TEMPLATES_ROOT, this.name);
+    this.targetRoot = join(root, 'build');
+    this.strategyTemplatesRoot = join(TEMPLATES_ROOT, this.name);
   }
 
   abstract onFile(relativePath: string, importName: string, hasPrefix: boolean): void;
@@ -43,8 +43,8 @@ export abstract class GrpcAdapter {
       {
         type: 'addMany',
         destination: this.root,
-        base: this.adapterTemplatesRoot,
-        templateFiles: [this.adapterTemplatesRoot, join(this.adapterTemplatesRoot, '**/.*')],
+        base: this.strategyTemplatesRoot,
+        templateFiles: [this.strategyTemplatesRoot, join(this.strategyTemplatesRoot, '**/.*')],
         force: true,
       },
     ];

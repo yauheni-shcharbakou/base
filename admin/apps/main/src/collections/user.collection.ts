@@ -1,12 +1,11 @@
-import { MongoMainCollection } from '@packages/common';
-import { CollectionConfig } from 'payload/types';
+import type { CollectionConfig } from 'payload';
 
 export const UserCollection: CollectionConfig = {
-  slug: MongoMainCollection.USER,
-  auth: true,
+  slug: 'users',
   admin: {
     useAsTitle: 'email',
   },
+  auth: true,
   fields: [
     // Email added by default
     // Add more fields as needed

@@ -1,7 +1,7 @@
-version: '3'
+name: base
 
 services:
-  db1:
+  mongo1:
     image: mongo:latest
     restart: unless-stopped
     ports:
@@ -11,8 +11,11 @@ services:
     volumes:
       - mongo_data_1:/data/db
     entrypoint: [ '/usr/bin/mongod', '--replSet', 'base', '--bind_ip_all', '--port', '27017' ]
+    profiles:
+      - local
+      - all
 
-  db2:
+  mongo2:
     image: mongo:latest
     restart: unless-stopped
     ports:
@@ -22,8 +25,11 @@ services:
     volumes:
       - mongo_data_2:/data/db
     entrypoint: [ '/usr/bin/mongod', '--replSet', 'base', '--bind_ip_all', '--port', '27018' ]
+    profiles:
+      - local
+      - all
 
-  db3:
+  mongo3:
     image: mongo:latest
     restart: unless-stopped
     ports:
@@ -33,13 +39,16 @@ services:
     volumes:
       - mongo_data_3:/data/db
     entrypoint: [ '/usr/bin/mongod', '--replSet', 'base', '--bind_ip_all', '--port', '27019' ]
+    profiles:
+      - local
+      - all
 
-  mongodb-initializer:
+  mongo-initializer:
     image: mongo:latest
     depends_on:
-      - db1
-      - db2
-      - db3
+      - mongo1
+      - mongo2
+      - mongo3
     networks:
       - private_network
     volumes:
@@ -51,62 +60,71 @@ services:
         sleep 2 &&
         chmod +x /scripts/rs_initializer.sh &&
         /scripts/rs_initializer.sh
+    profiles:
+      - local
+      - all
 
-  backend.main:
-    build:
-      context: .
-      dockerfile: ./backend/apps/main/Dockerfile
-    restart: unless-stopped
+#  backend.main:
+#    build:
+#      context: .
+#      dockerfile: ./backend/apps/main/Dockerfile
+#    restart: unless-stopped
+##    ports:
+##      - '8000:8000'
+#    environment:
+#      NODE_ENV: production
+#      MONGODB_URL: mongodb://db1:27017,db2:27018,db3:27019/main?replicaSet=base
+#      MAIN_GRPC_URL: 0.0.0.0:8000
+#    networks:
+#      - private_network
+#    depends_on:
+#      - db1
+#      - db2
+#      - db3
+#
+#  backend.api-gateway:
+#    build:
+#      context: .
+#      dockerfile: ./backend/apps/api-gateway/Dockerfile
+#    restart: unless-stopped
 #    ports:
-#      - '8000:8000'
-    environment:
-      NODE_ENV: production
-      MONGODB_URL: mongodb://db1:27017,db2:27018,db3:27019/main?replicaSet=base
-      MAIN_GRPC_URL: 0.0.0.0:8000
-    networks:
-      - private_network
-    depends_on:
-      - db1
-      - db2
-      - db3
-
-  backend.api-gateway:
-    build:
-      context: .
-      dockerfile: ./backend/apps/api-gateway/Dockerfile
-    restart: unless-stopped
-    ports:
-      - '10000:10000'
-    environment:
-      PORT: 10000
-      NODE_ENV: production
-      MAIN_GRPC_URL: backend.main:8000
-    networks:
-      - private_network
-      - public_network
-    depends_on:
-      - backend.main
+#      - '10000:10000'
+#    environment:
+#      PORT: 10000
+#      NODE_ENV: production
+#      MAIN_GRPC_URL: backend.main:8000
+#    networks:
+#      - private_network
+#      - public_network
+#    depends_on:
+#      - backend.main
 
   admin.main:
     build:
+      args:
+        PORT: 3336
+        MONGODB_URL: mongodb://mongo1:27017,mongo2:27018,mongo3:27019/main?replicaSet=base
+        PAYLOAD_SECRET: 12345
       context: .
       dockerfile: ./admin/apps/main/Dockerfile
     restart: unless-stopped
     ports:
-      - '3336:3336'
+      - '${ADMIN_MAIN_PORT:-3336}:3336'
     environment:
       PORT: 3336
       NODE_ENV: production
-      MONGODB_URL: mongodb://db1:27017,db2:27018,db3:27019/main?replicaSet=base
+      MONGODB_URL: mongodb://mongo1:27017,mongo2:27018,mongo3:27019/main?replicaSet=base
       PAYLOAD_SECRET: 12345
     networks:
       - private_network
       - public_network
     depends_on:
-      - db1
-      - db2
-      - db3
+      - mongo1
+      - mongo2
+      - mongo3
 #      - backend.api-gateway
+    profiles:
+      - all
 
 #  frontend:
 #    build:

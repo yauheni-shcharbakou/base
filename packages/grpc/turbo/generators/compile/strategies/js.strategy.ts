@@ -1,17 +1,18 @@
 import { execSync } from 'child_process';
+import * as _ from 'lodash';
+import { GrpcStrategy } from './base/grpc-strategy';
 import { join } from 'path';
-import { SourceFile, SyntaxKind, TypedNode } from 'ts-morph';
+import { SourceFile } from 'ts-morph';
 import {
   ADAPTER_DIR_ROOT,
   PROTO_SRC_ROOT,
   PROTOC_PATH,
   PROTOC_PLUGIN_PATH,
-} from './helpers/constants';
-import { GrpcAdapter } from './helpers/grpc-adapter';
+} from '../helpers/constants';
 
-export class NestAdapter extends GrpcAdapter {
+export class JsStrategy extends GrpcStrategy {
   constructor() {
-    super('nest', join(ADAPTER_DIR_ROOT, 'nest'));
+    super('js', join(ADAPTER_DIR_ROOT, 'js'));
   }
 
   onFile(relativePath: string, importName: string, hasPrefix: boolean): void {
@@ -19,15 +20,14 @@ export class NestAdapter extends GrpcAdapter {
       PROTOC_PATH,
       `--plugin=${PROTOC_PLUGIN_PATH}`,
       `--ts_proto_out=${this.targetRoot}`,
-      '--ts_proto_opt=nestJs=true',
       '--ts_proto_opt=useDate=true',
       '--ts_proto_opt=snakeToCamel=false',
+      '--ts_proto_opt=useMapType=true',
       '--ts_proto_opt=unrecognizedEnum=false',
       '--ts_proto_opt=stringEnums=true',
-      // '--ts_proto_opt=forceLong=number',
       '--ts_proto_opt=useMapType=true',
       '--ts_proto_opt=addGrpcMetadata=true',
-      '--ts_proto_opt=useSnakeTypeName=false',
+      '--ts_proto_opt=outputServices=grpc-js',
       `./${relativePath}`,
     ].join(' ');
 
@@ -37,19 +37,13 @@ export class NestAdapter extends GrpcAdapter {
   async onSourceFile(sourceFile: SourceFile): Promise<void> {
     sourceFile.getVariableDeclaration('protobufPackage')?.remove();
 
-    sourceFile.forEachDescendant((node) => {
-      if (
-        node.getKind() === SyntaxKind.PropertySignature ||
-        node.getKind() === SyntaxKind.PropertyDeclaration
-      ) {
-        const type = (node as unknown as TypedNode).getTypeNode();
+    _.forEach(['MessageFns', 'Exact', 'DeepPartial'], (name) => {
+      const variable = sourceFile.getVariableStatement((stmt) => {
+        return stmt.getDeclarations().some((decl) => decl.getName() === name);
+      });
 
-        if (type && type.getKind() === SyntaxKind.UnionType) {
-          const extType = type.getType();
-          const updatedType = extType.getNonNullableType();
-          node['setType'](updatedType.getText());
-        }
-      }
+      const item = variable ?? sourceFile.getInterface(name) ?? sourceFile.getTypeAlias(name);
+      item?.setIsExported(false);
     });
   }
 }

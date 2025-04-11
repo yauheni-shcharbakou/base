@@ -11,6 +11,5 @@ export const PROTOC_PLUGIN_PATH = join(NODE_MODULES_ROOT, '.bin/protoc-gen-ts_pr
 
 export const PROTO_EXT_REG_EXP = /.proto$/g;
 
-export const ASSETS_ROOT = join(__dirname, '..', 'assets');
 export const TEMPLATES_ROOT = join(__dirname, '..', 'templates');
 export const COMMON_TEMPLATES_ROOT = join(TEMPLATES_ROOT, 'common');

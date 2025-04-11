@@ -1,31 +1,38 @@
-import path from 'path';
+// storage-adapter-import-placeholder
+import { AdminValidationSchema, validateEnv } from '@packages/common';
 import { mongooseAdapter } from '@payloadcms/db-mongodb';
-import { webpackBundler } from '@payloadcms/bundler-webpack';
-import { slateEditor } from '@payloadcms/richtext-slate';
-import { buildConfig } from 'payload/config';
-import { ContactCollection } from './collections/contact.collection';
-import { UserCollection } from './collections/user.collection';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import path from 'path';
+import { buildConfig } from 'payload';
+import { fileURLToPath } from 'url';
+import sharp from 'sharp';
 
-const collections = [UserCollection, ContactCollection];
+import { UserCollection } from '@/collections/user.collection';
+import { MediaCollection } from '@/collections/media.collection';
 
-const mongoUrl =
-  process.env.MONGODB_URL ??
-  'mongodb://localhost:27017,localhost:27018,localhost:27019/main?replicaSet=base';
+const { PAYLOAD_SECRET, MONGODB_URL } = validateEnv(AdminValidationSchema);
+
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 export default buildConfig({
   admin: {
     user: UserCollection.slug,
-    bundler: webpackBundler(),
+    importMap: {
+      baseDir: path.resolve(dirname),
+    },
   },
-  editor: slateEditor({}),
-  collections,
+  collections: [UserCollection, MediaCollection],
+  editor: lexicalEditor(),
+  secret: PAYLOAD_SECRET,
   typescript: {
-    outputFile: path.resolve(__dirname, 'payload-types.ts'),
+    outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  graphQL: {
-    schemaOutputFile: path.resolve(__dirname, 'generated-schema.graphql'),
-  },
-  db: mongooseAdapter({
-    url: mongoUrl,
-  }),
+  db: mongooseAdapter({ url: MONGODB_URL }),
+  sharp,
+  plugins: [
+    // storage-adapter-placeholder
+  ],
+  telemetry: false,
+  cors: '*',
 });
