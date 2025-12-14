@@ -1,7 +1,7 @@
 {
   "name": "@packages/grpc",
   "private": true,
-  "author": "Evgenii Shcherbakov <iipekolict@gmail.com>",
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
   "scripts": {
@@ -12,5 +12,3 @@
     "ts-proto": "2.2.5"
   }
 }
-
-

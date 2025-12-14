@@ -1,7 +1,7 @@
 {
   "name": "@backend/transport",
   "private": true,
-  "author": "Evgenii Shcherbakov <iipekolict@gmail.com>",
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
   "main": "./dist/index.js",

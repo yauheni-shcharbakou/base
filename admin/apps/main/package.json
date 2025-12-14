@@ -1,7 +1,7 @@
 {
   "name": "admin.main",
   "private": true,
-  "author": "Evgenii Shcherbakov <iipekolict@gmail.com>",
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
   "type": "module",
@@ -17,16 +17,16 @@
   },
   "dependencies": {
     "@packages/common": "*",
-    "@payloadcms/db-mongodb": "3.7.0",
-    "@payloadcms/next": "3.7.0",
-    "@payloadcms/richtext-lexical": "3.7.0",
+    "@payloadcms/db-mongodb": "3.68.4",
+    "@payloadcms/next": "3.68.4",
+    "@payloadcms/richtext-lexical": "3.68.4",
     "cross-env": "7.0.3",
     "graphql": "16.9.0",
-    "next": "15.0.4",
-    "payload": "3.7.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "sharp": "0.32.6"
+    "next": "15.4.10",
+    "payload": "3.68.4",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "sharp": "0.34.2"
   },
   "devDependencies": {
     "@types/react": "19.0.1",

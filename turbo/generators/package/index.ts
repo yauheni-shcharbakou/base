@@ -5,7 +5,6 @@ export const packageGenerator = (plop: PlopTypes.NodePlopAPI) => {
   const packageRootByType = new Map([
     ['default', join('{{ turbo.paths.root }}', 'packages', '{{ dashCase name }}')],
     ['backend', join('{{ turbo.paths.root }}', 'backend/packages', '{{ dashCase name }}')],
-    ['library', join('{{ turbo.paths.root }}', 'libraries', '{{ dashCase name }}')],
   ]);
 
   const types = Array.from(packageRootByType.keys());

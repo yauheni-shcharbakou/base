@@ -1,7 +1,7 @@
 {
   "name": "base",
   "private": true,
-  "author": "Evgenii Shcherbakov <iipekolict@gmail.com>",
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
   "scripts": {
@@ -26,8 +26,6 @@
     "prod:backend.main": "turbo run prod --filter=backend.main --env-mode loose",
     "format": "turbo run format",
     "gen:package": "turbo gen package && yarn",
-    "gen:backend-package": "turbo gen backend-package && yarn",
-    "gen:backend-microservice": "turbo gen backend-microservice && yarn",
     "reset": "turbo run reset && rm -rf .turbo node_modules yarn.lock",
     "reset:admin": "turbo run reset --filter=\"admin.*\"",
     "reset:backend": "turbo run reset --filter=\"backend.*\"",
@@ -36,21 +34,22 @@
   },
   "dependencies": {
     "lodash": "4.17.21",
-    "moment": "^2.30.1"
+    "moment": "2.30.1"
   },
   "devDependencies": {
-    "@turbo/gen": "2.3.1",
+    "@turbo/gen": "2.6.3",
     "@types/lodash": "4.14.202",
-    "@types/node": "^20.3.1",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "change-case-all": "^2.1.0",
-    "eslint": "^8.42.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
+    "@types/node": "22.19.3",
+    "@typescript-eslint/eslint-plugin": "6.0.0",
+    "@typescript-eslint/parser": "6.0.0",
+    "change-case-all": "2.1.0",
+    "eslint": "8.42.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "minimatch": "10.1.1",
     "prettier": "3.3.3",
-    "tsup": "8.3.5",
-    "turbo": "2.3.1",
+    "tsup": "8.5.1",
+    "turbo": "2.6.3",
     "typescript": "latest",
     "yarn": "1.22.22"
   },
@@ -66,7 +65,6 @@
     "frontend/apps/*",
     "frontend/packages/*",
     "packages/*",
-    "packages/**/*",
-    "libraries/*"
+    "packages/**/*"
   ]
 }

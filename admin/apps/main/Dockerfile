@@ -1,11 +1,10 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 
 FROM base AS installer
 RUN apk add --no-cache libc6-compat
 COPY ./admin/apps/main ./admin/apps/main
 COPY ./packages ./packages
-COPY ./libraries ./libraries
 COPY ./package.json ./package.json
 RUN yarn install --mode update-lockfile
 

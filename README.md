@@ -3,7 +3,7 @@ My personal website
 
 ### Requirements
 
-- Node.js 18+
+- Node.js 22+
 - Installed protobuf compiler (for development only)
 - Installed docker and docker-compose
 
@@ -152,7 +152,4 @@ yarn format
 For generate new package run:
 ```shell
 yarn gen:package
-yarn gen:backend-package
-yarn gen:backend-microservice
-yarn gen:backend-entity
 ```
