@@ -1,14 +1,12 @@
 import { MongooseModuleOptions } from '@nestjs/mongoose';
-import { MongoValidationSchema, validateEnv } from '@packages/common';
+import { DatabaseValidationSchema, validateEnv } from '@packages/common';
 
-const env = validateEnv(MongoValidationSchema);
+const env = validateEnv(DatabaseValidationSchema);
 
 export const mongoConfig = () =>
   ({
     mongo: <MongooseModuleOptions>{
-      uri:
-        env.MONGODB_URL ??
-        'mongodb://localhost:27017,localhost:27018,localhost:27019/main?replicaSet=base',
+      uri: env.DATABASE_URL ?? 'mongodb://localhost:27017/main',
       autoIndex: true,
       autoCreate: true,
     },

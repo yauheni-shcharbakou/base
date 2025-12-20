@@ -3,6 +3,7 @@ export * from './filters';
 export * from './helpers';
 export * from './interceptors';
 export * from './mappers';
+export * from './pipes';
 export * from './types';
 export * from './grpc.module';
 export * from './grpc.constants';

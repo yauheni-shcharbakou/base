@@ -28,4 +28,4 @@ ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 COPY --from=builder /app .
 EXPOSE 10000
-CMD ["yarn", "prod:backend.api-gateway"]
+CMD ["node", "backend/apps/api-gateway/dist/main"]

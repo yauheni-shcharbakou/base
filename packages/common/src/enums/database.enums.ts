@@ -1,4 +1,4 @@
-export enum MongoMainCollection {
+export enum MainDatabaseCollection {
   USER = 'users',
   CONTACT = 'contacts',
   EXPERIENCE = 'experiences',

@@ -1,1 +1,1 @@
-export * from './mongo.enums';
+export * from './database.enums';

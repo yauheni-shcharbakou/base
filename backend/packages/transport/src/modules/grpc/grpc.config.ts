@@ -1,10 +1,13 @@
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
-import { BackendGrpcValidationSchema, validateEnv } from '@packages/common';
+import { validateEnv } from '@packages/common';
 import { CONTACT_SERVICE_NAME, MAIN_PACKAGE_NAME, PROTO_PATH } from '@packages/grpc.nest';
+import Joi from 'joi';
 import { join } from 'path';
 
-const env = validateEnv(BackendGrpcValidationSchema);
+const env = validateEnv({
+  MAIN_GRPC_URL: Joi.string().optional(),
+});
 
 const commonGrpcOptions: Partial<GrpcOptions['options']> = {
   loader: {

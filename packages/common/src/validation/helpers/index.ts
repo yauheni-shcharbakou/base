@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import Joi, { type AnySchema } from 'joi';
+import _ from 'lodash';
 import { EnvironmentOf } from 'validation/types';
 
 let isEnvParsed = false;
@@ -18,7 +19,8 @@ export const validateEnv = <ValidationSchema extends Record<string, AnySchema>>(
     return result.value;
   }
 
-  const errorsList = (result.error.details ?? []).reduce(
+  const errorsList = _.reduce(
+    result.error.details ?? [],
     (acc: string, { message }) => acc + ' ' + message,
     '',
   );

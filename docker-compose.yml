@@ -20,16 +20,17 @@ services:
       dockerfile: ./backend/apps/main/Dockerfile
     restart: unless-stopped
     ports:
-      - '8000:10000'
+      - '8000:8000'
     environment:
-      PORT: 8000
       NODE_ENV: production
-      MONGODB_URL: mongodb://mongo:27017/main
+      DATABASE_URL: mongodb://mongo:27017/main
       MAIN_GRPC_URL: 0.0.0.0:8000
     networks:
       - private_network
     depends_on:
       - mongo
+    profiles:
+      - all
 
   backend.api-gateway:
     build:
@@ -47,11 +48,14 @@ services:
       - public_network
     depends_on:
       - backend.main
+    profiles:
+      - all
 
   admin.main:
     build:
       args:
         PORT: 3336
+        NODE_ENV: production
         MONGODB_URL: mongodb://mongo:27017/main
         PAYLOAD_SECRET: 12345
       context: .
@@ -62,7 +66,7 @@ services:
     environment:
       PORT: 3336
       NODE_ENV: production
-      MONGODB_URL: mongodb://mongo:27017/main
+      DATABASE_URL: mongodb://mongo:27017/main
       PAYLOAD_SECRET: 12345
     networks:
       - private_network

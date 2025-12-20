@@ -15,16 +15,17 @@
   },
   "dependencies": {
     "@backend/common": "*",
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/config": "^3.2.2",
-    "@nestjs/mongoose": "^10.0.5",
+    "@nestjs/common": "11.1.9",
+    "@nestjs/config": "4.0.2",
+    "@nestjs/mongoose": "11.0.4",
     "@packages/common": "*",
-    "@sweet-monads/either": "^3.3.1",
-    "mongoose": "^8.3.0",
-    "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "@sweet-monads/either": "3.3.1",
+    "mongoose": "9.0.2",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
+    "@packages/eslint-configs": "*",
     "@packages/ts-configs": "*"
   }
 }

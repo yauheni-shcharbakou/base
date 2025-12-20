@@ -4,7 +4,6 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsNotEmpty,
-  IsNumber,
   IsObject,
   IsOptional,
   IsString,

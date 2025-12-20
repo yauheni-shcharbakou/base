@@ -28,4 +28,4 @@ ENV NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
 COPY --from=builder /app .
 EXPOSE 8000
-CMD ["yarn", "prod:backend.main"]
+CMD ["node", "backend/apps/main/dist/main"]

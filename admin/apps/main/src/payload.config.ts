@@ -1,16 +1,19 @@
-// storage-adapter-import-placeholder
-import { AdminValidationSchema, validateEnv } from '@packages/common';
+import { DatabaseValidationSchema, validateEnv } from '@packages/common';
 import { mongooseAdapter } from '@payloadcms/db-mongodb';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import Joi from 'joi';
 import path from 'path';
 import { buildConfig } from 'payload';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 
-import { UserCollection } from '@/collections/user.collection';
-import { MediaCollection } from '@/collections/media.collection';
+const env = validateEnv({
+  ...DatabaseValidationSchema,
+  PAYLOAD_SECRET: Joi.string().required(),
+});
 
-const { PAYLOAD_SECRET, MONGODB_URL } = validateEnv(AdminValidationSchema);
+import { UserCollection } from 'src/collections/user.collection';
+import { MediaCollection } from 'src/collections/media.collection';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -24,15 +27,11 @@ export default buildConfig({
   },
   collections: [UserCollection, MediaCollection],
   editor: lexicalEditor(),
-  secret: PAYLOAD_SECRET,
+  secret: env.PAYLOAD_SECRET,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: mongooseAdapter({ url: MONGODB_URL }),
+  db: mongooseAdapter({ url: env.DATABASE_URL }),
   sharp,
-  plugins: [
-    // storage-adapter-placeholder
-  ],
-  telemetry: false,
-  cors: '*',
+  plugins: [],
 });

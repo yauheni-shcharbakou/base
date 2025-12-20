@@ -8,7 +8,9 @@ export const NodeValidationSchema = {
     .optional(),
 } as const;
 
-export const MongoValidationSchema = { MONGODB_URL: Joi.string().required() } as const;
+export const DatabaseValidationSchema = {
+  DATABASE_URL: Joi.string().required(),
+} as const;
 
 export type NodeEnvironment = EnvironmentOf<typeof NodeValidationSchema>;
-export type MongoEnvironment = EnvironmentOf<typeof MongoValidationSchema>;
+export type DatabaseEnvironment = EnvironmentOf<typeof DatabaseValidationSchema>;

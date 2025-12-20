@@ -1,6 +1,4 @@
-import { ContactRequestDto } from '@backend/common';
-import { GrpcController, ValidateGrpcPayload } from '@backend/transport';
-import { Metadata } from '@grpc/grpc-js';
+import { GrpcController } from '@backend/transport';
 import { Inject } from '@nestjs/common';
 import {
   ContactList,
@@ -18,10 +16,7 @@ import {
 export class ContactRpcController implements ContactServiceController {
   constructor(@Inject(CONTACT_REPOSITORY) private readonly contactRepository: ContactRepository) {}
 
-  @ValidateGrpcPayload(ContactRequestDto)
-  async getMany(request: ContactRequest, metadata: Metadata): Promise<ContactList> {
-    console.log(request, metadata);
-
+  async getMany(request: ContactRequest): Promise<ContactList> {
     return {
       items: await this.contactRepository.getMany(request.query),
     };

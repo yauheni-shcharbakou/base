@@ -1,7 +1,8 @@
+import { MainDatabaseCollection } from '@packages/common';
 import type { CollectionConfig } from 'payload';
 
 export const UserCollection: CollectionConfig = {
-  slug: 'users',
+  slug: MainDatabaseCollection.USER,
   admin: {
     useAsTitle: 'email',
   },

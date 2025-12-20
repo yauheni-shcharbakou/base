@@ -10,7 +10,7 @@ export abstract class MongoRepositoryImpl<
   Doc extends MongoEntity,
   Entity extends DatabaseEntity = DatabaseEntity,
   Query extends BaseQuery = BaseQuery & Partial<Entity>,
-  Create = Omit<Entity, '_id' | 'createdAt' | 'updatedAt'>,
+  Create = Partial<Omit<Entity, 'createdAt' | 'updatedAt'>>,
   Update = Partial<Entity>,
   // @ts-ignore
 > implements DatabaseRepository<Entity, Query, Create, Update>
@@ -53,8 +53,8 @@ export abstract class MongoRepositoryImpl<
 
   async saveOne(createData: Create): Promise<Either<InternalServerErrorException, Entity>> {
     try {
-      const entity = await this.model.create(createData);
-      return right(this.mapper.stringify(entity));
+      const entity = await this.model.create(createData as any);
+      return right(this.mapper.stringify(entity as unknown as Doc));
     } catch (e) {
       return left(new InternalServerErrorException(e?.['message']));
     }

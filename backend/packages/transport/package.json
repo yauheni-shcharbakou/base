@@ -15,18 +15,19 @@
   },
   "dependencies": {
     "@backend/common": "*",
-    "@grpc/grpc-js": "^1.10.6",
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/config": "^3.2.2",
-    "@nestjs/microservices": "^10.3.7",
+    "@grpc/grpc-js": "1.14.3",
+    "@nestjs/common": "11.1.9",
+    "@nestjs/config": "4.0.2",
+    "@nestjs/microservices": "11.1.9",
     "@packages/common": "*",
     "@packages/grpc.nest": "*",
-    "class-validator": "^0.14.1",
-    "mongoose": "^8.3.0",
-    "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "class-validator": "0.14.3",
+    "mongoose": "9.0.2",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
+    "@packages/eslint-configs": "*",
     "@packages/ts-configs": "*"
   }
 }

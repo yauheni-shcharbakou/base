@@ -1,9 +1,9 @@
 import { BooleanProp, MongoEntity, MongoSchema, StringProp } from '@backend/persistence';
 import { SchemaFactory } from '@nestjs/mongoose';
-import { MongoMainCollection } from '@packages/common';
+import { MainDatabaseCollection } from '@packages/common';
 import { Contact } from '@packages/grpc.nest';
 
-@MongoSchema({ collection: MongoMainCollection.CONTACT })
+@MongoSchema({ collection: MainDatabaseCollection.CONTACT })
 export class ContactEntity extends MongoEntity implements Contact {
   @StringProp({ required: false })
   link?: string;

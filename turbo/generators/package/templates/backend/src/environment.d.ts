@@ -1,8 +1,8 @@
-import { BackendEnvironment } from '@packages/environment';
+import { NodeEnvironment } from '@packages/common';
 
 declare global {
   namespace NodeJS {
-    interface ProcessEnv extends BackendEnvironment {}
+    interface ProcessEnv extends NodeEnvironment {}
   }
 }
 

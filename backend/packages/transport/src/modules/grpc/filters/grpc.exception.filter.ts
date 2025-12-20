@@ -3,10 +3,11 @@ import { status } from '@grpc/grpc-js';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { BaseRpcExceptionFilter, RpcException } from '@nestjs/microservices';
 import { GrpcStatusCodeMapper } from 'modules/grpc/mappers';
+import { Observable } from 'rxjs';
 
 @Catch()
 export class GrpcExceptionFilter extends BaseRpcExceptionFilter implements ExceptionFilter {
-  catch(exception: Error, host: ArgumentsHost) {
+  catch(exception: Error, host: ArgumentsHost): Observable<any> {
     if (exception instanceof RpcException) {
       return super.catch(exception, host);
     }
