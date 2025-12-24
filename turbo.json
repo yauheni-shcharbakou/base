@@ -1,11 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env"],
+  "concurrency": "20",
   "tasks": {
     "dev": {
       "cache": false,
       "persistent": true,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "env": ["PORT"]
     },
     "build": {
       "dependsOn": ["^build"]

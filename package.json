@@ -29,8 +29,8 @@
     "reset": "turbo run reset && rm -rf .turbo node_modules yarn.lock",
     "reset:admin": "turbo run reset --filter=\"admin.*\"",
     "reset:backend": "turbo run reset --filter=\"backend.*\"",
-    "docker:local": "docker-compose -f docker-compose.yml --profile local up --build",
-    "docker": "docker-compose -f docker-compose.yml --profile all up --build"
+    "docker:local": "docker compose -f docker-compose.yml --profile local up --build",
+    "docker": "docker compose -f docker-compose.yml --profile all up --build"
   },
   "dependencies": {
     "lodash": "4.17.21",

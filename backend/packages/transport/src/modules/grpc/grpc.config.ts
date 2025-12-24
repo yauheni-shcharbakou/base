@@ -1,12 +1,19 @@
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import { CONTACT_SERVICE_NAME, MAIN_PACKAGE_NAME, PROTO_PATH } from '@packages/grpc.nest';
+import {
+  CONTACT_SERVICE_NAME,
+  MAIN_PACKAGE_NAME,
+  PROTO_PATH,
+  AUTH_PACKAGE_NAME,
+  AUTH_SERVICE_NAME,
+} from '@packages/grpc.nest';
 import Joi from 'joi';
 import { join } from 'path';
 
 const env = validateEnv({
   MAIN_GRPC_URL: Joi.string().optional(),
+  AUTH_GRPC_URL: Joi.string().optional(),
 });
 
 const commonGrpcOptions: Partial<GrpcOptions['options']> = {
@@ -14,6 +21,7 @@ const commonGrpcOptions: Partial<GrpcOptions['options']> = {
     arrays: true,
     keepCase: true,
     enums: String,
+    includeDirs: [PROTO_PATH],
   },
 };
 
@@ -28,6 +36,16 @@ export const grpcConfig = () =>
         protoPath: join(PROTO_PATH, 'main.proto'),
       },
       services: [CONTACT_SERVICE_NAME],
+    },
+    [AUTH_PACKAGE_NAME]: {
+      transport: Transport.GRPC,
+      options: <GrpcOptions['options']>{
+        ...commonGrpcOptions,
+        url: env.AUTH_GRPC_URL ?? '0.0.0.0:8001',
+        package: AUTH_PACKAGE_NAME,
+        protoPath: join(PROTO_PATH, 'auth.proto'),
+      },
+      services: [AUTH_SERVICE_NAME],
     },
   }) as const;
 

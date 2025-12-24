@@ -1,0 +1,10 @@
+syntax = 'proto3';
+
+package auth;
+
+import "models/auth.proto";
+
+service AuthService {
+  rpc login (models.auth.AuthLogin) returns (models.auth.AuthData) {}
+  rpc refreshToken (models.auth.AuthRefresh) returns (models.auth.AuthTokens) {}
+}

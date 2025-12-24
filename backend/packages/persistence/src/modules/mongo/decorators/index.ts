@@ -1,2 +1,2 @@
-export * from './prop.decorator';
-export * from './schema.decorator';
+export * from './mongo.prop.decorator';
+export * from './mongo.schema.decorator';

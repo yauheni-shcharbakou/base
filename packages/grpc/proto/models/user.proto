@@ -1,0 +1,11 @@
+syntax = 'proto3';
+
+package models.user;
+
+import "common/enums.proto";
+
+message User {
+  string _id = 1;
+  string email = 2;
+  common.enums.UserRole role = 3;
+}

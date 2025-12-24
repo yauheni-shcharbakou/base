@@ -1,3 +1,7 @@
+export enum CommonDatabaseCollection {
+  MIGRATION = 'migrations',
+}
+
 export enum MainDatabaseCollection {
   USER = 'users',
   CONTACT = 'contacts',

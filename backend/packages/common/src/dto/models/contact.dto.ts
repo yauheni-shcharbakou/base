@@ -15,35 +15,36 @@ import { DatabaseEntityDto } from 'dto/database-entity.dto';
 import { ListResponseDto } from 'dto/list-response.dto';
 
 export class ContactDto extends DatabaseEntityDto implements Contact {
-  @ApiProperty()
+  @ApiProperty({ type: Boolean })
   @IsNotEmpty()
   @IsBoolean()
+  @Type(() => Boolean)
   isPublic: boolean;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   @IsString()
   link?: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String })
   @IsNotEmpty()
   @IsString()
   value: string;
 }
 
 export class ContactQueryDto extends BaseQueryDto implements ContactQuery {
-  @ApiProperty({ required: false })
+  @ApiProperty({ type: Boolean, required: false })
   @IsOptional()
   @IsBoolean()
   @TransformToBoolean()
   isPublic?: boolean;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   @IsString()
   name?: string;

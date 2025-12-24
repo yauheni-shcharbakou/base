@@ -1,6 +1,6 @@
 import { BaseQuery, DatabaseEntity } from '@backend/common';
 import _ from 'lodash';
-import { MongoEntity } from 'modules/mongo/mongo.entity';
+import { MongoEntity } from 'modules/mongo/entities/mongo.entity';
 import { QueryFilter } from 'mongoose';
 
 export class MongoMapper<
@@ -25,7 +25,7 @@ export class MongoMapper<
   }
 
   stringify(entity: Doc): Entity {
-    return entity.toJSON({ flattenMaps: false });
+    return entity.toJSON({ flattenMaps: false }) as Entity;
   }
 
   stringifyMany(entities: Doc[]): Entity[] {

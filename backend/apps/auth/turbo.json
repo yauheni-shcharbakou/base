@@ -1,0 +1,16 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "src/**/*.ts",
+        ".eslintrc.js",
+        "Dockerfile",
+        "nest-cli.json",
+        "package.json",
+        "tsconfig*.json"
+      ],
+      "outputs": ["dist/**"]
+    }
+  }
+}

@@ -36,7 +36,7 @@ export const BufferArrayProp = propDecoratorFactory<Types.Buffer[]>([MongooseSch
 const defaultObjectIdOptions: Options<Types.ObjectId> = {
   index: true,
   get: (value: Types.ObjectId | undefined) => value?.toString(),
-  transform: (fn: any) => fn,
+  transform: (fn: any): any => fn,
 };
 
 export const ObjectIdProp = propDecoratorFactory<Types.ObjectId>(

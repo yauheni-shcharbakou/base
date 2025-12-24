@@ -32,13 +32,16 @@
     "@nestjs/microservices": "11.1.9",
     "@nestjs/platform-express": "11.1.9",
     "@nestjs/swagger": "11.2.3",
+    "@nestjs/throttler": "6.5.0",
     "@packages/common": "*",
     "@packages/grpc.nest": "*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.3",
     "dotenv": "17.2.3",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "rxjs": "7.8.2",
+    "cookie-parser": "1.4.7",
+    "cors": "2.8.5"
   },
   "devDependencies": {
     "@nestjs/cli": "11.0.14",
@@ -55,7 +58,9 @@
     "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "@types/cookie-parser": "1.4.10",
+    "@types/cors": "2.8.19"
   },
   "jest": {
     "moduleFileExtensions": [

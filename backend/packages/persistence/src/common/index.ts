@@ -1,1 +1,1 @@
-export * from './database.repository';
+export * from './interfaces';
