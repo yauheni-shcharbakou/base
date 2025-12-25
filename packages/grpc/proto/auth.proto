@@ -2,9 +2,9 @@ syntax = 'proto3';
 
 package auth;
 
-import "models/auth.proto";
+import "services/auth.proto";
 
 service AuthService {
-  rpc login (models.auth.AuthLogin) returns (models.auth.AuthData) {}
-  rpc refreshToken (models.auth.AuthRefresh) returns (models.auth.AuthTokens) {}
+  rpc login (services.auth.AuthLogin) returns (services.auth.AuthData) {}
+  rpc refreshToken (services.auth.AuthRefresh) returns (services.auth.AuthTokens) {}
 }

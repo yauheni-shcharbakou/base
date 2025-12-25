@@ -1,6 +1,6 @@
 import { DynamicModule, Type } from '@nestjs/common';
 import { ModelDefinition, MongooseModule } from '@nestjs/mongoose';
-import { MigrationTask } from 'common';
+import { MigrationTask } from 'interfaces';
 import _ from 'lodash';
 import { MONGO_TASKS } from 'modules/mongo/migration/mongo.migration.constants';
 import {

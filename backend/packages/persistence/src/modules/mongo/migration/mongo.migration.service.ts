@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleInit, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
-import { MigrationTask } from 'common';
+import { MigrationTask } from 'interfaces';
 import { MONGO_TASKS } from 'modules/mongo/migration/mongo.migration.constants';
 import { MongoMigrationEntity } from 'modules/mongo/migration/mongo.migration.entity';
 import { MongoMigrationStatus } from 'modules/mongo/migration/mongo.migration.enums';

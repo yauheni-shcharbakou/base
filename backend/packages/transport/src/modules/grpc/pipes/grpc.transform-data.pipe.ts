@@ -4,6 +4,6 @@ import { GrpcDataMapper } from 'modules/grpc/mappers';
 @Injectable()
 export class GrpcTransformDataPipe implements PipeTransform {
   transform(value: any) {
-    return GrpcDataMapper.inTraffic()(value);
+    return GrpcDataMapper.inTraffic(value);
   }
 }

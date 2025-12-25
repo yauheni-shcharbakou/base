@@ -1,7 +1,7 @@
 import { BaseQuery, DatabaseEntity } from '@backend/common';
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
-import { DatabaseRepository } from 'common';
+import { DatabaseRepository } from 'interfaces';
 import { MongoMapper } from 'modules/mongo/mappers';
 import { MongoEntity } from 'modules/mongo/entities/mongo.entity';
 import { Model } from 'mongoose';

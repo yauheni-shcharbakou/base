@@ -7,8 +7,3 @@ enum EmployeeRole {
   FRONTEND_DEVELOPER = 1;
   FULL_STACK_DEVELOPER = 2;
 }
-
-enum UserRole {
-  ADMIN = 0;
-  USER = 1;
-}

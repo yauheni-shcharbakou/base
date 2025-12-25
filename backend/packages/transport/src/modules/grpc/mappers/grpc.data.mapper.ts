@@ -2,7 +2,6 @@ import _ from 'lodash';
 import Long from 'long';
 import { GrpcTimestamp } from 'modules/grpc/types';
 import { isObjectIdOrHexString } from 'mongoose';
-import { map, OperatorFunction, pipe } from 'rxjs';
 
 export class GrpcDataMapper {
   private static isTimestamp(obj: object): obj is GrpcTimestamp {
@@ -79,31 +78,17 @@ export class GrpcDataMapper {
     return value;
   }
 
-  static inTraffic<In extends any = any, Out = In>(
-    additionalMap: (val: In) => Out = (val) => val as unknown as Out,
-  ) {
-    return (value: In): Out => {
-      return additionalMap(this.inTransformer(value));
-    };
+  /**
+   * @description mapper for incoming grpc data
+   */
+  static get inTraffic() {
+    return <T>(value: T): T => this.inTransformer(value);
   }
 
-  static inTrafficPipe<In = any, Out = In>(
-    additionalMap: (val: In) => Out = (val) => val as unknown as Out,
-  ): OperatorFunction<In, Out> {
-    return pipe(map(this.inTraffic(additionalMap)));
-  }
-
-  static outTraffic<In extends any = any, Out = In>(
-    additionalMap: (val: In) => Out = (val) => val as unknown as Out,
-  ) {
-    return (value: In): Out => {
-      return additionalMap(this.outTransformer(value));
-    };
-  }
-
-  static outTrafficPipe<In = any, Out = In>(
-    additionalMap: (val: In) => Out = (val) => val as unknown as Out,
-  ): OperatorFunction<In, Out> {
-    return pipe(map(this.outTraffic(additionalMap)));
+  /**
+   * @description mapper for outcoming grpc data
+   */
+  static get outTraffic() {
+    return <T>(value: T): T => this.outTransformer(value);
   }
 }

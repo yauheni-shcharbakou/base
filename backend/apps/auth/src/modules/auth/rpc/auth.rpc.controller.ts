@@ -11,7 +11,7 @@ import {
   AuthTokens,
 } from '@packages/grpc.nest';
 import { AUTH_SERVICE, AuthService } from 'modules/auth/service/auth.service';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 
 @GrpcController()

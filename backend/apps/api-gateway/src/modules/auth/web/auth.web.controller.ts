@@ -1,14 +1,13 @@
 import { Method } from '@backend/common';
-import { GrpcDataMapper, InjectGrpcService } from '@backend/transport';
+import { GrpcRxPipe, InjectGrpcService } from '@backend/transport';
 import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
-import { RpcException } from '@nestjs/microservices';
 import { ApiTags } from '@nestjs/swagger';
 import { AUTH_SERVICE_NAME, AuthServiceClient } from '@packages/grpc.nest';
 import { plainToInstance } from 'class-transformer';
 import { AuthLoginDto } from 'modules/auth/dto/auth.login.dto';
 import { AuthRefreshDto } from 'modules/auth/dto/auth.refresh.dto';
 import { AuthTokensDto } from 'modules/auth/dto/auth.tokens.dto';
-import { catchError, map, Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Response, Request } from 'express';
 
 @ApiTags('auth')
@@ -49,14 +48,12 @@ export class AuthWebController {
     @Req() req: Request,
   ) {
     console.log(req.cookies);
+    // console.log(this.authServiceClient.login(body).grpcIn);
+    // this.authServiceClient.login(body).grpcIn((res) => res.user).toPromise();
 
     const result = await this.authServiceClient
       .login(body)
-      .pipe(
-        GrpcDataMapper.inTrafficPipe(),
-        map((response) => plainToInstance(AuthTokensDto, response.tokens)),
-        catchError((exception) => throwError(() => new RpcException(exception))),
-      )
+      .pipe(GrpcRxPipe.proxy((response) => plainToInstance(AuthTokensDto, response.tokens)))
       .toPromise();
 
     res
@@ -74,10 +71,8 @@ export class AuthWebController {
   @Post('refresh-token')
   @Method({ type: AuthTokensDto })
   refreshToken(@Body() body: AuthRefreshDto): Observable<AuthTokensDto> {
-    return this.authServiceClient.refreshToken(body).pipe(
-      GrpcDataMapper.inTrafficPipe(),
-      map((response) => plainToInstance(AuthTokensDto, response)),
-      catchError((exception) => throwError(() => new RpcException(exception))),
-    );
+    return this.authServiceClient
+      .refreshToken(body)
+      .pipe(GrpcRxPipe.proxy((response) => plainToInstance(AuthTokensDto, response)));
   }
 }
