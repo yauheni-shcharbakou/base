@@ -8,7 +8,6 @@ import { AppModule } from 'app.module';
 import { HttpRequestInterceptor } from 'common/interceptors/http-request.interceptor';
 import { Config } from 'config';
 import cookieParser from 'cookie-parser';
-import cors from 'cors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -18,10 +17,10 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  app.enableCors({
-    origin: 'http://localhost:3336', // фронтенд
-    credentials: true, // разрешаем cookie
-  });
+  // app.enableCors({
+  //   origin: 'http://localhost:3336',
+  //   credentials: true,
+  // });
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new RpcExceptionFilter(), new HttpExceptionFilter());
@@ -42,6 +41,6 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(port, () => logger.log(`ApiGateway running on http://localhost:${port}`));
+  await app.listen(port, () => logger.log(`API Gateway running on http://localhost:${port}`));
 }
 bootstrap();

@@ -63,12 +63,13 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
+    'external-users': ExternalUserAuthOperations;
   };
   blocks: {};
   collections: {
-    users: User;
+    'external-users': ExternalUser;
     media: Media;
+    migrations: Migration;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -76,8 +77,9 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
+    'external-users': ExternalUsersSelect<false> | ExternalUsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    migrations: MigrationsSelect<false> | MigrationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -90,15 +92,15 @@ export interface Config {
   globals: {};
   globalsSelect: {};
   locale: null;
-  user: User & {
-    collection: 'users';
+  user: ExternalUser & {
+    collection: 'external-users';
   };
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
-export interface UserAuthOperations {
+export interface ExternalUserAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -118,25 +120,13 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "external-users".
  */
-export interface User {
+export interface ExternalUser {
   id: string;
+  externalId: string;
   email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
+  role?: ('ADMIN' | 'USER') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -156,6 +146,19 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "migrations".
+ */
+export interface Migration {
+  id: string;
+  name: string;
+  status: 'pending' | 'success' | 'failed';
+  errorMessage?: string | null;
+  errorStack?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -182,17 +185,21 @@ export interface PayloadLockedDocument {
   id: string;
   document?:
     | ({
-        relationTo: 'users';
-        value: string | User;
+        relationTo: 'external-users';
+        value: string | ExternalUser;
       } | null)
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'migrations';
+        value: string | Migration;
       } | null);
   globalSlug?: string | null;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'external-users';
+    value: string | ExternalUser;
   };
   updatedAt: string;
   createdAt: string;
@@ -204,8 +211,8 @@ export interface PayloadLockedDocument {
 export interface PayloadPreference {
   id: string;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'external-users';
+    value: string | ExternalUser;
   };
   key?: string | null;
   value?:
@@ -233,23 +240,12 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "external-users_select".
  */
-export interface UsersSelect<T extends boolean = true> {
+export interface ExternalUsersSelect<T extends boolean = true> {
+  externalId?: T;
   email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
+  role?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -268,6 +264,18 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "migrations_select".
+ */
+export interface MigrationsSelect<T extends boolean = true> {
+  name?: T;
+  status?: T;
+  errorMessage?: T;
+  errorStack?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

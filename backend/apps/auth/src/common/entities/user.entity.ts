@@ -1,8 +1,20 @@
-import { MongoEntity, MongoSchema, NumberProp, StringProp } from '@backend/persistence';
-import { SchemaFactory } from '@nestjs/mongoose';
+import { DateProp, MongoEntity, MongoSchema, NumberProp, StringProp } from '@backend/persistence';
+import { Prop, SchemaFactory } from '@nestjs/mongoose';
 import { MainDatabaseCollection } from '@packages/common';
 import { UserRole } from '@packages/grpc.nest';
-import { UserInternal } from 'common/interfaces/user.interface';
+import { UserInternal, UserSession } from 'common/interfaces/user.interface';
+
+@MongoSchema({ _id: false, timestamps: false })
+export class UserSessionSchema implements UserSession {
+  @StringProp()
+  id: string;
+
+  @DateProp()
+  createdAt: Date;
+
+  @DateProp()
+  expiresAt: Date;
+}
 
 @MongoSchema({ collection: MainDatabaseCollection.USER })
 export class UserEntity extends MongoEntity implements UserInternal {
@@ -20,6 +32,9 @@ export class UserEntity extends MongoEntity implements UserInternal {
 
   @NumberProp({ required: false, default: () => 0 })
   loginAttempts: number;
+
+  @Prop({ required: false, type: [UserSessionSchema], default: () => [] })
+  sessions: UserSessionSchema[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserEntity);
