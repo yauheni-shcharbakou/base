@@ -10,6 +10,7 @@ export const NodeValidationSchema = {
 
 export const DatabaseValidationSchema = {
   DATABASE_URL: Joi.string().required(),
+  DATABASE_NAME: Joi.string().required(),
 } as const;
 
 export type NodeEnvironment = EnvironmentOf<typeof NodeValidationSchema>;
