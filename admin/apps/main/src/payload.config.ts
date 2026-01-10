@@ -27,7 +27,10 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: mongooseAdapter({ url: config.database.url }),
+  db: mongooseAdapter({
+    url: config.database.url,
+    connectOptions: { dbName: 'main' },
+  }),
   sharp,
   plugins: [],
   routes: {
