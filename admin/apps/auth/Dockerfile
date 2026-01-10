@@ -11,6 +11,7 @@ RUN yarn install --mode update-lockfile
 
 FROM base AS builder
 ARG DATABASE_URL
+ARG DATABASE_NAME
 ARG PAYLOAD_SECRET
 RUN apk add protobuf
 RUN apk add protobuf-dev
