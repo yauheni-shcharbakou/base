@@ -1,7 +1,5 @@
 import { MICROSERVICE_GRPC_OPTIONS } from '@backend/transport';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { Config } from 'config';
 import { AppModule } from 'app.module';
 
 async function bootstrap() {
