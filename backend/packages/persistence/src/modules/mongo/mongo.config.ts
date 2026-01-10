@@ -9,6 +9,7 @@ export const mongoConfig = () =>
   ({
     mongo: <MongooseModuleOptions>{
       uri: env.DATABASE_URL ?? 'mongodb://localhost:27017/main',
+      dbName: 'auth',
       autoIndex: true,
       autoCreate: true,
     },
