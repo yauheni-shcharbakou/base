@@ -1,3 +1,9 @@
+export enum MigrationStatus {
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  FAILED = 'failed',
+}
+
 export enum AdminCollectionGroup {
   SYSTEM = 'System',
   AUTH = 'Auth',

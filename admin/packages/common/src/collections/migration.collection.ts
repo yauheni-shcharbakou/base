@@ -1,5 +1,6 @@
-import { AdminCollectionGroup, CommonDatabaseCollection } from '@packages/common';
+import { AdminCollectionGroup, CommonDatabaseCollection, MigrationStatus } from '@packages/common';
 import { AdminAccessGuard } from 'guards';
+import _ from 'lodash';
 import { CollectionConfig } from 'payload';
 
 export const MigrationCollection: CollectionConfig = {
@@ -32,20 +33,7 @@ export const MigrationCollection: CollectionConfig = {
       type: 'select',
       index: true,
       required: true,
-      options: [
-        {
-          label: 'PENDING',
-          value: 'pending',
-        },
-        {
-          label: 'SUCCESS',
-          value: 'success',
-        },
-        {
-          label: 'FAILED',
-          value: 'failed',
-        },
-      ],
+      options: _.values(MigrationStatus),
     },
     {
       name: 'errorMessage',

@@ -1,3 +1,3 @@
-import nextConfig from '@packages/eslint-configs/next.config.mjs';
+import nextConfig from '@packages/configs/eslint/next.config.mjs';
 
 export default nextConfig(import.meta.url);

@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger, OnModuleInit, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
+import { MigrationStatus } from '@packages/common';
 import { MigrationTask } from 'interfaces';
 import { MONGO_TASKS } from 'modules/mongo/migration/mongo.migration.constants';
 import { MongoMigrationEntity } from 'modules/mongo/migration/mongo.migration.entity';
-import { MongoMigrationStatus } from 'modules/mongo/migration/mongo.migration.enums';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class MongoMigrationService implements OnModuleInit {
 
   async onModuleInit() {
     const completedTasks = await this.migrationModel
-      .distinct('name', { status: MongoMigrationStatus.SUCCESS })
+      .distinct('name', { status: MigrationStatus.SUCCESS })
       .exec();
 
     const completedTasksSet = new Set(completedTasks);
@@ -42,7 +42,7 @@ export class MongoMigrationService implements OnModuleInit {
         await this.migrationModel
           .findOneAndUpdate(
             { name },
-            { status: MongoMigrationStatus.SUCCESS },
+            { status: MigrationStatus.SUCCESS },
             { new: true, upsert: true },
           )
           .exec();
@@ -57,7 +57,7 @@ export class MongoMigrationService implements OnModuleInit {
           .findOneAndUpdate(
             { name },
             {
-              status: MongoMigrationStatus.FAILED,
+              status: MigrationStatus.FAILED,
               errorMessage: error['message']?.toString(),
               errorStack: error['stack']?.toString(),
             },

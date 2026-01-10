@@ -19,6 +19,6 @@
     "joi": "18.0.2"
   },
   "devDependencies": {
-    "@packages/ts-configs": "*"
+    "@packages/configs": "*"
   }
 }

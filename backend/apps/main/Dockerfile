@@ -16,16 +16,17 @@ RUN apk update
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV TURBO_TELEMETRY_DISABLED=1
 WORKDIR /app
 COPY --from=installer /app .
 COPY ./turbo.json ./turbo.json
+RUN yarn build:grpc
 RUN yarn build:backend.main
 
 FROM base AS runner
 ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV TURBO_TELEMETRY_DISABLED=1
 WORKDIR /app
 COPY --from=builder /app .
-EXPOSE 8000
+EXPOSE $PORT
 CMD ["node", "backend/apps/main/dist/main"]

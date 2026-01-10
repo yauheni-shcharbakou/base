@@ -1,7 +1,8 @@
 {
-  "extends": "@packages/ts-configs/package/base.tsconfig.json",
+  "extends": "@packages/configs/tsconfig/package/payload.tsconfig.json",
   "compilerOptions": {
     "baseUrl": "./src"
   },
+  "include": ["src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

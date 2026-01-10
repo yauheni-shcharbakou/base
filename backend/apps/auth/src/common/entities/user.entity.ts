@@ -1,6 +1,6 @@
 import { DateProp, MongoEntity, MongoSchema, NumberProp, StringProp } from '@backend/persistence';
 import { Prop, SchemaFactory } from '@nestjs/mongoose';
-import { MainDatabaseCollection } from '@packages/common';
+import { AuthDatabaseCollection } from '@packages/common';
 import { UserRole } from '@packages/grpc.nest';
 import { UserInternal, UserSession } from 'common/interfaces/user.interface';
 
@@ -16,7 +16,7 @@ export class UserSessionSchema implements UserSession {
   expiresAt: Date;
 }
 
-@MongoSchema({ collection: MainDatabaseCollection.USER })
+@MongoSchema({ collection: AuthDatabaseCollection.USER })
 export class UserEntity extends MongoEntity implements UserInternal {
   @StringProp({ required: true, unique: true, index: true })
   email: string;

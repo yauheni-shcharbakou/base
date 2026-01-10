@@ -15,12 +15,7 @@ export interface ExternalAuthResponse {
         _strategy: 'local-jwt';
       })
     | null;
-  collection: string;
+  collection?: string;
   token?: string;
   exp?: number;
-}
-
-export interface ExternalAuthResult {
-  user: ExternalUser;
-  collection: string;
 }

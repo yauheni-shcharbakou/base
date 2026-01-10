@@ -1,5 +1,5 @@
 {
-  "name": "@packages/eslint-configs",
+  "name": "@packages/configs",
   "private": true,
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",

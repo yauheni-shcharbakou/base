@@ -14,6 +14,27 @@ services:
       - local
       - all
 
+  backend.auth:
+    build:
+      context: .
+      dockerfile: ./backend/apps/auth/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '8001:8001'
+    environment:
+      PORT: 8001
+      NODE_ENV: production
+      DATABASE_URL: mongodb://mongo:27017/auth
+      AUTH_GRPC_URL: 0.0.0.0:8001
+      ACCESS_JWT_SECRET: string123
+      REFRESH_JWT_SECRET: string123
+    networks:
+      - private_network
+    depends_on:
+      - mongo
+    profiles:
+      - all
+
   backend.main:
     build:
       context: .
@@ -22,6 +43,7 @@ services:
     ports:
       - '8000:8000'
     environment:
+      PORT: 8000
       NODE_ENV: production
       DATABASE_URL: mongodb://mongo:27017/main
       MAIN_GRPC_URL: 0.0.0.0:8000
@@ -38,15 +60,17 @@ services:
       dockerfile: ./backend/apps/api-gateway/Dockerfile
     restart: unless-stopped
     ports:
-      - '10000:10000'
+      - '${BACKEND_PORT:-5555}:5555'
     environment:
-      PORT: 10000
+      PORT: 5555
       NODE_ENV: production
+      AUTH_GRPC_URL: backend.auth:8001
       MAIN_GRPC_URL: backend.main:8000
     networks:
       - private_network
       - public_network
     depends_on:
+      - backend.auth
       - backend.main
     profiles:
       - all
@@ -64,7 +88,7 @@ services:
       - private_network
       - public_network
     ports:
-      - '3336:3336'
+      - '${ADMIN_PORT:-3336}:3336'
     profiles:
       - local
 
@@ -81,7 +105,7 @@ services:
       - private_network
       - public_network
     ports:
-      - '3336:3336'
+      - '${ADMIN_PORT:-3336}:3336'
     profiles:
       - all
 
@@ -136,6 +160,7 @@ services:
     depends_on:
       - mongo
       - admin.proxy
+      - admin.auth
     profiles:
       - all
 

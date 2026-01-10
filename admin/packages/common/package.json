@@ -21,7 +21,6 @@
     "payload": "3.68.4"
   },
   "devDependencies": {
-    "@packages/eslint-configs": "*",
-    "@packages/ts-configs": "*"
+    "@packages/configs": "*"
   }
 }

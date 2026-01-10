@@ -6,11 +6,15 @@ import { AppModule } from 'app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService<Config>);
-
   app.connectMicroservice(app.get(MICROSERVICE_GRPC_OPTIONS));
+  await app.startAllMicroservices();
 
-  await app.startAllMicroservices(); // start() warn
-  await app.listen(configService.get('port', { infer: true }));
+  // const app = await NestFactory.create(AppModule);
+  // const configService = app.get(ConfigService<Config>);
+  //
+  // app.connectMicroservice(app.get(MICROSERVICE_GRPC_OPTIONS));
+  //
+  // await app.startAllMicroservices(); // start() warn
+  // await app.listen(configService.get('port', { infer: true }));
 }
 bootstrap();
