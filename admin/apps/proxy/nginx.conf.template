@@ -17,6 +17,7 @@ http {
 
     server {
         listen ${PORT};
+        server_name ${ADMIN_URL};
 
         location ^~ /auth/ {
             proxy_pass ${ADMIN_AUTH_URL};
