@@ -3,6 +3,8 @@ import { DatabaseValidationSchema, validateEnv } from '@packages/common';
 
 const env = validateEnv(DatabaseValidationSchema);
 
+console.log('DATABASE URL', env.DATABASE_URL);
+
 export const mongoConfig = () =>
   ({
     mongo: <MongooseModuleOptions>{
