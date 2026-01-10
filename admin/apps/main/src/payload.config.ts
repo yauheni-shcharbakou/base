@@ -29,7 +29,7 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: config.database.url,
-    connectOptions: { dbName: 'main' },
+    connectOptions: { dbName: config.database.name },
   }),
   sharp,
   plugins: [],

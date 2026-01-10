@@ -28,7 +28,7 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: config.database.url,
-    connectOptions: { dbName: 'auth' },
+    connectOptions: { dbName: config.database.name },
   }),
   sharp,
   plugins: [],

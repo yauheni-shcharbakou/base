@@ -15,6 +15,7 @@ type CommonConfig<Auth = false> = Auth extends true
       isDevelopment: boolean;
       database: {
         url: string;
+        name: string;
       };
       payload: {
         secret: string;
@@ -27,6 +28,7 @@ type CommonConfig<Auth = false> = Auth extends true
       isDevelopment: boolean;
       database: {
         url: string;
+        name: string;
       };
       payload: {
         secret: string;
@@ -50,6 +52,7 @@ export const adminConfig = <Auth extends boolean = true, CustomConfig extends ob
     isDevelopment: env.NODE_ENV === 'development',
     database: {
       url: env.DATABASE_URL,
+      name: env.DATABASE_NAME,
     },
     payload: {
       secret: env.PAYLOAD_SECRET,
