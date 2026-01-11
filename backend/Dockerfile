@@ -10,8 +10,7 @@ COPY ./.gitignore ./.gitignore
 RUN yarn install --mode update-lockfile
 
 FROM base AS builder
-RUN apk add protobuf
-RUN apk add protobuf-dev
+RUN apk add protobuf protobuf-dev
 RUN apk update
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc

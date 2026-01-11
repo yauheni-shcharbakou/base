@@ -3,5 +3,22 @@
   "private": true,
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
-  "version": "0.0.0"
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "ts-node-dev --transpile-only src/main.ts --watch",
+    "build": "tsup src/main.ts --format cjs --dts",
+    "prod": "node dist/main.js"
+  },
+  "dependencies": {
+    "@packages/common": "*",
+    "express": "5.1.0",
+    "http-proxy-middleware": "3.0.5",
+    "joi": "18.0.2"
+  },
+  "devDependencies": {
+    "@packages/configs": "*",
+    "@types/express": "^5.0.0",
+    "ts-node-dev": "2.0.0",
+    "tsup": "8.5.1"
+  }
 }

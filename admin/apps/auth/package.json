@@ -6,6 +6,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prod": "PORT=4000 node server.js",
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
     "dev": "dotenv -- cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",

@@ -15,7 +15,6 @@ type CommonConfig<Auth = false> = Auth extends true
       isDevelopment: boolean;
       database: {
         url: string;
-        name: string;
       };
       payload: {
         secret: string;
@@ -28,7 +27,6 @@ type CommonConfig<Auth = false> = Auth extends true
       isDevelopment: boolean;
       database: {
         url: string;
-        name: string;
       };
       payload: {
         secret: string;
@@ -39,11 +37,11 @@ export const adminConfig = <Auth extends boolean = true, CustomConfig extends ob
   withAuth: Auth = true as Auth,
   customConfig: CustomConfig = {} as CustomConfig,
 ): CommonConfig<Auth> & CustomConfig => {
-  const validationSchema: CommonEnv & { ADMIN_AUTH_URL?: Joi.StringSchema } =
+  const validationSchema: CommonEnv & { ADMIN_AUTH_PROXY_URL?: Joi.StringSchema } =
     commonValidationSchema;
 
   if (withAuth) {
-    validationSchema.ADMIN_AUTH_URL = Joi.string().uri().required();
+    validationSchema.ADMIN_AUTH_PROXY_URL = Joi.string().uri().required();
   }
 
   const env = validateEnv(validationSchema);
@@ -52,7 +50,6 @@ export const adminConfig = <Auth extends boolean = true, CustomConfig extends ob
     isDevelopment: env.NODE_ENV === 'development',
     database: {
       url: env.DATABASE_URL,
-      name: env.DATABASE_NAME,
     },
     payload: {
       secret: env.PAYLOAD_SECRET,
@@ -60,7 +57,7 @@ export const adminConfig = <Auth extends boolean = true, CustomConfig extends ob
   } as CommonConfig<true>;
 
   if (withAuth) {
-    config.auth = { url: env.ADMIN_AUTH_URL! };
+    config.auth = { url: env.ADMIN_AUTH_PROXY_URL! };
   }
 
   return _.merge(config, customConfig);

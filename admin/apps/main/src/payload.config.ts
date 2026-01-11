@@ -1,5 +1,6 @@
 import { config } from '@/config';
 import { externalUserCollection, MigrationCollection } from '@admin/common';
+import { Database } from '@packages/common';
 import { mongooseAdapter } from '@payloadcms/db-mongodb';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import path from 'path';
@@ -29,7 +30,7 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: config.database.url,
-    connectOptions: { dbName: config.database.name },
+    connectOptions: { dbName: Database.MAIN },
   }),
   sharp,
   plugins: [],

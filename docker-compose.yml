@@ -37,6 +37,38 @@ services:
     profiles:
       - all
 
+  admin:
+    build:
+      args:
+        PORT: 3336
+        DATABASE_URL: mongodb://mongo:27017
+        ADMIN_HOST: host.docker.internal
+        ADMIN_AUTH_PROXY_URL: http://localhost:4000/auth
+        ADMIN_AUTH_URL: http://127.0.0.1:4000
+        ADMIN_MAIN_URL: http://127.0.0.1:4001
+        PAYLOAD_SECRET: 12345,
+      context: .
+      dockerfile: ./admin/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${ADMIN_PORT:-3336}:3336'
+    environment:
+      PORT: 3336
+      NODE_ENV: production
+      DATABASE_URL: mongodb://mongo:27017
+      ADMIN_HOST: host.docker.internal
+      ADMIN_AUTH_PROXY_URL: http://host.docker.internal:3336/auth
+      ADMIN_AUTH_URL: http://127.0.0.1:4000
+      ADMIN_MAIN_URL: http://127.0.0.1:4001
+      PAYLOAD_SECRET: 12345
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - mongo
+    profiles:
+      - all
+
 #  backend.auth:
 #    build:
 #      context: .
