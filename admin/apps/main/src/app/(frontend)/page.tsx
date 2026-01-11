@@ -12,5 +12,5 @@ export default async function HomePage() {
   const payload = await getPayload({ config: pConfig });
   const { user } = await payload.auth({ headers });
 
-  redirect(user?.email ? '/admin' : config.auth.url);
+  redirect(user?.email ? '/admin/' : `${config.auth.url}/`);
 }
