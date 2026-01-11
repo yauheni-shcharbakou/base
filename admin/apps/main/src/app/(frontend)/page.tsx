@@ -8,9 +8,8 @@ import './styles.css';
 
 export default async function HomePage() {
   const headers = await getHeaders();
-  const pConfig = await payloadConfig;
-  const payload = await getPayload({ config: pConfig });
+  const payload = await getPayload({ config: await payloadConfig });
   const { user } = await payload.auth({ headers });
 
-  redirect(user?.email ? '/admin/' : `${config.auth.url}/`);
+  redirect(user?.email ? '/main/admin/' : `${config.auth.url}/`);
 }
