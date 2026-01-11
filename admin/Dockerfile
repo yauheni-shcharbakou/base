@@ -52,7 +52,7 @@ RUN chown nextjs:nodejs /dev/stdout /dev/stderr
 COPY ./admin/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./admin/apps/proxy/nginx.conf.template /etc/nginx/templates/nginx.conf.template
 
-RUN /bin/sh -c "envsubst '\${PORT},\${ADMIN_HOST},\${ADMIN_AUTH_URL},\${ADMIN_MAIN_URL}' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf"
+RUN /bin/sh -c "envsubst '\$PORT \$ADMIN_HOST \$ADMIN_AUTH_URL \$ADMIN_MAIN_URL' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf"
 RUN /bin/sh -c "nginx -t"
 
 RUN <<EOF
