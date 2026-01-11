@@ -35,6 +35,7 @@ export default buildConfig({
   plugins: [],
   routes: {
     api: '/auth/api',
+    admin: '/auth/admin',
     graphQL: '/auth/graphql',
     graphQLPlayground: '/auth/graphqlPlayground',
   },
