@@ -130,22 +130,22 @@ services:
 #    profiles:
 #      - all
 
-#  admin.proxy-local:
-#    build:
-#      context: .
-#      dockerfile: ./admin/apps/proxy/Dockerfile
-#    restart: unless-stopped
-#    environment:
-#      PORT: 3336
-#      ADMIN_AUTH_URL: http://host.docker.internal:4000
-#      ADMIN_MAIN_URL: http://host.docker.internal:4001
-#    networks:
-#      - private_network
-#      - public_network
-#    ports:
-#      - '${ADMIN_PORT:-3336}:3336'
-#    profiles:
-#      - local
+  admin.proxy-local:
+    build:
+      context: .
+      dockerfile: ./admin/apps/proxy/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: 3336
+      ADMIN_AUTH_URL: http://host.docker.internal:4000
+      ADMIN_MAIN_URL: http://host.docker.internal:4001
+    networks:
+      - private_network
+      - public_network
+    ports:
+      - '${ADMIN_PORT:-3336}:3336'
+    profiles:
+      - local
 #
 #  admin.proxy:
 #    build:
