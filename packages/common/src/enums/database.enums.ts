@@ -4,6 +4,11 @@ export enum MigrationStatus {
   FAILED = 'failed',
 }
 
+export enum Database {
+  AUTH = 'auth',
+  MAIN = 'main',
+}
+
 export enum AdminCollectionGroup {
   SYSTEM = 'System',
   AUTH = 'Auth',
