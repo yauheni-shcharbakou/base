@@ -5,10 +5,12 @@ import { Inject } from '@nestjs/common';
 import {
   AuthData,
   AuthLogin,
+  AuthMe,
   AuthRefresh,
   AuthServiceController,
   AuthServiceControllerMethods,
   AuthTokens,
+  User,
 } from '@packages/grpc.nest';
 import { AUTH_SERVICE, AuthService } from 'modules/auth/service/auth.service';
 import { Observable } from 'rxjs';
@@ -25,5 +27,9 @@ export class AuthRpcController implements AuthServiceController {
 
   refreshToken(request: AuthRefresh, metadata?: Metadata): Observable<AuthTokens> {
     return fromPromise(this.authService.refreshToken(request)).pipe(unwrapEither());
+  }
+
+  me(request: AuthMe, metadata?: Metadata): Observable<User> {
+    return fromPromise(this.authService.getUserByToken(request)).pipe(unwrapEither());
   }
 }

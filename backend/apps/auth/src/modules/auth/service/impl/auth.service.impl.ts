@@ -1,7 +1,7 @@
 import { ForbiddenException, Inject, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthData, AuthLogin, AuthRefresh, AuthTokens } from '@packages/grpc.nest';
+import { AuthData, AuthLogin, AuthMe, AuthRefresh, AuthTokens, User } from '@packages/grpc.nest';
 import { Either, left, right } from '@sweet-monads/either';
 import { IAuthJwtPayload } from 'common/interfaces/auth.interface';
 import { UserInternal } from 'common/interfaces/user.interface';
@@ -96,5 +96,23 @@ export class AuthServiceImpl implements AuthService {
     }
 
     return right(await this.generateTokens({ id: user.value._id, login: user.value.email }));
+  }
+
+  async getUserByToken(
+    data: AuthMe,
+  ): Promise<Either<NotFoundException | ForbiddenException, User>> {
+    const payload = this.parsePayload(data.accessToken);
+
+    if (!payload) {
+      return left(new ForbiddenException('Access token invalid'));
+    }
+
+    const user = await this.userRepository.getById(payload.id);
+
+    if (user.isLeft()) {
+      return left(user.value);
+    }
+
+    return right(_.pick(user.value, ['_id', 'email', 'role']));
   }
 }

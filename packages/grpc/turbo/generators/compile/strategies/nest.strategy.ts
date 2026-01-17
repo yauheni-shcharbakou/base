@@ -1,7 +1,8 @@
 import { execSync } from 'child_process';
-import { GrpcStrategy } from './base/grpc-strategy';
+import { ProjectOptions } from 'ts-morph';
+import { nestTransformers } from '../transformers';
+import { BaseStrategy } from './base.strategy';
 import { join } from 'path';
-import { SourceFile, SyntaxKind, TypedNode } from 'ts-morph';
 import {
   ADAPTER_DIR_ROOT,
   PROTO_SRC_ROOT,
@@ -9,9 +10,18 @@ import {
   PROTOC_PLUGIN_PATH,
 } from '../helpers/constants';
 
-export class NestStrategy extends GrpcStrategy {
+export class NestStrategy extends BaseStrategy {
   constructor() {
-    super('nest', join(ADAPTER_DIR_ROOT, 'nest'));
+    super('nest', join(ADAPTER_DIR_ROOT, 'nest'), nestTransformers);
+  }
+
+  getProjectOptions(): ProjectOptions {
+    return {
+      compilerOptions: {
+        experimentalDecorators: true,
+        emitDecoratorMetadata: true,
+      },
+    };
   }
 
   onFile(relativePath: string, importName: string, hasPrefix: boolean): void {
@@ -31,24 +41,5 @@ export class NestStrategy extends GrpcStrategy {
     ].join(' ');
 
     execSync(command, { cwd: PROTO_SRC_ROOT, encoding: 'utf-8' });
-  }
-
-  async onSourceFile(sourceFile: SourceFile): Promise<void> {
-    sourceFile.getVariableDeclaration('protobufPackage')?.remove();
-
-    sourceFile.forEachDescendant((node) => {
-      if (
-        node.getKind() === SyntaxKind.PropertySignature ||
-        node.getKind() === SyntaxKind.PropertyDeclaration
-      ) {
-        const type = (node as unknown as TypedNode).getTypeNode();
-
-        if (type && type.getKind() === SyntaxKind.UnionType) {
-          const extType = type.getType();
-          const updatedType = extType.getNonNullableType();
-          node['setType'](updatedType.getText());
-        }
-      }
-    });
   }
 }

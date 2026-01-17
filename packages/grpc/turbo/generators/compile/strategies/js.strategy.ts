@@ -1,8 +1,7 @@
 import { execSync } from 'child_process';
-import * as _ from 'lodash';
-import { GrpcStrategy } from './base/grpc-strategy';
+import { jsTransformers } from '../transformers';
+import { BaseStrategy } from './base.strategy';
 import { join } from 'path';
-import { SourceFile } from 'ts-morph';
 import {
   ADAPTER_DIR_ROOT,
   PROTO_SRC_ROOT,
@@ -10,9 +9,9 @@ import {
   PROTOC_PLUGIN_PATH,
 } from '../helpers/constants';
 
-export class JsStrategy extends GrpcStrategy {
+export class JsStrategy extends BaseStrategy {
   constructor() {
-    super('js', join(ADAPTER_DIR_ROOT, 'js'));
+    super('js', join(ADAPTER_DIR_ROOT, 'js'), jsTransformers);
   }
 
   onFile(relativePath: string, importName: string, hasPrefix: boolean): void {
@@ -32,18 +31,5 @@ export class JsStrategy extends GrpcStrategy {
     ].join(' ');
 
     execSync(command, { cwd: PROTO_SRC_ROOT, encoding: 'utf-8' });
-  }
-
-  async onSourceFile(sourceFile: SourceFile): Promise<void> {
-    sourceFile.getVariableDeclaration('protobufPackage')?.remove();
-
-    _.forEach(['MessageFns', 'Exact', 'DeepPartial'], (name) => {
-      const variable = sourceFile.getVariableStatement((stmt) => {
-        return stmt.getDeclarations().some((decl) => decl.getName() === name);
-      });
-
-      const item = variable ?? sourceFile.getInterface(name) ?? sourceFile.getTypeAlias(name);
-      item?.setIsExported(false);
-    });
   }
 }

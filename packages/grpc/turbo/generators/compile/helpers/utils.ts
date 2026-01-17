@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { stat } from 'fs/promises';
-import { join } from 'path';
+import { dirname, join, relative } from 'path';
 import { PROTO_EXT_REG_EXP } from './constants';
 
 export const parseProtoTree = async (
@@ -44,4 +44,14 @@ export const parseProtoTree = async (
   }
 
   return map;
+};
+
+export const getRelativeImportPath = (fromFilePath: string, toFilePath: string): string => {
+  let path = relative(dirname(fromFilePath), toFilePath);
+
+  if (!path.startsWith('.')) {
+    path = './' + path;
+  }
+
+  return path;
 };

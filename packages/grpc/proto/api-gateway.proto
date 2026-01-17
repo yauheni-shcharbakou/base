@@ -1,9 +1,0 @@
-syntax = 'proto3';
-
-package apiGateway;
-
-import "models/contact.proto";
-
-service MainService {
-  rpc getContacts (models.contact.ContactRequest) returns (models.contact.ContactList) {}
-}

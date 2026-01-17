@@ -1,29 +1,22 @@
 import dotenv from 'dotenv';
-import Joi, { type AnySchema } from 'joi';
-import _ from 'lodash';
-import { EnvironmentOf } from 'validation/types';
+import zod, { z, ZodObject, ZodRawShape } from 'zod';
 
 let isEnvParsed = false;
 
-export const validateEnv = <ValidationSchema extends Record<string, AnySchema>>(
+export const validateEnv = <ValidationSchema extends ZodRawShape>(
   schema: ValidationSchema,
-): EnvironmentOf<ValidationSchema> => {
+): z.infer<ZodObject<ValidationSchema>> => {
   if (!isEnvParsed) {
     dotenv.config();
     isEnvParsed = true;
   }
 
-  const result = Joi.object(schema).validate(process.env, { allowUnknown: true });
+  const result = zod.object(schema).safeParse(process.env);
 
-  if (!result.error) {
-    return result.value;
+  if (!result.success) {
+    console.error('Invalid environment variables:', zod.prettifyError(result.error));
+    throw new Error('Env validation failed');
   }
 
-  const errorsList = _.reduce(
-    result.error.details ?? [],
-    (acc: string, { message }) => acc + ' ' + message,
-    '',
-  );
-
-  throw Error(`Environment validation failed: ${errorsList}`);
+  return result.data;
 };

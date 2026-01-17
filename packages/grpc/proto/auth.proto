@@ -2,9 +2,33 @@ syntax = 'proto3';
 
 package auth;
 
-import "services/auth.proto";
+import "models/user.proto";
+
+message AuthLogin {
+  string login = 1;
+  string password = 2;
+}
+
+message AuthMe {
+  string accessToken = 1;
+}
+
+message AuthRefresh {
+  string refreshToken = 1;
+}
+
+message AuthTokens {
+  string accessToken = 1;
+  string refreshToken = 2;
+}
+
+message AuthData {
+  models.user.User user = 1;
+  AuthTokens tokens = 2;
+}
 
 service AuthService {
-  rpc login (services.auth.AuthLogin) returns (services.auth.AuthData) {}
-  rpc refreshToken (services.auth.AuthRefresh) returns (services.auth.AuthTokens) {}
+  rpc login (AuthLogin) returns (AuthData) {}
+  rpc refreshToken (AuthRefresh) returns (AuthTokens) {}
+  rpc me (AuthMe) returns (models.user.User) {}
 }

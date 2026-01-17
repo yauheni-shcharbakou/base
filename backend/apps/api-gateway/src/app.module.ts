@@ -17,7 +17,7 @@ import { MainModule } from 'modules/main/main.module';
       ],
     }),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    GrpcModule.forRoot(),
+    GrpcModule.forRoot({ host: 'apiGateway' }),
     AuthModule,
     MainModule,
   ],

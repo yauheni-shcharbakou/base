@@ -1,19 +1,18 @@
 import { commonConfig } from '@backend/common';
-import { JwtModuleOptions, JwtSignOptions } from '@nestjs/jwt';
 import { validateEnv } from '@packages/common';
-import Joi from 'joi';
+import zod from 'zod';
 
 const env = validateEnv({
-  ACCESS_JWT_SECRET: Joi.string().required(),
-  REFRESH_JWT_SECRET: Joi.string().required(),
+  ACCESS_JWT_SECRET: zod.string(),
+  REFRESH_JWT_SECRET: zod.string(),
 });
 
-const common = commonConfig();
-const accessTokenExpiresIn = common.isDevelopment ? '1d' : '10m';
-const refreshTokenExpiresIn = common.isDevelopment ? '30d' : '7d';
+export const config = () => {
+  const common = commonConfig();
+  const accessTokenExpiresIn = common.isDevelopment ? '1d' : '10m';
+  const refreshTokenExpiresIn = common.isDevelopment ? '30d' : '7d';
 
-export const config = () =>
-  ({
+  return {
     ...common,
     jwt: {
       accessToken: {
@@ -31,6 +30,7 @@ export const config = () =>
         },
       },
     },
-  }) as const;
+  } as const;
+};
 
 export type Config = ReturnType<typeof config>;

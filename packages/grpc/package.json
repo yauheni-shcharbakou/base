@@ -8,6 +8,7 @@
     "build": "turbo gen compile"
   },
   "devDependencies": {
+    "@nestjs/common": "11.1.9",
     "ts-morph": "24.0.0",
     "ts-proto": "2.2.5"
   }

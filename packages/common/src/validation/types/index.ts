@@ -1,7 +1,5 @@
-import type { AnySchema } from 'joi';
+import { z, ZodObject, ZodRawShape } from 'zod';
 
-type TypeOf<Definition> = Definition extends AnySchema<infer Type> ? Type : Definition;
-
-export type EnvironmentOf<ValidationSchema extends Record<string, AnySchema>> = {
-  [Variable in keyof ValidationSchema]: TypeOf<ValidationSchema[Variable]>;
-};
+export type EnvironmentOf<ValidationSchema extends ZodRawShape> = z.infer<
+  ZodObject<ValidationSchema>
+>;

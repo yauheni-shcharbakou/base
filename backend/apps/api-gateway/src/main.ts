@@ -1,3 +1,4 @@
+import { MICROSERVICE_GRPC_OPTIONS } from '@backend/transport';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -41,6 +42,8 @@ async function bootstrap() {
     },
   });
 
+  app.connectMicroservice(app.get(MICROSERVICE_GRPC_OPTIONS));
+  await app.startAllMicroservices();
   await app.listen(port, () => logger.log(`API Gateway running on http://localhost:${port}`));
 }
 bootstrap();

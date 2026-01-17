@@ -1,18 +1,19 @@
 import { PlopTypes } from '@turbo/gen';
+import { dotCase } from 'change-case-all';
 import { EventEmitter } from 'events';
 import { mkdir, readdir, rm } from 'fs/promises';
 import * as _ from 'lodash';
 import { JsStrategy } from './strategies/js.strategy';
 import { NestStrategy } from './strategies/nest.strategy';
-import { GrpcStrategy } from './strategies/base/grpc-strategy';
-import { join } from 'path';
+import { BaseStrategy } from './strategies/base.strategy';
+import { basename, join } from 'path';
 import { Project } from 'ts-morph';
 import { parseProtoTree } from './helpers/utils';
 import { GrpcCompilerAnswers } from './helpers/types';
 import { PROTO_EXT_REG_EXP, PROTO_SRC_ROOT } from './helpers/constants';
 
 export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
-  const strategies: GrpcStrategy[] = [new NestStrategy(), new JsStrategy()];
+  const strategies: BaseStrategy[] = [new NestStrategy(), new JsStrategy()];
 
   plop.setActionType('cleanup', async (answers: GrpcCompilerAnswers) => {
     await Promise.all(
@@ -64,13 +65,23 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
 
   plop.setActionType('ts-morph', async (answers: GrpcCompilerAnswers) => {
     for (const strategy of strategies) {
-      const project = new Project();
+      const project = new Project(strategy.getProjectOptions());
 
       for (const appFile of answers.files) {
         const filePath = join(strategy.targetRoot, appFile);
         const sourceFile = project.addSourceFileAtPath(filePath);
-        await strategy.onSourceFile(sourceFile);
+        const fileId = dotCase(basename(filePath).replace(/(.ts|.tsx)/g, ''));
+
+        await strategy.onSourceFile(sourceFile, fileId, filePath);
+
+        sourceFile.formatText();
+        sourceFile.organizeImports();
+
         await sourceFile.save();
+
+        console.info(
+          `[grpc.${strategy.name}] File ${filePath.replace(strategy.targetRoot, '')} compiled`,
+        );
       }
     }
 

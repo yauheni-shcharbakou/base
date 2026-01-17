@@ -14,18 +14,3 @@ message Contact {
   string value = 6;
   bool isPublic = 7;
 }
-
-message ContactQuery {
-  optional string id = 1;
-  repeated string ids = 2;
-  optional string name = 3;
-  optional bool isPublic = 4;
-}
-
-message ContactRequest {
-  optional ContactQuery query = 1;
-}
-
-message ContactList {
-  repeated Contact items = 1;
-}
