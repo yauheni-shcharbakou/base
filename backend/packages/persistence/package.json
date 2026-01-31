@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@backend/common": "*",
+    "@backend/grpc": "*",
     "@nestjs/common": "11.1.9",
     "@nestjs/config": "4.0.2",
     "@nestjs/core": "11.1.9",

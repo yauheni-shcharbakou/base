@@ -14,6 +14,7 @@ export const jsTransformers: Type<BaseTransformer>[] = [
 
 export const nestTransformers: Type<BaseTransformer>[] = [
   CommonTransformer,
+  JsRemoveDuplicateExportsTransformer,
   RemoveOptionalityTransformer,
   NestProxyControllerTransformer,
 ];

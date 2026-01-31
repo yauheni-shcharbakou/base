@@ -6,14 +6,15 @@ import { getGrpcClientToken, getGrpcServiceToken } from 'helpers';
 import _ from 'lodash';
 import { GRPC_CONFIG_SERVICE, MICROSERVICE_GRPC_OPTIONS } from 'modules/grpc/grpc.constants';
 
-export type GrpcModuleForRootParams = {
-  host?: GrpcHost;
-};
-
 export type GrpcModuleForFeatureParams = {
   strategy: {
     [Host in GrpcHost]?: (keyof GrpcConfig[Host]['services'])[];
   };
+};
+
+export type GrpcModuleForRootParams = {
+  host?: GrpcHost;
+  appClientStrategy?: GrpcModuleForFeatureParams['strategy'];
 };
 
 export class GrpcModule {
@@ -31,7 +32,44 @@ export class GrpcModule {
     );
   }
 
+  private static getClientParams(strategy: GrpcModuleForFeatureParams['strategy']) {
+    const clients: ClientsProviderAsyncOptions[] = [];
+    const providers: Provider[] = [];
+    const exports: DynamicModule['exports'] = [ClientsModule];
+
+    for (const [clientName, services] of _.entries(strategy)) {
+      const clientToken = getGrpcClientToken(clientName);
+
+      clients.push({
+        inject: [GRPC_CONFIG_SERVICE],
+        name: clientToken,
+        useFactory: (configService: ConfigService) => {
+          const hostConfig: GrpcConfig[GrpcHost] = configService.getOrThrow(clientName);
+          const serviceDefinitions = this.getServiceDefinitions(hostConfig, services);
+
+          return _.merge(_.omit(hostConfig, ['services']), { options: serviceDefinitions });
+        },
+      });
+
+      _.forEach(services, (service) => {
+        const serviceToken = getGrpcServiceToken(service);
+
+        providers.push({
+          provide: serviceToken,
+          inject: [clientToken],
+          useFactory: (client: ClientGrpc) => client.getService(service),
+        });
+
+        exports.push(serviceToken);
+      });
+    }
+
+    return { clients, providers, exports };
+  }
+
   static forRoot(params: GrpcModuleForRootParams = {}): DynamicModule {
+    const imports: DynamicModule['imports'] = [ConfigModule.forFeature(grpcConfig)];
+
     const providers: Provider[] = [
       {
         provide: GRPC_CONFIG_SERVICE,
@@ -60,8 +98,16 @@ export class GrpcModule {
       exports.push(MICROSERVICE_GRPC_OPTIONS);
     }
 
+    if (params.appClientStrategy) {
+      const clientParams = this.getClientParams(params.appClientStrategy);
+
+      providers.push(...clientParams.providers);
+      exports.push(...clientParams.exports);
+      imports.push(ClientsModule.registerAsync({ clients: clientParams.clients }));
+    }
+
     return {
-      imports: [ConfigModule.forFeature(grpcConfig)],
+      imports,
       providers,
       exports,
       module: GrpcModule,
@@ -70,36 +116,7 @@ export class GrpcModule {
   }
 
   static forFeature(params: GrpcModuleForFeatureParams): DynamicModule {
-    const clients: ClientsProviderAsyncOptions[] = [];
-    const providers: Provider[] = [];
-    const exports: DynamicModule['exports'] = [ClientsModule];
-
-    for (const [clientName, services] of _.entries(params.strategy)) {
-      const clientToken = getGrpcClientToken(clientName);
-
-      clients.push({
-        inject: [GRPC_CONFIG_SERVICE],
-        name: clientToken,
-        useFactory: (configService: ConfigService) => {
-          const hostConfig: GrpcConfig[GrpcHost] = configService.getOrThrow(clientName);
-          const serviceDefinitions = this.getServiceDefinitions(hostConfig, services);
-
-          return _.merge(_.omit(hostConfig, ['services']), { options: serviceDefinitions });
-        },
-      });
-
-      _.forEach(services, (service) => {
-        const serviceToken = getGrpcServiceToken(service);
-
-        providers.push({
-          provide: serviceToken,
-          inject: [clientToken],
-          useFactory: (client: ClientGrpc) => client.getService(service),
-        });
-
-        exports.push(serviceToken);
-      });
-    }
+    const { clients, providers, exports } = this.getClientParams(params.strategy);
 
     return {
       imports: [ClientsModule.registerAsync({ clients })],

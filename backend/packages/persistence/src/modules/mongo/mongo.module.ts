@@ -2,9 +2,11 @@ import { DynamicModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Database } from '@packages/common';
-import { MongoMigrationModule, MongoMigrationModuleParams } from 'modules/mongo/migration';
-import { mongoConfig, MongoConfig } from 'modules/mongo/mongo.config';
+import { MongoConfig, mongoConfig } from 'configs';
+import { MongoMigrationModule, MongoMigrationModuleParams } from 'modules/mongo-migration';
 import { MONGO_CONFIG_SERVICE } from 'modules/mongo/mongo.constants';
+import { Connection } from 'mongoose';
+import { MongoIdPlugin } from 'plugins';
 
 type MongoModuleForRootParams = {
   database: Database;
@@ -20,7 +22,17 @@ export class MongoModule {
           imports: [ConfigModule],
           inject: [ConfigService],
           useFactory: (configService: ConfigService<MongoConfig>) => {
-            return configService.getOrThrow('mongo', { infer: true })(params.database);
+            const mongoOptions = configService.getOrThrow('mongo', { infer: true })(
+              params.database,
+            );
+
+            return {
+              ...mongoOptions,
+              connectionFactory: (connection: Connection) => {
+                connection.plugin(MongoIdPlugin);
+                return connection;
+              },
+            };
           },
         }),
         MongoMigrationModule.register(params.migration),

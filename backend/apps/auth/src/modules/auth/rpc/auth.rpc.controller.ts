@@ -9,9 +9,8 @@ import {
   AuthRefresh,
   AuthServiceController,
   AuthServiceControllerMethods,
-  AuthTokens,
   User,
-} from '@packages/grpc.nest';
+} from '@backend/grpc';
 import { AUTH_SERVICE, AuthService } from 'modules/auth/service/auth.service';
 import { Observable } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
@@ -25,7 +24,7 @@ export class AuthRpcController implements AuthServiceController {
     return fromPromise(this.authService.login(request)).pipe(unwrapEither());
   }
 
-  refreshToken(request: AuthRefresh, metadata?: Metadata): Observable<AuthTokens> {
+  refreshToken(request: AuthRefresh, metadata?: Metadata): Observable<AuthData> {
     return fromPromise(this.authService.refreshToken(request)).pipe(unwrapEither());
   }
 

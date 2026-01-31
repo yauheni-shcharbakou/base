@@ -13,9 +13,15 @@ export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({ sticky = true 
   const { data: user } = useGetIdentity<User>();
 
   return (
-    <AppBar position={sticky ? 'sticky' : 'relative'}>
+    <AppBar position={sticky ? 'sticky' : 'relative'} elevation={0}>
       <Toolbar>
-        <Stack direction="row" width="100%" justifyContent="flex-end" alignItems="center">
+        <Stack
+          direction="row"
+          width="100%"
+          justifyContent="flex-end"
+          alignItems="center"
+          bgcolor="transparent"
+        >
           <HamburgerMenu />
           <Stack direction="row" width="100%" justifyContent="flex-end" alignItems="center">
             <IconButton color="inherit" onClick={setMode}>

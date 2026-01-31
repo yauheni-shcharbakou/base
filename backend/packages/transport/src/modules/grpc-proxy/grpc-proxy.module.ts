@@ -1,70 +1,53 @@
-import { DynamicModule } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ClientGrpc, ClientsModule } from '@nestjs/microservices';
-import {
-  GrpcProxyControllerFactoryParams,
-  GrpcProxyControllerFactoryResult,
-} from '@packages/grpc.nest';
-import { GrpcConfigServiceDefinition, GrpcHost } from 'configs';
+import { DynamicModule, Type } from '@nestjs/common';
+import { GrpcProxyControllerFactory, GrpcProxyControllerFactoryParams } from '@backend/grpc';
+import { GrpcHost } from 'configs';
 import { GrpcController, InjectGrpcService, ValidateGrpcPayload } from 'decorators';
-import { getGrpcClientToken, getGrpcServiceToken } from 'helpers';
 import _ from 'lodash';
-import { GRPC_CONFIG_SERVICE } from 'modules/grpc';
+import { GrpcModule } from 'modules/grpc';
 import { GrpcRxPipe } from 'pipes';
 
-export type GrpcProxyControllerFactory<DtoSchema extends object> = (
-  params: GrpcProxyControllerFactoryParams<DtoSchema>,
-) => GrpcProxyControllerFactoryResult;
-
-export type GrpcProxyModuleParams<DtoSchema extends object> = {
+export type GrpcProxyControllerParams = {
   host: GrpcHost;
-  controllerFactory: GrpcProxyControllerFactory<DtoSchema>;
-  dtoSchema: DtoSchema;
-  custom?: Omit<GrpcProxyControllerFactoryParams<DtoSchema>, 'dtoSchema'>;
+  controllerFactory: GrpcProxyControllerFactory;
+  custom?: Partial<GrpcProxyControllerFactoryParams>;
+};
+
+type ControllerAccumulator = {
+  controllers: Type[];
+  strategy: {
+    [Host in GrpcHost]?: any[];
+  };
 };
 
 export class GrpcProxyModule {
-  static register<DtoSchema extends object = object>(
-    params: GrpcProxyModuleParams<DtoSchema>,
-  ): DynamicModule {
-    const factoryResult = params.controllerFactory({
-      GrpcController: params.custom?.GrpcController ?? GrpcController,
-      ValidateGrpcPayload: params.custom?.ValidateGrpcPayload ?? ValidateGrpcPayload,
-      InjectGrpcService: params.custom?.InjectGrpcService ?? InjectGrpcService,
-      dtoSchema: params.dtoSchema,
-      proxyPipes: params.custom?.proxyPipes ?? [GrpcRxPipe.proxy()],
-    });
+  static register(...params: GrpcProxyControllerParams[]): DynamicModule {
+    const controllerAccumulator = _.reduce(
+      params,
+      (acc: ControllerAccumulator, controllerParams) => {
+        const factoryResult = controllerParams.controllerFactory({
+          GrpcController: controllerParams.custom?.GrpcController ?? GrpcController,
+          ValidateGrpcPayload: controllerParams.custom?.ValidateGrpcPayload ?? ValidateGrpcPayload,
+          InjectGrpcService: controllerParams.custom?.InjectGrpcService ?? InjectGrpcService,
+          proxyPipes: controllerParams.custom?.proxyPipes ?? [GrpcRxPipe.rpcException],
+        });
 
-    const clientToken = getGrpcClientToken(params.host);
-    const serviceToken = getGrpcServiceToken(factoryResult.service);
+        const hostServices = acc.strategy[controllerParams.host];
+
+        if (_.isArray(hostServices)) {
+          hostServices.push(factoryResult.service);
+        } else {
+          acc.strategy[controllerParams.host] = [factoryResult.service];
+        }
+
+        acc.controllers.push(factoryResult.Controller);
+        return acc;
+      },
+      { controllers: [], strategy: {} },
+    );
 
     return {
-      imports: [
-        ClientsModule.registerAsync({
-          clients: [
-            {
-              inject: [GRPC_CONFIG_SERVICE],
-              name: clientToken,
-              useFactory: (configService: ConfigService) => {
-                const hostConfig = configService.getOrThrow(params.host);
-
-                const serviceDefinition: GrpcConfigServiceDefinition =
-                  hostConfig.services[factoryResult.service];
-
-                return _.merge(_.omit(hostConfig, ['services']), { options: serviceDefinition });
-              },
-            },
-          ],
-        }),
-      ],
-      providers: [
-        {
-          provide: serviceToken,
-          inject: [clientToken],
-          useFactory: (client: ClientGrpc) => client.getService(factoryResult.service),
-        },
-      ],
-      controllers: [factoryResult.Controller],
+      imports: [GrpcModule.forFeature({ strategy: controllerAccumulator.strategy })],
+      controllers: controllerAccumulator.controllers,
       module: GrpcProxyModule,
     };
   }

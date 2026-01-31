@@ -1,12 +1,10 @@
-import { Method } from '@backend/common';
 import { GrpcRxPipe, InjectGrpcService } from '@backend/transport';
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AUTH_SERVICE_NAME, AuthServiceClient } from '@packages/grpc.nest';
+import { AUTH_SERVICE_NAME, AuthServiceClient } from '@backend/grpc';
 import { plainToInstance } from 'class-transformer';
-import { AuthLoginDto } from 'modules/auth/dto/auth.login.dto';
-import { AuthRefreshDto } from 'modules/auth/dto/auth.refresh.dto';
-import { AuthTokensDto } from 'modules/auth/dto/auth.tokens.dto';
+import { Method } from 'common/decorators/method.decorator';
+import { AuthLoginDto, AuthRefreshDto, AuthTokensDto } from 'common/dto/services/auth.service.dto';
 import { Observable } from 'rxjs';
 
 @ApiTags('auth')
@@ -52,6 +50,6 @@ export class AuthWebController {
   refreshToken(@Body() body: AuthRefreshDto): Observable<AuthTokensDto> {
     return this.authServiceClient
       .refreshToken(body)
-      .pipe(GrpcRxPipe.proxy((response) => plainToInstance(AuthTokensDto, response)));
+      .pipe(GrpcRxPipe.proxy((response) => plainToInstance(AuthTokensDto, response.tokens)));
   }
 }

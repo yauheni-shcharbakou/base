@@ -1,5 +1,6 @@
 import { ApiOutlined } from '@mui/icons-material';
 import { DevtoolsProvider } from '@/providers/devtools';
+import { AuthDatabaseCollection } from '@packages/common';
 import { Refine } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
 import { RefineSnackbarProvider, useNotificationProvider } from '@refinedev/mui';
@@ -10,7 +11,7 @@ import React, { Suspense } from 'react';
 
 import { ColorModeContextProvider } from '@/contexts/color-mode';
 import { authProvider } from '@/providers/auth-provider';
-import { dataProvider } from '@/providers/data-provider';
+import { dataProvider, grpcProvider } from '@/providers/data-provider';
 
 export const metadata: Metadata = {
   title: 'Refine',
@@ -39,10 +40,23 @@ export default async function RootLayout({
                 <DevtoolsProvider>
                   <Refine
                     routerProvider={routerProvider}
-                    dataProvider={dataProvider}
+                    dataProvider={{
+                      default: grpcProvider,
+                      http: dataProvider,
+                    }}
                     notificationProvider={useNotificationProvider}
                     authProvider={authProvider}
                     resources={[
+                      {
+                        name: AuthDatabaseCollection.USER,
+                        list: `/${AuthDatabaseCollection.USER}`,
+                        create: `/${AuthDatabaseCollection.USER}/create`,
+                        edit: `/${AuthDatabaseCollection.USER}/edit/:id`,
+                        show: `/${AuthDatabaseCollection.USER}/show/:id`,
+                        meta: {
+                          canDelete: true,
+                        },
+                      },
                       {
                         name: 'blog_posts',
                         list: '/blog-posts',

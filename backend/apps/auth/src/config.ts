@@ -5,6 +5,9 @@ import zod from 'zod';
 const env = validateEnv({
   ACCESS_JWT_SECRET: zod.string(),
   REFRESH_JWT_SECRET: zod.string(),
+  SALT_ROUNDS: zod.number().default(10),
+  ADMIN_EMAIL: zod.email(),
+  ADMIN_PASSWORD: zod.string(),
 });
 
 export const config = () => {
@@ -30,7 +33,14 @@ export const config = () => {
         },
       },
     },
+    hashing: {
+      saltRounds: env.SALT_ROUNDS,
+    },
+    admin: {
+      email: env.ADMIN_EMAIL,
+      password: env.ADMIN_PASSWORD,
+    },
   } as const;
-};
+}; //
 
 export type Config = ReturnType<typeof config>;

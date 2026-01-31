@@ -1,4 +1,8 @@
 export type GrpcCompilerAnswers = {
-  files: string[];
-  indexExports: string[];
+  files: Set<string>;
+  indexExports: Set<string>;
+};
+
+export type Type<T> = {
+  new (...args: any[]): T;
 };

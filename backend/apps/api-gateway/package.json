@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@backend/common": "*",
+    "@backend/grpc": "*",
+    "@backend/persistence": "*",
     "@backend/transport": "*",
     "@grpc/grpc-js": "1.14.3",
     "@grpc/proto-loader": "0.8.0",
@@ -35,11 +37,11 @@
     "@nestjs/throttler": "6.5.0",
     "@packages/common": "*",
     "@packages/grpc": "*",
-    "@packages/grpc.nest": "*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.3",
     "cookie-parser": "1.4.7",
     "dotenv": "17.2.3",
+    "protobufjs": "7.5.4",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },

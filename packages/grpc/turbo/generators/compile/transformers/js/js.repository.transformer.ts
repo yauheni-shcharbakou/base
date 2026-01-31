@@ -21,7 +21,7 @@ export class JsRepositoryTransformer extends BaseTransformer {
   }
 
   private declareImports() {
-    this.addOrUpdateImport('@grpc/grpc-js', ['CallOptions', 'Metadata', 'MetadataOptions']);
+    this.addOrUpdateImport('@grpc/grpc-js', ['CallOptions', 'Metadata']);
 
     this.addOrUpdateImport(this.importFromCompilerPath, ['GrpcRepository']);
   }
@@ -55,9 +55,9 @@ export class JsRepositoryTransformer extends BaseTransformer {
             type: requestType,
           },
           {
-            name: 'metadataOptions',
-            type: 'MetadataOptions',
-            initializer: '{}',
+            name: 'metadata',
+            type: 'Metadata',
+            initializer: 'new Metadata()',
           },
           {
             name: 'options',
@@ -88,7 +88,7 @@ export class JsRepositoryTransformer extends BaseTransformer {
           //   .write(');');
 
           writer.writeLine(
-            `return this.exec<${requestType}, ${responseType}>("${name}", request, metadataOptions, options);`,
+            `return this.exec<${requestType}, ${responseType}>("${name}", request, metadata, options);`,
           );
         },
       });

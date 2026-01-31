@@ -7,9 +7,29 @@ import {
   CONTACT_PACKAGE_NAME,
   CONTACT_SERVICE_NAME,
   PROTO_PATH,
-} from '@packages/grpc.nest';
+  USER_PACKAGE_NAME,
+  USER_SERVICE_NAME,
+} from '@backend/grpc';
 import { join } from 'path';
+import { wrappers } from 'protobufjs';
 import zod from 'zod';
+
+const declareProtobufWrappers = () => {
+  wrappers['.google.protobuf.Timestamp'] = {
+    // @ts-ignore
+    fromObject(value: Date) {
+      return {
+        seconds: value.getTime() / 1000,
+        nanos: (value.getTime() % 1000) * 1e6,
+      };
+    },
+    toObject(message: any) {
+      return new Date(message.seconds * 1000 + message.nanos / 1e6);
+    },
+  };
+};
+
+declareProtobufWrappers();
 
 export type GrpcConfigServiceDefinition = {
   package: string;
@@ -28,6 +48,7 @@ export const grpcConfig = () => {
     loader: {
       arrays: true,
       keepCase: true,
+      defaults: true,
       enums: String,
       includeDirs: [PROTO_PATH],
     },
@@ -39,6 +60,13 @@ export const grpcConfig = () => {
       definition: <GrpcConfigServiceDefinition>{
         package: AUTH_PACKAGE_NAME,
         protoPath: join(PROTO_PATH, 'auth.proto'),
+      },
+    },
+    [USER_SERVICE_NAME]: {
+      name: USER_SERVICE_NAME,
+      definition: <GrpcConfigServiceDefinition>{
+        package: USER_PACKAGE_NAME,
+        protoPath: join(PROTO_PATH, 'user.proto'),
       },
     },
     [CONTACT_SERVICE_NAME]: {
@@ -59,6 +87,7 @@ export const grpcConfig = () => {
       },
       services: {
         [services[AUTH_SERVICE_NAME].name]: services[AUTH_SERVICE_NAME].definition,
+        [services[USER_SERVICE_NAME].name]: services[USER_SERVICE_NAME].definition,
         [services[CONTACT_SERVICE_NAME].name]: services[CONTACT_SERVICE_NAME].definition,
       },
     },
@@ -70,6 +99,7 @@ export const grpcConfig = () => {
       },
       services: {
         [services[AUTH_SERVICE_NAME].name]: services[AUTH_SERVICE_NAME].definition,
+        [services[USER_SERVICE_NAME].name]: services[USER_SERVICE_NAME].definition,
       },
     },
     main: {

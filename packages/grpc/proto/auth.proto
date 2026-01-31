@@ -2,6 +2,7 @@ syntax = 'proto3';
 
 package auth;
 
+import "google/protobuf/timestamp.proto";
 import "models/user.proto";
 
 message AuthLogin {
@@ -17,9 +18,14 @@ message AuthRefresh {
   string refreshToken = 1;
 }
 
+message AuthToken {
+  string value = 1;
+  google.protobuf.Timestamp expireDate = 2;
+}
+
 message AuthTokens {
-  string accessToken = 1;
-  string refreshToken = 2;
+  AuthToken accessToken = 1;
+  AuthToken refreshToken = 2;
 }
 
 message AuthData {
@@ -29,6 +35,6 @@ message AuthData {
 
 service AuthService {
   rpc login (AuthLogin) returns (AuthData) {}
-  rpc refreshToken (AuthRefresh) returns (AuthTokens) {}
+  rpc refreshToken (AuthRefresh) returns (AuthData) {}
   rpc me (AuthMe) returns (models.user.User) {}
 }

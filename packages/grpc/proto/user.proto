@@ -1,0 +1,78 @@
+syntax = 'proto3';
+
+package user;
+
+import "common/service.proto";
+import "models/user.proto";
+
+// query
+
+message UserQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string email = 3;
+  repeated models.user.UserRole roles = 4;
+}
+
+message UserRequest {
+  optional UserQuery query = 1;
+}
+
+// get
+
+message UserList {
+  repeated models.user.User items = 1;
+}
+
+message UserGetListResponse {
+  repeated models.user.User items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message UserCreate {
+  string email = 1;
+  string password = 2;
+  optional models.user.UserRole role = 3;
+}
+
+message UserCreateManyRequest {
+  repeated UserCreate items = 1;
+}
+
+// update
+
+message UserUpdateSet {
+  optional string email = 1;
+  optional models.user.UserRole role = 2;
+  optional string password = 3;
+}
+
+message UserUpdate {
+  optional UserUpdateSet set = 1;
+}
+
+message UserUpdateRequest {
+  UserQuery query = 1;
+  UserUpdate update = 2;
+}
+
+message UserUpdateByIdRequest {
+  string id = 1;
+  UserUpdate update = 2;
+}
+
+service UserService {
+  rpc getById (common.service.IdField) returns (models.user.User) {}
+  rpc getOne (UserRequest) returns (models.user.User) {}
+  rpc getMany (UserRequest) returns (UserList) {}
+  rpc getList (common.service.GetListRequest) returns (UserGetListResponse) {}
+
+  rpc createOne (UserCreate) returns (models.user.User) {}
+  rpc updateOne (UserUpdateRequest) returns (models.user.User) {}
+  rpc deleteOne (UserRequest) returns (models.user.User) {}
+
+  rpc updateById (UserUpdateByIdRequest) returns (models.user.User) {}
+  rpc deleteById (common.service.IdField) returns (models.user.User) {}
+}

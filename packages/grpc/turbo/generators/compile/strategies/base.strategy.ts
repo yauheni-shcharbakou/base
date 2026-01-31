@@ -1,9 +1,9 @@
-import { Type } from '@nestjs/common';
 import { PlopTypes } from '@turbo/gen';
-import { writeFileSync } from 'fs';
+import { writeFileSync, mkdirSync } from 'fs';
+import { Type } from '../helpers/types';
 import { BaseTransformer } from '../transformers/base.transformer';
 import { ProjectOptions, SourceFile } from 'ts-morph';
-import { COMMON_TEMPLATES_ROOT, TEMPLATES_ROOT } from '../helpers/constants';
+import { TEMPLATES_ROOT } from '../helpers/constants';
 import { join } from 'path';
 
 export abstract class BaseStrategy {
@@ -15,7 +15,7 @@ export abstract class BaseStrategy {
     protected readonly root: string,
     protected readonly transformers: Type<BaseTransformer>[],
   ) {
-    this.targetRoot = join(root, 'build');
+    this.targetRoot = join(root, 'src');
     this.strategyTemplatesRoot = join(TEMPLATES_ROOT, this.name);
   }
 
@@ -49,21 +49,18 @@ export abstract class BaseStrategy {
       .map((item) => `export * from './${item}';\n`)
       .join('');
 
-    writeFileSync(join(this.targetRoot, relativePath, 'index.ts'), exports, { encoding: 'utf-8' });
+    const folderPath = join(this.targetRoot, relativePath);
+    const filePath = join(folderPath, 'index.ts');
+
+    mkdirSync(folderPath, { recursive: true });
+    writeFileSync(filePath, exports, { encoding: 'utf-8' });
   }
 
   getActions(): PlopTypes.ActionType[] {
     return [
       {
         type: 'addMany',
-        destination: this.root,
-        base: COMMON_TEMPLATES_ROOT,
-        templateFiles: [COMMON_TEMPLATES_ROOT, join(COMMON_TEMPLATES_ROOT, '**/.*')],
-        force: true,
-      },
-      {
-        type: 'addMany',
-        destination: this.root,
+        destination: this.targetRoot,
         base: this.strategyTemplatesRoot,
         templateFiles: [this.strategyTemplatesRoot, join(this.strategyTemplatesRoot, '**/.*')],
         force: true,

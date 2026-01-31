@@ -1,13 +1,13 @@
 import { GrpcModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
-import { AUTH_PACKAGE_NAME, AUTH_SERVICE_NAME } from '@packages/grpc.nest';
+import { AUTH_SERVICE_NAME } from '@backend/grpc';
 import { AuthWebController } from 'modules/auth/web/auth.web.controller';
 
 @Module({
   imports: [
     GrpcModule.forFeature({
       strategy: {
-        [AUTH_PACKAGE_NAME]: [AUTH_SERVICE_NAME],
+        auth: [AUTH_SERVICE_NAME],
       },
     }),
   ],

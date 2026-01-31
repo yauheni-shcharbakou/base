@@ -3,7 +3,7 @@ import { jsTransformers } from '../transformers';
 import { BaseStrategy } from './base.strategy';
 import { join } from 'path';
 import {
-  ADAPTER_DIR_ROOT,
+  FRONTEND_PACKAGES_DIR_ROOT,
   PROTO_SRC_ROOT,
   PROTOC_PATH,
   PROTOC_PLUGIN_PATH,
@@ -11,7 +11,7 @@ import {
 
 export class JsStrategy extends BaseStrategy {
   constructor() {
-    super('js', join(ADAPTER_DIR_ROOT, 'js'), jsTransformers);
+    super('js', join(FRONTEND_PACKAGES_DIR_ROOT, 'grpc'), jsTransformers);
   }
 
   onFile(relativePath: string, importName: string, hasPrefix: boolean): void {

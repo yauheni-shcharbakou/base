@@ -1,6 +1,6 @@
 import { RpcException } from '@nestjs/microservices';
 import { GrpcDataMapper } from 'mappers';
-import { catchError, map, OperatorFunction, pipe, throwError } from 'rxjs';
+import { catchError, map, Observable, OperatorFunction, pipe, throwError } from 'rxjs';
 
 export class GrpcRxPipe {
   /**
@@ -8,7 +8,7 @@ export class GrpcRxPipe {
    * @example
    * const result = grpcClient.getUsers().pipe(GrpcRxPipe.in, ...other pipes)
    */
-  static get in() {
+  static get in(): <T>(source: Observable<T>) => Observable<T> {
     return pipe(map(GrpcDataMapper.inTraffic));
   }
 
@@ -19,7 +19,7 @@ export class GrpcRxPipe {
    *     return next.handle().pipe(GrpcRxPipe.out);
    * }
    */
-  static get out() {
+  static get out(): <T>(source: Observable<T>) => Observable<T> {
     return pipe(map(GrpcDataMapper.outTraffic));
   }
 
@@ -28,8 +28,10 @@ export class GrpcRxPipe {
    * @example
    * const result = grpcClient.getUsers().pipe(GrpcRxPipe.in, ...other pipes, GrpcRxPipe.rpcException)
    */
-  static get rpcException() {
-    return pipe(catchError((exception) => throwError(() => new RpcException(exception))));
+  static get rpcException(): <T>(source: Observable<T>) => Observable<T> {
+    return <T>(source: Observable<T>) => {
+      return source.pipe(catchError((exception) => throwError(() => new RpcException(exception))));
+    };
   }
 
   /**
@@ -40,9 +42,9 @@ export class GrpcRxPipe {
    */
   static proxy<In, Out = In>(mapper?: (data: In) => Out): OperatorFunction<In, Out> {
     if (!mapper) {
-      return pipe(GrpcRxPipe.in, GrpcRxPipe.rpcException) as OperatorFunction<In, Out>;
+      return pipe(GrpcRxPipe.in, GrpcRxPipe.rpcException) as unknown as OperatorFunction<In, Out>;
     }
 
-    return pipe(GrpcRxPipe.in, map(mapper), GrpcRxPipe.rpcException) as OperatorFunction<In, Out>;
+    return pipe(GrpcRxPipe.in, map(mapper), GrpcRxPipe.rpcException);
   }
 }

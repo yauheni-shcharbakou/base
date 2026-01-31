@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { stat } from 'fs/promises';
 import { dirname, join, relative } from 'path';
-import { PROTO_EXT_REG_EXP } from './constants';
+import { PROTO_EXT_REG_EXP, TS_EXT_REG_EXP } from './constants';
 
 export const parseProtoTree = async (
   root: string,
@@ -38,7 +38,7 @@ export const parseProtoTree = async (
       continue;
     }
 
-    importName = importName.replace(PROTO_EXT_REG_EXP, '');
+    importName = importName.replace(PROTO_EXT_REG_EXP, '').replace(TS_EXT_REG_EXP, '');
     map.set(importName, true);
     eventEmitter?.emit('file', relativePath, importName, !!prefix);
   }

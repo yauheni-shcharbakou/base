@@ -1,11 +1,10 @@
 'use server';
 
 import { config } from '@/config';
-import { AuthLogin, User, UserRole } from '@packages/grpc.js';
+import { AuthData, AuthLogin, AuthToken, User, UserRole } from '@frontend/grpc';
 import { type AuthActionResponse, CheckResponse } from '@refinedev/core';
 import { authGrpcRepository } from '@/repositories';
 import _ from 'lodash';
-import moment from 'moment';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies } from 'next/headers';
 
@@ -17,6 +16,14 @@ const cookieConfig: Partial<ResponseCookie> = {
 if (!config.isDevelopment) {
   cookieConfig.secure = true;
 }
+
+const getAccessToken = (authData: AuthData): AuthToken => {
+  return _.get(authData, 'tokens.accessToken')!;
+};
+
+const getRefreshToken = (authData: AuthData): AuthToken => {
+  return _.get(authData, 'tokens.refreshToken')!;
+};
 
 export async function checkAccess(): Promise<CheckResponse> {
   try {
@@ -31,16 +38,19 @@ export async function checkAccess(): Promise<CheckResponse> {
 
     if (!accessToken?.value && refreshToken?.value) {
       // TODO: add role to refreshToken response
-      const tokens = await authGrpcRepository.refreshToken({ refreshToken: refreshToken.value });
+      const authData = await authGrpcRepository.refreshToken({ refreshToken: refreshToken.value });
 
-      cookieStore.set('access-token', tokens.accessToken, {
+      const accessTokenData = getAccessToken(authData);
+      const refreshTokenData = getRefreshToken(authData);
+
+      cookieStore.set('access-token', accessTokenData.value, {
         ...cookieConfig,
-        expires: moment().add(1, 'hour').toDate(),
+        expires: accessTokenData.expireDate,
       });
 
-      cookieStore.set('refresh-token', tokens.refreshToken, {
+      cookieStore.set('refresh-token', refreshTokenData.value, {
         ...cookieConfig,
-        expires: moment().add(24, 'hour').toDate(),
+        expires: refreshTokenData.expireDate,
       });
     }
 
@@ -59,21 +69,24 @@ export async function checkAccess(): Promise<CheckResponse> {
 export async function login(request: AuthLogin): Promise<AuthActionResponse> {
   try {
     const cookieStore = await cookies();
-    const data = await authGrpcRepository.login(request);
+    const authData = await authGrpcRepository.login(request);
 
-    cookieStore.set('role', data.user!.role, {
+    const accessTokenData = getAccessToken(authData);
+    const refreshTokenData = getRefreshToken(authData);
+
+    cookieStore.set('role', authData.user!.role, {
       ...cookieConfig,
-      expires: moment().add(1, 'hour').toDate(),
+      expires: accessTokenData.expireDate,
     });
 
-    cookieStore.set('access-token', data.tokens!.accessToken, {
+    cookieStore.set('access-token', accessTokenData.value, {
       ...cookieConfig,
-      expires: moment().add(1, 'hour').toDate(),
+      expires: accessTokenData.expireDate,
     });
 
-    cookieStore.set('refresh-token', data.tokens!.refreshToken, {
+    cookieStore.set('refresh-token', refreshTokenData.value, {
       ...cookieConfig,
-      expires: moment().add(24, 'hour').toDate(),
+      expires: refreshTokenData.expireDate,
     });
 
     return { success: true };

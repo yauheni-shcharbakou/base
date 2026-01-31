@@ -1,5 +1,6 @@
 'use client';
 
+import { ResourceList } from '@/components/resource-list';
 import { Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { useMany } from '@refinedev/core';
@@ -89,8 +90,8 @@ export default function BlogPostList() {
       {
         field: 'actions',
         headerName: 'Actions',
-        align: 'right',
-        headerAlign: 'right',
+        align: 'center',
+        headerAlign: 'center',
         minWidth: 120,
         sortable: false,
         display: 'flex',
@@ -108,9 +109,5 @@ export default function BlogPostList() {
     [categories, categoryIsLoading],
   );
 
-  return (
-    <List>
-      <DataGrid {...dataGridProps} columns={columns} />
-    </List>
-  );
+  return <ResourceList {...dataGridProps} columns={columns} />;
 }

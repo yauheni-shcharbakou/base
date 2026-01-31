@@ -1,5 +1,6 @@
 'use client';
 
+import { createTheme } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import { ThemeProvider } from '@mui/material/styles';
@@ -18,6 +19,58 @@ export const ColorModeContext = createContext<ColorModeContextType>({} as ColorM
 type ColorModeContextProviderProps = {
   defaultMode?: string;
 };
+
+const darkTheme = createTheme({
+  ...RefineThemes.BlueDark,
+  palette: {
+    ...RefineThemes.BlueDark.palette,
+    primary: {
+      main: '#42a5f6',
+    },
+    secondary: {
+      main: '#c41442',
+    },
+    background: {
+      default: '#000000',
+      paper: '#212121',
+    },
+  },
+  components: {
+    MuiAppBar: {
+      defaultProps: {
+        elevation: 0,
+      },
+    },
+    MuiPaper: {
+      defaultProps: {
+        elevation: 0,
+        variant: 'outlined',
+      },
+    },
+    MuiCard: {
+      defaultProps: {
+        elevation: 0,
+      },
+    },
+  },
+});
+
+const lightTheme = createTheme({
+  ...RefineThemes.Blue,
+  palette: {
+    ...RefineThemes.Blue.palette,
+    primary: {
+      main: '#42a5f6',
+    },
+    // secondary: {
+    //   main: '#c41442',
+    // },
+    // background: {
+    //   default: '#ffffff',
+    //   paper: '#dcdcdc',
+    // },
+  },
+});
 
 export const ColorModeContextProvider: React.FC<
   PropsWithChildren<ColorModeContextProviderProps>
@@ -52,10 +105,7 @@ export const ColorModeContextProvider: React.FC<
         mode,
       }}
     >
-      <ThemeProvider
-        // you can change the theme colors here. example: mode === "light" ? RefineThemes.Magenta : RefineThemes.MagentaDark
-        theme={mode === 'light' ? RefineThemes.Blue : RefineThemes.BlueDark}
-      >
+      <ThemeProvider theme={mode === 'light' ? lightTheme : darkTheme}>
         <CssBaseline />
         <GlobalStyles styles={{ html: { WebkitFontSmoothing: 'auto' } }} />
         {children}

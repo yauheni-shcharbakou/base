@@ -2,13 +2,18 @@ syntax = 'proto3';
 
 package models.user;
 
+import "google/protobuf/timestamp.proto";
+
 enum UserRole {
   ADMIN = 0;
   USER = 1;
 }
 
 message User {
-  string _id = 1;
-  string email = 2;
-  UserRole role = 3;
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string email = 4;
+  UserRole role = 5;
 }

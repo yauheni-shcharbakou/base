@@ -5,7 +5,7 @@ package models.certificate;
 import "google/protobuf/timestamp.proto";
 
 message Certificate {
-  string _id = 1;
+  string id = 1;
   google.protobuf.Timestamp createdAt = 2;
   optional google.protobuf.Timestamp updatedAt = 3;
 

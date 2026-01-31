@@ -82,13 +82,41 @@ export class GrpcDataMapper {
    * @description mapper for incoming grpc data
    */
   static get inTraffic() {
-    return <T>(value: T): T => this.inTransformer(value);
+    return <T>(value: T): T => {
+      return value;
+    };
+
+    // return <T>(value: T): T => {
+    //   if (value instanceof Metadata) {
+    //     return value;
+    //   }
+    //
+    //   if (value instanceof ServerWritableStreamImpl) {
+    //     value.request = this.inTransformer(value.request);
+    //     return value;
+    //   }
+    //
+    //   return this.inTransformer(value);
+    // };
   }
 
   /**
    * @description mapper for outcoming grpc data
    */
   static get outTraffic() {
-    return <T>(value: T): T => this.outTransformer(value);
+    return <T>(value: T): T => {
+      return value;
+    };
+    //   if (value instanceof Metadata) {
+    //     return value;
+    //   }
+    //
+    //   if (value instanceof ServerWritableStreamImpl) {
+    //     value.request = this.outTransformer(value.request);
+    //     return value;
+    //   }
+    //
+    //   return this.outTransformer(value);
+    // };
   }
 }

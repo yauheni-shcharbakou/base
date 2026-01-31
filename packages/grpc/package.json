@@ -4,11 +4,19 @@
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "turbo gen compile"
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "dev": "yarn build -- --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "reset": "rm -rf .turbo dist src node_modules",
+    "compile": "turbo gen compile"
   },
   "devDependencies": {
-    "@nestjs/common": "11.1.9",
+    "@packages/configs": "*",
     "ts-morph": "24.0.0",
     "ts-proto": "2.2.5"
   }

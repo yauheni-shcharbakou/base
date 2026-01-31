@@ -6,8 +6,8 @@ import { GrpcTransformDataPipe } from 'pipes';
 export const GrpcController = (): ClassDecorator => {
   return applyDecorators(
     Controller(),
-    UsePipes(GrpcTransformDataPipe),
-    UseInterceptors(GrpcControllerInterceptor),
+    // UsePipes(GrpcTransformDataPipe),
+    // UseInterceptors(GrpcControllerInterceptor),
     UseFilters(GrpcExceptionFilter),
   );
 };

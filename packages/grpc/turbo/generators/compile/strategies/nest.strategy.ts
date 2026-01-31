@@ -4,7 +4,7 @@ import { nestTransformers } from '../transformers';
 import { BaseStrategy } from './base.strategy';
 import { join } from 'path';
 import {
-  ADAPTER_DIR_ROOT,
+  BACKEND_PACKAGES_DIR_ROOT,
   PROTO_SRC_ROOT,
   PROTOC_PATH,
   PROTOC_PLUGIN_PATH,
@@ -12,7 +12,7 @@ import {
 
 export class NestStrategy extends BaseStrategy {
   constructor() {
-    super('nest', join(ADAPTER_DIR_ROOT, 'nest'), nestTransformers);
+    super('nest', join(BACKEND_PACKAGES_DIR_ROOT, 'grpc'), nestTransformers);
   }
 
   getProjectOptions(): ProjectOptions {
@@ -37,6 +37,7 @@ export class NestStrategy extends BaseStrategy {
       '--ts_proto_opt=useMapType=true',
       '--ts_proto_opt=addGrpcMetadata=true',
       '--ts_proto_opt=useSnakeTypeName=false',
+      '--ts_proto_opt=outputJsonMethods=true',
       `./${relativePath}`,
     ].join(' ');
 

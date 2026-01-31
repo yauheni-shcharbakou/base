@@ -1,15 +1,5 @@
-import { DatabaseEntity } from '@backend/common';
-import { User } from '@packages/grpc.nest';
+import { User } from '@backend/grpc';
 
-export interface UserSession {
-  id: string;
-  createdAt: Date;
-  expiresAt: Date;
-}
-
-export interface UserInternal extends User, DatabaseEntity {
-  salt: string;
+export interface UserInternal extends User {
   hash: string;
-  loginAttempts: number;
-  sessions: UserSession[];
 }
