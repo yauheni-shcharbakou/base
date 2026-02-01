@@ -1,16 +1,7 @@
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import {
-  AUTH_PACKAGE_NAME,
-  AUTH_SERVICE_NAME,
-  CONTACT_PACKAGE_NAME,
-  CONTACT_SERVICE_NAME,
-  PROTO_PATH,
-  USER_PACKAGE_NAME,
-  USER_SERVICE_NAME,
-} from '@backend/grpc';
-import { join } from 'path';
+import { GrpcAuthService, GrpcContactService, GrpcUserService, PROTO_PATH } from '@backend/grpc';
 import { wrappers } from 'protobufjs';
 import zod from 'zod';
 
@@ -31,11 +22,6 @@ const declareProtobufWrappers = () => {
 
 declareProtobufWrappers();
 
-export type GrpcConfigServiceDefinition = {
-  package: string;
-  protoPath: string;
-};
-
 const env = validateEnv({
   API_GATEWAY_GRPC_URL: zod.string().default('0.0.0.0:8000'),
 
@@ -54,30 +40,6 @@ export const grpcConfig = () => {
     },
   };
 
-  const services = {
-    [AUTH_SERVICE_NAME]: {
-      name: AUTH_SERVICE_NAME,
-      definition: <GrpcConfigServiceDefinition>{
-        package: AUTH_PACKAGE_NAME,
-        protoPath: join(PROTO_PATH, 'auth.proto'),
-      },
-    },
-    [USER_SERVICE_NAME]: {
-      name: USER_SERVICE_NAME,
-      definition: <GrpcConfigServiceDefinition>{
-        package: USER_PACKAGE_NAME,
-        protoPath: join(PROTO_PATH, 'user.proto'),
-      },
-    },
-    [CONTACT_SERVICE_NAME]: {
-      name: CONTACT_SERVICE_NAME,
-      definition: <GrpcConfigServiceDefinition>{
-        package: CONTACT_PACKAGE_NAME,
-        protoPath: join(PROTO_PATH, 'contact.proto'),
-      },
-    },
-  } as const;
-
   return {
     apiGateway: {
       transport: Transport.GRPC,
@@ -86,9 +48,8 @@ export const grpcConfig = () => {
         url: env.API_GATEWAY_GRPC_URL,
       },
       services: {
-        [services[AUTH_SERVICE_NAME].name]: services[AUTH_SERVICE_NAME].definition,
-        [services[USER_SERVICE_NAME].name]: services[USER_SERVICE_NAME].definition,
-        [services[CONTACT_SERVICE_NAME].name]: services[CONTACT_SERVICE_NAME].definition,
+        [GrpcAuthService.name]: GrpcAuthService.definition,
+        [GrpcUserService.name]: GrpcUserService.definition,
       },
     },
     auth: {
@@ -98,8 +59,8 @@ export const grpcConfig = () => {
         url: env.AUTH_GRPC_URL,
       },
       services: {
-        [services[AUTH_SERVICE_NAME].name]: services[AUTH_SERVICE_NAME].definition,
-        [services[USER_SERVICE_NAME].name]: services[USER_SERVICE_NAME].definition,
+        [GrpcAuthService.name]: GrpcAuthService.definition,
+        [GrpcUserService.name]: GrpcUserService.definition,
       },
     },
     main: {
@@ -109,7 +70,7 @@ export const grpcConfig = () => {
         url: env.MAIN_GRPC_URL,
       },
       services: {
-        [services[CONTACT_SERVICE_NAME].name]: services[CONTACT_SERVICE_NAME].definition,
+        [GrpcContactService.name]: GrpcContactService.definition,
       },
     },
   } as const;

@@ -3,12 +3,12 @@
 import { userGrpcRepository } from '@/repositories';
 import { AuthDatabaseCollection } from '@packages/common';
 import {
-  CrudConditionalFilter,
-  CrudConditionalOperator,
-  CrudLogicalFilter,
-  CrudSort,
-  GetListRequest,
-  IdField,
+  GrpcCrudConditionalFilter,
+  GrpcCrudConditionalOperator,
+  GrpcCrudLogicalFilter,
+  GrpcCrudSort,
+  GrpcGetListRequest,
+  GrpcIdField,
 } from '@frontend/grpc';
 import {
   BaseRecord,
@@ -29,14 +29,18 @@ import { type CallOptions, Metadata } from '@grpc/grpc-js';
 import { cookies } from 'next/headers';
 
 interface DataRepository<Entity extends BaseRecord = BaseRecord> {
-  getById(request: IdField, metadata?: Metadata, options?: Partial<CallOptions>): Promise<Entity>;
+  getById(
+    request: GrpcIdField,
+    metadata?: Metadata,
+    options?: Partial<CallOptions>,
+  ): Promise<Entity>;
   // getMany(
   //   request: { ids: string[] },
   //   metadata?: Metadata,
   //   options?: Partial<CallOptions>,
   // ): Promise<{ items: Entity[] }>;
   getList(
-    request: GetListRequest,
+    request: GrpcGetListRequest,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<{ items: Entity[]; total: number }>;
@@ -46,12 +50,12 @@ interface DataRepository<Entity extends BaseRecord = BaseRecord> {
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
   updateById(
-    request: IdField & { update: { set: Partial<Entity> } },
+    request: GrpcIdField & { update: { set: Partial<Entity> } },
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
   deleteById(
-    request: IdField,
+    request: GrpcIdField,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
@@ -74,11 +78,11 @@ const declareRepositories = () => {
 
 const getRepository = declareRepositories();
 
-const convertLogicalFilter = (logicalFilter: LogicalFilter): CrudLogicalFilter => {
-  const filter: CrudLogicalFilter = _.pick(logicalFilter, [
+const convertLogicalFilter = (logicalFilter: LogicalFilter): GrpcCrudLogicalFilter => {
+  const filter: GrpcCrudLogicalFilter = _.pick(logicalFilter, [
     'field',
     'operator',
-  ]) as CrudLogicalFilter;
+  ]) as GrpcCrudLogicalFilter;
 
   if (_.isString(logicalFilter.value)) {
     filter.string = logicalFilter.value;
@@ -113,7 +117,6 @@ const getAuthMetadata = async () => {
 
   const meta = new Metadata();
   meta.set('access-token', token);
-  console.log(meta);
   return meta;
 };
 
@@ -133,17 +136,17 @@ export async function getList<Entity extends BaseRecord>(
     const metadata = await getAuthMetadata();
     const repository = getRepository<Entity>(params.resource);
 
-    const conditionalFilters: CrudConditionalFilter[] = [];
-    const logicalFilters: CrudLogicalFilter[] = [];
+    const conditionalFilters: GrpcCrudConditionalFilter[] = [];
+    const logicalFilters: GrpcCrudLogicalFilter[] = [];
 
     for (const filter of params.filters ?? []) {
-      if (_.includes(_.values(CrudConditionalOperator), filter.operator)) {
+      if (_.includes(_.values(GrpcCrudConditionalOperator), filter.operator)) {
         if (!filter.value?.length) {
           continue;
         }
 
         conditionalFilters.push({
-          ...(filter as CrudConditionalFilter),
+          ...(filter as GrpcCrudConditionalFilter),
           value: _.map(filter.value, (nestedFilter) => convertLogicalFilter(nestedFilter)),
         });
 
@@ -160,7 +163,7 @@ export async function getList<Entity extends BaseRecord>(
         sorters: _.map(params.sorters ?? [], (sorter) => {
           return {
             field: sorter.field,
-            order: sorter.order === 'desc' ? CrudSort.desc : CrudSort.asc,
+            order: sorter.order === 'desc' ? GrpcCrudSort.desc : GrpcCrudSort.asc,
           };
         }),
         pagination: {

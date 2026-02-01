@@ -1,11 +1,11 @@
 import {
-  BaseQuery,
-  CrudConditionalFilter,
-  CrudConditionalOperator,
-  CrudLogicalFilter,
-  CrudLogicalOperator,
-  CrudSorter,
-  IdField,
+  GrpcBaseQuery,
+  GrpcCrudConditionalFilter,
+  GrpcCrudConditionalOperator,
+  GrpcCrudLogicalFilter,
+  GrpcCrudLogicalOperator,
+  GrpcCrudSorter,
+  GrpcIdField,
 } from '@backend/grpc';
 import { MongoEntity } from 'entities';
 import { DatabaseRepositoryGetList } from 'interfaces';
@@ -14,16 +14,16 @@ import { FilterOperators } from 'mongodb';
 import { QueryFilter } from 'mongoose';
 import { MongoSort } from 'types';
 
-interface ParsedLogicalFilter extends Omit<CrudLogicalFilter, 'string' | 'number' | 'boolean'> {
+interface ParsedLogicalFilter extends Omit<GrpcCrudLogicalFilter, 'string' | 'number' | 'boolean'> {
   value?: any;
 }
 
 type FilterConverter = (filter: ParsedLogicalFilter) => any;
 
 export class MongoMapper<
-  Entity extends IdField,
+  Entity extends GrpcIdField,
   Doc extends MongoEntity,
-  Query extends BaseQuery = BaseQuery & Partial<Entity>,
+  Query extends GrpcBaseQuery = GrpcBaseQuery & Partial<Entity>,
 > {
   protected readonly fieldNameConverter: Record<string, keyof Doc | string>;
 
@@ -31,13 +31,13 @@ export class MongoMapper<
     this.fieldNameConverter = _.merge({ id: '_id' }, fieldConversions);
   }
 
-  protected readonly additionalFilterConverters: [CrudLogicalOperator, FilterConverter][] = [];
+  protected readonly additionalFilterConverters: [GrpcCrudLogicalOperator, FilterConverter][] = [];
 
   protected convertFieldName(fieldName: string): string {
     return (this.fieldNameConverter[fieldName] ?? fieldName).toString();
   }
 
-  protected parseLogicalFilter(filter: CrudLogicalFilter): ParsedLogicalFilter {
+  protected parseLogicalFilter(filter: GrpcCrudLogicalFilter): ParsedLogicalFilter {
     const result: ParsedLogicalFilter = _.pick(filter, ['field', 'operator']);
 
     if (_.isNumber(filter.number) ?? _.isBoolean(filter.boolean)) {
@@ -80,9 +80,9 @@ export class MongoMapper<
     };
   }
 
-  protected readonly converterByFilter: Map<CrudLogicalOperator, FilterConverter> = new Map([
+  protected readonly converterByFilter: Map<GrpcCrudLogicalOperator, FilterConverter> = new Map([
     [
-      CrudLogicalOperator.eq,
+      GrpcCrudLogicalOperator.eq,
       ({ value }) => {
         if (!value) {
           return;
@@ -92,7 +92,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.ne,
+      GrpcCrudLogicalOperator.ne,
       ({ value }) => {
         if (!value) {
           return;
@@ -103,14 +103,14 @@ export class MongoMapper<
           : { $ne: value };
       },
     ],
-    [CrudLogicalOperator.eqs, this.defaultFilterConverter()],
-    [CrudLogicalOperator.nes, this.defaultFilterConverter('$ne')],
-    [CrudLogicalOperator.lt, this.defaultFilterConverter('$lt')],
-    [CrudLogicalOperator.gt, this.defaultFilterConverter('$gt')],
-    [CrudLogicalOperator.lte, this.defaultFilterConverter('$lte')],
-    [CrudLogicalOperator.gte, this.defaultFilterConverter('$gte')],
+    [GrpcCrudLogicalOperator.eqs, this.defaultFilterConverter()],
+    [GrpcCrudLogicalOperator.nes, this.defaultFilterConverter('$ne')],
+    [GrpcCrudLogicalOperator.lt, this.defaultFilterConverter('$lt')],
+    [GrpcCrudLogicalOperator.gt, this.defaultFilterConverter('$gt')],
+    [GrpcCrudLogicalOperator.lte, this.defaultFilterConverter('$lte')],
+    [GrpcCrudLogicalOperator.gte, this.defaultFilterConverter('$gte')],
     [
-      CrudLogicalOperator.in,
+      GrpcCrudLogicalOperator.in,
       ({ value }) => {
         if (_.isArray(value)) {
           return { $in: value };
@@ -118,7 +118,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.nin,
+      GrpcCrudLogicalOperator.nin,
       ({ value }) => {
         if (_.isArray(value)) {
           return { $nin: value };
@@ -126,7 +126,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.ina,
+      GrpcCrudLogicalOperator.ina,
       ({ value }) => {
         if (_.isArray(value)) {
           return { $all: value };
@@ -134,7 +134,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.nina,
+      GrpcCrudLogicalOperator.nina,
       ({ value }) => {
         if (_.isArray(value)) {
           return { $nin: value };
@@ -142,7 +142,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.contains,
+      GrpcCrudLogicalOperator.contains,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: value, $options: 'i' };
@@ -150,7 +150,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.ncontains,
+      GrpcCrudLogicalOperator.ncontains,
       ({ value }) => {
         if (_.isString(value)) {
           return { $not: { $regex: value, $options: 'i' } };
@@ -158,7 +158,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.containss,
+      GrpcCrudLogicalOperator.containss,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: value };
@@ -166,7 +166,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.ncontainss,
+      GrpcCrudLogicalOperator.ncontainss,
       ({ value }) => {
         if (_.isString(value)) {
           return { $not: { $regex: value } };
@@ -174,7 +174,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.startswith,
+      GrpcCrudLogicalOperator.startswith,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: '^' + value, $options: 'i' };
@@ -182,7 +182,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.nstartswith,
+      GrpcCrudLogicalOperator.nstartswith,
       ({ value }) => {
         if (_.isString(value)) {
           return { $not: { $regex: '^' + value, $options: 'i' } };
@@ -190,7 +190,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.startswiths,
+      GrpcCrudLogicalOperator.startswiths,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: '^' + value };
@@ -198,7 +198,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.startswiths,
+      GrpcCrudLogicalOperator.startswiths,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: '^' + value };
@@ -206,7 +206,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.nstartswiths,
+      GrpcCrudLogicalOperator.nstartswiths,
       ({ value }) => {
         if (_.isString(value)) {
           return { $not: { $regex: '^' + value } };
@@ -214,7 +214,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.endswith,
+      GrpcCrudLogicalOperator.endswith,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: value + '$', $options: 'i' };
@@ -222,7 +222,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.endswiths,
+      GrpcCrudLogicalOperator.endswiths,
       ({ value }) => {
         if (_.isString(value)) {
           return { $regex: value + '$' };
@@ -230,7 +230,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.between,
+      GrpcCrudLogicalOperator.between,
       ({ value }) => {
         if (_.isArray(value)) {
           const [min, max] = value;
@@ -239,7 +239,7 @@ export class MongoMapper<
       },
     ],
     [
-      CrudLogicalOperator.nbetween,
+      GrpcCrudLogicalOperator.nbetween,
       ({ value }) => {
         if (_.isArray(value)) {
           const [min, max] = value;
@@ -247,17 +247,17 @@ export class MongoMapper<
         }
       },
     ],
-    [CrudLogicalOperator.null, () => null],
-    [CrudLogicalOperator.nnull, () => ({ $ne: null })],
+    [GrpcCrudLogicalOperator.null, () => null],
+    [GrpcCrudLogicalOperator.nnull, () => ({ $ne: null })],
     ...this.additionalFilterConverters,
   ]);
 
-  protected convertConditionalFilter(filter: CrudConditionalFilter): any {
+  protected convertConditionalFilter(filter: GrpcCrudConditionalFilter): any {
     if (!filter.value?.length) {
       return;
     }
 
-    const mongoOperator = filter.operator === CrudConditionalOperator.or ? '$or' : '$and';
+    const mongoOperator = filter.operator === GrpcCrudConditionalOperator.or ? '$or' : '$and';
 
     return {
       [mongoOperator]: _.reduce(
@@ -277,7 +277,7 @@ export class MongoMapper<
     };
   }
 
-  transformSorters(sorters: CrudSorter[] = []): MongoSort {
+  transformSorters(sorters: GrpcCrudSorter[] = []): MongoSort {
     return _.reduce(
       sorters,
       (acc: MongoSort, sorter) => {

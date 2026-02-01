@@ -37,7 +37,7 @@ export class NestStrategy extends BaseStrategy {
       '--ts_proto_opt=useMapType=true',
       '--ts_proto_opt=addGrpcMetadata=true',
       '--ts_proto_opt=useSnakeTypeName=false',
-      '--ts_proto_opt=outputJsonMethods=true',
+      '--ts_proto_opt=typePrefix=Grpc',
       `./${relativePath}`,
     ].join(' ');
 

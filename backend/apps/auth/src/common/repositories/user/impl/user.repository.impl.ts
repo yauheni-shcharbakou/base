@@ -1,29 +1,23 @@
 import { MongoRepositoryImpl } from '@backend/persistence';
 import { NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserQuery } from '@backend/grpc';
+import { GrpcUser, GrpcUserQuery } from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
 import { UserEntity } from 'common/entities/user.entity';
-import { UserInternal } from 'common/interfaces/user.interface';
+import { User } from 'common/interfaces/user.interface';
 import { UserMapper } from 'common/repositories/user/mappers/user.mapper';
-import {
-  UserCreateInternal,
-  UserRepository,
-  UserUpdateInternal,
-} from 'common/repositories/user/user.repository';
+import { UserCreate, UserRepository, UserUpdate } from 'common/repositories/user/user.repository';
 import { Model } from 'mongoose';
 
 export class UserRepositoryImpl
-  extends MongoRepositoryImpl<UserEntity, User, UserQuery, UserCreateInternal, UserUpdateInternal>
+  extends MongoRepositoryImpl<UserEntity, GrpcUser, GrpcUserQuery, UserCreate, UserUpdate>
   implements UserRepository
 {
   constructor(@InjectModel(UserEntity.name) protected readonly model: Model<UserEntity>) {
     super(model, new UserMapper());
   }
 
-  async getOneInternal(
-    query?: Partial<UserQuery>,
-  ): Promise<Either<NotFoundException, UserInternal>> {
+  async getOneInternal(query?: Partial<GrpcUserQuery>): Promise<Either<NotFoundException, User>> {
     const entity = await this.model.findOne<UserEntity>(this.mapper.transformQuery(query)).exec();
 
     if (!entity) {

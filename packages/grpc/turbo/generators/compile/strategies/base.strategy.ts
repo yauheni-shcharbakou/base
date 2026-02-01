@@ -1,5 +1,6 @@
 import { PlopTypes } from '@turbo/gen';
 import { writeFileSync, mkdirSync } from 'fs';
+import { ContextData } from '../context';
 import { Type } from '../helpers/types';
 import { BaseTransformer } from '../transformers/base.transformer';
 import { ProjectOptions, SourceFile } from 'ts-morph';
@@ -21,11 +22,11 @@ export abstract class BaseStrategy {
 
   protected async executeTransformers(
     sourceFile: SourceFile,
-    fileId: string,
+    contextData: ContextData,
     filePath: string,
   ): Promise<void> {
     for (const Transformer of this.transformers) {
-      const transformer = new Transformer(sourceFile, fileId, filePath, this.targetRoot);
+      const transformer = new Transformer(sourceFile, contextData, filePath, this.targetRoot);
 
       if (await transformer.canTransform()) {
         await transformer.transform();
@@ -68,7 +69,14 @@ export abstract class BaseStrategy {
     ];
   }
 
-  async onSourceFile(sourceFile: SourceFile, fileId: string, filePath: string): Promise<void> {
-    await this.executeTransformers(sourceFile, fileId, filePath);
+  async onSourceFile(
+    sourceFile: SourceFile,
+    contextData: ContextData,
+    filePath: string,
+  ): Promise<void> {
+    await this.executeTransformers(sourceFile, contextData, filePath);
+
+    sourceFile.formatText();
+    sourceFile.organizeImports();
   }
 }

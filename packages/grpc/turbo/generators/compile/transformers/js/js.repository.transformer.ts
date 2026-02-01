@@ -1,39 +1,63 @@
 import { pascalCase } from 'change-case-all';
 import * as _ from 'lodash';
-import { InterfaceDeclaration, MethodSignature, Node } from 'ts-morph';
+import { ServiceData } from '../../context';
+import { MethodSignature, Node } from 'ts-morph';
 import { BaseTransformer } from '../base.transformer';
 
-type Names = {
-  clientInterface: string;
-  repositoryClass: string;
-};
-
 export class JsRepositoryTransformer extends BaseTransformer {
-  private names: Names;
-  private readonly clientMethods = new Map<string, MethodSignature>();
-  private clientInterface: InterfaceDeclaration;
-
-  private getNames(): Names {
-    return {
-      clientInterface: pascalCase(`${this.fileId}.service.client`),
-      repositoryClass: pascalCase(`${this.fileId}.grpc.repository`),
-    };
-  }
-
   private declareImports() {
     this.addOrUpdateImport('@grpc/grpc-js', ['CallOptions', 'Metadata']);
 
     this.addOrUpdateImport(this.importFromCompilerPath, ['GrpcRepository']);
   }
 
-  private declareRepository() {
+  private declareRepository(service: ServiceData) {
+    const clientInterfaceName = pascalCase(`grpc.${service.name}.client`);
+    const clientInterface = this.sourceFile.getInterface(clientInterfaceName);
+
+    if (!clientInterface) {
+      return;
+    }
+
+    const clientMethods = new Map<string, MethodSignature>();
+
+    for (const method of clientInterface.getMethods()) {
+      const name = method.getName();
+
+      if (!clientMethods.has(name)) {
+        clientMethods.set(name, method);
+      }
+    }
+
     const repositoryClass = this.sourceFile.addClass({
-      name: this.names.repositoryClass,
+      name: pascalCase(`grpc.${service.id}.repository`),
       isExported: true,
-      extends: `GrpcRepository<${this.names.clientInterface}>`,
+      extends: `GrpcRepository<${clientInterfaceName}>`,
     });
 
-    _.forEach(Array.from(this.clientMethods.entries()), ([name, method]) => {
+    repositoryClass.addConstructor({
+      parameters: [
+        {
+          name: 'address',
+          type: 'string',
+        },
+        {
+          name: 'credentials',
+          type: 'ChannelCredentials',
+          initializer: 'ChannelCredentials.createInsecure()',
+        },
+        {
+          name: 'options',
+          type: 'Partial<ClientOptions>',
+          hasQuestionToken: true,
+        },
+      ],
+      statements: (writer) => {
+        writer.writeLine(`super(new ${clientInterfaceName}(address, credentials, options));`);
+      },
+    });
+
+    _.forEach(Array.from(clientMethods.entries()), ([name, method]) => {
       const requestType = method.getParameter('request')?.getType()?.getText();
       const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
 
@@ -67,26 +91,6 @@ export class JsRepositoryTransformer extends BaseTransformer {
         ],
         returnType: `Promise<${responseType}>`,
         statements: (writer) => {
-          // writer
-          //   .writeLine(`return new Promise<${responseType}>((resolve, reject) => `)
-          //   .inlineBlock(() => {
-          //     writer
-          //       .writeLine(
-          //         `this.client.${name}(req, new Metadata(metadataOptions), options, (err, response) => `,
-          //       )
-          //       .inlineBlock(() => {
-          //         writer
-          //           .writeLine('if (err) ')
-          //           .inlineBlock(() => {
-          //             writer.writeLine('reject(err);');
-          //           })
-          //           .blankLine()
-          //           .writeLine('resolve(response);');
-          //       })
-          //       .write(');');
-          //   })
-          //   .write(');');
-
           writer.writeLine(
             `return this.exec<${requestType}, ${responseType}>("${name}", request, metadata, options);`,
           );
@@ -97,26 +101,13 @@ export class JsRepositoryTransformer extends BaseTransformer {
     return repositoryClass;
   }
 
-  protected onInit(): void {
-    this.names = this.getNames();
-  }
-
   canTransform(): boolean | Promise<boolean> {
-    this.clientInterface = this.sourceFile.getInterface(this.names.clientInterface);
-
-    return !!this.clientInterface;
+    return !(!this.contextData.services.length || !this.contextData.packageId);
   }
 
   transform(): void | Promise<void> {
-    for (const method of this.clientInterface.getMethods()) {
-      const name = method.getName();
-
-      if (!this.clientMethods.has(name)) {
-        this.clientMethods.set(name, method);
-      }
-    }
-
     this.declareImports();
-    this.declareRepository();
+
+    _.forEach(this.contextData.services, (service) => this.declareRepository(service));
   }
 }

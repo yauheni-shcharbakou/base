@@ -1,8 +1,8 @@
+import { GrpcAuthService, GrpcAuthServiceClient, GrpcUserRole } from '@backend/grpc';
 import { GrpcRxPipe, InjectGrpcService } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AUTH_SERVICE_NAME, AuthServiceClient, UserRole } from '@backend/grpc';
 import { MetadataAccessType, MetadataKey } from 'common/enums/metadata.enums';
 import { map, Observable } from 'rxjs';
 
@@ -10,7 +10,8 @@ import { map, Observable } from 'rxjs';
 export class GrpcAccessGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    @InjectGrpcService(AUTH_SERVICE_NAME) private readonly authServiceClient: AuthServiceClient,
+    @InjectGrpcService(GrpcAuthService.name)
+    private readonly authServiceClient: GrpcAuthServiceClient,
   ) {}
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
@@ -22,7 +23,7 @@ export class GrpcAccessGuard implements CanActivate {
 
     const accessType = this.reflector.getAllAndOverride<MetadataAccessType>(
       MetadataKey.ACCESS_TYPE,
-      [context.getClass(), context.getHandler()],
+      [context.getHandler(), context.getClass()],
     );
 
     if (accessType === MetadataAccessType.PUBLIC) {
@@ -35,12 +36,16 @@ export class GrpcAccessGuard implements CanActivate {
 
       return this.authServiceClient.me({ accessToken }).pipe(
         map((user) => {
-          return accessType === MetadataAccessType.ADMIN ? user.role === UserRole.ADMIN : !!user;
+          if (accessType === MetadataAccessType.ADMIN && user.role !== GrpcUserRole.ADMIN) {
+            throw new UnauthorizedException('Only admin can use this endpoint');
+          }
+
+          return true;
         }),
         GrpcRxPipe.rpcException,
       );
-    } catch (e) {
-      throw new UnauthorizedException();
+    } catch (error) {
+      throw new UnauthorizedException(error.message);
     }
   }
 }

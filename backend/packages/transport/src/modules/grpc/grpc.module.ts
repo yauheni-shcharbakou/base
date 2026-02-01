@@ -1,10 +1,15 @@
 import { DynamicModule, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientGrpc, ClientsModule, ClientsProviderAsyncOptions } from '@nestjs/microservices';
-import { grpcConfig, GrpcConfig, GrpcConfigServiceDefinition, GrpcHost } from 'configs';
+import { grpcConfig, GrpcConfig, GrpcHost } from 'configs';
 import { getGrpcClientToken, getGrpcServiceToken } from 'helpers';
 import _ from 'lodash';
 import { GRPC_CONFIG_SERVICE, MICROSERVICE_GRPC_OPTIONS } from 'modules/grpc/grpc.constants';
+
+type GrpcServiceDefinition = {
+  package: string;
+  protoPath: string;
+};
 
 export type GrpcModuleForFeatureParams = {
   strategy: {
@@ -19,17 +24,25 @@ export type GrpcModuleForRootParams = {
 
 export class GrpcModule {
   private static getServiceDefinitions(hostConfig: GrpcConfig[GrpcHost], services: string[]) {
-    return _.reduce(
+    const result = _.reduce(
       services,
-      (acc: { package: string[]; protoPath: string[] }, service) => {
-        const definition: GrpcConfigServiceDefinition = hostConfig.services[service];
+      (acc: { package: Set<string>; protoPath: Set<string> }, service) => {
+        const definition: GrpcServiceDefinition = hostConfig.services[service];
 
-        acc.package.push(definition.package);
-        acc.protoPath.push(definition.protoPath);
+        acc.package.add(definition.package);
+        acc.protoPath.add(definition.protoPath);
         return acc;
       },
-      { package: [], protoPath: [] },
+      {
+        package: new Set<string>(),
+        protoPath: new Set<string>(),
+      },
     );
+
+    return {
+      package: Array.from(result.package),
+      protoPath: Array.from(result.protoPath),
+    };
   }
 
   private static getClientParams(strategy: GrpcModuleForFeatureParams['strategy']) {

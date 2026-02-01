@@ -2,63 +2,25 @@
 
 import { ResourceList } from '@/components/resource-list';
 import { useResourceList } from '@/hooks/use-resource-list';
+import { GridColumnsBuilder } from '@/utils/grid-columns.builder';
 import { type GridColDef } from '@mui/x-data-grid';
-import { User } from '@packages/grpc';
-import { DeleteButton, EditButton, ShowButton } from '@refinedev/mui';
-import React from 'react';
+import { GrpcUser } from '@packages/grpc';
+import React, { useMemo } from 'react';
 
 export default function UserList() {
-  const { dataGridProps } = useResourceList<User>();
+  const { dataGridProps, isMounted } = useResourceList<GrpcUser>();
 
-  const columns = React.useMemo<GridColDef<User>[]>(
-    () => [
-      {
-        field: 'id',
-        headerName: 'ID',
-        type: 'string',
-        minWidth: 200,
-        display: 'flex',
-        align: 'left',
-        headerAlign: 'left',
-        filterable: false,
-      },
-      {
-        field: 'email',
-        headerName: 'Email',
-        type: 'string',
-        minWidth: 200,
-        display: 'flex',
-        flex: 1,
-      },
-      {
-        field: 'role',
-        headerName: 'Role',
-        type: 'singleSelect',
-        minWidth: 80,
-        display: 'flex',
-      },
-      {
-        field: 'actions',
-        headerName: 'Actions',
-        align: 'center',
-        headerAlign: 'center',
-        minWidth: 120,
-        sortable: false,
-        filterable: false,
-        display: 'flex',
-        renderCell: function render({ row }) {
-          return (
-            <>
-              <EditButton hideText recordItemId={row.id} />
-              <ShowButton hideText recordItemId={row.id} />
-              <DeleteButton hideText recordItemId={row.id} />
-            </>
-          );
-        },
-      },
-    ],
+  const columns = useMemo<GridColDef<GrpcUser>[]>(
+    () =>
+      new GridColumnsBuilder<GrpcUser>()
+        .string('email')
+        .enum('role')
+        .date('createdAt')
+        .date('updatedAt')
+        .actions()
+        .build(),
     [],
   );
 
-  return <ResourceList {...dataGridProps} columns={columns} />;
+  return <ResourceList {...dataGridProps} isMounted={isMounted} columns={columns} />;
 }

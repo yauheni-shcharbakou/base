@@ -1,16 +1,5 @@
 import { config } from '@/config';
-import { ChannelCredentials } from '@grpc/grpc-js';
-import {
-  AuthGrpcRepository,
-  AuthServiceClient,
-  UserGrpcRepository,
-  UserServiceClient,
-} from '@frontend/grpc';
+import { GrpcAuthRepository, GrpcUserRepository } from '@frontend/grpc';
 
-export const authGrpcRepository = new AuthGrpcRepository(
-  new AuthServiceClient(config.backend.grpcUrl, ChannelCredentials.createInsecure()),
-);
-
-export const userGrpcRepository = new UserGrpcRepository(
-  new UserServiceClient(config.backend.grpcUrl, ChannelCredentials.createInsecure()),
-);
+export const authGrpcRepository = new GrpcAuthRepository(config.backend.grpcUrl);
+export const userGrpcRepository = new GrpcUserRepository(config.backend.grpcUrl);

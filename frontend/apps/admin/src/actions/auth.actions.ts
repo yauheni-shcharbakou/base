@@ -1,9 +1,10 @@
 'use server';
 
 import { config } from '@/config';
-import { AuthData, AuthLogin, AuthToken, User, UserRole } from '@frontend/grpc';
+import { GrpcAuthData, GrpcAuthLogin, GrpcAuthToken, GrpcUser, GrpcUserRole } from '@frontend/grpc';
+import { Metadata } from '@grpc/grpc-js';
 import { type AuthActionResponse, CheckResponse } from '@refinedev/core';
-import { authGrpcRepository } from '@/repositories';
+import { authGrpcRepository, userGrpcRepository } from '@/repositories';
 import _ from 'lodash';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies } from 'next/headers';
@@ -17,11 +18,11 @@ if (!config.isDevelopment) {
   cookieConfig.secure = true;
 }
 
-const getAccessToken = (authData: AuthData): AuthToken => {
+const getAccessToken = (authData: GrpcAuthData): GrpcAuthToken => {
   return _.get(authData, 'tokens.accessToken')!;
 };
 
-const getRefreshToken = (authData: AuthData): AuthToken => {
+const getRefreshToken = (authData: GrpcAuthData): GrpcAuthToken => {
   return _.get(authData, 'tokens.refreshToken')!;
 };
 
@@ -32,7 +33,7 @@ export async function checkAccess(): Promise<CheckResponse> {
     const refreshToken = cookieStore.get('refresh-token');
     const role = cookieStore.get('role');
 
-    if (!refreshToken?.value || role?.value !== UserRole.ADMIN) {
+    if (!refreshToken?.value || role?.value !== GrpcUserRole.ADMIN) {
       throw new Error('Forbidden');
     }
 
@@ -66,7 +67,7 @@ export async function checkAccess(): Promise<CheckResponse> {
   }
 }
 
-export async function login(request: AuthLogin): Promise<AuthActionResponse> {
+export async function login(request: GrpcAuthLogin): Promise<AuthActionResponse> {
   try {
     const cookieStore = await cookies();
     const authData = await authGrpcRepository.login(request);
@@ -124,7 +125,7 @@ export async function logout(): Promise<AuthActionResponse> {
   };
 }
 
-export async function me(): Promise<User | null> {
+export async function me(): Promise<GrpcUser | null> {
   try {
     const cookieStore = await cookies();
     const accessToken = cookieStore.get('access-token');

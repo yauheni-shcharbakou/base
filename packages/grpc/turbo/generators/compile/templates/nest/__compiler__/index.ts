@@ -14,9 +14,16 @@ export const PROTO_PATH = join(
   'proto',
 );
 
+export type GrpcProxyMethodParams<T = any> =
+  | {
+      dto?: Type<T>;
+      decorators?: MethodDecorator[];
+    }
+  | Type<T>;
+
 export interface GrpcProxyControllerFactoryParams {
   GrpcController: () => ClassDecorator;
-  ValidateGrpcPayload: (Dto: Type) => MethodDecorator;
+  GrpcMethod: (params?: GrpcProxyMethodParams) => MethodDecorator;
   InjectGrpcService: (serviceName: string) => PropertyDecorator & ParameterDecorator;
   proxyPipes: OperatorFunction<any, any>[];
 }

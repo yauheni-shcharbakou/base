@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, MenuItem, TextField } from '@mui/material';
-import { User, UserRole } from '@packages/grpc';
+import { GrpcUser, GrpcUserRole } from '@packages/grpc';
 import { Edit } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
 
@@ -9,9 +9,9 @@ export default function UserEdit() {
   const {
     saveButtonProps,
     register,
-    formState: { errors, isValid },
+    formState: { errors },
     refineCore: { formLoading, query },
-  } = useForm<User>({});
+  } = useForm<GrpcUser>({});
 
   const entity = query?.data?.data;
 
@@ -27,6 +27,7 @@ export default function UserEdit() {
           type="email"
           label={'Email'}
           name="email"
+          value={entity?.email ?? ''}
         />
         <TextField
           {...register('password', { minLength: 8, setValueAs: (value) => value || undefined })}
@@ -37,7 +38,7 @@ export default function UserEdit() {
           type="password"
           label={'Password'}
           name="password"
-          defaultValue={null}
+          defaultValue={''}
         />
         <TextField
           {...register('role')}
@@ -46,11 +47,11 @@ export default function UserEdit() {
           label="Role"
           margin="normal"
           name="role"
-          defaultValue={entity?.role}
+          value={entity?.role ?? ''}
           error={!!errors?.role}
           helperText={errors?.role?.message?.toString()}
         >
-          {Object.values(UserRole).map((role) => (
+          {Object.values(GrpcUserRole).map((role) => (
             <MenuItem key={role} value={role}>
               {role}
             </MenuItem>

@@ -1,4 +1,6 @@
 import { execSync } from 'child_process';
+import { ContextData } from '../context';
+import { SourceFile } from 'ts-morph';
 import { jsTransformers } from '../transformers';
 import { BaseStrategy } from './base.strategy';
 import { join } from 'path';
@@ -27,9 +29,19 @@ export class JsStrategy extends BaseStrategy {
       '--ts_proto_opt=useMapType=true',
       '--ts_proto_opt=addGrpcMetadata=true',
       '--ts_proto_opt=outputServices=grpc-js',
+      '--ts_proto_opt=typePrefix=Grpc',
       `./${relativePath}`,
     ].join(' ');
 
     execSync(command, { cwd: PROTO_SRC_ROOT, encoding: 'utf-8' });
+  }
+
+  async onSourceFile(
+    sourceFile: SourceFile,
+    contextData: ContextData,
+    filePath: string,
+  ): Promise<void> {
+    await super.onSourceFile(sourceFile, contextData, filePath);
+    sourceFile.addImportDeclaration({ moduleSpecifier: 'server-only' });
   }
 }

@@ -1,5 +1,5 @@
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { BaseQuery, GetListRequest, IdField } from '@backend/grpc';
+import { GrpcBaseQuery, GrpcGetListRequest, GrpcIdField } from '@backend/grpc';
 import { Either } from '@sweet-monads/either';
 
 export type ExcludeDatabaseSystemFields<Entity> = Omit<Entity, 'id' | 'createdAt' | 'updatedAt'>;
@@ -22,19 +22,7 @@ export type UpdateOf<Entity> = {
   inc?: UpdateIncOf<Entity>;
 };
 
-type Test = UpdateOf<{ email: string; amount: number }>;
-
-const test: Test = {
-  set: {
-    amount: 12,
-    email: '2323',
-  },
-  inc: {
-    amount: 5,
-  },
-};
-
-export interface DatabaseRepositoryGetList<Query> extends Partial<GetListRequest> {
+export interface DatabaseRepositoryGetList<Query> extends Partial<GrpcGetListRequest> {
   query?: Partial<Query>;
 }
 
@@ -44,8 +32,8 @@ export interface DatabaseRepositoryGetListRes<Entity> {
 }
 
 export interface DatabaseRepository<
-  Entity extends IdField = IdField,
-  Query extends BaseQuery = BaseQuery & Partial<Entity>,
+  Entity extends GrpcIdField = GrpcIdField,
+  Query extends GrpcBaseQuery = GrpcBaseQuery & Partial<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
 > {

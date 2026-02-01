@@ -1,7 +1,7 @@
 import { DynamicModule, Type } from '@nestjs/common';
 import { GrpcProxyControllerFactory, GrpcProxyControllerFactoryParams } from '@backend/grpc';
 import { GrpcHost } from 'configs';
-import { GrpcController, InjectGrpcService, ValidateGrpcPayload } from 'decorators';
+import { GrpcController, GrpcProxyMethod, InjectGrpcService } from 'decorators';
 import _ from 'lodash';
 import { GrpcModule } from 'modules/grpc';
 import { GrpcRxPipe } from 'pipes';
@@ -26,7 +26,7 @@ export class GrpcProxyModule {
       (acc: ControllerAccumulator, controllerParams) => {
         const factoryResult = controllerParams.controllerFactory({
           GrpcController: controllerParams.custom?.GrpcController ?? GrpcController,
-          ValidateGrpcPayload: controllerParams.custom?.ValidateGrpcPayload ?? ValidateGrpcPayload,
+          GrpcMethod: controllerParams.custom?.GrpcMethod ?? GrpcProxyMethod,
           InjectGrpcService: controllerParams.custom?.InjectGrpcService ?? InjectGrpcService,
           proxyPipes: controllerParams.custom?.proxyPipes ?? [GrpcRxPipe.rpcException],
         });

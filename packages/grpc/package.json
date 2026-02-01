@@ -9,7 +9,6 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
-    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "yarn build -- --watch",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "reset": "rm -rf .turbo dist src node_modules",
@@ -17,7 +16,8 @@
   },
   "devDependencies": {
     "@packages/configs": "*",
-    "ts-morph": "24.0.0",
+    "protobufjs": "7.5.4",
+    "ts-morph": "27.0.2",
     "ts-proto": "2.2.5"
   }
 }

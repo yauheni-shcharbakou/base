@@ -1,15 +1,17 @@
+import { constantCase } from 'change-case-all';
+import { ContextData } from '../context';
 import { getRelativeImportPath } from '../helpers/utils';
 import { join } from 'path';
-import { SourceFile } from 'ts-morph';
+import { SourceFile, VariableStatement } from 'ts-morph';
 
 export abstract class BaseTransformer {
   protected readonly importFromCompilerPath: string;
 
   constructor(
     protected readonly sourceFile: SourceFile,
-    protected readonly fileId: string,
+    protected readonly contextData: ContextData,
     protected readonly filePath: string,
-    sourceCodeRootPath: string,
+    protected readonly sourceCodeRootPath: string,
   ) {
     this.importFromCompilerPath = getRelativeImportPath(
       this.filePath,
@@ -21,7 +23,7 @@ export abstract class BaseTransformer {
 
   protected onInit(): void {}
 
-  protected addOrUpdateImport(moduleName: string, namedImports: string[]) {
+  protected addOrUpdateImport(moduleName: string, namedImports: string[], type = false) {
     const existingImport = this.sourceFile.getImportDeclaration(moduleName);
 
     if (existingImport) {
@@ -30,8 +32,24 @@ export abstract class BaseTransformer {
       this.sourceFile.addImportDeclaration({
         moduleSpecifier: moduleName,
         namedImports: namedImports,
+        isTypeOnly: type,
       });
     }
+  }
+
+  protected getVariableStatement(name: string): VariableStatement | undefined {
+    return this.sourceFile.getVariableStatement((stmt) => {
+      return stmt.getDeclarations().some((decl) => decl.getName() === name);
+    });
+  }
+
+  protected getPackageNameValue(): string | undefined {
+    if (!this.contextData.packageId) {
+      return;
+    }
+
+    const packageNameConst = constantCase(`${this.contextData.packageId}.package.name`);
+    return this.sourceFile.getVariableDeclaration(packageNameConst)?.getInitializer()?.getText();
   }
 
   canTransform(): boolean | Promise<boolean> {

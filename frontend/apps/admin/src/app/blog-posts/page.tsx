@@ -109,5 +109,5 @@ export default function BlogPostList() {
     [categories, categoryIsLoading],
   );
 
-  return <ResourceList {...dataGridProps} columns={columns} />;
+  return <ResourceList {...dataGridProps} isMounted={true} columns={columns} />;
 }

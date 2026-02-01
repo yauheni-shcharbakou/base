@@ -1,11 +1,17 @@
-import { User, UserCreate, UserQuery, UserRole, UserUpdate } from '@backend/grpc';
+import {
+  GrpcUser,
+  GrpcUserCreate,
+  GrpcUserQuery,
+  GrpcUserRole,
+  GrpcUserUpdate,
+} from '@backend/grpc';
 import { Inject, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
 import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
 import {
   USER_REPOSITORY,
   UserRepository,
-  UserUpdateInternal,
+  UserUpdate,
 } from 'common/repositories/user/user.repository';
 import _ from 'lodash';
 import { UserService } from 'modules/user/service/user.service';
@@ -16,7 +22,7 @@ export class UserServiceImpl implements UserService {
     @Inject(CRYPTO_SERVICE) private readonly cryptoService: CryptoService,
   ) {}
 
-  async create(data: UserCreate): Promise<Either<InternalServerErrorException, User>> {
+  async create(data: GrpcUserCreate): Promise<Either<InternalServerErrorException, GrpcUser>> {
     const hashedPassword = await this.cryptoService.hash(data.password);
 
     if (hashedPassword.isLeft()) {
@@ -26,15 +32,15 @@ export class UserServiceImpl implements UserService {
     return this.userRepository.saveOne({
       ...data,
       hash: hashedPassword.value,
-      role: data.role ?? UserRole.USER,
+      role: data.role ?? GrpcUserRole.USER,
     });
   }
 
   async updateOne(
-    query: UserQuery,
-    updateData: UserUpdate,
-  ): Promise<Either<NotFoundException, User>> {
-    const update: UserUpdateInternal = {
+    query: GrpcUserQuery,
+    updateData: GrpcUserUpdate,
+  ): Promise<Either<NotFoundException, GrpcUser>> {
+    const update: UserUpdate = {
       ...updateData,
       set: _.omit(updateData.set ?? {}, 'password'),
     };

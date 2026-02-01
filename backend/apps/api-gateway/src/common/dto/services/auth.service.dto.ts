@@ -1,9 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthLogin, AuthMe, AuthRefresh, AuthToken, AuthTokens } from '@backend/grpc';
+import {
+  GrpcAuthLogin,
+  GrpcAuthMe,
+  GrpcAuthRefresh,
+  GrpcAuthToken,
+  GrpcAuthTokens,
+} from '@backend/grpc';
 import { Type } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsObject, IsString, ValidateNested } from 'class-validator';
 
-export class AuthLoginDto implements AuthLogin {
+export class AuthLoginDto implements GrpcAuthLogin {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
@@ -15,21 +21,21 @@ export class AuthLoginDto implements AuthLogin {
   password: string;
 }
 
-export class AuthMeDto implements AuthMe {
+export class AuthMeDto implements GrpcAuthMe {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   accessToken: string;
 }
 
-export class AuthRefreshDto implements AuthRefresh {
+export class AuthRefreshDto implements GrpcAuthRefresh {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   refreshToken: string;
 }
 
-export class AuthTokenDto implements AuthToken {
+export class AuthTokenDto implements GrpcAuthToken {
   @ApiProperty({ type: Date })
   @IsNotEmpty()
   @IsDate()
@@ -42,7 +48,7 @@ export class AuthTokenDto implements AuthToken {
   value: string;
 }
 
-export class AuthTokensDto implements AuthTokens {
+export class AuthTokensDto implements GrpcAuthTokens {
   @ApiProperty({ type: AuthTokenDto })
   @IsNotEmpty()
   @IsObject()

@@ -1,4 +1,4 @@
-import { IdField } from '@backend/grpc';
+import { GrpcIdField } from '@backend/grpc';
 
 export interface ItemsType<Item> {
   items: Item[];
@@ -13,6 +13,6 @@ export interface UpdateRequestType<Query, Update> {
   update: Update;
 }
 
-export interface UpdateByIdRequestType<Update> extends IdField {
+export interface UpdateByIdRequestType<Update> extends GrpcIdField {
   update: Update;
 }

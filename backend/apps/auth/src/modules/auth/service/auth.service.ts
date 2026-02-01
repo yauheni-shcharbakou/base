@@ -1,13 +1,15 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { AuthData, AuthLogin, AuthMe, AuthRefresh, User } from '@backend/grpc';
+import { GrpcAuthData, GrpcAuthLogin, GrpcAuthMe, GrpcAuthRefresh, GrpcUser } from '@backend/grpc';
 import { Either } from '@sweet-monads/either';
 
 export const AUTH_SERVICE = Symbol('AuthService');
 
 export interface AuthService {
-  login(data: AuthLogin): Promise<Either<NotFoundException | ForbiddenException, AuthData>>;
+  login(data: GrpcAuthLogin): Promise<Either<NotFoundException | ForbiddenException, GrpcAuthData>>;
   refreshToken(
-    data: AuthRefresh,
-  ): Promise<Either<NotFoundException | ForbiddenException, AuthData>>;
-  getUserByToken(data: AuthMe): Promise<Either<NotFoundException | ForbiddenException, User>>;
+    data: GrpcAuthRefresh,
+  ): Promise<Either<NotFoundException | ForbiddenException, GrpcAuthData>>;
+  getUserByToken(
+    data: GrpcAuthMe,
+  ): Promise<Either<NotFoundException | ForbiddenException, GrpcUser>>;
 }

@@ -1,9 +1,7 @@
 import { execSync } from 'child_process';
-import { jsTransformers } from '../transformers';
+import { typesTransformers } from '../transformers';
 import { BaseStrategy } from './base.strategy';
-import { join } from 'path';
 import {
-  FRONTEND_PACKAGES_DIR_ROOT,
   GRPC_PACKAGE_ROOT,
   PROTO_SRC_ROOT,
   PROTOC_PATH,
@@ -12,7 +10,7 @@ import {
 
 export class TypesStrategy extends BaseStrategy {
   constructor() {
-    super('types', GRPC_PACKAGE_ROOT, jsTransformers);
+    super('types', GRPC_PACKAGE_ROOT, typesTransformers);
   }
 
   onFile(relativePath: string, importName: string, hasPrefix: boolean): void {
@@ -27,6 +25,7 @@ export class TypesStrategy extends BaseStrategy {
       '--ts_proto_opt=useMapType=true',
       '--ts_proto_opt=onlyTypes=true',
       '--ts_proto_opt=outputServices=false',
+      '--ts_proto_opt=typePrefix=Grpc',
       `./${relativePath}`,
     ].join(' ');
 

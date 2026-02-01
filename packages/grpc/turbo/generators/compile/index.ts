@@ -1,13 +1,13 @@
 import { PlopTypes } from '@turbo/gen';
-import { dotCase } from 'change-case-all';
 import { EventEmitter } from 'events';
 import { mkdir, readdir, rm } from 'fs/promises';
 import * as _ from 'lodash';
+import { Context } from './context';
 import { TypesStrategy } from './strategies/types.strategy';
 import { JsStrategy } from './strategies/js.strategy';
 import { NestStrategy } from './strategies/nest.strategy';
 import { BaseStrategy } from './strategies/base.strategy';
-import { basename, join } from 'path';
+import { join } from 'path';
 import { Project } from 'ts-morph';
 import { parseProtoTree } from './helpers/utils';
 import { GrpcCompilerAnswers } from './helpers/types';
@@ -37,13 +37,19 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
 
     const protoFiles = await readdir(PROTO_SRC_ROOT, { recursive: true });
 
-    eventEmitter.on('file', (relativePath: string, importName: string, hasPrefix: boolean) => {
-      answers.files.add(relativePath.replace(PROTO_EXT_REG_EXP, '.ts'));
+    eventEmitter.on(
+      'file',
+      async (relativePath: string, importName: string, hasPrefix: boolean) => {
+        const filePath = relativePath.replace(PROTO_EXT_REG_EXP, '.ts');
 
-      if (!hasPrefix) {
-        answers.indexExports.add(importName);
-      }
-    });
+        answers.files.add(filePath);
+        await answers.context.createData(filePath);
+
+        if (!hasPrefix) {
+          answers.indexExports.add(importName);
+        }
+      },
+    );
 
     eventEmitter.on(
       'folder',
@@ -67,13 +73,17 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
 
       eventEmitter.on('folder', strategy.onFolder.bind(strategy));
 
-      eventEmitter.on('file', (relativePath: string, importName: string, hasPrefix: boolean) => {
-        answers.files.add(relativePath);
+      eventEmitter.on(
+        'file',
+        async (relativePath: string, importName: string, hasPrefix: boolean) => {
+          answers.files.add(relativePath);
+          await answers.context.createData(relativePath);
 
-        if (!hasPrefix) {
-          answers.indexExports.add(importName);
-        }
-      });
+          if (!hasPrefix) {
+            answers.indexExports.add(importName);
+          }
+        },
+      );
 
       eventEmitter.on(
         'folder',
@@ -109,15 +119,10 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
       const project = new Project(strategy.getProjectOptions());
 
       for (const appFile of Array.from(answers.files)) {
+        const contextData = answers.context.getData(appFile);
         const filePath = join(strategy.targetRoot, appFile);
         const sourceFile = project.addSourceFileAtPath(filePath);
-        const fileId = dotCase(basename(filePath).replace(/(.ts|.tsx)/g, ''));
-
-        await strategy.onSourceFile(sourceFile, fileId, filePath);
-
-        sourceFile.formatText();
-        sourceFile.organizeImports();
-
+        await strategy.onSourceFile(sourceFile, contextData, filePath);
         await sourceFile.save();
 
         console.info(
@@ -131,7 +136,11 @@ export const compileGenerator = (plop: PlopTypes.NodePlopAPI) => {
 
   plop.setGenerator('compile', {
     description: 'Compile gRPC adapters',
-    prompts: async () => ({ files: new Set<string>(), indexExports: new Set<string>() }),
+    prompts: async () => ({
+      files: new Set<string>(),
+      indexExports: new Set<string>(),
+      context: new Context(),
+    }),
     actions: _.reduce(
       strategies,
       (acc: PlopTypes.ActionType[], strategy) => _.concat(acc, strategy.getActions()),

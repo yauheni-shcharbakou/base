@@ -1,6 +1,6 @@
-import { BaseQuery, EntityWithTimestamps } from '@backend/grpc';
+import { GrpcBaseQuery, GrpcEntityWithTimestamps } from '@backend/grpc';
 import { UpdateIncOf, UpdateOf, UpdateRemoveOf, UpdateSetOf } from '@backend/persistence';
-import { Query, Type as DtoType } from '@nestjs/common';
+import { Type as DtoType } from '@nestjs/common';
 import { ApiProperty, OmitType, PartialType, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsObject, IsOptional, ValidateNested } from 'class-validator';
@@ -10,7 +10,7 @@ import {
   RequestType,
   UpdateByIdRequestType,
   UpdateRequestType,
-} from 'common/interfaces/data-types.interface';
+} from 'common/interfaces/grpc-types.interface';
 import _ from 'lodash';
 
 export const ItemsDto = <Item extends object>(ItemDto: DtoType<Item>): DtoType<ItemsType<Item>> => {
@@ -26,7 +26,7 @@ export const ItemsDto = <Item extends object>(ItemDto: DtoType<Item>): DtoType<I
   return DynamicItemsDto;
 };
 
-export const RequestDto = <Query extends BaseQuery>(
+export const RequestDto = <Query extends GrpcBaseQuery>(
   QueryDto: DtoType<Query>,
 ): DtoType<RequestType<Query>> => {
   class DynamicRequestDto implements RequestType<Query> {
@@ -41,7 +41,7 @@ export const RequestDto = <Query extends BaseQuery>(
   return DynamicRequestDto;
 };
 
-export const UpdateDto = <Entity extends EntityWithTimestamps>(
+export const UpdateDto = <Entity extends GrpcEntityWithTimestamps>(
   EntityDto: DtoType<Entity>,
   remove: UpdateRemoveOf<Entity> = [],
   inc: (keyof UpdateIncOf<Entity>)[] = [],
@@ -85,7 +85,7 @@ export const UpdateDto = <Entity extends EntityWithTimestamps>(
   return DynamicUpdateDto;
 };
 
-export const UpdateRequestDto = <Query extends BaseQuery, Update extends UpdateOf<any>>(
+export const UpdateRequestDto = <Query extends GrpcBaseQuery, Update extends UpdateOf<any>>(
   QueryDto: DtoType<Query>,
   UpdateDto: DtoType<Update>,
 ): DtoType<UpdateRequestType<Query, Update>> => {

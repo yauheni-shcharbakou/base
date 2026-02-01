@@ -1,5 +1,5 @@
 import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { BaseQuery, IdField } from '@backend/grpc';
+import { GrpcBaseQuery, GrpcIdField } from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
 import { MongoEntity } from 'entities';
 import {
@@ -14,8 +14,8 @@ import { Model } from 'mongoose';
 
 export abstract class MongoRepositoryImpl<
   Doc extends MongoEntity,
-  Entity extends IdField = IdField,
-  Query extends BaseQuery = BaseQuery & Partial<Entity>,
+  Entity extends GrpcIdField = GrpcIdField,
+  Query extends GrpcBaseQuery = GrpcBaseQuery & Partial<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
 > implements DatabaseRepository<Entity, Query, Create, Update> {

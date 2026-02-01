@@ -1,7 +1,14 @@
 import { ForbiddenException, Inject, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthData, AuthLogin, AuthMe, AuthRefresh, AuthTokens, User } from '@backend/grpc';
+import {
+  GrpcAuthData,
+  GrpcAuthLogin,
+  GrpcAuthMe,
+  GrpcAuthRefresh,
+  GrpcAuthTokens,
+  GrpcUser,
+} from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
 import { AuthJwtPayload, AuthJwtPayloadParsed } from 'common/interfaces/auth.interface';
 import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
@@ -32,7 +39,7 @@ export class AuthServiceImpl implements AuthService {
     }
   }
 
-  private async generateTokens(payload: AuthJwtPayload): Promise<AuthTokens> {
+  private async generateTokens(payload: AuthJwtPayload): Promise<GrpcAuthTokens> {
     const refreshSecret = this.configService.getOrThrow('jwt.refreshToken.secret', { infer: true });
 
     const refreshExpiresIn = this.configService.getOrThrow(
@@ -60,7 +67,9 @@ export class AuthServiceImpl implements AuthService {
     };
   }
 
-  async login(data: AuthLogin): Promise<Either<NotFoundException | ForbiddenException, AuthData>> {
+  async login(
+    data: GrpcAuthLogin,
+  ): Promise<Either<NotFoundException | ForbiddenException, GrpcAuthData>> {
     const user = await this.userRepository.getOneInternal({ email: data.login });
 
     console.log('login', user);
@@ -82,8 +91,8 @@ export class AuthServiceImpl implements AuthService {
   }
 
   async refreshToken(
-    data: AuthRefresh,
-  ): Promise<Either<NotFoundException | ForbiddenException, AuthData>> {
+    data: GrpcAuthRefresh,
+  ): Promise<Either<NotFoundException | ForbiddenException, GrpcAuthData>> {
     const payload = this.parsePayload(data.refreshToken, true);
 
     if (!payload) {
@@ -103,8 +112,8 @@ export class AuthServiceImpl implements AuthService {
   }
 
   async getUserByToken(
-    data: AuthMe,
-  ): Promise<Either<NotFoundException | ForbiddenException, User>> {
+    data: GrpcAuthMe,
+  ): Promise<Either<NotFoundException | ForbiddenException, GrpcUser>> {
     const payload = this.parsePayload(data.accessToken);
 
     if (!payload) {

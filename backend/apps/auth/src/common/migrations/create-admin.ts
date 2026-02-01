@@ -1,4 +1,4 @@
-import { UserRole } from '@backend/grpc';
+import { GrpcUserRole } from '@backend/grpc';
 import { MigrationTask } from '@backend/persistence';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -25,6 +25,6 @@ export class CreateAdmin implements MigrationTask {
       throw hash.value;
     }
 
-    await new this.userModel({ email, hash: hash.value, role: UserRole.ADMIN }).save();
+    await new this.userModel({ email, hash: hash.value, role: GrpcUserRole.ADMIN }).save();
   }
 }

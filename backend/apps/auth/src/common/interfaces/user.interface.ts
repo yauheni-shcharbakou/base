@@ -1,5 +1,5 @@
-import { User } from '@backend/grpc';
+import { GrpcUser } from '@backend/grpc';
 
-export interface UserInternal extends User {
+export interface User extends GrpcUser {
   hash: string;
 }

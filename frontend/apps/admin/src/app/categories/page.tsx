@@ -1,7 +1,6 @@
 'use client';
 
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
-import type { User } from '@packages/grpc.js';
 import { DeleteButton, EditButton, List, ShowButton, useDataGrid } from '@refinedev/mui';
 import React from 'react';
 

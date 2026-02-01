@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  User,
-  UserCreate,
-  UserQuery,
-  UserRequest,
-  UserRole,
-  UserUpdate,
-  UserUpdateByIdRequest,
-  UserUpdateRequest,
+  GrpcUser,
+  GrpcUserCreate,
+  GrpcUserQuery,
+  GrpcUserRequest,
+  GrpcUserRole,
+  GrpcUserUpdate,
+  GrpcUserUpdateByIdRequest,
+  GrpcUserUpdateRequest,
 } from '@backend/grpc';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
@@ -16,37 +16,36 @@ import {
   UpdateByIdRequestDto,
   UpdateDto,
   UpdateRequestDto,
-} from 'common/dto/data-types.dto';
+} from 'common/dto/grpc-types.dto';
 import { EntityWithTimestampsDto } from 'common/dto/entity-with-timestamps.dto';
-import { IdFieldDto } from 'common/dto/id-field.dto';
 
-export class UserDto extends EntityWithTimestampsDto implements User {
+export class UserDto extends EntityWithTimestampsDto implements GrpcUser {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   email: string;
 
-  @ApiProperty({ enum: UserRole, enumName: 'UserRole' })
+  @ApiProperty({ enum: GrpcUserRole, enumName: 'UserRole' })
   @IsNotEmpty()
-  @IsEnum(UserRole)
-  role: UserRole;
+  @IsEnum(GrpcUserRole)
+  role: GrpcUserRole;
 }
 
-export class UserQueryDto extends BaseQueryDto implements UserQuery {
+export class UserQueryDto extends BaseQueryDto implements GrpcUserQuery {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   email?: string;
 
-  @ApiProperty({ required: false, enum: UserRole, enumName: 'UserRole', isArray: true })
+  @ApiProperty({ required: false, enum: GrpcUserRole, enumName: 'UserRole', isArray: true })
   @IsOptional()
-  @IsEnum(UserRole, { each: true })
-  roles: UserRole[] = [];
+  @IsEnum(GrpcUserRole, { each: true })
+  roles: GrpcUserRole[] = [];
 }
 
-export class UserRequestDto extends RequestDto(UserQueryDto) implements UserRequest {}
+export class UserRequestDto extends RequestDto(UserQueryDto) implements GrpcUserRequest {}
 
-export class UserCreateDto implements UserCreate {
+export class UserCreateDto implements GrpcUserCreate {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
@@ -57,18 +56,18 @@ export class UserCreateDto implements UserCreate {
   @IsString()
   password: string;
 
-  @ApiProperty({ required: false, enum: UserRole, enumName: 'UserRole' })
+  @ApiProperty({ required: false, enum: GrpcUserRole, enumName: 'UserRole' })
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsEnum(GrpcUserRole)
+  role?: GrpcUserRole;
 }
 
-export class UserUpdateDto extends UpdateDto(UserDto) implements UserUpdate {}
+export class UserUpdateDto extends UpdateDto(UserDto) implements GrpcUserUpdate {}
 
 export class UserUpdateRequestDto
   extends UpdateRequestDto(UserQueryDto, UserUpdateDto)
-  implements UserUpdateRequest {}
+  implements GrpcUserUpdateRequest {}
 
 export class UserUpdateByIdRequestDto
   extends UpdateByIdRequestDto(UserUpdateDto)
-  implements UserUpdateByIdRequest {}
+  implements GrpcUserUpdateByIdRequest {}

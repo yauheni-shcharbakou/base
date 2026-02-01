@@ -2,15 +2,15 @@
 
 import { ColorModeContext } from '@/contexts/color-mode';
 import { DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
-import { Stack, Typography, Toolbar, AppBar, Avatar, IconButton } from '@mui/material';
-import type { User } from '@packages/grpc.js';
+import { Stack, Typography, Toolbar, AppBar, IconButton } from '@mui/material';
+import { GrpcUser } from '@frontend/grpc';
 import { useGetIdentity } from '@refinedev/core';
 import { HamburgerMenu, RefineThemedLayoutHeaderProps } from '@refinedev/mui';
 import React, { useContext } from 'react';
 
 export const Header: React.FC<RefineThemedLayoutHeaderProps> = ({ sticky = true }) => {
   const { mode, setMode } = useContext(ColorModeContext);
-  const { data: user } = useGetIdentity<User>();
+  const { data: user } = useGetIdentity<GrpcUser>();
 
   return (
     <AppBar position={sticky ? 'sticky' : 'relative'} elevation={0}>

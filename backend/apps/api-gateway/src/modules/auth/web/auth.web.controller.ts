@@ -1,7 +1,7 @@
 import { GrpcRxPipe, InjectGrpcService } from '@backend/transport';
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AUTH_SERVICE_NAME, AuthServiceClient } from '@backend/grpc';
+import { GrpcAuthServiceClient, GrpcAuthService } from '@backend/grpc';
 import { plainToInstance } from 'class-transformer';
 import { Method } from 'common/decorators/method.decorator';
 import { AuthLoginDto, AuthRefreshDto, AuthTokensDto } from 'common/dto/services/auth.service.dto';
@@ -11,8 +11,8 @@ import { Observable } from 'rxjs';
 @Controller('auth')
 export class AuthWebController {
   constructor(
-    @InjectGrpcService(AUTH_SERVICE_NAME)
-    private readonly authServiceClient: AuthServiceClient,
+    @InjectGrpcService(GrpcAuthService.name)
+    private readonly authServiceClient: GrpcAuthServiceClient,
   ) {}
 
   // @Get()

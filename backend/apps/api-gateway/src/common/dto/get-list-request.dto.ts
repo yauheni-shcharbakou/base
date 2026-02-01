@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  CrudConditionalFilter,
-  CrudConditionalOperator,
-  CrudLogicalFilter,
-  CrudLogicalOperator,
-  CrudSort,
-  CrudSorter,
-  GetListRequest,
-  Pagination,
+  GrpcCrudConditionalFilter,
+  GrpcCrudConditionalOperator,
+  GrpcCrudLogicalFilter,
+  GrpcCrudLogicalOperator,
+  GrpcCrudSort,
+  GrpcCrudSorter,
+  GrpcGetListRequest,
+  GrpcPagination,
 } from '@backend/grpc';
 import { Type } from 'class-transformer';
 import {
@@ -21,7 +21,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-class CrudLogicalFilterDto implements CrudLogicalFilter {
+class CrudLogicalFilterDto implements GrpcCrudLogicalFilter {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsBoolean()
@@ -39,10 +39,10 @@ class CrudLogicalFilterDto implements CrudLogicalFilter {
   @Type(() => Number)
   number?: number;
 
-  @ApiProperty({ enum: CrudLogicalOperator, enumName: 'CrudLogicalOperator' })
+  @ApiProperty({ enum: GrpcCrudLogicalOperator, enumName: 'GrpcCrudLogicalOperator' })
   @IsNotEmpty()
-  @IsEnum(CrudLogicalOperator)
-  operator: CrudLogicalOperator;
+  @IsEnum(GrpcCrudLogicalOperator)
+  operator: GrpcCrudLogicalOperator;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -50,16 +50,16 @@ class CrudLogicalFilterDto implements CrudLogicalFilter {
   string?: string;
 }
 
-class CrudConditionalFilterDto implements CrudConditionalFilter {
+class CrudConditionalFilterDto implements GrpcCrudConditionalFilter {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   key?: string;
 
-  @ApiProperty({ enum: CrudConditionalOperator, enumName: 'CrudConditionalOperator' })
+  @ApiProperty({ enum: GrpcCrudConditionalOperator, enumName: 'GrpcCrudConditionalOperator' })
   @IsNotEmpty()
-  @IsEnum(CrudConditionalOperator)
-  operator: CrudConditionalOperator;
+  @IsEnum(GrpcCrudConditionalOperator)
+  operator: GrpcCrudConditionalOperator;
 
   @ApiProperty({ required: false, type: [CrudLogicalFilterDto] })
   @IsOptional()
@@ -69,19 +69,19 @@ class CrudConditionalFilterDto implements CrudConditionalFilter {
   value: CrudLogicalFilterDto[] = [];
 }
 
-class CrudSorterDto implements CrudSorter {
+class CrudSorterDto implements GrpcCrudSorter {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   field: string;
 
-  @ApiProperty({ enum: CrudSort, enumName: 'CrudSort' })
+  @ApiProperty({ enum: GrpcCrudSort, enumName: 'GrpcCrudSort' })
   @IsNotEmpty()
-  @IsEnum(CrudSort)
-  order: CrudSort;
+  @IsEnum(GrpcCrudSort)
+  order: GrpcCrudSort;
 }
 
-class PaginationDto implements Pagination {
+class PaginationDto implements GrpcPagination {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsNumber()
@@ -95,7 +95,7 @@ class PaginationDto implements Pagination {
   limit?: number;
 }
 
-export class GetListRequestDto implements GetListRequest {
+export class GetListRequestDto implements GrpcGetListRequest {
   @ApiProperty({ required: false, type: [CrudConditionalFilterDto] })
   @IsOptional()
   @IsObject({ each: true })
