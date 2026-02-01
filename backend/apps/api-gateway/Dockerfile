@@ -1,31 +1,3 @@
-#FROM node:22-alpine AS base
-#ENV NODE_ENV=production
-#ENV TURBO_TELEMETRY_DISABLED=1
-##ENV TURBO_CACHE_DIR=/tmp/turbo-cache
-#WORKDIR /app
-#
-#FROM base AS installer
-#RUN apk add protobuf protobuf-dev
-#RUN apk update
-#ENV PATH="/usr/bin:${PATH}"
-#ENV PROTO_PATH=protoc
-#COPY ./backend/apps/api-gateway ./backend/apps/api-gateway
-#COPY ./backend/packages ./backend/packages
-#COPY ./packages ./packages
-#COPY ./package.json ./package.json
-#COPY ./.gitignore ./.gitignore
-#COPY ./turbo.json ./turbo.json
-#RUN yarn install --mode update-lockfile
-#
-#FROM base AS builder
-#COPY --from=installer /app .
-#RUN yarn build:backend.api-gateway
-#
-#FROM base AS runner
-#COPY --from=builder /app .
-#EXPOSE $PORT
-#CMD ["node", "backend/apps/api-gateway/dist/main"]
-
 FROM node:22-alpine AS base
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -47,6 +19,7 @@ COPY --from=prepare /app/out/json/ .
 RUN yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
 RUN yarn build
+RUN yarn install --ignore-scripts --production
 
 FROM base AS runner
 RUN addgroup --system --gid 1001 nodejs
