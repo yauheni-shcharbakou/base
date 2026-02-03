@@ -1,5 +1,4 @@
 import { constantCase, pascalCase } from 'change-case-all';
-import * as _ from 'lodash';
 import { BaseTransformer } from '../base.transformer';
 
 export class NestFixExportsTransformer extends BaseTransformer {
@@ -8,7 +7,7 @@ export class NestFixExportsTransformer extends BaseTransformer {
   }
 
   transform(): void {
-    _.forEach(this.contextData.services, ({ name }) => {
+    this.contextData.services.forEach(({ name }) => {
       const serviceClientName = pascalCase(`${name}.client`);
       const serviceClientNameWithPrefix = pascalCase(`grpc.${serviceClientName}`);
 

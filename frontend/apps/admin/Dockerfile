@@ -1,43 +1,36 @@
-FROM refinedev/node:18 AS base
-
-FROM base AS deps
-
+FROM node:22-alpine AS base
+ENV NODE_ENV=production
+ENV TURBO_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV MALLOC_ARENA_MAX=2
+RUN apk update
 RUN apk add --no-cache libc6-compat
+WORKDIR /app
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+FROM base AS prepare
+RUN yarn global add turbo@latest
+COPY . .
+RUN turbo prune frontend.admin --docker
 
 FROM base AS builder
-
-COPY --from=deps /app/refine/node_modules ./node_modules
-
-COPY . .
-
-RUN npm run build
+RUN apk add --no-cache protobuf protobuf-dev
+ENV PATH="/usr/bin:${PATH}"
+ENV PROTO_PATH=protoc
+ENV GRPC_COMPILER_CONTEXT=frontend
+COPY --from=prepare /app/out/json/ .
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+    yarn install --ignore-scripts --production=false
+COPY --from=prepare /app/out/full/ .
+RUN --mount=type=cache,target=/app/.turbo \
+    yarn build
+RUN yarn install --ignore-scripts --production=false
 
 FROM base AS runner
-
-ENV NODE_ENV production
-
-COPY --from=builder /app/refine/public ./public
-
-RUN mkdir .next
-RUN chown refine:nodejs .next
-
-COPY --from=builder --chown=refine:nodejs /app/refine/.next/standalone ./
-COPY --from=builder --chown=refine:nodejs /app/refine/.next/static ./.next/static
-
-USER refine
-
-EXPOSE 3000
-
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
-
-CMD ["node", "server.js"]
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/apps/admin/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/apps/admin/.next/static ./frontend/apps/admin/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/apps/admin/public ./frontend/apps/admin/public
+EXPOSE $PORT
+CMD ["node", "frontend/apps/admin/server.js"]

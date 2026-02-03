@@ -1,5 +1,4 @@
 import { pascalCase } from 'change-case-all';
-import * as _ from 'lodash';
 import { ServiceData } from '../../context';
 import { MethodSignature, Node } from 'ts-morph';
 import { BaseTransformer } from '../base.transformer';
@@ -57,7 +56,7 @@ export class JsRepositoryTransformer extends BaseTransformer {
       },
     });
 
-    _.forEach(Array.from(clientMethods.entries()), ([name, method]) => {
+    Array.from(clientMethods.entries()).forEach(([name, method]) => {
       const requestType = method.getParameter('request')?.getType()?.getText();
       const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
 
@@ -108,6 +107,6 @@ export class JsRepositoryTransformer extends BaseTransformer {
   transform(): void | Promise<void> {
     this.declareImports();
 
-    _.forEach(this.contextData.services, (service) => this.declareRepository(service));
+    this.contextData.services.forEach((service) => this.declareRepository(service));
   }
 }

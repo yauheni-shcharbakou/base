@@ -1,4 +1,5 @@
 import { join } from 'path';
+import zod from 'zod';
 
 export const GRPC_PACKAGE_ROOT = join(__dirname, '../../../..');
 export const REPOSITORY_ROOT = join(GRPC_PACKAGE_ROOT, '../..');
@@ -15,3 +16,7 @@ export const PROTO_EXT_REG_EXP = /.proto$/g;
 export const TS_EXT_REG_EXP = /.ts$/g;
 
 export const TEMPLATES_ROOT = join(__dirname, '..', 'templates');
+
+export const env = zod
+  .object({ GRPC_COMPILER_CONTEXT: zod.enum(['backend', 'frontend', 'all']).default('all') })
+  .parse(process.env);

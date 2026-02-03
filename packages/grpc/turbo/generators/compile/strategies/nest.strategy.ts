@@ -12,7 +12,7 @@ import {
 
 export class NestStrategy extends BaseStrategy {
   constructor() {
-    super('nest', join(BACKEND_PACKAGES_DIR_ROOT, 'grpc'), nestTransformers);
+    super('nest', join(BACKEND_PACKAGES_DIR_ROOT, 'grpc'), nestTransformers, ['frontend']);
   }
 
   getProjectOptions(): ProjectOptions {

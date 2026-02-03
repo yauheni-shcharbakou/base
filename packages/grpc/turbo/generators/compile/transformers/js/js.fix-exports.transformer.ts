@@ -1,12 +1,11 @@
 import { pascalCase } from 'change-case-all';
-import * as _ from 'lodash';
 import { BaseTransformer } from '../base.transformer';
 
 export class JsFixExportsTransformer extends BaseTransformer {
   transform(): void {
     const unexportActors: string[] = ['MessageFns', 'Exact', 'DeepPartial'];
 
-    _.forEach(this.contextData.services, ({ name }) => {
+    this.contextData.services.forEach(({ name }) => {
       const serviceClientName = pascalCase(`${name}.client`);
       const serviceClientNameWithPrefix = pascalCase(`grpc.${serviceClientName}`);
 
@@ -19,7 +18,7 @@ export class JsFixExportsTransformer extends BaseTransformer {
         ?.rename(serviceClientNameWithPrefix);
     });
 
-    _.forEach(unexportActors, (name) => {
+    unexportActors.forEach((name) => {
       this.getVariableStatement(name)?.setIsExported(false);
       this.sourceFile.getInterface(name)?.setIsExported(false);
       this.sourceFile.getTypeAlias(name)?.setIsExported(false);

@@ -3,7 +3,8 @@
 **/.next
 **/.env
 **/.turbo
+**/out
 .git
 .idea
 .github
-#yarn.lock
+Dockerfile

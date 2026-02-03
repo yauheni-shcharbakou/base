@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
 import zod, { z, ZodObject, ZodRawShape } from 'zod';
 
 let isEnvParsed = false;
@@ -7,7 +7,7 @@ export const validateEnv = <ValidationSchema extends ZodRawShape>(
   schema: ValidationSchema,
 ): z.infer<ZodObject<ValidationSchema>> => {
   if (!isEnvParsed) {
-    dotenv.config();
+    config({ quiet: true });
     isEnvParsed = true;
   }
 

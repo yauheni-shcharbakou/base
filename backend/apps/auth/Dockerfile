@@ -1,6 +1,7 @@
 FROM node:22-alpine AS base
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
+ENV MALLOC_ARENA_MAX=2
 RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -11,19 +12,22 @@ COPY . .
 RUN turbo prune backend.auth --docker
 
 FROM base AS builder
-RUN apk update
-RUN apk add protobuf protobuf-dev
+RUN apk add --no-cache protobuf protobuf-dev
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
+ENV GRPC_COMPILER_CONTEXT=backend
 COPY --from=prepare /app/out/json/ .
-RUN yarn install --ignore-scripts --production=false
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+    yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
-RUN yarn build
-RUN yarn install --ignore-scripts --production
+RUN --mount=type=cache,target=/app/.turbo \
+    yarn build
+RUN yarn install --ignore-scripts --production=false
 
 FROM base AS runner
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
-CMD ["node", "backend/apps/auth/dist/main"]
+EXPOSE $PORT
+CMD ["node", "backend/apps/auth/dist/main.js"]

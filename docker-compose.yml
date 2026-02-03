@@ -36,38 +36,6 @@ services:
 #      - mongo
 #    profiles:
 #      - all
-#
-#  admin:
-#    build:
-#      args:
-#        PORT: 3336
-#        DATABASE_URL: mongodb://mongo:27017
-#        ADMIN_HOST: host.docker.internal
-#        ADMIN_AUTH_PROXY_URL: http://localhost:4000/auth
-#        ADMIN_AUTH_URL: http://127.0.0.1:4000
-#        ADMIN_MAIN_URL: http://127.0.0.1:4001
-#        PAYLOAD_SECRET: 12345,
-#      context: .
-#      dockerfile: ./admin/Dockerfile
-#    restart: unless-stopped
-#    ports:
-#      - '${ADMIN_PORT:-3336}:3336'
-#    environment:
-#      PORT: 3336
-#      NODE_ENV: production
-#      DATABASE_URL: mongodb://mongo:27017
-#      ADMIN_HOST: host.docker.internal
-#      ADMIN_AUTH_PROXY_URL: http://host.docker.internal:3336/auth
-#      ADMIN_AUTH_URL: http://127.0.0.1:4000
-#      ADMIN_MAIN_URL: http://127.0.0.1:4001
-#      PAYLOAD_SECRET: 12345
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - mongo
-#    profiles:
-#      - all
 
   backend.auth:
     build:
@@ -91,26 +59,7 @@ services:
       - mongo
     profiles:
       - all
-#
-#  backend.main:
-#    build:
-#      context: .
-#      dockerfile: ./backend/apps/main/Dockerfile
-#    restart: unless-stopped
-#    ports:
-#      - '8000:8000'
-#    environment:
-#      PORT: 8000
-#      NODE_ENV: production
-#      DATABASE_URL: mongodb://mongo:27017/main
-#      MAIN_GRPC_URL: 0.0.0.0:8000
-#    networks:
-#      - private_network
-#    depends_on:
-#      - mongo
-#    profiles:
-#      - all
-#
+
   backend.api-gateway:
     build:
       context: .
@@ -131,108 +80,27 @@ services:
     profiles:
       - all
 
-#  admin.proxy-local:
-#    build:
-#      context: .
-#      dockerfile: ./admin/apps/proxy/Dockerfile
-#    restart: unless-stopped
-#    environment:
-#      PORT: 3336
-#      ADMIN_AUTH_URL: http://host.docker.internal:4000
-#      ADMIN_MAIN_URL: http://host.docker.internal:4001
-#    networks:
-#      - private_network
-#      - public_network
-#    ports:
-#      - '${ADMIN_PORT:-3336}:3336'
-#    profiles:
-#      - local
-#
-#  admin.proxy:
-#    build:
-#      context: .
-#      dockerfile: ./admin/apps/proxy/Dockerfile
-#    restart: unless-stopped
-#    environment:
-#      PORT: 3336
-#      ADMIN_AUTH_URL: http://admin.auth:4000
-#      ADMIN_MAIN_URL: http://admin.main:4001
-#    networks:
-#      - private_network
-#      - public_network
-#    ports:
-#      - '${ADMIN_PORT:-3336}:3336'
-#    profiles:
-#      - all
-#
-#  admin.auth:
-#    build:
-#      args:
-#        PORT: 4000
-#        NODE_ENV: production
-#        DATABASE_URL: mongodb://mongo:27017/auth
-#        PAYLOAD_SECRET: 12345
-#      context: .
-#      dockerfile: ./admin/apps/auth/Dockerfile
-#    restart: unless-stopped
-#    ports:
-#      - '${ADMIN_AUTH_PORT:-4000}:4000'
-#    environment:
-#      PORT: 4000
-#      NODE_ENV: production
-#      DATABASE_URL: mongodb://mongo:27017/auth
-#      PAYLOAD_SECRET: 12345
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - mongo
-#      - admin.proxy
-#    profiles:
-#      - all
-#
-#  admin.main:
-#    build:
-#      args:
-#        PORT: 4001
-#        NODE_ENV: production
-#        DATABASE_URL: mongodb://mongo:27017/main
-#        ADMIN_AUTH_URL: http://admin.proxy:3336/auth
-#        PAYLOAD_SECRET: 12345
-#      context: .
-#      dockerfile: ./admin/apps/main/Dockerfile
-#    restart: unless-stopped
-#    ports:
-#      - '${ADMIN_MAIN_PORT:-4001}:4001'
-#    environment:
-#      PORT: 4001
-#      NODE_ENV: production
-#      DATABASE_URL: mongodb://mongo:27017/main
-#      ADMIN_AUTH_URL: http://admin.proxy:3336/auth
-#      PAYLOAD_SECRET: 12345
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - mongo
-#      - admin.proxy
-#      - admin.auth
-#    profiles:
-#      - all
-
-#  frontend:
-#    build:
-#      context: .
-#      dockerfile: ./apps/frontend/Dockerfile
-#    restart: unless-stopped
-#    ports:
-#      - '${PORT:-3000}:3000'
-#    environment:
-#      NEXT_PUBLIC_BACKEND_URL: http://backend.api-gateway:10000
-#    networks:
-#      - public_network
-#    depends_on:
-#      - backend.api-gateway
+  frontend.admin:
+    build:
+      context: .
+      dockerfile: ./frontend/apps/admin/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${ADMIN_PORT:-3336}:3336'
+    environment:
+      PORT: 3336
+      NODE_ENV: production
+      BACKEND_GRPC_URL: backend.api-gateway:8000
+      NEXT_PUBLIC_DEFAULT_EMAIL: admin@gmail.com
+      NEXT_PUBLIC_DEFAULT_PASSWORD: string123
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - mongo
+      - backend.api-gateway
+    profiles:
+      - all
 
 networks:
   private_network:

@@ -4,7 +4,7 @@ import { ContextData } from '../context';
 import { Type } from '../helpers/types';
 import { BaseTransformer } from '../transformers/base.transformer';
 import { ProjectOptions, SourceFile } from 'ts-morph';
-import { TEMPLATES_ROOT } from '../helpers/constants';
+import { env, TEMPLATES_ROOT } from '../helpers/constants';
 import { join } from 'path';
 
 export abstract class BaseStrategy {
@@ -15,6 +15,7 @@ export abstract class BaseStrategy {
     public readonly name: string,
     protected readonly root: string,
     protected readonly transformers: Type<BaseTransformer>[],
+    protected readonly restrictedContexts: (typeof env.GRPC_COMPILER_CONTEXT)[] = [],
   ) {
     this.targetRoot = join(root, 'src');
     this.strategyTemplatesRoot = join(TEMPLATES_ROOT, this.name);
@@ -32,6 +33,10 @@ export abstract class BaseStrategy {
         await transformer.transform();
       }
     }
+  }
+
+  canRun(): boolean {
+    return !this.restrictedContexts.includes(env.GRPC_COMPILER_CONTEXT);
   }
 
   abstract onFile(relativePath: string, importName: string, hasPrefix: boolean): void;

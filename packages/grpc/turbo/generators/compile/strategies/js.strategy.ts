@@ -13,7 +13,7 @@ import {
 
 export class JsStrategy extends BaseStrategy {
   constructor() {
-    super('js', join(FRONTEND_PACKAGES_DIR_ROOT, 'grpc'), jsTransformers);
+    super('js', join(FRONTEND_PACKAGES_DIR_ROOT, 'grpc'), jsTransformers, ['backend']);
   }
 
   onFile(relativePath: string, importName: string, hasPrefix: boolean): void {

@@ -1,5 +1,4 @@
 import { constantCase, pascalCase } from 'change-case-all';
-import * as _ from 'lodash';
 import {
   MethodSignature,
   OptionalKind,
@@ -184,7 +183,7 @@ export class NestServiceSchemaTransformer extends BaseTransformer {
 
     this.declareImports();
 
-    _.forEach(this.contextData.services, (service) => {
+    this.contextData.services.forEach((service) => {
       const names = this.getNames(service);
 
       const controllerInterface = this.sourceFile.getInterface(names.controller);
