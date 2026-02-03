@@ -13,16 +13,22 @@ RUN turbo prune backend.api-gateway --docker
 
 FROM base AS builder
 RUN apk add --no-cache protobuf protobuf-dev
+ARG YARN_CACHE_ID=backend-api-gateway-yarn-cache
+ARG TURBO_CACHE_ID=backend-api-gateway-turbo-cache
+ARG YARN_CACHE_PATH=/usr/local/share/.cache/yarn
+ARG TURBO_CACHE_PATH=/app/.turbo
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
 ENV GRPC_COMPILER_CONTEXT=backend
+ENV YARN_CACHE_FOLDER=$YARN_CACHE_PATH
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+RUN --mount=type=cache,id=$YARN_CACHE_ID,target=$YARN_CACHE_PATH \
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
-RUN --mount=type=cache,target=/app/.turbo \
+RUN --mount=type=cache,id=$TURBO_CACHE_ID,target=$TURBO_CACHE_PATH \
     yarn build
-RUN yarn install --ignore-scripts --production=false
+RUN --mount=type=cache,id=$YARN_CACHE_ID,target=$YARN_CACHE_PATH \
+    yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
 RUN addgroup --system --gid 1001 nodejs
