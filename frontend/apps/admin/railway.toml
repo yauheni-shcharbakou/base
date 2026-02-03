@@ -1,0 +1,8 @@
+[build]
+watchPatterns = ["frontend/apps/admin/**", "frontend/packages/**", "packages/**"]
+builder = "DOCKERFILE"
+dockerfilePath = "frontend/apps/admin/Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
