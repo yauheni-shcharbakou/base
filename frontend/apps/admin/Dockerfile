@@ -14,20 +14,18 @@ RUN turbo prune frontend.admin --docker
 
 FROM base AS builder
 RUN apk add --no-cache protobuf protobuf-dev
-ARG YARN_CACHE_ID=frontend-admin-yarn-cache
-ARG TURBO_CACHE_ID=frontend-admin-turbo-cache
-ARG YARN_CACHE_PATH=/usr/local/share/.cache/yarn
-ARG TURBO_CACHE_PATH=/app/.turbo
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
 ENV GRPC_COMPILER_CONTEXT=frontend
-ENV YARN_CACHE_FOLDER=$YARN_CACHE_PATH
+ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=$YARN_CACHE_ID,target=$YARN_CACHE_PATH \
+RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
-RUN --mount=type=cache,id=$TURBO_CACHE_ID,target=$TURBO_CACHE_PATH \
+RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/app/.turbo,target=/app/.turbo \
     yarn build
+RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
+    yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
 RUN addgroup --system --gid 1001 nodejs
