@@ -1,0 +1,17 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "src/**/*",
+        "public/**/*",
+        ".eslintrc.json",
+        "Dockerfile",
+        "next.config.mjs",
+        "package.json",
+        "tsconfig*.json"
+      ],
+      "outputs": [".next/**"]
+    }
+  }
+}

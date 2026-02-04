@@ -1,7 +1,7 @@
 {
-  "extends": "@packages/ts-configs/package/base.tsconfig.json",
+  "extends": "@packages/configs/tsconfig/package/base.tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "./src",
+    "baseUrl": "./src"
   },
   "exclude": ["node_modules", "dist"]
 }

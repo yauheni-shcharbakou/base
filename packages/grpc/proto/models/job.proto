@@ -1,0 +1,21 @@
+syntax = 'proto3';
+
+package models.job;
+
+import "google/protobuf/timestamp.proto";
+
+enum JobType {
+  BACKEND = 0;
+  FRONTEND = 1;
+  FULL_STACK = 2;
+}
+
+message Job {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string title = 4;
+  bool isPublic = 5;
+  JobType type = 6;
+}

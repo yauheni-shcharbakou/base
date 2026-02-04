@@ -1,0 +1,9 @@
+syntax = 'proto3';
+
+package common.enums;
+
+enum EmployeeRole {
+  BACKEND_DEVELOPER = 0;
+  FRONTEND_DEVELOPER = 1;
+  FULL_STACK_DEVELOPER = 2;
+}

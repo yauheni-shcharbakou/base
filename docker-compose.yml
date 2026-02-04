@@ -1,0 +1,111 @@
+name: base
+
+services:
+  mongo:
+    image: mongo:latest
+    restart: unless-stopped
+    networks:
+      - private_network
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    profiles:
+      - local
+      - all
+
+#  backend:
+#    build:
+#      context: .
+#      dockerfile: ./backend/Dockerfile
+#    restart: unless-stopped
+#    ports:
+#      - '${BACKEND_PORT:-5555}:5555'
+#    environment:
+#      PORT: 5555
+#      NODE_ENV: production
+#      DATABASE_URL: mongodb://mongo:27017
+#      AUTH_GRPC_URL: 0.0.0.0:8001
+#      MAIN_GRPC_URL: 0.0.0.0:8000
+#      ACCESS_JWT_SECRET: string123
+#      REFRESH_JWT_SECRET: string123
+#    networks:
+#      - private_network
+#      - public_network
+#    depends_on:
+#      - mongo
+#    profiles:
+#      - all
+
+  backend.auth:
+    build:
+      context: .
+      dockerfile: ./backend/apps/auth/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '8001:8001'
+    environment:
+      PORT: 8001
+      NODE_ENV: production
+      DATABASE_URL: mongodb://mongo:27017
+      AUTH_GRPC_URL: 0.0.0.0:8001
+      ACCESS_JWT_SECRET: string123
+      REFRESH_JWT_SECRET: string123
+      ADMIN_EMAIL: admin@gmail.com
+      ADMIN_PASSWORD: string123
+    networks:
+      - private_network
+    depends_on:
+      - mongo
+    profiles:
+      - all
+
+  backend.api-gateway:
+    build:
+      context: .
+      dockerfile: ./backend/apps/api-gateway/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${BACKEND_PORT:-5555}:5555'
+    environment:
+      PORT: 5555
+      NODE_ENV: production
+      API_GATEWAY_GRPC_URL: 0.0.0.0:8000
+      AUTH_GRPC_URL: backend.auth:8001
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - backend.auth
+    profiles:
+      - all
+
+  frontend.admin:
+    build:
+      context: .
+      dockerfile: ./frontend/apps/admin/Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${ADMIN_PORT:-3336}:3336'
+    environment:
+      PORT: 3336
+      NODE_ENV: production
+      BACKEND_GRPC_URL: backend.api-gateway:8000
+      NEXT_PUBLIC_DEFAULT_EMAIL: admin@gmail.com
+      NEXT_PUBLIC_DEFAULT_PASSWORD: string123
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - mongo
+      - backend.api-gateway
+    profiles:
+      - all
+
+networks:
+  private_network:
+  public_network:
+    driver: bridge
+
+volumes:
+  mongo_data:

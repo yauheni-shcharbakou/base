@@ -1,0 +1,16 @@
+syntax = 'proto3';
+
+package models.certificate;
+
+import "google/protobuf/timestamp.proto";
+
+message Certificate {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string name = 4;
+  string link = 5;
+  string organization = 6;
+  google.protobuf.Timestamp date = 7;
+}

@@ -1,0 +1,10 @@
+**/node_modules/
+**/dist
+**/.next
+**/.env
+**/.turbo
+**/out
+.git
+.idea
+.github
+Dockerfile

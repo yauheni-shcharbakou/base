@@ -1,0 +1,21 @@
+syntax = 'proto3';
+
+package models.experience;
+
+import "google/protobuf/timestamp.proto";
+import "common/enums.proto";
+
+message Experience {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  repeated string projects = 4;
+  string company = 5;
+  string position = 6;
+  string domain = 7;
+  common.enums.EmployeeRole role = 8;
+  bool isPublic = 9;
+  google.protobuf.Timestamp startDate = 10;
+  optional google.protobuf.Timestamp endDate = 11;
+}

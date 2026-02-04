@@ -1,0 +1,18 @@
+syntax = 'proto3';
+
+package models.education;
+
+import "google/protobuf/timestamp.proto";
+
+message Education {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string title = 4;
+  string place = 5;
+  string city = 6;
+  string country = 7;
+  google.protobuf.Timestamp startDate = 8;
+  optional google.protobuf.Timestamp endDate = 9;
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@packages/grpc",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "dev": "yarn build -- --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "reset": "rm -rf .turbo dist src node_modules",
+    "compile": "turbo gen compile"
+  },
+  "devDependencies": {
+    "@packages/configs": "*",
+    "protobufjs": "7.5.4",
+    "ts-morph": "27.0.2",
+    "ts-proto": "2.2.5"
+  }
+}

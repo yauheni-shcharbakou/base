@@ -2,10 +2,16 @@ import { PlopTypes } from '@turbo/gen';
 import { join } from 'path';
 
 export const packageGenerator = (plop: PlopTypes.NodePlopAPI) => {
-  const packagePath = '{{ turbo.paths.root }}/packages/{{ dashCase name }}';
+  const packageRootByType = new Map([
+    ['default', join('{{ turbo.paths.root }}', 'packages', '{{ dashCase name }}')],
+    ['admin', join('{{ turbo.paths.root }}', 'admin/packages', '{{ dashCase name }}')],
+    ['backend', join('{{ turbo.paths.root }}', 'backend/packages', '{{ dashCase name }}')],
+  ]);
+
+  const types = Array.from(packageRootByType.keys());
 
   plop.setGenerator('package', {
-    description: 'Creates new package',
+    description: 'Generate new package',
     prompts: [
       {
         type: 'input',
@@ -24,28 +30,25 @@ export const packageGenerator = (plop: PlopTypes.NodePlopAPI) => {
           return true;
         },
       },
-    ],
-    actions: [
       {
-        type: 'add',
-        path: `${packagePath}/package.json`,
-        templateFile: join(__dirname, 'templates/package.json.hbs'),
-      },
-      {
-        type: 'add',
-        path: `${packagePath}/tsconfig.json`,
-        templateFile: join(__dirname, 'assets/tsconfig.json'),
-      },
-      {
-        type: 'add',
-        path: `${packagePath}/turbo.json`,
-        templateFile: join(__dirname, 'assets/turbo.json'),
-      },
-      {
-        type: 'add',
-        path: `${packagePath}/src/index.ts`,
-        templateFile: join(__dirname, 'assets/index.ts'),
+        type: 'list',
+        name: 'type',
+        message: 'What is the type of the new package?',
+        choices: types,
+        default: types[0],
       },
     ],
+    actions: (answers: { type: string }) => {
+      const typeTemplatesRoot = join(__dirname, 'templates', answers.type);
+
+      return [
+        {
+          type: 'addMany',
+          destination: packageRootByType.get(answers.type),
+          base: typeTemplatesRoot,
+          templateFiles: [typeTemplatesRoot, join(typeTemplatesRoot, '.*')],
+        },
+      ];
+    },
   });
 };

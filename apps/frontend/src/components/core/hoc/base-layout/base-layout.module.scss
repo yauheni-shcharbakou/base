@@ -1,5 +1,0 @@
-@use 'styles/layout' as layout;
-
-.main > section:first-of-type {
-  padding-top: layout.$pageHeaderOffset;
-}

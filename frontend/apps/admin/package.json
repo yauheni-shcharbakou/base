@@ -1,0 +1,53 @@
+{
+  "name": "frontend.admin",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "dotenv -- cross-env NODE_OPTIONS=--max_old_space_size=4096 refine dev",
+    "build": "refine build",
+    "prod": "NODE_NEV=production node build/frontend/apps/admin/server.js",
+    "start": "refine start",
+    "lint": "next lint",
+    "refine": "refine"
+  },
+  "dependencies": {
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.1",
+    "@emotion/cache": "11.14.0",
+    "@frontend/grpc": "*",
+    "@grpc/grpc-js": "1.14.3",
+    "@mui/icons-material": "6.5.0",
+    "@mui/lab": "6.0.1-beta.36",
+    "@mui/material": "6.5.0",
+    "@mui/material-nextjs": "^7.3.7",
+    "@mui/x-data-grid": "7.29.12",
+    "@packages/common": "*",
+    "@packages/grpc": "*",
+    "@refinedev/cli": "2.16.50",
+    "@refinedev/core": "5.0.8",
+    "@refinedev/devtools": "2.0.3",
+    "@refinedev/nextjs-router": "7.0.4",
+    "@refinedev/kbar": "2.0.1",
+    "@refinedev/simple-rest": "6.0.1",
+    "@refinedev/mui": "7.0.1",
+    "@refinedev/react-hook-form": "5.0.4",
+    "@sweet-monads/either": "3.3.1",
+    "axios": "1.13.2",
+    "next": "15.2.9",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "js-cookie": "^3.0.5"
+  },
+  "devDependencies": {
+    "@packages/configs": "*",
+    "@types/js-cookie": "^3.0.6",
+    "@types/react": "19.2.9",
+    "@types/react-dom": "19.2.2",
+    "cross-env": "^7.0.3",
+    "dotenv-cli": "11.0.0",
+    "eslint": "^8",
+    "eslint-config-next": "^15.0.3"
+  }
+}

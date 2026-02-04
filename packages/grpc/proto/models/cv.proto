@@ -1,0 +1,24 @@
+syntax = 'proto3';
+
+package models.cv;
+
+import "google/protobuf/timestamp.proto";
+
+message Cv {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string job = 4;
+  repeated string contacts = 5;
+  repeated string certificates = 6;
+  repeated string languages = 7;
+  repeated string workExperience = 8;
+  repeated string education = 9;
+  repeated string personalProjects = 10;
+  repeated string skills = 11;
+  string alias = 12;
+  bool isPrimary = 13;
+  string fullName = 14;
+  repeated string summary = 15;
+}

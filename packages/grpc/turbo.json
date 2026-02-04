@@ -1,0 +1,15 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "src/**/*.ts",
+        "package.json",
+        "ts-config*.json",
+        "proto/**",
+        "turbo/generators/compile/**"
+      ],
+      "outputs": ["dist/**", "proto/**"]
+    }
+  }
+}

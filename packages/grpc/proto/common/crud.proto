@@ -1,0 +1,66 @@
+syntax = 'proto3';
+
+package common.crud;
+
+enum CrudLogicalOperator {
+  eq = 0;
+  ne = 1;
+  eqs = 2;
+  nes = 3;
+  lt = 4;
+  gt = 5;
+  lte = 6;
+  gte = 7;
+  in = 8;
+  nin = 9;
+  ina = 10;
+  nina = 11;
+  contains = 12;
+  ncontains = 13;
+  containss = 14;
+  ncontainss = 15;
+  between = 16;
+  nbetween = 17;
+  null = 18;
+  nnull = 19;
+  startswith = 20;
+  nstartswith = 21;
+  startswiths = 22;
+  nstartswiths = 23;
+  endswith = 24;
+  nendswith = 25;
+  endswiths = 26;
+  nendswiths = 27;
+}
+
+enum CrudConditionalOperator {
+  or = 0;
+  and = 1;
+}
+
+enum CrudSort {
+  asc = 0;
+  desc = 1;
+}
+
+message CrudLogicalFilter {
+  string field = 1;
+  CrudLogicalOperator operator = 2;
+
+  oneof value {
+    string string = 3;
+    int32 number = 4;
+    bool boolean = 5;
+  }
+}
+
+message CrudConditionalFilter {
+  optional string key = 1;
+  CrudConditionalOperator operator = 2;
+  repeated CrudLogicalFilter value = 3;
+}
+
+message CrudSorter {
+  string field = 1;
+  CrudSort order = 2;
+}

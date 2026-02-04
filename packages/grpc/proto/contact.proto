@@ -1,0 +1,24 @@
+syntax = 'proto3';
+
+package contact;
+
+import "models/contact.proto";
+
+message ContactQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string name = 3;
+  optional bool isPublic = 4;
+}
+
+message ContactRequest {
+  optional ContactQuery query = 1;
+}
+
+message ContactList {
+  repeated models.contact.Contact items = 1;
+}
+
+service ContactService {
+  rpc getMany (ContactRequest) returns (ContactList) {}
+}

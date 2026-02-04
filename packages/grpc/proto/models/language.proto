@@ -1,0 +1,33 @@
+syntax = 'proto3';
+
+package models.language;
+
+import "google/protobuf/timestamp.proto";
+
+enum LanguageLevel {
+  A1 = 0;
+  A2 = 1;
+  B1 = 2;
+  B2 = 3;
+  C1 = 4;
+  C2 = 5;
+}
+
+enum LanguageLevelDescription {
+  BEGINNER = 0;
+  ELEMENTARY = 1;
+  INTERMEDIATE = 2;
+  UPPER_INTERMEDIATE = 3;
+  ADVANCED = 4;
+  FLUENT = 5;
+}
+
+message Language {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string name = 4;
+  LanguageLevel level = 5;
+  LanguageLevelDescription description = 6;
+}
