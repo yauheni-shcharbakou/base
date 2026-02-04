@@ -77,6 +77,13 @@ yarn dev:backend # only backend stuff
 yarn dev:frontend # only frontend stuff
 ```
 
+##### Commands for packages compilation
+
+```shell
+yarn compile
+yarn compile:grpc # run gRPC compiler
+```
+
 ##### Commands for build
 
 ```shell
