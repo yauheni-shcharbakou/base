@@ -25,6 +25,7 @@ My personal website
 >
 > - Nest.js
 > - Mongoose
+> - Microservices
 
 ### Project structure
 
