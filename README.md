@@ -15,7 +15,7 @@ My personal website
 > - Turborepo
 > - gRPC
 
-> Admin
+> Admin panel
 >
 > - Next.js
 > - Refine
