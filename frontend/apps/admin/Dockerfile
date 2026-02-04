@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.2
+
 FROM node:22-alpine AS base
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
