@@ -18,19 +18,17 @@ RUN apk add --no-cache protobuf protobuf-dev
 ARG RAILWAY_SERVICE_ID=backend-auth
 ARG YARN_CACHE_PATH=/usr/local/share/.cache/yarn
 ARG TURBO_CACHE_PATH=/app/.turbo
-ARG YARN_CACHE_ID=s/${RAILWAY_SERVICE_ID}-${YARN_CACHE_PATH}
-ARG TURBO_CACHE_ID=s/${RAILWAY_SERVICE_ID}-${TURBO_CACHE_PATH}
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
 ENV GRPC_COMPILER_CONTEXT=backend
 ENV YARN_CACHE_FOLDER=${YARN_CACHE_PATH}
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=${YARN_CACHE_ID},target=${YARN_CACHE_PATH} \
+RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-${YARN_CACHE_PATH},target=${YARN_CACHE_PATH} \
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
-RUN --mount=type=cache,id=${TURBO_CACHE_ID},target=${TURBO_CACHE_PATH} \
+RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-${TURBO_CACHE_PATH},target=${TURBO_CACHE_PATH} \
     yarn build
-RUN --mount=type=cache,id=${YARN_CACHE_ID},target=${YARN_CACHE_PATH} \
+RUN --mount=type=cache,id=s/${RAILWAY_SERVICE_ID}-${YARN_CACHE_PATH},target=${YARN_CACHE_PATH} \
     yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
