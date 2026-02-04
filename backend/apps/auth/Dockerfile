@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:22-alpine AS base
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -20,14 +21,14 @@ ARG TURBO_CACHE_PATH=/app/.turbo
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
 ENV GRPC_COMPILER_CONTEXT=backend
-ENV YARN_CACHE_FOLDER=$YARN_CACHE_PATH
+ENV YARN_CACHE_FOLDER=${YARN_CACHE_PATH}
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=$YARN_CACHE_ID,target=$YARN_CACHE_PATH \
+RUN --mount=type=cache,id=${YARN_CACHE_ID},target=${YARN_CACHE_PATH} \
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
-RUN --mount=type=cache,id=$TURBO_CACHE_ID,target=$TURBO_CACHE_PATH \
+RUN --mount=type=cache,id=${TURBO_CACHE_ID},target=${TURBO_CACHE_PATH} \
     yarn build
-RUN --mount=type=cache,id=$YARN_CACHE_ID,target=$YARN_CACHE_PATH \
+RUN --mount=type=cache,id=${YARN_CACHE_ID},target=${YARN_CACHE_PATH} \
     yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
