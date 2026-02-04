@@ -1,4 +1,5 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.2
+
 FROM node:22-alpine AS base
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
@@ -14,10 +15,11 @@ RUN turbo prune backend.auth --docker
 
 FROM base AS builder
 RUN apk add --no-cache protobuf protobuf-dev
-ARG YARN_CACHE_ID=backend-auth-yarn-cache
-ARG TURBO_CACHE_ID=backend-auth-turbo-cache
+ARG RAILWAY_SERVICE_ID=backend-auth
 ARG YARN_CACHE_PATH=/usr/local/share/.cache/yarn
 ARG TURBO_CACHE_PATH=/app/.turbo
+ARG YARN_CACHE_ID=s/${RAILWAY_SERVICE_ID}-${YARN_CACHE_PATH}
+ARG TURBO_CACHE_ID=s/${RAILWAY_SERVICE_ID}-${TURBO_CACHE_PATH}
 ENV PATH="/usr/bin:${PATH}"
 ENV PROTO_PATH=protoc
 ENV GRPC_COMPILER_CONTEXT=backend
