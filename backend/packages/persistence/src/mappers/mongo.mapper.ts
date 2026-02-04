@@ -50,7 +50,6 @@ export class MongoMapper<
     }
 
     const trimmed = filter.string.trim();
-    console.log(trimmed);
 
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
       result.value = trimmed;
@@ -59,9 +58,7 @@ export class MongoMapper<
 
     try {
       result.value = JSON.parse(filter.string);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) {}
 
     return result;
   }
@@ -320,8 +317,6 @@ export class MongoMapper<
       const converter = this.converterByFilter.get(filter.operator);
       const generated = converter(parsedFilter);
 
-      console.log('filter', parsedFilter, generated, this.convertFieldName(filter.field));
-
       if (generated === undefined) {
         return;
       }
@@ -346,7 +341,6 @@ export class MongoMapper<
       queryFilter = _.merge(queryFilter, generated);
     });
 
-    console.log('LIST QUERY', queryFilter);
     return queryFilter;
   }
 

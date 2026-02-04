@@ -38,7 +38,6 @@ export async function checkAccess(): Promise<CheckResponse> {
     }
 
     if (!accessToken?.value && refreshToken?.value) {
-      // TODO: add role to refreshToken response
       const authData = await authGrpcRepository.refreshToken({ refreshToken: refreshToken.value });
 
       const accessTokenData = getAccessToken(authData);

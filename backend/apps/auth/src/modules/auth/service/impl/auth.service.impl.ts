@@ -72,8 +72,6 @@ export class AuthServiceImpl implements AuthService {
   ): Promise<Either<NotFoundException | ForbiddenException, GrpcAuthData>> {
     const user = await this.userRepository.getOneInternal({ email: data.login });
 
-    console.log('login', user);
-
     if (user.isLeft()) {
       return left(user.value);
     }

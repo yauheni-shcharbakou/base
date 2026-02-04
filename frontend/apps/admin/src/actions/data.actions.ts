@@ -1,5 +1,6 @@
 'use server';
 
+import { checkAccess } from '@/actions/auth.actions';
 import { userGrpcRepository } from '@/repositories';
 import { AuthDatabaseCollection } from '@packages/common';
 import {
@@ -108,15 +109,21 @@ const convertLogicalFilter = (logicalFilter: LogicalFilter): GrpcCrudLogicalFilt
 };
 
 const getAuthMetadata = async () => {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access-token')?.value;
+  const { authenticated } = await checkAccess();
 
-  if (!token) {
-    return new Metadata();
+  if (!authenticated) {
+    throw new Error('Forbidden');
   }
 
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('access-token')?.value;
+
   const meta = new Metadata();
-  meta.set('access-token', token);
+
+  if (accessToken) {
+    meta.set('access-token', accessToken);
+  }
+
   return meta;
 };
 

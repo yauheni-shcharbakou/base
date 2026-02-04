@@ -6,10 +6,7 @@ import { Request } from 'express';
 export class HttpRequestInterceptor implements NestInterceptor {
   private readonly logger = new Logger(HttpRequestInterceptor.name);
 
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler<any>,
-  ): Observable<any> | Promise<Observable<any>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (context.getType() !== 'http') {
       return next.handle();
     }
