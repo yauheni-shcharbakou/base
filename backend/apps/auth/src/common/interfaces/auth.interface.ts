@@ -6,6 +6,7 @@ export interface AuthJwtPayload {
 export interface AuthJwtPayloadParsed extends AuthJwtPayload {
   id: string;
   login: string;
+  refresh?: true;
   iat: number;
   exp: number;
   iss: string;

@@ -1,13 +1,18 @@
 import { GrpcController } from '@backend/transport';
-import { applyDecorators, SetMetadata, UseGuards } from '@nestjs/common';
+import { applyDecorators, SetMetadata, UseGuards, UseInterceptors } from '@nestjs/common';
 import { MetadataAccessType, MetadataKey } from 'common/enums/metadata.enums';
 import { GrpcAccessGuard } from 'common/guards/grpc-access.guard';
+import { GrpcControllerInterceptor } from 'common/interceptors/grpc.controller.interceptor';
 
 export const PublicAccess = () => SetMetadata(MetadataKey.ACCESS_TYPE, MetadataAccessType.PUBLIC);
 export const AdminAccess = () => SetMetadata(MetadataKey.ACCESS_TYPE, MetadataAccessType.ADMIN);
 
 export const DefaultGrpcController = () => {
-  return applyDecorators(UseGuards(GrpcAccessGuard), GrpcController());
+  return applyDecorators(
+    UseInterceptors(GrpcControllerInterceptor),
+    UseGuards(GrpcAccessGuard),
+    GrpcController(),
+  );
 };
 
 export const PublicGrpcController = () => {

@@ -14,6 +14,7 @@ import { AuthJwtPayload, AuthJwtPayloadParsed } from 'common/interfaces/auth.int
 import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
 import { USER_REPOSITORY, UserRepository } from 'common/repositories/user/user.repository';
 import { Config } from 'config';
+import _ from 'lodash';
 import { AuthService } from 'modules/auth/service/auth.service';
 
 export class AuthServiceImpl implements AuthService {
@@ -26,34 +27,40 @@ export class AuthServiceImpl implements AuthService {
     @Inject(CRYPTO_SERVICE) private readonly cryptoService: CryptoService,
   ) {}
 
+  private getConfiguration() {
+    return this.configService.get('jwt', { infer: true });
+  }
+
   private parsePayload(token: string, isRefresh = false): AuthJwtPayloadParsed | undefined {
     try {
-      return this.jwtService.verify(
+      const configuration = this.getConfiguration();
+      const options = isRefresh ? configuration.refreshToken : configuration.accessToken;
+
+      const payload = this.jwtService.verify<AuthJwtPayloadParsed>(
         token,
-        isRefresh
-          ? this.configService.getOrThrow('jwt.refreshToken.secret', { infer: true })
-          : undefined,
+        _.pick(options, ['secret', 'issuer']),
       );
+
+      if (isRefresh && !payload.refresh) {
+        return;
+      }
+
+      return payload;
     } catch (error) {
       return;
     }
   }
 
   private async generateTokens(payload: AuthJwtPayload): Promise<GrpcAuthTokens> {
-    const refreshSecret = this.configService.getOrThrow('jwt.refreshToken.secret', { infer: true });
-
-    const refreshExpiresIn = this.configService.getOrThrow(
-      'jwt.refreshToken.signOptions.expiresIn',
-      { infer: true },
-    );
+    const configuration = this.getConfiguration();
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload),
-      this.jwtService.signAsync(payload, { secret: refreshSecret, expiresIn: refreshExpiresIn }),
+      this.jwtService.signAsync(payload, configuration.accessToken),
+      this.jwtService.signAsync({ ...payload, refresh: true }, configuration.refreshToken),
     ]);
 
     const accessTokenPayload = this.parsePayload(accessToken);
-    const refreshTokenPayload = this.parsePayload(accessToken, true);
+    const refreshTokenPayload = this.parsePayload(refreshToken, true);
 
     return {
       accessToken: {

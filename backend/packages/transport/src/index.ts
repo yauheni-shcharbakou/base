@@ -2,7 +2,6 @@ export * from './configs';
 export * from './decorators';
 export * from './filters';
 export * from './helpers';
-export * from './interceptors';
 export * from './mappers';
 export * from './modules';
 export * from './pipes';

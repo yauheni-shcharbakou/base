@@ -14,6 +14,19 @@ export class GrpcAccessGuard implements CanActivate {
     private readonly authServiceClient: GrpcAuthServiceClient,
   ) {}
 
+  private checkAccess(accessToken: string, accessType: MetadataAccessType): Observable<boolean> {
+    return this.authServiceClient.me({ accessToken }).pipe(
+      map((user) => {
+        if (accessType === MetadataAccessType.ADMIN && user.role !== GrpcUserRole.ADMIN) {
+          throw new UnauthorizedException('Only admin can use this endpoint');
+        }
+
+        return true;
+      }),
+      GrpcRxPipe.rpcException,
+    );
+  }
+
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const contextType = context.getType();
 
@@ -32,18 +45,13 @@ export class GrpcAccessGuard implements CanActivate {
 
     try {
       const metadata = context.switchToRpc().getContext<Metadata>();
-      const [accessToken] = metadata.get('access-token') as string[];
+      const [accessToken] = (metadata?.get('access-token') as string[]) ?? [];
 
-      return this.authServiceClient.me({ accessToken }).pipe(
-        map((user) => {
-          if (accessType === MetadataAccessType.ADMIN && user.role !== GrpcUserRole.ADMIN) {
-            throw new UnauthorizedException('Only admin can use this endpoint');
-          }
+      if (!accessToken) {
+        throw new UnauthorizedException('Access token not found');
+      }
 
-          return true;
-        }),
-        GrpcRxPipe.rpcException,
-      );
+      return this.checkAccess(accessToken, accessType);
     } catch (error) {
       throw new UnauthorizedException(error.message);
     }

@@ -186,8 +186,10 @@ export async function getList<Entity extends BaseRecord>(
       total: result.total,
     };
   } catch (error) {
-    // @ts-ignore
-    console.error(error);
+    if (error instanceof Error) {
+      console.error(error);
+    }
+
     return { data: [], total: 0 };
   }
 }
