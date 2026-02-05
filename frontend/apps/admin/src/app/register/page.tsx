@@ -1,12 +1,13 @@
-import { checkAccess } from '@/actions/auth.actions';
 import { AuthPage } from '@/components/auth-page';
+import { checkAccessToken } from '@/helpers/auth.helpers';
+import { AuthDatabaseCollection } from '@packages/common';
 import { redirect } from 'next/navigation';
 
 export default async function Register() {
-  const { authenticated, redirectTo } = await checkAccess();
+  const accessToken = await checkAccessToken();
 
-  if (authenticated) {
-    redirect(redirectTo || '/');
+  if (accessToken) {
+    redirect(`/${AuthDatabaseCollection.USER}`);
   }
 
   return <AuthPage type="register" />;

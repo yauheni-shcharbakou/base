@@ -1,6 +1,5 @@
 import { commonConfig } from '@backend/common';
 import { validateEnv } from '@packages/common';
-import { randomUUID } from 'crypto';
 import zod from 'zod';
 
 const env = validateEnv({
@@ -13,23 +12,20 @@ const env = validateEnv({
 
 export const config = () => {
   const common = commonConfig();
-
-  const accessTokenExpiresIn = common.isDevelopment ? '1d' : '10m';
-  const refreshTokenExpiresIn = common.isDevelopment ? '7d' : '1h';
-  const getIssuer = () => (common.isDevelopment ? 'Rayan Hosling' : randomUUID());
+  const issuer = common.isDevelopment ? 'Rayan Hosling' : 'Tyler Durden';
 
   return {
     ...common,
     jwt: {
       accessToken: {
         secret: env.ACCESS_JWT_SECRET,
-        expiresIn: accessTokenExpiresIn,
-        issuer: getIssuer(),
+        expiresIn: common.isDevelopment ? '1d' : '10m',
+        issuer,
       },
       refreshToken: {
         secret: env.REFRESH_JWT_SECRET,
-        expiresIn: refreshTokenExpiresIn,
-        issuer: getIssuer(),
+        expiresIn: common.isDevelopment ? '7d' : '1h',
+        issuer,
       },
     },
     hashing: {

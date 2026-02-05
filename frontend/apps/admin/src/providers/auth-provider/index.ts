@@ -14,10 +14,7 @@ export const authProvider: AuthProvider = {
   check: async () => checkAccess(),
   getIdentity: async () => me(),
   login: async (params: LoginParams): Promise<AuthActionResponse> => {
-    return login({
-      login: params.email,
-      password: params.password,
-    });
+    return login({ login: params.email, password: params.password });
   },
   logout: async () => logout(),
   onError: async (error: any): Promise<OnErrorResponse> => {

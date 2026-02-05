@@ -1,16 +1,7 @@
 'use server';
 
-import { checkAccess } from '@/actions/auth.actions';
-import { userGrpcRepository } from '@/repositories';
-import { AuthDatabaseCollection } from '@packages/common';
-import {
-  GrpcCrudConditionalFilter,
-  GrpcCrudConditionalOperator,
-  GrpcCrudLogicalFilter,
-  GrpcCrudSort,
-  GrpcGetListRequest,
-  GrpcIdField,
-} from '@frontend/grpc';
+import { getAuthMetadata } from '@/helpers/auth.helpers';
+import { convertFilters, convertSorters, getRepository } from '@/helpers/data.helpers';
 import {
   BaseRecord,
   CreateParams,
@@ -19,113 +10,11 @@ import {
   GetListResponse,
   GetOneParams,
   GetOneResponse,
-  LogicalFilter,
   UpdateParams,
   UpdateResponse,
   DeleteOneParams,
   DeleteOneResponse,
 } from '@refinedev/core';
-import _ from 'lodash';
-import { type CallOptions, Metadata } from '@grpc/grpc-js';
-import { cookies } from 'next/headers';
-
-interface DataRepository<Entity extends BaseRecord = BaseRecord> {
-  getById(
-    request: GrpcIdField,
-    metadata?: Metadata,
-    options?: Partial<CallOptions>,
-  ): Promise<Entity>;
-  // getMany(
-  //   request: { ids: string[] },
-  //   metadata?: Metadata,
-  //   options?: Partial<CallOptions>,
-  // ): Promise<{ items: Entity[] }>;
-  getList(
-    request: GrpcGetListRequest,
-    metadata?: Metadata,
-    options?: Partial<CallOptions>,
-  ): Promise<{ items: Entity[]; total: number }>;
-  createOne(
-    request: Partial<Entity>,
-    metadata?: Metadata,
-    options?: Partial<CallOptions>,
-  ): Promise<Entity>;
-  updateById(
-    request: GrpcIdField & { update: { set: Partial<Entity> } },
-    metadata?: Metadata,
-    options?: Partial<CallOptions>,
-  ): Promise<Entity>;
-  deleteById(
-    request: GrpcIdField,
-    metadata?: Metadata,
-    options?: Partial<CallOptions>,
-  ): Promise<Entity>;
-}
-
-const declareRepositories = () => {
-  const repositoryByResource = new Map([[AuthDatabaseCollection.USER, userGrpcRepository]]);
-
-  return <Entity extends BaseRecord>(resource: string): DataRepository<Entity> => {
-    const repository = repositoryByResource.get(resource as any);
-
-    if (!repository) {
-      throw new Error('Repository not found');
-    }
-
-    // @ts-ignore
-    return repository;
-  };
-};
-
-const getRepository = declareRepositories();
-
-const convertLogicalFilter = (logicalFilter: LogicalFilter): GrpcCrudLogicalFilter => {
-  const filter: GrpcCrudLogicalFilter = _.pick(logicalFilter, [
-    'field',
-    'operator',
-  ]) as GrpcCrudLogicalFilter;
-
-  if (_.isString(logicalFilter.value)) {
-    filter.string = logicalFilter.value;
-    return filter;
-  }
-
-  if (_.isNumber(logicalFilter.value)) {
-    filter.number = logicalFilter.value;
-    return filter;
-  }
-
-  if (_.isBoolean(logicalFilter.value)) {
-    filter.boolean = logicalFilter.value;
-    return filter;
-  }
-
-  if (_.isObject(logicalFilter.value)) {
-    filter.string = JSON.stringify(logicalFilter.value);
-    return filter;
-  }
-
-  return filter;
-};
-
-const getAuthMetadata = async () => {
-  const { authenticated } = await checkAccess();
-
-  if (!authenticated) {
-    throw new Error('Forbidden');
-  }
-
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('access-token')?.value;
-
-  const meta = new Metadata();
-
-  if (accessToken) {
-    meta.set('access-token', accessToken);
-  }
-
-  return meta;
-};
 
 export async function getOne<Entity extends BaseRecord>(
   params: GetOneParams,
@@ -143,36 +32,10 @@ export async function getList<Entity extends BaseRecord>(
     const metadata = await getAuthMetadata();
     const repository = getRepository<Entity>(params.resource);
 
-    const conditionalFilters: GrpcCrudConditionalFilter[] = [];
-    const logicalFilters: GrpcCrudLogicalFilter[] = [];
-
-    for (const filter of params.filters ?? []) {
-      if (_.includes(_.values(GrpcCrudConditionalOperator), filter.operator)) {
-        if (!filter.value?.length) {
-          continue;
-        }
-
-        conditionalFilters.push({
-          ...(filter as GrpcCrudConditionalFilter),
-          value: _.map(filter.value, (nestedFilter) => convertLogicalFilter(nestedFilter)),
-        });
-
-        continue;
-      }
-
-      logicalFilters.push(convertLogicalFilter(filter as LogicalFilter));
-    }
-
     const result = await repository.getList(
       {
-        conditionalFilters,
-        logicalFilters,
-        sorters: _.map(params.sorters ?? [], (sorter) => {
-          return {
-            field: sorter.field,
-            order: sorter.order === 'desc' ? GrpcCrudSort.desc : GrpcCrudSort.asc,
-          };
-        }),
+        ...convertFilters(params.filters),
+        sorters: convertSorters(params.sorters),
         pagination: {
           page: params.pagination?.currentPage,
           limit: params.pagination?.pageSize,
@@ -181,10 +44,7 @@ export async function getList<Entity extends BaseRecord>(
       metadata,
     );
 
-    return {
-      data: result.items,
-      total: result.total,
-    };
+    return { data: result.items, total: result.total };
   } catch (error) {
     if (error instanceof Error) {
       console.error(error);

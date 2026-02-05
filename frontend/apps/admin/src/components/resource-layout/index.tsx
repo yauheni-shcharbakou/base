@@ -1,17 +1,17 @@
 'use server';
 
-import { checkAccess } from '@/actions/auth.actions';
 import { Header } from '@/components/header';
 import { Sider } from '@/components/sider';
-import { ThemedLayout, ThemedSider } from '@refinedev/mui';
+import { checkAccessToken } from '@/helpers/auth.helpers';
+import { ThemedLayout } from '@refinedev/mui';
 import { redirect } from 'next/navigation';
 import React, { PropsWithChildren } from 'react';
 
 export const ResourceLayout = async ({ children }: PropsWithChildren) => {
-  const { authenticated, redirectTo } = await checkAccess();
+  const accessToken = await checkAccessToken();
 
-  if (!authenticated) {
-    return redirect(redirectTo || '/login');
+  if (!accessToken) {
+    redirect('/login');
   }
 
   return (
