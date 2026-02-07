@@ -24,7 +24,7 @@ RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/usr/local/shar
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
 RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/app/.turbo,target=/app/.turbo \
-    yarn build
+    yarn build:docker
 RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
     yarn install --ignore-scripts --production --frozen-lockfile --offline
 

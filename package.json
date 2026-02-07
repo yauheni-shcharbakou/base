@@ -5,7 +5,7 @@
   "license": "MIT",
   "version": "0.0.0",
   "scripts": {
-    "postinstall": "yarn compile",
+    "postinstall": "yarn compile -- --force",
     "compile": "turbo run compile",
     "compile:grpc": "turbo run compile --filter=@packages/grpc",
     "dev": "yarn compile && turbo run dev",
@@ -23,6 +23,7 @@
     "build:frontend": "yarn compile && turbo run build --filter=\"frontend.*\"",
     "build:frontend.admin": "yarn compile && turbo run build --filter=frontend.admin",
     "build:grpc": "yarn compile && turbo run build --filter=\"@*/grpc\"",
+    "build:docker": "yarn compile -- --force && turbo run build",
     "prod": "turbo run prod",
     "prod:backend": "turbo run prod --filter=\"backend.*\"",
     "prod:backend.api-gateway": "turbo run prod --filter=backend.api-gateway",
@@ -44,14 +45,14 @@
     "zod": "4.3.5"
   },
   "devDependencies": {
-    "@turbo/gen": "2.8.1",
+    "@turbo/gen": "2.8.3",
     "@types/lodash": "4.14.202",
     "@types/node": "22.19.3",
     "change-case-all": "2.1.0",
     "minimatch": "10.1.1",
     "prettier": "3.7.4",
     "tsup": "8.5.1",
-    "turbo": "2.8.1",
+    "turbo": "2.8.3",
     "typescript": "latest",
     "yarn": "1.22.22"
   },
