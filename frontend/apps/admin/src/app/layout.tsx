@@ -10,7 +10,7 @@ import React, { Suspense } from 'react';
 
 import { ColorModeContextProvider } from '@/contexts/color-mode';
 import { authProvider } from '@/providers/auth-provider';
-import { dataProvider, grpcProvider } from '@/providers/data-provider';
+import { httpDataProvider, grpcDataProvider } from '@/providers/data-provider';
 
 export const metadata: Metadata = {
   title: 'Base admin panel',
@@ -40,8 +40,8 @@ export default async function RootLayout({
                   <Refine
                     routerProvider={routerProvider}
                     dataProvider={{
-                      default: grpcProvider,
-                      http: dataProvider,
+                      default: grpcDataProvider,
+                      http: httpDataProvider,
                     }}
                     notificationProvider={useNotificationProvider}
                     authProvider={authProvider}

@@ -1,27 +1,21 @@
 'use server';
 
-import {
-  clearCookies,
-  checkAccessToken,
-  refreshAuthData,
-  setAuthCookies,
-} from '@/helpers/auth.helpers';
+import { authService } from '@/services';
 import { GrpcAuthLogin, GrpcUser } from '@frontend/grpc';
 import { type AuthActionResponse, CheckResponse } from '@refinedev/core';
-import { authGrpcRepository } from '@/repositories';
 import _ from 'lodash';
 
 export async function checkAccess(): Promise<CheckResponse> {
   try {
-    const accessToken = await checkAccessToken();
+    const hasAuth = await authService.hasAuth();
 
-    if (!accessToken) {
-      await refreshAuthData();
+    if (!hasAuth) {
+      await authService.refreshAuthData();
     }
 
     return { authenticated: true };
   } catch (error) {
-    await clearCookies();
+    await authService.clearCookies();
 
     return {
       authenticated: false,
@@ -33,8 +27,7 @@ export async function checkAccess(): Promise<CheckResponse> {
 
 export async function login(request: GrpcAuthLogin): Promise<AuthActionResponse> {
   try {
-    const authData = await authGrpcRepository.login(request);
-    await setAuthCookies(authData);
+    await authService.login(request);
     return { success: true };
   } catch (error) {
     let errorMessage = 'Unauthorized';
@@ -58,7 +51,7 @@ export async function login(request: GrpcAuthLogin): Promise<AuthActionResponse>
 }
 
 export async function logout(): Promise<AuthActionResponse> {
-  await clearCookies();
+  await authService.clearCookies();
 
   return {
     success: true,
@@ -68,15 +61,9 @@ export async function logout(): Promise<AuthActionResponse> {
 
 export async function me(): Promise<GrpcUser | null> {
   try {
-    let accessToken = await checkAccessToken();
-
-    if (!accessToken) {
-      accessToken = await refreshAuthData();
-    }
-
-    return authGrpcRepository.me({ accessToken });
+    return authService.getCurrentUser();
   } catch (error) {
-    await clearCookies();
+    await authService.clearCookies();
     return null;
   }
 }

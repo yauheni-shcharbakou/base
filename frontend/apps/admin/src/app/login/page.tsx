@@ -1,12 +1,12 @@
 import { AuthPage } from '@/components/auth-page';
-import { checkAccessToken } from '@/helpers/auth.helpers';
+import { authService } from '@/services';
 import { AuthDatabaseCollection } from '@packages/common';
 import { redirect } from 'next/navigation';
 
 export default async function Login() {
-  const accessToken = await checkAccessToken();
+  const hasAuth = await authService.hasAuth();
 
-  if (accessToken) {
+  if (hasAuth) {
     redirect(`/${AuthDatabaseCollection.USER}`);
   }
 

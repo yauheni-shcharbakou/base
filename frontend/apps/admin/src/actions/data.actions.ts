@@ -1,48 +1,39 @@
 'use server';
 
-import { getAuthMetadata } from '@/helpers/auth.helpers';
-import { convertFilters, convertSorters, getRepository } from '@/helpers/data.helpers';
+import { grpcDataMapper } from '@/mappers';
+import { authService, grpcDataService } from '@/services';
+import { GrpcCreateOne, GrpcSingleEntityAction, GrpcUpdateOne } from '@/types/grpc.types';
 import {
   BaseRecord,
-  CreateParams,
   CreateResponse,
   GetListParams,
   GetListResponse,
-  GetOneParams,
   GetOneResponse,
-  UpdateParams,
   UpdateResponse,
-  DeleteOneParams,
   DeleteOneResponse,
 } from '@refinedev/core';
 
-export async function getOne<Entity extends BaseRecord>(
-  params: GetOneParams,
+export async function getOne<Entity extends BaseRecord = BaseRecord>(
+  request: GrpcSingleEntityAction,
 ): Promise<GetOneResponse<Entity>> {
-  const metadata = await getAuthMetadata();
-  const repository = getRepository<Entity>(params.resource);
-  const entity = await repository.getById({ id: params.id.toString() }, metadata);
+  const metadata = await authService.getAuthMetadata();
+
+  const entity = await grpcDataService
+    .getRepository<Entity>(request.resource)
+    .getById({ id: request.id.toString() }, metadata);
+
   return { data: entity };
 }
 
-export async function getList<Entity extends BaseRecord>(
+export async function getList<Entity extends BaseRecord = BaseRecord>(
   params: GetListParams,
 ): Promise<GetListResponse<Entity>> {
   try {
-    const metadata = await getAuthMetadata();
-    const repository = getRepository<Entity>(params.resource);
+    const metadata = await authService.getAuthMetadata();
 
-    const result = await repository.getList(
-      {
-        ...convertFilters(params.filters),
-        sorters: convertSorters(params.sorters),
-        pagination: {
-          page: params.pagination?.currentPage,
-          limit: params.pagination?.pageSize,
-        },
-      },
-      metadata,
-    );
+    const result = await grpcDataService
+      .getRepository<Entity>(params.resource)
+      .getList(grpcDataMapper.convertGetListParams(params), metadata);
 
     return { data: result.items, total: result.total };
   } catch (error) {
@@ -54,37 +45,38 @@ export async function getList<Entity extends BaseRecord>(
   }
 }
 
-export async function createOne<Entity extends BaseRecord, TVariables>(
-  params: CreateParams<TVariables>,
+export async function createOne<Entity extends BaseRecord = BaseRecord>(
+  request: GrpcCreateOne<Entity>,
 ): Promise<CreateResponse<Entity>> {
-  const metadata = await getAuthMetadata();
-  const repository = getRepository<Entity>(params.resource);
-  const entity = await repository.createOne(params.variables as Partial<Entity>, metadata);
+  const metadata = await authService.getAuthMetadata();
+
+  const entity = await grpcDataService
+    .getRepository<Entity>(request.resource)
+    .createOne(request.create, metadata);
+
   return { data: entity };
 }
 
-export async function updateOne<Entity extends BaseRecord, TVariables>(
-  params: UpdateParams<TVariables>,
+export async function updateOne<Entity extends BaseRecord = BaseRecord>(
+  request: GrpcUpdateOne<Entity>,
 ): Promise<UpdateResponse<Entity>> {
-  const metadata = await getAuthMetadata();
-  const repository = getRepository<Entity>(params.resource);
+  const metadata = await authService.getAuthMetadata();
 
-  const entity = await repository.updateById(
-    {
-      id: params.id.toString(),
-      update: { set: params.variables as Partial<Entity> },
-    },
-    metadata,
-  );
+  const entity = await grpcDataService
+    .getRepository<Entity>(request.resource)
+    .updateById({ id: request.id.toString(), update: request.update }, metadata);
 
   return { data: entity };
 }
 
-export async function deleteOne<Entity extends BaseRecord, TVariables>(
-  params: DeleteOneParams<TVariables>,
+export async function deleteOne<Entity extends BaseRecord = BaseRecord>(
+  request: GrpcSingleEntityAction,
 ): Promise<DeleteOneResponse<Entity>> {
-  const metadata = await getAuthMetadata();
-  const repository = getRepository<Entity>(params.resource);
-  const entity = await repository.deleteById({ id: params.id.toString() }, metadata);
+  const metadata = await authService.getAuthMetadata();
+
+  const entity = await grpcDataService
+    .getRepository<Entity>(request.resource)
+    .deleteById({ id: request.id.toString() }, metadata);
+
   return { data: entity };
 }
