@@ -1,4 +1,3 @@
-import { setAuthCookies } from '@/helpers/auth.helpers';
 import { ConfigService } from '@/services/config.service';
 import { authService } from '@/services/index';
 import { GrpcAuthData, GrpcAuthLogin, GrpcAuthRepository, GrpcUserRole } from '@frontend/grpc';
