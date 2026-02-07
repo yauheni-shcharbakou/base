@@ -1,8 +1,14 @@
 import nextPlugin from '@next/eslint-plugin-next';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
-import prettierConfig from 'eslint-config-prettier';
+import eslintPrettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+const prettierConfig = JSON.parse(
+  readFileSync(resolve(import.meta.dirname, '..', '..', '..', '.prettierrc'), 'utf-8'),
+);
 
 export default function nextConfig() {
   return [
@@ -25,7 +31,7 @@ export default function nextConfig() {
         '@typescript-eslint/no-empty-object-type': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unused-vars': ['off', { argsIgnorePattern: '^_' }],
-        'prettier/prettier': 'error',
+        'prettier/prettier': ['error', prettierConfig, { usePrettierrc: false }],
       },
     },
     {
@@ -37,7 +43,7 @@ export default function nextConfig() {
         ...nextPlugin.configs['core-web-vitals'].rules,
       },
     },
-    prettierConfig,
+    eslintPrettierConfig,
     {
       ignores: ['.next/', 'node_modules/', 'dist/', 'out/'],
     },
