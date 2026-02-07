@@ -1,5 +1,5 @@
 {
-  "extends": "@packages/configs/tsconfig/package/nest.tsconfig.json",
+  "extends": "@packages/configs/tsconfig/package/base.tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
     "baseUrl": "./src"

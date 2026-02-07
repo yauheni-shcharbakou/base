@@ -1,10 +1,11 @@
 {
-  "name": "@admin/{{ dashCase name }}",
+  "name": "@frontend/{{ dashCase name }}",
   "private": true,
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
@@ -15,8 +16,7 @@
     "reset": "rm -rf .turbo dist node_modules"
   },
   "dependencies": {
-    "@packages/common": "*",
-    "payload": "3.68.4"
+    "@packages/common": "*"
   },
   "devDependencies": {
     "@packages/configs": "*"

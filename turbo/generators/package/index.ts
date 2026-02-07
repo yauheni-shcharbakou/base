@@ -4,8 +4,8 @@ import { join } from 'path';
 export const packageGenerator = (plop: PlopTypes.NodePlopAPI) => {
   const packageRootByType = new Map([
     ['default', join('{{ turbo.paths.root }}', 'packages', '{{ dashCase name }}')],
-    ['admin', join('{{ turbo.paths.root }}', 'admin/packages', '{{ dashCase name }}')],
     ['backend', join('{{ turbo.paths.root }}', 'backend/packages', '{{ dashCase name }}')],
+    ['frontend', join('{{ turbo.paths.root }}', 'frontend/packages', '{{ dashCase name }}')],
   ]);
 
   const types = Array.from(packageRootByType.keys());
