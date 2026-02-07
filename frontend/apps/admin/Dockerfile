@@ -25,11 +25,12 @@ RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/usr/local/shar
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
 RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/app/.turbo,target=/app/.turbo \
-    yarn build
+    yarn build:docker
 RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
     yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
+ENV HOSTNAME=0.0.0.0
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 USER nextjs

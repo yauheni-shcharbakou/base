@@ -4,6 +4,7 @@ services:
   mongo:
     image: mongo:latest
     restart: unless-stopped
+    container_name: base-mongo
     networks:
       - private_network
     ports:
@@ -14,34 +15,12 @@ services:
       - local
       - all
 
-#  backend:
-#    build:
-#      context: .
-#      dockerfile: ./backend/Dockerfile
-#    restart: unless-stopped
-#    ports:
-#      - '${BACKEND_PORT:-5555}:5555'
-#    environment:
-#      PORT: 5555
-#      NODE_ENV: production
-#      DATABASE_URL: mongodb://mongo:27017
-#      AUTH_GRPC_URL: 0.0.0.0:8001
-#      MAIN_GRPC_URL: 0.0.0.0:8000
-#      ACCESS_JWT_SECRET: string123
-#      REFRESH_JWT_SECRET: string123
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - mongo
-#    profiles:
-#      - all
-
   backend.auth:
     build:
       context: .
       dockerfile: ./backend/apps/auth/Dockerfile
     restart: unless-stopped
+    container_name: base-backend-auth
     ports:
       - '8001:8001'
     environment:
@@ -65,6 +44,7 @@ services:
       context: .
       dockerfile: ./backend/apps/api-gateway/Dockerfile
     restart: unless-stopped
+    container_name: base-backend-api-gateway
     ports:
       - '${BACKEND_PORT:-5555}:5555'
     environment:
@@ -85,10 +65,12 @@ services:
       context: .
       dockerfile: ./frontend/apps/admin/Dockerfile
     restart: unless-stopped
+    container_name: base-frontend-admin
     ports:
       - '${ADMIN_PORT:-3336}:3336'
     environment:
       PORT: 3336
+      HOSTNAME: 0.0.0.0
       NODE_ENV: production
       BACKEND_GRPC_URL: backend.api-gateway:8000
       NEXT_PUBLIC_DEFAULT_EMAIL: admin@gmail.com

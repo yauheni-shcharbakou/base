@@ -2,14 +2,12 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": [
-        "src/**/*.ts",
-        "package.json",
-        "ts-config*.json",
-        "proto/**",
-        "turbo/generators/compile/**"
-      ],
-      "outputs": ["dist/**", "proto/**"]
+      "inputs": ["src/**/*.ts", "package.json", "ts-config*.json", "proto/**", "compiler/**"],
+      "outputs": ["dist/**"]
+    },
+    "compile": {
+      "inputs": ["package.json", "ts-config*.json", "proto/**", "compiler/**"],
+      "outputs": ["src/**"]
     }
   }
 }

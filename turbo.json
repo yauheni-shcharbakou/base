@@ -15,8 +15,6 @@
     "prod": {},
     "format": {},
     "reset": {},
-    "compile": {
-      "cache": false
-    }
+    "compile": {}
   }
 }

@@ -12,12 +12,14 @@
     "dev": "yarn build -- --watch",
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "reset": "rm -rf .turbo dist src node_modules",
-    "compile": "turbo gen compile"
+    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts"
   },
   "devDependencies": {
     "@packages/configs": "*",
     "protobufjs": "7.5.4",
+    "tsconfig-paths": "4.2.0",
     "ts-morph": "27.0.2",
+    "ts-node-dev": "2.0.0",
     "ts-proto": "2.2.5"
   }
 }
