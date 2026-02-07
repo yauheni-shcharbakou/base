@@ -98,9 +98,13 @@ export abstract class BaseAdapter {
     const assetsSrcPath = join(GRPC_PACKAGE_ROOT, 'compiler', 'adapters', this.name, 'assets');
     const assetsDestPath = join(this.targetRoot, '__compiler__');
 
-    const assetsFiles = await readdir(assetsSrcPath, { recursive: true });
+    let assetsFiles: string[] | undefined;
 
-    if (assetsFiles.length) {
+    try {
+      assetsFiles = await readdir(assetsSrcPath, { recursive: true });
+    } catch (error) {}
+
+    if (assetsFiles?.length) {
       this.hasAssets = true;
       await cp(assetsSrcPath, assetsDestPath, { force: true, recursive: true });
     }
