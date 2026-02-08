@@ -4,6 +4,7 @@ import { Box, TextField, MenuItem } from '@mui/material';
 import { GrpcUser, GrpcUserRole } from '@packages/grpc';
 import { Create } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
+import { Controller } from 'react-hook-form';
 
 export default function UserCreate() {
   const {
@@ -11,6 +12,7 @@ export default function UserCreate() {
     refineCore: { formLoading },
     register,
     formState: { errors },
+    control,
   } = useForm<GrpcUser>({});
 
   return (
@@ -38,22 +40,28 @@ export default function UserCreate() {
           name="password"
           required
         />
-        <TextField
-          {...register('role')}
-          select
-          fullWidth
-          label="Role"
-          margin="normal"
-          defaultValue={GrpcUserRole.USER}
-          error={!!errors?.role}
-          helperText={errors?.role?.message?.toString()}
-        >
-          {Object.values(GrpcUserRole).map((role) => (
-            <MenuItem key={role} value={role}>
-              {role}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Controller
+          name={'role'}
+          control={control}
+          render={({ field }) => {
+            return (
+              <TextField
+                {...field}
+                value={field?.value || GrpcUserRole.USER}
+                select
+                label="Role"
+                fullWidth
+                margin="normal"
+              >
+                {Object.values(GrpcUserRole).map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </TextField>
+            );
+          }}
+        />
       </Box>
     </Create>
   );

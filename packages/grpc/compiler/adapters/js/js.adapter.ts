@@ -6,6 +6,7 @@ import { SourceFile } from 'ts-morph';
 
 export class JsAdapter extends BaseAdapter {
   protected addSideEffects(sourceFile: SourceFile): void | Promise<void> {
+    sourceFile.insertText(0, '// @ts-nocheck\n');
     sourceFile.addImportDeclaration({ moduleSpecifier: 'server-only' });
   }
 

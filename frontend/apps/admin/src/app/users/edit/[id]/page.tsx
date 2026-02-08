@@ -1,9 +1,10 @@
 'use client';
 
-import { Box, MenuItem, TextField } from '@mui/material';
+import { Box, Divider, MenuItem, Select, TextField, Typography } from '@mui/material';
 import { GrpcUser, GrpcUserRole } from '@packages/grpc';
 import { Edit } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
+import { Controller } from 'react-hook-form';
 
 export default function UserEdit() {
   const {
@@ -11,6 +12,7 @@ export default function UserEdit() {
     register,
     formState: { errors },
     refineCore: { formLoading, query },
+    control,
   } = useForm<GrpcUser>({});
 
   const entity = query?.data?.data;
@@ -27,7 +29,6 @@ export default function UserEdit() {
           type="email"
           label={'Email'}
           name="email"
-          value={entity?.email ?? ''}
         />
         <TextField
           {...register('password', { minLength: 8, setValueAs: (value) => value || undefined })}
@@ -40,23 +41,28 @@ export default function UserEdit() {
           name="password"
           defaultValue={''}
         />
-        <TextField
-          {...register('role')}
-          select
-          fullWidth
-          label="Role"
-          margin="normal"
-          name="role"
-          value={entity?.role ?? ''}
-          error={!!errors?.role}
-          helperText={errors?.role?.message?.toString()}
-        >
-          {Object.values(GrpcUserRole).map((role) => (
-            <MenuItem key={role} value={role}>
-              {role}
-            </MenuItem>
-          ))}
-        </TextField>
+        <Controller
+          name={'role'}
+          control={control}
+          render={({ field }) => {
+            return (
+              <TextField
+                {...field}
+                value={field?.value || GrpcUserRole.USER}
+                select
+                label="Role"
+                fullWidth
+                margin="normal"
+              >
+                {Object.values(GrpcUserRole).map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </TextField>
+            );
+          }}
+        />
       </Box>
     </Edit>
   );

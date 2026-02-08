@@ -22,22 +22,22 @@ export class AuthService {
   private async setAuthCookies(authData: GrpcAuthData) {
     const cookieStore = await cookies();
 
-    const role = authData.user?.role ?? GrpcUserRole.USER;
-    const accessToken = authData.tokens?.accessToken?.value ?? '';
-    const accessExpireDate = authData.tokens?.accessToken?.expireDate;
-    const refreshToken = authData.tokens?.refreshToken?.value ?? '';
-    const refreshExpiredDate = authData.tokens?.refreshToken?.expireDate;
+    const accessToken = authData.tokens.accessToken.value;
+    const accessExpireDate = authData.tokens.accessToken.expireDate;
 
-    cookieStore.set('role', role, { ...this.cookieConfig, expires: accessExpireDate });
+    cookieStore.set('role', authData.user.role, {
+      ...this.cookieConfig,
+      expires: accessExpireDate,
+    });
 
     cookieStore.set('access-token', accessToken, {
       ...this.cookieConfig,
       expires: accessExpireDate,
     });
 
-    cookieStore.set('refresh-token', refreshToken, {
+    cookieStore.set('refresh-token', authData.tokens.refreshToken.value, {
       ...this.cookieConfig,
-      expires: refreshExpiredDate,
+      expires: authData.tokens.refreshToken.expireDate,
     });
 
     return accessToken;
@@ -93,7 +93,7 @@ export class AuthService {
     const refreshToken = await this.getRefreshToken();
     const authData = await this.authRepository.refreshToken({ refreshToken });
 
-    if (authData.user?.role !== GrpcUserRole.ADMIN) {
+    if (authData.user.role !== GrpcUserRole.ADMIN) {
       throw new Error('Forbidden');
     }
 
