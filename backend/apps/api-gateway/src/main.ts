@@ -8,15 +8,12 @@ import { RpcExceptionFilter } from 'common/filters/rpc-exception.filter';
 import { AppModule } from 'app.module';
 import { HttpRequestInterceptor } from 'common/interceptors/http-request.interceptor';
 import { Config } from 'config';
-import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
   const configService = app.get(ConfigService<Config>);
   const port = configService.get('port', { infer: true });
   const logger = new Logger();
-
-  app.use(cookieParser());
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new RpcExceptionFilter(), new HttpExceptionFilter());

@@ -10,7 +10,7 @@ const fileGrpcClient = new GrpcFileServiceClient(
   {},
 );
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   try {
     const user = await authService.getCurrentUser();
     const chunkSize = configService.getChunkSize();
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    return new Promise((resolve) => {
+    return new Promise<NextResponse>((resolve) => {
       const grpcStream = fileGrpcClient.uploadOne((error, response) => {
         if (error) {
           resolve(NextResponse.json({ message: error.details }, { status: 500 }));
