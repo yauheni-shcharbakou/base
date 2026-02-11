@@ -1,3 +1,4 @@
+import { ONE_MB_BYTES } from '@/constants';
 import { NodeValidationSchema, validateEnv } from '@packages/common';
 import zod from 'zod';
 
@@ -5,8 +6,9 @@ export class ConfigService {
   private readonly env = validateEnv({
     ...NodeValidationSchema,
     BACKEND_GRPC_URL: zod.string().default('0.0.0.0:8000'),
-    NEXT_PUBLIC_DEFAULT_EMAIL: zod.email().default('admin@gmail.com'),
-    NEXT_PUBLIC_DEFAULT_PASSWORD: zod.string().default('string123'),
+    DEFAULT_EMAIL: zod.email().default('admin@gmail.com'),
+    DEFAULT_PASSWORD: zod.string().default('string123'),
+    CHUNK_SIZE_MB: zod.coerce.number().default(1),
   });
 
   public readonly isDevelopment = this.env.NODE_ENV === 'development';
@@ -18,8 +20,8 @@ export class ConfigService {
     },
     defaultAuth: this.isDevelopment
       ? {
-          email: this.env.NEXT_PUBLIC_DEFAULT_EMAIL,
-          password: this.env.NEXT_PUBLIC_DEFAULT_PASSWORD,
+          email: this.env.DEFAULT_EMAIL,
+          password: this.env.DEFAULT_PASSWORD,
         }
       : undefined,
   } as const;
@@ -30,5 +32,9 @@ export class ConfigService {
 
   getDefaultAuth() {
     return this.config.defaultAuth;
+  }
+
+  getChunkSize() {
+    return this.env.CHUNK_SIZE_MB * ONE_MB_BYTES;
   }
 }

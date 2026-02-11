@@ -73,8 +73,9 @@ services:
       HOSTNAME: 0.0.0.0
       NODE_ENV: production
       BACKEND_GRPC_URL: backend.api-gateway:8000
-      NEXT_PUBLIC_DEFAULT_EMAIL: admin@gmail.com
-      NEXT_PUBLIC_DEFAULT_PASSWORD: string123
+      DEFAULT_EMAIL: admin@gmail.com
+      DEFAULT_PASSWORD: string123
+      CHUNK_SIZE_MB: 1
     networks:
       - private_network
       - public_network

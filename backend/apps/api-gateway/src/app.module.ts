@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { GrpcAuthService } from '@backend/grpc';
 import { config } from 'config';
 import { AuthModule } from 'modules/auth/auth.module';
+import { FileModule } from 'modules/file/file.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuthModule } from 'modules/auth/auth.module';
       },
     }),
     AuthModule,
+    FileModule,
   ],
 })
 export class AppModule {}

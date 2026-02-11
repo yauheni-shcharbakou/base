@@ -1,9 +1,10 @@
 'use client';
 
+import { TimestampFields } from '@/components/timestamp-fields';
 import { Stack, Typography } from '@mui/material';
 import { GrpcUser } from '@packages/grpc';
 import { useShow } from '@refinedev/core';
-import { DateField, Show, TextFieldComponent as TextField } from '@refinedev/mui';
+import { Show, TextFieldComponent } from '@refinedev/mui';
 
 export default function UserShow() {
   const { query } = useShow<GrpcUser>();
@@ -13,26 +14,19 @@ export default function UserShow() {
   return (
     <Show isLoading={isLoading}>
       <Stack gap={1}>
-        <Typography variant="body1" fontWeight="bold">
+        <Typography variant="body1" fontWeight="bold" color="info">
           ID
         </Typography>
-        <TextField value={record?.id} />
-        <Typography variant="body1" fontWeight="bold">
+        <TextFieldComponent value={record?.id} />
+        <Typography variant="body1" fontWeight="bold" color="info">
           Email
         </Typography>
-        <TextField value={record?.email} />
-        <Typography variant="body1" fontWeight="bold">
+        <TextFieldComponent value={record?.email} />
+        <Typography variant="body1" fontWeight="bold" color="info">
           Role
         </Typography>
-        <TextField value={record?.role} />
-        <Typography variant="body1" fontWeight="bold">
-          Created at
-        </Typography>
-        <DateField value={record?.createdAt} format="YYYY-MM-DDThh:mm:ssZ" />
-        <Typography variant="body1" fontWeight="bold">
-          Updated at
-        </Typography>
-        <DateField value={record?.updatedAt} format="YYYY-MM-DDThh:mm:ssZ" />
+        <TextFieldComponent value={record?.role} />
+        <TimestampFields record={record} />
       </Stack>
     </Show>
   );

@@ -18,11 +18,6 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // app.enableCors({
-  //   origin: 'http://localhost:3336',
-  //   credentials: true,
-  // });
-
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new RpcExceptionFilter(), new HttpExceptionFilter());
   app.useGlobalInterceptors(new HttpRequestInterceptor());

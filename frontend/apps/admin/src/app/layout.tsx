@@ -1,5 +1,5 @@
 import { DevtoolsProvider } from '@/providers/devtools';
-import { AuthDatabaseCollection } from '@packages/common';
+import { AuthDatabaseCollection, Database, FileDatabaseCollection } from '@packages/common';
 import { Refine } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
 import { RefineSnackbarProvider, useNotificationProvider } from '@refinedev/mui';
@@ -10,7 +10,7 @@ import React, { Suspense } from 'react';
 
 import { ColorModeContextProvider } from '@/contexts/color-mode';
 import { authProvider } from '@/providers/auth-provider';
-import { httpDataProvider, grpcDataProvider } from '@/providers/data-provider';
+import { httpDataProvider, grpcDataProvider, uploadDataProvider } from '@/providers/data-provider';
 
 export const metadata: Metadata = {
   title: 'Base admin panel',
@@ -42,10 +42,24 @@ export default async function RootLayout({
                     dataProvider={{
                       default: grpcDataProvider,
                       http: httpDataProvider,
+                      upload: uploadDataProvider,
                     }}
                     notificationProvider={useNotificationProvider}
                     authProvider={authProvider}
                     resources={[
+                      {
+                        name: Database.AUTH,
+                        meta: {
+                          label: Database.AUTH,
+                        },
+                      },
+                      {
+                        name: Database.FILE,
+                        meta: {
+                          label: Database.FILE,
+                        },
+                      },
+
                       {
                         name: AuthDatabaseCollection.USER,
                         list: `/${AuthDatabaseCollection.USER}`,
@@ -54,8 +68,22 @@ export default async function RootLayout({
                         show: `/${AuthDatabaseCollection.USER}/show/:id`,
                         meta: {
                           canDelete: true,
+                          parent: Database.AUTH,
                         },
                       },
+                      {
+                        name: FileDatabaseCollection.FILE,
+                        list: `/${FileDatabaseCollection.FILE}`,
+                        create: `/${FileDatabaseCollection.FILE}/create`,
+                        edit: `/${FileDatabaseCollection.FILE}/edit/:id`,
+                        show: `/${FileDatabaseCollection.FILE}/show/:id`,
+                        meta: {
+                          canDelete: true,
+                          dataProviderName: 'upload',
+                          parent: Database.FILE,
+                        },
+                      },
+
                       {
                         name: 'blog_posts',
                         list: '/blog-posts',

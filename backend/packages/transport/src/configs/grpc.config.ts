@@ -1,7 +1,13 @@
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import { GrpcAuthService, GrpcContactService, GrpcUserService, PROTO_PATH } from '@backend/grpc';
+import {
+  GrpcAuthService,
+  GrpcContactService,
+  GrpcFileService,
+  GrpcUserService,
+  PROTO_PATH,
+} from '@backend/grpc';
 import { wrappers } from 'protobufjs';
 import zod from 'zod';
 
@@ -25,8 +31,8 @@ declareProtobufWrappers();
 const env = validateEnv({
   API_GATEWAY_GRPC_URL: zod.string().default('0.0.0.0:8000'),
 
-  MAIN_GRPC_URL: zod.string().default('0.0.0.0:8001'),
-  AUTH_GRPC_URL: zod.string().default('0.0.0.0:8002'),
+  AUTH_GRPC_URL: zod.string().default('0.0.0.0:8001'),
+  FILE_GRPC_URL: zod.string().default('0.0.0.0:8002'),
 });
 
 export const grpcConfig = () => {
@@ -50,6 +56,8 @@ export const grpcConfig = () => {
       services: {
         [GrpcAuthService.name]: GrpcAuthService.definition,
         [GrpcUserService.name]: GrpcUserService.definition,
+
+        [GrpcFileService.name]: GrpcFileService.definition,
       },
     },
     auth: {
@@ -63,14 +71,14 @@ export const grpcConfig = () => {
         [GrpcUserService.name]: GrpcUserService.definition,
       },
     },
-    main: {
+    file: {
       transport: Transport.GRPC,
       options: {
         ...commonGrpcOptions,
-        url: env.MAIN_GRPC_URL,
+        url: env.FILE_GRPC_URL,
       },
       services: {
-        [GrpcContactService.name]: GrpcContactService.definition,
+        [GrpcFileService.name]: GrpcFileService.definition,
       },
     },
   } as const;

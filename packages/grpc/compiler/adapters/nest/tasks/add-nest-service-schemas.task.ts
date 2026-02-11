@@ -142,7 +142,7 @@ export class AddNestServiceSchemasTask extends TransformTask {
                                   writer
                                     .writeLine('//@ts-ignore')
                                     .writeLine(
-                                      `return this.client.${methodName}(request).pipe(...proxyPipes);`,
+                                      `return this.client.${methodName}(request, metadata).pipe(...proxyPipes);`,
                                     );
                                 });
                             });
