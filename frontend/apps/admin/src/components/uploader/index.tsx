@@ -50,17 +50,19 @@ export const Uploader: FC<Props> = ({
   };
 
   return (
-    <Card variant="outlined" sx={{ pl: 2, pr: 2 }}>
+    <Card
+      variant="outlined"
+      sx={{ pl: 2, pr: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+    >
       <Typography
         fontWeight="bold"
         color={disabled ? 'textDisabled' : 'info'}
-        align="center"
         sx={{ mb: 2, mt: 2 }}
       >
         {selectedFile?.name ? `File: ${selectedFile.name}, ${fileSize}` : 'File not selected'}
       </Typography>
       {!disabled && errors[formField] && (
-        <Typography variant="caption" color="error" align="center" sx={{ mb: 2, mt: 2 }}>
+        <Typography variant="caption" color="error" sx={{ mb: 2, mt: 2, flexGrow: 1 }}>
           {errors[formField].message?.toString() || 'Problem with file'}
         </Typography>
       )}
@@ -102,7 +104,7 @@ export const Uploader: FC<Props> = ({
         )}
       />
       {isUploading && (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 2 }} width={1}>
           <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
             {progress} %
           </Typography>
