@@ -4,6 +4,12 @@ package models.file;
 
 import "google/protobuf/timestamp.proto";
 
+enum FileType {
+  IMAGE = 0;
+  DOCUMENT = 1;
+  OTHER = 2;
+}
+
 message File {
   string id = 1;
   google.protobuf.Timestamp createdAt = 2;
@@ -15,4 +21,6 @@ message File {
   int32 size = 7;
   string mimeType = 8;
   bool isPublic = 9;
+  FileType type = 10;
+  string extension = 11;
 }

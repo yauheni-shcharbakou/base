@@ -8,7 +8,7 @@ import {
 } from '@backend/persistence';
 import { SchemaFactory } from '@nestjs/mongoose';
 import { FileDatabaseCollection } from '@packages/common';
-import { GrpcFile } from '@backend/grpc';
+import { GrpcFile, GrpcFileType } from '@backend/grpc';
 
 @MongoSchema({ collection: FileDatabaseCollection.FILE })
 export class FileEntity extends MongoEntity implements GrpcFile {
@@ -24,11 +24,17 @@ export class FileEntity extends MongoEntity implements GrpcFile {
   @NumberProp({ required: true })
   size: number;
 
-  @StringProp({ required: true, index: true })
+  @StringProp({ required: true })
   mimeType: string;
 
   @BooleanProp({ required: false, index: true, default: () => false })
   isPublic: boolean;
+
+  @StringProp({ required: true, index: true, enum: GrpcFileType })
+  type: GrpcFileType;
+
+  @StringProp({ required: true, index: true })
+  extension: string;
 }
 
 export const FileSchema = SchemaFactory.createForClass(FileEntity);

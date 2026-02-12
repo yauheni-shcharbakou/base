@@ -14,8 +14,8 @@ export default function FileList() {
     () =>
       new GridColumnsBuilder<GrpcFile>()
         .string('name')
-        .string('mimeType')
-        .boolean('isPublic')
+        .enum('type', { maxWidth: 100 })
+        .boolean('isPublic', { maxWidth: 100 })
         .date('createdAt')
         .date('updatedAt')
         .actions()

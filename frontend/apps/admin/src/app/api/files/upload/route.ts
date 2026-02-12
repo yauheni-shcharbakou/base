@@ -12,6 +12,7 @@ const fileGrpcClient = new GrpcFileServiceClient(
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {
+    const authMetadata = await authService.getAuthMetadata();
     const user = await authService.getCurrentUser();
     const chunkSize = configService.getChunkSize();
 
@@ -25,7 +26,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     return new Promise<NextResponse>((resolve) => {
-      const grpcStream = fileGrpcClient.uploadOne((error, response) => {
+      const grpcStream = fileGrpcClient.uploadOne(authMetadata, (error, response) => {
         if (error) {
           resolve(NextResponse.json({ message: error.details }, { status: 500 }));
         } else {
@@ -69,6 +70,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
     });
   } catch (err) {
-    return NextResponse.json({ message: 'Internal Error' }, { status: 500 });
+    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
   }
 }

@@ -5,11 +5,20 @@ import {
   GrpcFileUpdate,
   GrpcFileUpdateByIdRequest,
   GrpcFileUpdateRequest,
+  GrpcFile,
+  GrpcFileType,
 } from '@backend/grpc';
-import { GrpcFile } from '@frontend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { TransformToBoolean } from 'common/decorators/transform.decorator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { EntityWithTimestampsDto } from 'common/dto/entity-with-timestamps.dto';
@@ -53,6 +62,16 @@ export class FileDto extends EntityWithTimestampsDto implements GrpcFile {
   @IsMongoId()
   @Type(() => String)
   user: string;
+
+  @ApiProperty({ enum: GrpcFileType, enumName: 'GrpcFileType' })
+  @IsNotEmpty()
+  @IsEnum(GrpcFileType)
+  type: GrpcFileType;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  extension: string;
 }
 
 export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
@@ -83,6 +102,16 @@ export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
   @IsMongoId({ each: true })
   @Type(() => String)
   users: string[] = [];
+
+  @ApiProperty({ required: false, enum: GrpcFileType, enumName: 'GrpcFileType' })
+  @IsOptional()
+  @IsEnum(GrpcFileType)
+  type?: GrpcFileType;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  extension?: string;
 }
 
 export class FileRequestDto extends RequestDto(FileQueryDto) implements GrpcFileRequest {}
