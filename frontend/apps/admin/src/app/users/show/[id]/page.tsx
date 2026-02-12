@@ -1,33 +1,20 @@
 'use client';
 
-import { TimestampFields } from '@/components/timestamp-fields';
-import { Stack, Typography } from '@mui/material';
+import { StringEntityField } from '@/components/entity-fields';
+import { RecordView } from '@/components/record-view';
+import { useResourceShow } from '@/hooks/use-resource-show';
 import { GrpcUser } from '@packages/grpc';
-import { useShow } from '@refinedev/core';
-import { Show, TextFieldComponent } from '@refinedev/mui';
+import { Show } from '@refinedev/mui';
 
 export default function UserShow() {
-  const { query } = useShow<GrpcUser>();
-  const { data, isLoading } = query;
-  const record = data?.data;
+  const { isLoading, record } = useResourceShow<GrpcUser>();
 
   return (
     <Show isLoading={isLoading}>
-      <Stack gap={1}>
-        <Typography variant="body1" fontWeight="bold" color="info">
-          ID
-        </Typography>
-        <TextFieldComponent value={record?.id} />
-        <Typography variant="body1" fontWeight="bold" color="info">
-          Email
-        </Typography>
-        <TextFieldComponent value={record?.email} />
-        <Typography variant="body1" fontWeight="bold" color="info">
-          Role
-        </Typography>
-        <TextFieldComponent value={record?.role} />
-        <TimestampFields record={record} />
-      </Stack>
+      <RecordView record={record}>
+        <StringEntityField label="Email" value={record?.email} />
+        <StringEntityField label="Role" value={record?.role} />
+      </RecordView>
     </Show>
   );
 }
