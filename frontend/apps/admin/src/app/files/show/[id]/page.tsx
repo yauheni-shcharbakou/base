@@ -14,6 +14,7 @@ export default function FileShow() {
   return (
     <Show isLoading={isLoading}>
       <RecordView record={record}>
+        <StringEntityField label="User" value={record?.user} />
         <StringEntityField label="Name" value={record?.name} />
         <StringEntityField label="Original name" value={record?.originalName} />
         <StringEntityField label="Size" value={getFileSize(record?.size)} />

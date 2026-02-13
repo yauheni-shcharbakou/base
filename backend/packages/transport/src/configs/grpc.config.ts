@@ -1,13 +1,7 @@
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import {
-  GrpcAuthService,
-  GrpcContactService,
-  GrpcFileService,
-  GrpcUserService,
-  PROTO_PATH,
-} from '@backend/grpc';
+import { GrpcAuthService, GrpcFileService, GrpcUserService, PROTO_PATH } from '@backend/grpc';
 import { wrappers } from 'protobufjs';
 import zod from 'zod';
 

@@ -1,5 +1,5 @@
 import { GrpcFile, GrpcFileUpload } from '@backend/grpc';
-import { Inject, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Logger } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import { FileService } from 'modules/file/service/file.service';
@@ -24,7 +24,10 @@ export class FileServiceImpl implements FileService {
 
   constructor(@Inject(FILE_REPOSITORY) private readonly fileRepository: FileRepository) {}
 
-  uploadOne(stream$: Observable<GrpcFileUpload>): Observable<Either<Error, GrpcFile>> {
+  uploadOne(
+    stream$: Observable<GrpcFileUpload>,
+    user?: string,
+  ): Observable<Either<Error, GrpcFile>> {
     let writeStream: WriteStream;
     let createdFile: GrpcFile;
     let isSuccess = false;
@@ -34,7 +37,11 @@ export class FileServiceImpl implements FileService {
       timeout(10_000),
       concatMap(async (message): Promise<MessageResult> => {
         if (message.create) {
-          const file = await this.fileRepository.saveOne(message.create);
+          if (!user) {
+            throw new BadRequestException(`User is required`);
+          }
+
+          const file = await this.fileRepository.saveOne({ ...message.create, user });
 
           if (file.isLeft()) {
             throw file.value;

@@ -1,4 +1,4 @@
-import { GrpcProxyMethodParams } from '@backend/grpc';
+import { GrpcProxyMethodParams, GrpcProxyStreamMethodParams } from '@backend/grpc';
 import { applyDecorators, Type } from '@nestjs/common';
 import { ValidateGrpcPayload } from 'decorators/grpc.validate-payload.decorator';
 
@@ -41,6 +41,17 @@ export const GrpcProxyMethod = (params?: GrpcProxyMethodParams): MethodDecorator
   if (parsedParams.dto) {
     appliedDecorators.push(ValidateGrpcPayload(parsedParams.dto));
   }
+
+  if (parsedParams.decorators) {
+    appliedDecorators.push(...parsedParams.decorators);
+  }
+
+  return applyDecorators(...appliedDecorators);
+};
+
+export const GrpcProxyStreamMethod = (params?: GrpcProxyStreamMethodParams): MethodDecorator => {
+  const appliedDecorators: MethodDecorator[] = [];
+  const parsedParams = parseParams(params);
 
   if (parsedParams.decorators) {
     appliedDecorators.push(...parsedParams.decorators);

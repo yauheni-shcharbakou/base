@@ -1,16 +1,10 @@
-import {
-  GrpcFile,
-  GrpcFileCreate,
-  GrpcFileQuery,
-  GrpcFileType,
-  GrpcFileUpdate,
-} from '@backend/grpc';
+import { GrpcFile, GrpcFileQuery, GrpcFileType, GrpcFileUpdate } from '@backend/grpc';
 import { CreateOf, MongoRepositoryImpl } from '@backend/persistence';
 import { InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Either } from '@sweet-monads/either';
 import { FileEntity } from 'common/entities/file.entity';
-import { FileRepository } from 'common/repositories/file/file.repository';
+import { FileCreate, FileRepository } from 'common/repositories/file/file.repository';
 import { FileMapper } from 'common/repositories/file/mappers/file.mapper';
 import { Model } from 'mongoose';
 import { extname } from 'node:path';
@@ -57,9 +51,7 @@ export class FileRepositoryImpl
     ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', GrpcFileType.DOCUMENT],
   ]);
 
-  async saveOne(
-    createData: GrpcFileCreate,
-  ): Promise<Either<InternalServerErrorException, GrpcFile>> {
+  async saveOne(createData: FileCreate): Promise<Either<InternalServerErrorException, GrpcFile>> {
     const extension = extname(createData.originalName).replace(/^./g, '');
     const type = this.typeByMimeType.get(createData.mimeType) ?? GrpcFileType.OTHER;
     return super.saveOne({ ...createData, extension, type });

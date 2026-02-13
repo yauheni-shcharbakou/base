@@ -1,4 +1,5 @@
 import { GrpcRxPipe, InjectGrpcService } from '@backend/transport';
+import { Metadata } from '@grpc/grpc-js';
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GrpcAuthServiceClient, GrpcAuthService } from '@backend/grpc';

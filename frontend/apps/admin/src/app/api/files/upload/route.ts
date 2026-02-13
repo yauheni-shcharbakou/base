@@ -13,7 +13,6 @@ const fileGrpcClient = new GrpcFileServiceClient(
 export async function POST(req: Request): Promise<NextResponse> {
   try {
     const authMetadata = await authService.getAuthMetadata();
-    const user = await authService.getCurrentUser();
     const chunkSize = configService.getChunkSize();
 
     const formData = await req.formData();
@@ -35,7 +34,6 @@ export async function POST(req: Request): Promise<NextResponse> {
       });
 
       const createData: GrpcFileCreate = {
-        user: user.id,
         name: name || file.name,
         originalName: file.name,
         size: file.size,

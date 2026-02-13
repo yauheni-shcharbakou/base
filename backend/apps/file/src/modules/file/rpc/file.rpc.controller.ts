@@ -1,5 +1,5 @@
 import { unwrapEither } from '@backend/common';
-import { GrpcController } from '@backend/transport';
+import { GrpcController, GrpcMetadataMapper } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { Inject } from '@nestjs/common';
 import {
@@ -35,11 +35,13 @@ export class FileRpcController implements GrpcFileServiceController {
   }
 
   createOne(request: GrpcFileCreate, metadata?: Metadata): Observable<GrpcFile> {
-    return fromPromise(this.fileRepository.saveOne(request)).pipe(unwrapEither());
+    const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    return fromPromise(this.fileRepository.saveOne({ ...request, user })).pipe(unwrapEither());
   }
 
   uploadOne(request: Observable<GrpcFileUpload>, metadata?: Metadata): Observable<GrpcFile> {
-    return this.fileService.uploadOne(request).pipe(unwrapEither());
+    const metaUser = new GrpcMetadataMapper(metadata).get('user');
+    return this.fileService.uploadOne(request, metaUser).pipe(unwrapEither());
   }
 
   updateById(request: GrpcFileUpdateByIdRequest, metadata?: Metadata): Observable<GrpcFile> {
