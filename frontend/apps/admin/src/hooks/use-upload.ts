@@ -2,7 +2,7 @@
 
 import { getErrorMessage } from '@/helpers/error.helpers';
 import { internalHttpClient } from '@/helpers/http.helpers';
-import { CreateResponse, UpdateResponse, useNotification } from '@refinedev/core';
+import { BaseRecord, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 
 type Params = {
@@ -15,13 +15,10 @@ export const useUpload = ({ resource }: Params) => {
 
   const { open } = useNotification();
 
-  const handleUpload = async <UploadResponse = any>(
+  const handleUpload = async <UploadResponse extends BaseRecord = BaseRecord>(
     formData: FormData,
     file?: File,
-    onSuccess?: (
-      data: UploadResponse,
-    ) => Promise<CreateResponse<any> | UpdateResponse<any> | void> | void,
-  ) => {
+  ): Promise<UploadResponse | undefined> => {
     if (!file) {
       return;
     }
@@ -30,26 +27,31 @@ export const useUpload = ({ resource }: Params) => {
     setProgress(() => 0);
 
     try {
-      const response = await internalHttpClient.post(`${resource}/upload`, formData, {
-        onUploadProgress: (progressEvent) => {
-          const total = progressEvent.total || file.size;
-          const current = progressEvent.loaded;
-          const percentCompleted = Math.round((current * 100) / total);
+      const response = await internalHttpClient.post<UploadResponse>(
+        `${resource}/upload`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const total = progressEvent.total || file.size;
+            const current = progressEvent.loaded;
+            const percentCompleted = Math.round((current * 100) / total);
 
-          setProgress(() => percentCompleted);
+            setProgress(() => percentCompleted);
+          },
         },
-      });
+      );
 
-      await onSuccess?.(response.data);
+      return response.data;
     } catch (error) {
       open?.({
         type: 'error',
         message: 'Upload error',
         description: getErrorMessage(error),
-        key: `${resource}-upload-error`,
+        key: `${resource}-upload-error-${Date.now()}`,
       });
 
       setIsUploading(() => false);
+      return;
     }
   };
 

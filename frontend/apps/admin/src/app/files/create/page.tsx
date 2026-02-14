@@ -1,10 +1,12 @@
 'use client';
 
 import { Uploader } from '@/components/uploader';
+import { ONE_MB_BYTES } from '@/constants';
 import { useUpload } from '@/hooks/use-upload';
 import { Box, Checkbox, FormControlLabel, TextField } from '@mui/material';
 import { FileDatabaseCollection } from '@packages/common';
-import React, { useEffect, useState } from 'react';
+import { GrpcFile } from '@packages/grpc';
+import React from 'react';
 import { Create } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
 import { Controller } from 'react-hook-form';
@@ -16,30 +18,18 @@ type CreateForm = {
 };
 
 export default function FileCreate() {
-  const [isMounted, setIsMounted] = useState(false);
-
   const { isUploading, progress, handleUpload } = useUpload({
     resource: FileDatabaseCollection.FILE,
   });
 
   const {
     watch,
-    formState: { errors },
+    formState: { errors, isValid },
     control,
     setValue,
-    refineCore: { onFinish },
+    refineCore: { onFinish, formLoading },
     handleSubmit,
-  } = useForm<CreateForm>({
-    refineCoreProps: {
-      queryOptions: {
-        enabled: isMounted,
-      },
-    },
-  });
-
-  useEffect(() => {
-    setIsMounted(() => true);
-  }, []);
+  } = useForm<CreateForm>();
 
   const handleFileChange = (file?: File) => {
     setValue('name', file?.name ?? '');
@@ -55,16 +45,22 @@ export default function FileCreate() {
       formData.append('file', data.file);
     }
 
-    await handleUpload(formData, data.file, onFinish);
+    const createdFile = await handleUpload<GrpcFile>(formData, data.file);
+
+    if (!createdFile) {
+      return;
+    }
+
+    await onFinish(createdFile);
   };
 
   return (
     <Create
       saveButtonProps={{
         onClick: handleSubmit(handleSave),
-        disabled: isUploading,
+        disabled: formLoading || !isValid || isUploading,
       }}
-      isLoading={!isMounted}
+      isLoading={formLoading}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Controller
@@ -104,6 +100,9 @@ export default function FileCreate() {
           progress={progress}
           isUploading={isUploading}
           onChange={handleFileChange}
+          required
+          maxSize={100 * ONE_MB_BYTES}
+          types={['image/*', 'text/*', 'application/*', 'audio/*']}
         />
       </Box>
     </Create>
