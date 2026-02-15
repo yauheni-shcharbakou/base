@@ -1,3 +1,4 @@
+import { Checkbox } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import { BaseRecord } from '@refinedev/core';
 import { DateField, DeleteButton, EditButton, ShowButton } from '@refinedev/mui';
@@ -46,6 +47,8 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
   enum(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'singleSelect'),
+      align: 'center',
+      headerAlign: 'center',
       ...options,
     });
 
@@ -77,6 +80,11 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     this.columns.push({
       ...this.getDefaultProps(field, 'boolean'),
       width: 50,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: function render({ value }) {
+        return <Checkbox value={value} checked={value ?? false} disabled />;
+      },
       ...options,
     });
 

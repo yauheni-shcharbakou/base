@@ -34,3 +34,11 @@ export const grpcDataProvider: DataProvider = {
     return deleteOne<any>({ resource: params.resource, id: params.id.toString() });
   },
 };
+
+export const uploadDataProvider: DataProvider = {
+  ...grpcDataProvider,
+  getApiUrl: (): string => '/api',
+  create: async (params: CreateParams<any>) => {
+    return params.variables;
+  },
+};

@@ -7,6 +7,7 @@ export enum MigrationStatus {
 export enum Database {
   AUTH = 'auth',
   MAIN = 'main',
+  FILE = 'file',
 }
 
 export enum AdminCollectionGroup {
@@ -21,6 +22,11 @@ export enum CommonDatabaseCollection {
 
 export enum AuthDatabaseCollection {
   USER = 'users',
+}
+
+export enum FileDatabaseCollection {
+  FILE = 'files',
+  VIDEO = 'videos',
 }
 
 export enum MainDatabaseCollection {

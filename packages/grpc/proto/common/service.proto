@@ -9,6 +9,10 @@ message IdField {
   string id = 1;
 }
 
+message IdsField {
+  repeated string ids = 1;
+}
+
 message EntityWithTimestamps {
   string id = 1;
   google.protobuf.Timestamp createdAt = 2;

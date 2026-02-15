@@ -62,13 +62,6 @@ const lightTheme = createTheme({
     primary: {
       main: '#42a5f6',
     },
-    // secondary: {
-    //   main: '#c41442',
-    // },
-    // background: {
-    //   default: '#ffffff',
-    //   paper: '#dcdcdc',
-    // },
   },
 });
 

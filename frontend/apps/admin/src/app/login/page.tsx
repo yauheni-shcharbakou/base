@@ -3,7 +3,7 @@ import { authService } from '@/services';
 import { AuthDatabaseCollection } from '@packages/common';
 import { redirect } from 'next/navigation';
 
-export default async function Login() {
+export default async function LoginPage() {
   const hasAuth = await authService.hasAuth();
 
   if (hasAuth) {

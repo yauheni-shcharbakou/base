@@ -11,12 +11,15 @@ export default function UserCreate() {
     saveButtonProps,
     refineCore: { formLoading },
     register,
-    formState: { errors },
+    formState: { errors, isValid },
     control,
   } = useForm<GrpcUser>({});
 
   return (
-    <Create isLoading={formLoading} saveButtonProps={saveButtonProps}>
+    <Create
+      isLoading={formLoading}
+      saveButtonProps={{ ...saveButtonProps, disabled: !isValid || formLoading }}
+    >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }} autoComplete="off">
         <TextField
           {...register('email', { required: true })}

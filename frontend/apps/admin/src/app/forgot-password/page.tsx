@@ -3,7 +3,7 @@ import { authService } from '@/services';
 import { AuthDatabaseCollection } from '@packages/common';
 import { redirect } from 'next/navigation';
 
-export default async function ForgotPassword() {
+export default async function ForgotPasswordPage() {
   const hasAuth = await authService.hasAuth();
 
   if (hasAuth) {

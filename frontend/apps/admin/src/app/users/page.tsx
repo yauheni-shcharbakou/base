@@ -5,7 +5,7 @@ import { useResourceList } from '@/hooks/use-resource-list';
 import { GridColumnsBuilder } from '@/utils/grid-columns.builder';
 import { type GridColDef } from '@mui/x-data-grid';
 import { GrpcUser } from '@packages/grpc';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 export default function UserList() {
   const { dataGridProps, isMounted } = useResourceList<GrpcUser>();
