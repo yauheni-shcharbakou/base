@@ -34,6 +34,10 @@ message FileGetListResponse {
   int32 total = 2;
 }
 
+message FileSignedUrls {
+  map<string, string> urls = 1;
+}
+
 // create
 
 message FileCreate {
@@ -76,6 +80,7 @@ message FileUpdateByIdRequest {
 }
 
 service FileService {
+  rpc getSignedUrls (common.service.BaseQuery) returns (FileSignedUrls) {}
   rpc getById (common.service.IdField) returns (models.file.File) {}
   rpc getList (common.service.GetListRequest) returns (FileGetListResponse) {}
   rpc createOne (FileCreate) returns (models.file.File) {}

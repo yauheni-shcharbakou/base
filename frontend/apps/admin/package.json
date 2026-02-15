@@ -46,7 +46,6 @@
     "@types/js-cookie": "^3.0.6",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.2",
-    "cross-env": "^7.0.3",
-    "dotenv-cli": "11.0.0"
+    "cross-env": "^7.0.3"
   }
 }

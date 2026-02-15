@@ -24,7 +24,7 @@ export class NestAdapter extends BaseAdapter {
       '--ts_proto_opt=snakeToCamel=false',
       '--ts_proto_opt=unrecognizedEnum=false',
       '--ts_proto_opt=stringEnums=true',
-      '--ts_proto_opt=useMapType=true',
+      '--ts_proto_opt=useMapType=false',
       '--ts_proto_opt=addGrpcMetadata=true',
       '--ts_proto_opt=useSnakeTypeName=false',
       '--ts_proto_opt=typePrefix=Grpc',

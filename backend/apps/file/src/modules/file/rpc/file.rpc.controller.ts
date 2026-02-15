@@ -3,11 +3,13 @@ import { GrpcController, GrpcMetadataMapper } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { Inject } from '@nestjs/common';
 import {
+  GrpcBaseQuery,
   GrpcFile,
   GrpcFileCreate,
   GrpcFileGetListResponse,
   GrpcFileService,
   GrpcFileServiceController,
+  GrpcFileSignedUrls,
   GrpcFileUpdateByIdRequest,
   GrpcFileUpload,
   GrpcGetListRequest,
@@ -25,6 +27,10 @@ export class FileRpcController implements GrpcFileServiceController {
     @Inject(FILE_REPOSITORY) private readonly fileRepository: FileRepository,
     @Inject(FILE_SERVICE) private readonly fileService: FileService,
   ) {}
+
+  getSignedUrls(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcFileSignedUrls> {
+    return this.fileService.getSignedUrls(request);
+  }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {
     return fromPromise(this.fileRepository.getById(request.id)).pipe(unwrapEither());
@@ -51,6 +57,6 @@ export class FileRpcController implements GrpcFileServiceController {
   }
 
   deleteById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {
-    return fromPromise(this.fileRepository.deleteById(request.id)).pipe(unwrapEither());
+    return this.fileService.deleteById(request.id).pipe(unwrapEither());
   }
 }

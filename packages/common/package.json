@@ -14,9 +14,6 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "reset": "rm -rf .turbo dist node_modules"
   },
-  "dependencies": {
-    "dotenv": "17.2.3"
-  },
   "devDependencies": {
     "@packages/configs": "*"
   }

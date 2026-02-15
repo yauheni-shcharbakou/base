@@ -1,13 +1,28 @@
-import { GrpcFile, GrpcFileUpload } from '@backend/grpc';
-import { BadRequestException, Inject, Logger } from '@nestjs/common';
+import { GrpcBaseQuery, GrpcFile, GrpcFileSignedUrls, GrpcFileUpload } from '@backend/grpc';
+import { BadRequestException, HttpException, Inject, Logger } from '@nestjs/common';
+import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
+import {
+  FILE_STORAGE_SERVICE,
+  FileStorageService,
+} from 'common/services/file-storage/file-storage.service';
+import _ from 'lodash';
 import { FileService } from 'modules/file/service/file.service';
-import { WriteStream, createWriteStream } from 'fs';
-import { existsSync, unlinkSync } from 'node:fs';
-import { catchError, concatMap, filter, finalize, map, Observable, of, take, timeout } from 'rxjs';
-import { join } from 'path';
-import { extname } from 'node:path';
+import { PassThrough } from 'node:stream';
+import {
+  catchError,
+  concatMap,
+  filter,
+  finalize,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  switchMap,
+  take,
+  timeout,
+} from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 
 type MessageResult =
@@ -22,19 +37,55 @@ type MessageResult =
 export class FileServiceImpl implements FileService {
   private readonly logger = new Logger(FileServiceImpl.name);
 
-  constructor(@Inject(FILE_REPOSITORY) private readonly fileRepository: FileRepository) {}
+  constructor(
+    @Inject(FILE_REPOSITORY) private readonly fileRepository: FileRepository,
+    @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
+  ) {}
+
+  getSignedUrls(request: GrpcBaseQuery): Observable<GrpcFileSignedUrls> {
+    return fromPromise(this.fileRepository.getMany(request)).pipe(
+      concatMap(async (files) => {
+        const urls: GrpcFileSignedUrls['urls'] = {};
+
+        await Promise.all(
+          _.map(files, async (file) => {
+            const url = await firstValueFrom(this.fileStorageService.getFileSignedUrl(file));
+
+            if (url.isRight()) {
+              urls[file.id] = url.value;
+            }
+          }),
+        );
+
+        return { urls };
+      }),
+    );
+  }
+
+  deleteById(id: string): Observable<Either<HttpException, GrpcFile>> {
+    return fromPromise(this.fileRepository.deleteById(id)).pipe(
+      switchMap((file) => {
+        if (file.isLeft()) {
+          return of(left(file.value));
+        }
+
+        return this.fileStorageService.deleteFile(file.value).pipe(map((_) => right(file.value)));
+      }),
+    );
+  }
 
   uploadOne(
-    stream$: Observable<GrpcFileUpload>,
+    request$: Observable<GrpcFileUpload>,
     user?: string,
   ): Observable<Either<Error, GrpcFile>> {
-    let writeStream: WriteStream;
     let createdFile: GrpcFile;
     let isSuccess = false;
-    let filePath: string;
+    let uploadPromise: Promise<any>;
 
-    return stream$.pipe(
-      timeout(10_000),
+    const upload$ = new PassThrough();
+
+    return request$.pipe(
+      timeout(30_000),
       concatMap(async (message): Promise<MessageResult> => {
         if (message.create) {
           if (!user) {
@@ -48,35 +99,13 @@ export class FileServiceImpl implements FileService {
           }
 
           createdFile = file.value;
-
-          filePath = join(
-            process.cwd(),
-            'uploads',
-            `${createdFile.id + extname(createdFile.originalName)}`,
-          );
-
-          writeStream = createWriteStream(filePath);
+          uploadPromise = firstValueFrom(this.fileStorageService.uploadFile(createdFile, upload$));
           return { phase: 'create', file: createdFile };
         }
 
-        if (message.chunk && writeStream) {
-          const buffer = Buffer.from(message.chunk);
-
-          return new Promise((resolve, reject) => {
-            const canWrite = writeStream.write(buffer, (err) => {
-              if (err) {
-                reject(err);
-              }
-
-              if (canWrite) {
-                resolve({ phase: 'chunk' });
-              }
-            });
-
-            if (!canWrite) {
-              writeStream.once('drain', () => resolve({ phase: 'chunk' }));
-            }
-          });
+        if (message.chunk) {
+          await sendToWritable(upload$, Buffer.from(message.chunk));
+          return { phase: 'chunk' };
         }
 
         if (message.isFinished) {
@@ -95,11 +124,8 @@ export class FileServiceImpl implements FileService {
           throw new Error('No data received');
         }
 
-        if (writeStream) {
-          await new Promise((resolve, reject) => {
-            writeStream.end((err?: Error) => (err ? reject(err) : resolve(null)));
-          });
-        }
+        upload$.end();
+        await uploadPromise;
 
         isSuccess = true;
         this.logger.log(`File ${createdFile.id} uploaded`);
@@ -108,6 +134,8 @@ export class FileServiceImpl implements FileService {
       catchError((err) => {
         this.logger.error('File upload error:', err.message, err.stack);
         const errorResult = left(err);
+
+        upload$.destroy();
 
         if (!createdFile?.id) {
           return of(errorResult);
@@ -118,14 +146,14 @@ export class FileServiceImpl implements FileService {
         );
       }),
       finalize(() => {
-        if (writeStream && !writeStream.destroyed) {
-          writeStream.destroy();
-        }
+        if (!isSuccess) {
+          if (!upload$.destroyed) {
+            upload$.destroy();
+          }
 
-        if (!isSuccess && createdFile && filePath && existsSync(filePath)) {
-          try {
-            unlinkSync(filePath);
-          } catch (e) {}
+          if (createdFile) {
+            this.fileStorageService.deleteFile(createdFile);
+          }
         }
       }),
     );

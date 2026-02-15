@@ -15,6 +15,7 @@
     "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts"
   },
   "devDependencies": {
+    "@grpc/grpc-js": "1.14.3",
     "@packages/configs": "*",
     "@sweet-monads/either": "3.3.1",
     "protobufjs": "7.5.4",

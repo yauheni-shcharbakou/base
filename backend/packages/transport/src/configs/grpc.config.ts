@@ -35,6 +35,7 @@ export const grpcConfig = () => {
       arrays: true,
       keepCase: true,
       defaults: true,
+      objects: true,
       enums: String,
       includeDirs: [PROTO_PATH],
     },
