@@ -1,14 +1,8 @@
+import { fileGrpcClient } from '@/grpc/clients';
 import { authService, configService } from '@/services';
-import { GrpcFileServiceClient, GrpcFileCreate } from '@frontend/grpc';
-import { ChannelCredentials } from '@grpc/grpc-js';
+import { GrpcFileCreate } from '@frontend/grpc';
 import { sendToGrpcStream } from '@packages/common';
 import { NextResponse } from 'next/server';
-
-const fileGrpcClient = new GrpcFileServiceClient(
-  configService.getGrpcUrl(),
-  ChannelCredentials.createInsecure(),
-  {},
-);
 
 export async function POST(req: Request): Promise<NextResponse> {
   try {

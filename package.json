@@ -8,7 +8,7 @@
     "postinstall": "yarn compile -- --force",
     "compile": "turbo run compile",
     "compile:grpc": "turbo run compile --filter=@packages/grpc",
-    "dev": "turbo run dev",
+    "dev": "yarn compile && turbo run dev",
     "dev:backend": "yarn compile && turbo run dev --filter=\"backend.*\"",
     "dev:backend.api-gateway": "yarn compile && turbo run dev --filter=backend.api-gateway",
     "dev:backend.auth": "yarn compile && turbo run dev --filter=backend.auth",

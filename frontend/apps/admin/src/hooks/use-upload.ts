@@ -39,6 +39,8 @@ export const useUpload = ({ resource }: Params) => {
             setProgress(() => percentCompleted);
           },
           timeout: 0,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
         },
       );
 

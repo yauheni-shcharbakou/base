@@ -31,7 +31,7 @@ export const BooleanEntityField: FC<BooleanFieldProps> = ({ label, value }: Bool
       <Typography variant="body1" fontWeight="bold" color="info">
         {label}
       </Typography>
-      <BooleanField value={value} />
+      <BooleanField value={value} disableHoverListener />
     </>
   );
 };

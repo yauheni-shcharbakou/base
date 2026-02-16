@@ -18,6 +18,8 @@ import { Config } from 'config';
         return {
           baseURL: `${url}/${zone}`,
           timeout: 0,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
           headers: {
             AccessKey: apiKey,
           },
