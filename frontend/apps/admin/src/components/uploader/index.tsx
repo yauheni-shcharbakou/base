@@ -142,7 +142,7 @@ export const Uploader: FC<Props> = ({
               {isUploading && (
                 <Box width={1}>
                   <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
-                    {progress} %
+                    {progress?.toFixed(2)} %
                   </Typography>
                   <LinearProgress variant="determinate" value={progress} />
                 </Box>

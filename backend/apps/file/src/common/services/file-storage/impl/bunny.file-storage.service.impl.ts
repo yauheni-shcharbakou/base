@@ -62,6 +62,7 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
       .put(this.getFilePath(file), upload$, {
         headers: {
           'Content-Type': 'application/octet-stream',
+          'Content-Length': file.size.toString(),
         },
       })
       .pipe(map(() => true));

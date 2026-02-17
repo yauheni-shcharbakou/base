@@ -36,16 +36,14 @@ export default function FileCreate() {
   };
 
   const handleSave = async (data: CreateForm) => {
-    const formData = new FormData();
-
-    formData.append('name', data.name ?? '');
-    formData.append('isPublic', data.isPublic ? 'true' : 'false');
-
-    if (data.file) {
-      formData.append('file', data.file);
+    if (!data.file) {
+      return;
     }
 
-    const createdFile = await handleUpload<GrpcFile>(formData, data.file);
+    const createdFile = await handleUpload<GrpcFile>(data.file, {
+      name: data.name || '',
+      isPublic: data.isPublic,
+    });
 
     if (!createdFile) {
       return;

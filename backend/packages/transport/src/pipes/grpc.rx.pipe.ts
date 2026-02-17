@@ -1,4 +1,5 @@
-import { RpcException } from '@nestjs/microservices';
+import { Either } from '@sweet-monads/either';
+import { GrpcExceptionMapper } from 'mappers';
 import { catchError, map, Observable, OperatorFunction, pipe, throwError } from 'rxjs';
 
 export class GrpcRxPipe {
@@ -9,7 +10,9 @@ export class GrpcRxPipe {
    */
   static get rpcException(): <T>(source: Observable<T>) => Observable<T> {
     return <T>(source: Observable<T>) => {
-      return source.pipe(catchError((exception) => throwError(() => new RpcException(exception))));
+      return source.pipe(
+        catchError((exception) => throwError(() => GrpcExceptionMapper.toRpcException(exception))),
+      );
     };
   }
 
@@ -25,5 +28,20 @@ export class GrpcRxPipe {
     }
 
     return pipe(map(mapper), GrpcRxPipe.rpcException);
+  }
+
+  static get unwrapEither() {
+    return <L, R>(source: Observable<Either<L, R>>): Observable<R> => {
+      return source.pipe(
+        map((data) => {
+          if (data.isLeft()) {
+            throw GrpcExceptionMapper.toRpcException(data.value);
+          }
+
+          return data.value;
+        }),
+        catchError((exception) => throwError(() => GrpcExceptionMapper.toRpcException(exception))),
+      );
+    };
   }
 }

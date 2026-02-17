@@ -1,4 +1,5 @@
 import { Metadata } from '@grpc/grpc-js';
+import { BadRequestException } from '@nestjs/common';
 import _ from 'lodash';
 
 export class GrpcMetadataMapper {
@@ -26,7 +27,7 @@ export class GrpcMetadataMapper {
     const [value] = this.getArray(field);
 
     if (!value) {
-      throw new Error(`Grpc meta field ${field} is required`);
+      throw new BadRequestException(`Grpc meta field ${field} is required`);
     }
 
     return value;

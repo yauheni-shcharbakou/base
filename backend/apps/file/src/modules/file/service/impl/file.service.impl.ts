@@ -1,4 +1,10 @@
-import { GrpcBaseQuery, GrpcFile, GrpcFileSignedUrls, GrpcFileUpload } from '@backend/grpc';
+import {
+  GrpcBaseQuery,
+  GrpcFile,
+  GrpcFileSignedUrls,
+  GrpcFileUploadRequest,
+  GrpcFileUploadResponse,
+} from '@backend/grpc';
 import { BadRequestException, HttpException, Inject, Logger } from '@nestjs/common';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
@@ -12,7 +18,9 @@ import { FileService } from 'modules/file/service/file.service';
 import { PassThrough } from 'node:stream';
 import {
   catchError,
+  concat,
   concatMap,
+  defer,
   filter,
   finalize,
   firstValueFrom,
@@ -20,19 +28,10 @@ import {
   Observable,
   of,
   switchMap,
-  take,
+  takeWhile,
   timeout,
 } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
-
-type MessageResult =
-  | {
-      phase: 'create';
-      file: GrpcFile;
-    }
-  | { phase: 'chunk' }
-  | { phase: 'skip' }
-  | { phase: 'finish' };
 
 export class FileServiceImpl implements FileService {
   private readonly logger = new Logger(FileServiceImpl.name);
@@ -75,21 +74,22 @@ export class FileServiceImpl implements FileService {
   }
 
   uploadOne(
-    request$: Observable<GrpcFileUpload>,
+    request$: Observable<GrpcFileUploadRequest>,
     user?: string,
-  ): Observable<Either<Error, GrpcFile>> {
+  ): Observable<Either<Error, GrpcFileUploadResponse>> {
     let createdFile: GrpcFile;
     let isSuccess = false;
     let uploadPromise: Promise<any>;
+    let totalBytes = 0;
 
     const upload$ = new PassThrough();
 
-    return request$.pipe(
+    const progress$ = request$.pipe(
       timeout(30_000),
-      concatMap(async (message): Promise<MessageResult> => {
+      concatMap(async (message): Promise<GrpcFileUploadResponse | null> => {
         if (message.create) {
           if (!user) {
-            throw new BadRequestException(`User is required`);
+            throw new BadRequestException('User is required');
           }
 
           const file = await this.fileRepository.saveOne({ ...message.create, user });
@@ -100,50 +100,50 @@ export class FileServiceImpl implements FileService {
 
           createdFile = file.value;
           uploadPromise = firstValueFrom(this.fileStorageService.uploadFile(createdFile, upload$));
-          return { phase: 'create', file: createdFile };
+          return null;
         }
 
         if (message.chunk) {
           await sendToWritable(upload$, Buffer.from(message.chunk));
-          return { phase: 'chunk' };
+          totalBytes += message.chunk.length;
+          const percent = (totalBytes / createdFile.size) * 100;
+          return { percent };
         }
 
-        if (message.isFinished) {
-          return { phase: 'finish' };
-        }
-
-        return { phase: 'skip' };
+        return null;
       }),
-      catchError((err) => {
-        throw err;
-      }),
-      filter((res) => res.phase === 'finish'),
-      take(1),
-      concatMap(async () => {
-        if (!createdFile) {
-          throw new Error('No data received');
-        }
+      filter((res) => !!res),
+      takeWhile((res) => res.percent < 100, true),
+      map((res) => right({ percent: res.percent })),
+    );
 
-        upload$.end();
-        await uploadPromise;
+    const finish$ = defer(async (): Promise<Either<Error, GrpcFileUploadResponse>> => {
+      if (!createdFile) {
+        throw new Error('File was not created');
+      }
 
-        isSuccess = true;
-        this.logger.log(`File ${createdFile.id} uploaded`);
-        return right(createdFile);
-      }),
-      catchError((err) => {
+      if (totalBytes < createdFile.size) {
+        throw new Error('File upload interrupted: size mismatch');
+      }
+
+      upload$.end();
+      await uploadPromise;
+
+      isSuccess = true;
+      this.logger.log(`File ${createdFile.id} uploaded`);
+      return right({ file: createdFile });
+    });
+
+    return concat(progress$, finish$).pipe(
+      catchError(async (err) => {
         this.logger.error('File upload error:', err.message, err.stack);
-        const errorResult = left(err);
-
         upload$.destroy();
 
-        if (!createdFile?.id) {
-          return of(errorResult);
+        if (createdFile?.id) {
+          await firstValueFrom(this.deleteById(createdFile.id));
         }
 
-        return fromPromise(this.fileRepository.deleteById(createdFile.id)).pipe(
-          map(() => errorResult),
-        );
+        return left(err);
       }),
       finalize(() => {
         if (!isSuccess) {

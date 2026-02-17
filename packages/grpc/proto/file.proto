@@ -50,11 +50,17 @@ message FileCreate {
 
 // upload
 
-message FileUpload {
+message FileUploadRequest {
   oneof payload {
     FileCreate create = 1;
     bytes chunk = 2;
-    bool isFinished = 3;
+  }
+}
+
+message FileUploadResponse {
+  oneof payload {
+    float percent = 1;
+    models.file.File file = 2;
   }
 }
 
@@ -84,7 +90,7 @@ service FileService {
   rpc getById (common.service.IdField) returns (models.file.File) {}
   rpc getList (common.service.GetListRequest) returns (FileGetListResponse) {}
   rpc createOne (FileCreate) returns (models.file.File) {}
-  rpc uploadOne (stream FileUpload) returns (models.file.File) {}
+  rpc uploadOne (stream FileUploadRequest) returns (stream FileUploadResponse) {}
   rpc updateById (FileUpdateByIdRequest) returns (models.file.File) {}
   rpc deleteById (common.service.IdField) returns (models.file.File) {}
 }

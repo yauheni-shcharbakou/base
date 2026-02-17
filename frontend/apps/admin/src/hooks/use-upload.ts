@@ -1,7 +1,6 @@
 'use client';
 
 import { getErrorMessage } from '@/helpers/error.helpers';
-import { internalHttpClient } from '@/helpers/http.helpers';
 import { BaseRecord, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 
@@ -16,35 +15,79 @@ export const useUpload = ({ resource }: Params) => {
   const { open } = useNotification();
 
   const handleUpload = async <UploadResponse extends BaseRecord = BaseRecord>(
-    formData: FormData,
-    file?: File,
+    file: File,
+    additionalParams: Record<string, string | number | boolean | undefined> = {},
   ): Promise<UploadResponse | undefined> => {
-    if (!file) {
-      return;
-    }
-
     setIsUploading(() => true);
     setProgress(() => 0);
 
+    const formData = new FormData();
+
+    for (const key in additionalParams) {
+      const value = additionalParams[key];
+
+      if (typeof value === 'boolean') {
+        formData.append(key, value ? 'true' : 'false');
+        continue;
+      }
+
+      if (!value) {
+        continue;
+      }
+
+      formData.append(key, value.toString());
+    }
+
+    formData.append('file.mimeType', file.type);
+    formData.append('file.originalName', file.name);
+    formData.append('file.size', file.size.toString());
+    formData.append('file', file);
+
     try {
-      const response = await internalHttpClient.post<UploadResponse>(
-        `${resource}/upload`,
-        formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            const total = progressEvent.total || file.size;
-            const current = progressEvent.loaded;
-            const percentCompleted = Math.round((current * 100) / total);
+      const response = await fetch(`/api/${resource}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
 
-            setProgress(() => percentCompleted);
-          },
-          timeout: 0,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
-        },
-      );
+      const reader = response.body?.getReader();
 
-      return response.data;
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      const decoder = new TextDecoder();
+      let entity: UploadResponse | undefined;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        const lines = decoder.decode(value).split('\n');
+
+        lines.forEach((line) => {
+          if (line) {
+            const { type, value } = JSON.parse(line);
+
+            if (type === 'percent') {
+              setProgress(() => value);
+              return;
+            }
+
+            if (type === 'entity') {
+              entity = value;
+            }
+          }
+        });
+      }
+
+      if (!entity) {
+        throw new Error('No response entity');
+      }
+
+      return entity;
     } catch (error) {
       open?.({
         type: 'error',

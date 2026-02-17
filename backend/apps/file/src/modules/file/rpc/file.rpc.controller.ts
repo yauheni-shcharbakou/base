@@ -1,5 +1,4 @@
-import { unwrapEither } from '@backend/common';
-import { GrpcController, GrpcMetadataMapper } from '@backend/transport';
+import { GrpcController, GrpcMetadataMapper, GrpcRxPipe } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { Inject } from '@nestjs/common';
 import {
@@ -11,7 +10,8 @@ import {
   GrpcFileServiceController,
   GrpcFileSignedUrls,
   GrpcFileUpdateByIdRequest,
-  GrpcFileUpload,
+  GrpcFileUploadRequest,
+  GrpcFileUploadResponse,
   GrpcGetListRequest,
   GrpcIdField,
 } from '@backend/grpc';
@@ -33,7 +33,7 @@ export class FileRpcController implements GrpcFileServiceController {
   }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {
-    return fromPromise(this.fileRepository.getById(request.id)).pipe(unwrapEither());
+    return fromPromise(this.fileRepository.getById(request.id)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   getList(request: GrpcGetListRequest, metadata?: Metadata): Observable<GrpcFileGetListResponse> {
@@ -42,21 +42,24 @@ export class FileRpcController implements GrpcFileServiceController {
 
   createOne(request: GrpcFileCreate, metadata?: Metadata): Observable<GrpcFile> {
     const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
-    return fromPromise(this.fileRepository.saveOne({ ...request, user })).pipe(unwrapEither());
+    const stream$ = fromPromise(this.fileRepository.saveOne({ ...request, user }));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
-  uploadOne(request: Observable<GrpcFileUpload>, metadata?: Metadata): Observable<GrpcFile> {
+  uploadOne(
+    request: Observable<GrpcFileUploadRequest>,
+    metadata?: Metadata,
+  ): Observable<GrpcFileUploadResponse> {
     const metaUser = new GrpcMetadataMapper(metadata).get('user');
-    return this.fileService.uploadOne(request, metaUser).pipe(unwrapEither());
+    return this.fileService.uploadOne(request, metaUser).pipe(GrpcRxPipe.unwrapEither);
   }
 
   updateById(request: GrpcFileUpdateByIdRequest, metadata?: Metadata): Observable<GrpcFile> {
-    return fromPromise(this.fileRepository.updateOne({ id: request.id }, request.update)).pipe(
-      unwrapEither(),
-    );
+    const stream$ = fromPromise(this.fileRepository.updateOne({ id: request.id }, request.update));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   deleteById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {
-    return this.fileService.deleteById(request.id).pipe(unwrapEither());
+    return this.fileService.deleteById(request.id).pipe(GrpcRxPipe.unwrapEither);
   }
 }
