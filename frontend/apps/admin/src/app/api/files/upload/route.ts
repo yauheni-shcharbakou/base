@@ -87,7 +87,6 @@ export async function POST(req: Request): Promise<Response> {
         for (let i = 0; i < data.length; i += chunkSize) {
           const subChunk = data.slice(i, i + chunkSize);
           await sendToGrpcStream(request$, { chunk: subChunk });
-          await new Promise((r) => setTimeout(r, 1000));
         }
       }
     });
