@@ -90,7 +90,8 @@ service FileService {
   rpc getById (common.service.IdField) returns (models.file.File) {}
   rpc getList (common.service.GetListRequest) returns (FileGetListResponse) {}
   rpc createOne (FileCreate) returns (models.file.File) {}
-  rpc uploadOne (stream FileUploadRequest) returns (stream FileUploadResponse) {}
+  rpc uploadOne (stream FileUploadRequest) returns (models.file.File) {}
+  rpc uploadOneDuplex (stream FileUploadRequest) returns (stream FileUploadResponse) {}
   rpc updateById (FileUpdateByIdRequest) returns (models.file.File) {}
   rpc deleteById (common.service.IdField) returns (models.file.File) {}
 }

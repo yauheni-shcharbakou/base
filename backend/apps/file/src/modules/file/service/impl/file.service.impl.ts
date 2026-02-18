@@ -28,6 +28,7 @@ import {
   Observable,
   of,
   switchMap,
+  take,
   takeWhile,
   timeout,
 } from 'rxjs';
@@ -74,6 +75,89 @@ export class FileServiceImpl implements FileService {
   }
 
   uploadOne(
+    request$: Observable<GrpcFileUploadRequest>,
+    user?: string,
+  ): Observable<Either<Error, GrpcFile>> {
+    let createdFile: GrpcFile;
+    let isSuccess = false;
+    let uploadPromise: Promise<any>;
+    let totalBytes = 0;
+
+    const upload$ = new PassThrough();
+
+    return request$.pipe(
+      timeout(30_000),
+      concatMap(async (message): Promise<number | null> => {
+        if (message.create) {
+          if (!user) {
+            throw new BadRequestException(`User is required`);
+          }
+
+          const file = await this.fileRepository.saveOne({ ...message.create, user });
+
+          if (file.isLeft()) {
+            throw file.value;
+          }
+
+          createdFile = file.value;
+          uploadPromise = firstValueFrom(this.fileStorageService.uploadFile(createdFile, upload$));
+          return 0;
+        }
+
+        if (message.chunk) {
+          await sendToWritable(upload$, Buffer.from(message.chunk));
+          totalBytes += message.chunk.length;
+          return (totalBytes / createdFile.size) * 100;
+        }
+
+        return null;
+      }),
+      catchError((err) => {
+        throw err;
+      }),
+      filter((res) => res && res >= 100),
+      take(1),
+      concatMap(async () => {
+        if (!createdFile) {
+          throw new Error('No data received');
+        }
+
+        if (totalBytes < createdFile.size) {
+          throw new Error('File upload interrupted: size mismatch');
+        }
+
+        upload$.end();
+        await uploadPromise;
+
+        isSuccess = true;
+        this.logger.log(`File ${createdFile.id} uploaded`);
+        return right(createdFile);
+      }),
+      catchError(async (err) => {
+        this.logger.error('File upload error:', err.message, err.stack);
+        upload$.destroy();
+
+        if (createdFile?.id) {
+          await firstValueFrom(this.deleteById(createdFile.id));
+        }
+
+        return left(err);
+      }),
+      finalize(() => {
+        if (!isSuccess) {
+          if (!upload$.destroyed) {
+            upload$.destroy();
+          }
+
+          if (createdFile) {
+            this.fileStorageService.deleteFile(createdFile);
+          }
+        }
+      }),
+    );
+  }
+
+  uploadOneDuplex(
     request$: Observable<GrpcFileUploadRequest>,
     user?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>> {

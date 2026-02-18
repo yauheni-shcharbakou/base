@@ -1,5 +1,4 @@
-import { unwrapEither } from '@backend/common';
-import { GrpcController } from '@backend/transport';
+import { GrpcController, GrpcRxPipe } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { Inject } from '@nestjs/common';
 import {
@@ -21,14 +20,14 @@ export class AuthRpcController implements GrpcAuthServiceController {
   constructor(@Inject(AUTH_SERVICE) private readonly authService: AuthService) {}
 
   login(request: GrpcAuthLogin, metadata?: Metadata): Observable<GrpcAuthData> {
-    return fromPromise(this.authService.login(request)).pipe(unwrapEither());
+    return fromPromise(this.authService.login(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   refreshToken(request: GrpcAuthRefresh, metadata?: Metadata): Observable<GrpcAuthData> {
-    return fromPromise(this.authService.refreshToken(request)).pipe(unwrapEither());
+    return fromPromise(this.authService.refreshToken(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   me(request: GrpcAuthMe, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.authService.getUserByToken(request)).pipe(unwrapEither());
+    return fromPromise(this.authService.getUserByToken(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 }

@@ -49,9 +49,17 @@ export class FileRpcController implements GrpcFileServiceController {
   uploadOne(
     request: Observable<GrpcFileUploadRequest>,
     metadata?: Metadata,
-  ): Observable<GrpcFileUploadResponse> {
+  ): Promise<GrpcFile> | Observable<GrpcFile> | GrpcFile {
     const metaUser = new GrpcMetadataMapper(metadata).get('user');
     return this.fileService.uploadOne(request, metaUser).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  uploadOneDuplex(
+    request: Observable<GrpcFileUploadRequest>,
+    metadata?: Metadata,
+  ): Observable<GrpcFileUploadResponse> {
+    const metaUser = new GrpcMetadataMapper(metadata).get('user');
+    return this.fileService.uploadOneDuplex(request, metaUser).pipe(GrpcRxPipe.unwrapEither);
   }
 
   updateById(request: GrpcFileUpdateByIdRequest, metadata?: Metadata): Observable<GrpcFile> {

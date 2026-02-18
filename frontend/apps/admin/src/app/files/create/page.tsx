@@ -1,6 +1,6 @@
 'use client';
 
-import { Uploader } from '@/components/uploader';
+import { FileUploader } from '@/components/file-uploader';
 import { ONE_MB_BYTES } from '@/constants';
 import { useUpload } from '@/hooks/use-upload';
 import { Box, Checkbox, FormControlLabel, TextField } from '@mui/material';
@@ -90,7 +90,7 @@ export default function FileCreate() {
             />
           )}
         />
-        <Uploader
+        <FileUploader
           formField="file"
           errors={errors}
           control={control}

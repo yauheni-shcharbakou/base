@@ -16,6 +16,10 @@ export interface FileService {
   uploadOne(
     request$: Observable<GrpcFileUploadRequest>,
     user?: string,
+  ): Observable<Either<Error, GrpcFile>>;
+  uploadOneDuplex(
+    request$: Observable<GrpcFileUploadRequest>,
+    user?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>>;
   deleteById(id: string): Observable<Either<HttpException, GrpcFile>>;
 }

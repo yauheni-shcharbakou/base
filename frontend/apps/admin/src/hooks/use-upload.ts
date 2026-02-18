@@ -1,12 +1,15 @@
 'use client';
 
 import { getErrorMessage } from '@/helpers/error.helpers';
+import { internalHttpClient } from '@/helpers/http.helpers';
 import { BaseRecord, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 
 type Params = {
   resource: string;
 };
+
+type FormParams = Record<string, string | number | boolean | null | undefined>;
 
 export const useUpload = ({ resource }: Params) => {
   const [progress, setProgress] = useState(0);
@@ -16,7 +19,7 @@ export const useUpload = ({ resource }: Params) => {
 
   const handleUpload = async <UploadResponse extends BaseRecord = BaseRecord>(
     file: File,
-    additionalParams: Record<string, string | number | boolean | undefined> = {},
+    additionalParams: FormParams = {},
   ): Promise<UploadResponse | undefined> => {
     setIsUploading(() => true);
     setProgress(() => 0);
@@ -44,50 +47,24 @@ export const useUpload = ({ resource }: Params) => {
     formData.append('file', file);
 
     try {
-      const response = await fetch(`/api/${resource}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await internalHttpClient.post<UploadResponse>(
+        `${resource}/upload`,
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            const total = progressEvent.total || file.size;
+            const current = progressEvent.loaded;
+            const percentCompleted = Math.round((current * 100) / total);
 
-      const reader = response.body?.getReader();
+            setProgress(() => percentCompleted);
+          },
+          timeout: 0,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+        },
+      );
 
-      if (!reader) {
-        throw new Error('No response body');
-      }
-
-      const decoder = new TextDecoder();
-      let entity: UploadResponse | undefined;
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        const lines = decoder.decode(value).split('\n');
-
-        lines.forEach((line) => {
-          if (line) {
-            const { type, value } = JSON.parse(line);
-
-            if (type === 'percent') {
-              setProgress(() => value);
-              return;
-            }
-
-            if (type === 'entity') {
-              entity = value;
-            }
-          }
-        });
-      }
-
-      if (!entity) {
-        throw new Error('No response entity');
-      }
-
-      return entity;
+      return response.data;
     } catch (error) {
       open?.({
         type: 'error',

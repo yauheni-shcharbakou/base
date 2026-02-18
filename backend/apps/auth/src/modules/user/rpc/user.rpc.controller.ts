@@ -1,5 +1,4 @@
-import { unwrapEither } from '@backend/common';
-import { GrpcController } from '@backend/transport';
+import { GrpcController, GrpcRxPipe } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { Inject } from '@nestjs/common';
 import {
@@ -29,17 +28,16 @@ export class UserRpcController implements GrpcUserServiceController {
   ) {}
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userRepository.getById(request.id)).pipe(unwrapEither());
+    return fromPromise(this.userRepository.getById(request.id)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   getOne(request: GrpcUserRequest, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userRepository.getOne(request.query)).pipe(unwrapEither());
+    return fromPromise(this.userRepository.getOne(request.query)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   getMany(request: GrpcUserRequest, metadata?: Metadata): Observable<GrpcUserList> {
-    return fromPromise(this.userRepository.getMany(request.query)).pipe(
-      map((users) => ({ items: users })),
-    );
+    const stream$ = fromPromise(this.userRepository.getMany(request.query));
+    return stream$.pipe(map((users) => ({ items: users })));
   }
 
   getList(request: GrpcGetListRequest, metadata?: Metadata): Observable<GrpcUserGetListResponse> {
@@ -47,26 +45,24 @@ export class UserRpcController implements GrpcUserServiceController {
   }
 
   createOne(request: GrpcUserCreate, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userService.create(request)).pipe(unwrapEither());
+    return fromPromise(this.userService.create(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   updateOne(request: GrpcUserUpdateRequest, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userRepository.updateOne(request.query, request.update)).pipe(
-      unwrapEither(),
-    );
+    const stream$ = fromPromise(this.userRepository.updateOne(request.query, request.update));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   deleteOne(request: GrpcUserRequest, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userRepository.deleteOne(request.query)).pipe(unwrapEither());
+    return fromPromise(this.userRepository.deleteOne(request.query)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   updateById(request: GrpcUserUpdateByIdRequest, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userRepository.updateOne({ id: request.id }, request.update)).pipe(
-      unwrapEither(),
-    );
+    const stream$ = fromPromise(this.userRepository.updateOne({ id: request.id }, request.update));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   deleteById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcUser> {
-    return fromPromise(this.userRepository.deleteById(request.id)).pipe(unwrapEither());
+    return fromPromise(this.userRepository.deleteById(request.id)).pipe(GrpcRxPipe.unwrapEither);
   }
 }

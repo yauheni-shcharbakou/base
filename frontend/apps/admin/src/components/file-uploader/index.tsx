@@ -9,16 +9,16 @@ import { useDropzone } from 'react-dropzone';
 type Props = Pick<UseFormReturn<any>, 'control' | 'watch'> & {
   formField: string;
   errors: FieldErrors<any>;
-  progress?: number;
-  isUploading?: boolean;
   onChange?: (file?: File) => void;
   disabled?: boolean;
   required?: boolean;
   maxSize?: number;
   types?: string[];
+  progress?: number;
+  isUploading?: boolean;
 };
 
-export const Uploader: FC<Props> = ({
+export const FileUploader: FC<Props> = ({
   control,
   watch,
   formField,
@@ -141,10 +141,21 @@ export const Uploader: FC<Props> = ({
               </Box>
               {isUploading && (
                 <Box width={1}>
-                  <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
-                    {progress?.toFixed(2)} %
-                  </Typography>
-                  <LinearProgress variant="determinate" value={progress} />
+                  {progress && progress >= 100 ? (
+                    <>
+                      <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
+                        Saving...
+                      </Typography>
+                      <LinearProgress variant="indeterminate" />
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
+                        {progress?.toFixed(2)} %
+                      </Typography>
+                      <LinearProgress variant="determinate" value={progress} />
+                    </>
+                  )}
                 </Box>
               )}
             </Stack>
