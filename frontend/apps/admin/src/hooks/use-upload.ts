@@ -50,7 +50,7 @@ export const useUpload = ({ resource }: Params) => {
           onUploadProgress: (progressEvent) => {
             const total = progressEvent.total || file.size;
             const current = progressEvent.loaded;
-            const percentCompleted = Math.round((current * 100) / total);
+            const percentCompleted = (current * 100) / total;
 
             setProgress(() => percentCompleted);
           },
