@@ -24,22 +24,18 @@ export const useUpload = ({ resource }: Params) => {
     setIsUploading(() => true);
     setProgress(() => 0);
 
-    const formData = new FormData();
-
-    for (const key in additionalParams) {
-      const value = additionalParams[key];
-
+    const formData = Object.entries(additionalParams).reduce((acc, [key, value]) => {
       if (typeof value === 'boolean') {
-        formData.append(key, value ? 'true' : 'false');
-        continue;
+        acc.append(key, value ? 'true' : 'false');
+        return acc;
       }
 
-      if (!value) {
-        continue;
+      if (value || typeof value === 'number') {
+        acc.append(key, value.toString());
       }
 
-      formData.append(key, value.toString());
-    }
+      return acc;
+    }, new FormData());
 
     formData.append('file.mimeType', file.type);
     formData.append('file.originalName', file.name);
