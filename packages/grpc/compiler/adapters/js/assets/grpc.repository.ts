@@ -20,9 +20,9 @@ export abstract class GrpcRepository<GrpcClient extends Client> {
         method.call(this.client, req, metadata, options, (err, response) => {
           if (err) {
             reject(err);
+          } else {
+            resolve(response);
           }
-
-          resolve(response);
         });
       });
     };
@@ -41,9 +41,9 @@ export abstract class GrpcRepository<GrpcClient extends Client> {
       clientMethod.call(this.client, req, metadata, options, (err, response) => {
         if (err) {
           reject(err);
+        } else {
+          resolve(response);
         }
-
-        resolve(response);
       });
     });
   }

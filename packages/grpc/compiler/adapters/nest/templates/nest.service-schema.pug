@@ -1,0 +1,88 @@
+- var methodParamsInterface = `Grpc${pascalCase(data.service.id)}ProxyMethodParams`
+- var controller = `Grpc${pascalCase(data.service.id)}ProxyController`
+- var service = pascalCase(data.service.name)
+- var methodsDecorator = `${pascalCase(data.service.name)}ControllerMethods`
+
+|
+|interface #{methodParamsInterface} {
+each unaryMethod in data.unaryMethods
+    |   #{unaryMethod.name}?: GrpcProxyMethodParams<!{unaryMethod.requestType}>;
+    |
+each streamMethod in data.streamMethods
+    |   #{streamMethod.name}?: GrpcProxyStreamMethodParams;
+    |
+|}
+|
+|export const Grpc#{pascalCase(data.service.id)}Service = {
+|   name: "#{service}",
+|   definition: {
+|       package: !{data.package},
+|       protoPath: join(PROTO_PATH, '#{data.protoPath}'),
+|   },
+|   proxyFactory: (methodParams: #{methodParamsInterface} = {}): GrpcProxyControllerFactory => {
+|       return (controllerParams: GrpcProxyControllerFactoryParams): GrpcProxyControllerFactoryResult => {
+|           const { GrpcController, GrpcMethod, GrpcStreamMethod, InjectGrpcService, proxyPipes } = controllerParams;
+|
+|           @GrpcController()
+|           @#{methodsDecorator}()
+|           class #{controller} {
+|               constructor(
+|                   @InjectGrpcService(#{constantCase(data.service.name)}_NAME)
+|                   private readonly client: Grpc#{pascalCase(data.service.name)}Client,
+|
+if data.streamMethods.length
+    |               @Inject(GRPC_ACCESS_SERVICE) private readonly accessService: GrpcAccessService,
+    |
+|               ) {}
+|
+each unaryMethod in data.unaryMethods
+    |
+    |           @GrpcMethod(methodParams.#{unaryMethod.name})
+    |           #{unaryMethod.name}(request: !{unaryMethod.requestType}, metadata?: Metadata): !{unaryMethod.responseType} {
+    |               //@ts-ignore
+    |               return this.client.#{unaryMethod.name}(request, metadata?.clone()).pipe(...proxyPipes);
+    |           }
+    |
+each streamMethod in data.streamMethods
+    |
+    |           @GrpcStreamMethod(methodParams.#{streamMethod.name})
+    |           #{streamMethod.name}(request: !{streamMethod.requestType}, metadata?: Metadata): !{streamMethod.responseType} {
+    |               if (methodParams.#{streamMethod.name}?.allowedRoles) {
+    |                   const proxy$ = new ReplaySubject<!{streamMethod.streamType}>();
+    |                   const subscription = request.subscribe(proxy$);
+    |
+    |                   return this.accessService.checkAccess(
+    |                       metadata,
+    |                       methodParams.#{streamMethod.name}.allowedRoles
+    |                   ).pipe(
+    |                       map((meta) => {
+    |                           if (meta.isLeft()) {
+    |                               throw meta.value;
+    |                           }
+    |
+    |                           return meta.value;
+    |                       }),
+    |                       catchError((err) => {
+    |                           proxy$.error(err);
+    |                           throw err;
+    |                       }),
+    |                       switchMap((meta) => this.client.#{streamMethod.name}(proxy$.asObservable(), meta)),
+    |                       catchError((exception) => throwError(() => new RpcException(exception))),
+    |                       finalize(() => subscription.unsubscribe()),
+    |                   );
+    |               }
+    |
+    |               //@ts-ignore
+    |               return this.client.#{streamMethod.name}(request, metadata?.clone()).pipe(...proxyPipes);
+    |           }
+    |
+|           }
+|
+|           return {
+|               Controller: #{controller},
+|               service: "#{service}",
+|           };
+|       };
+|   },
+|   ControllerMethods: (): ClassDecorator => #{methodsDecorator}(),
+|} as const;

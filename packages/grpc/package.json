@@ -15,8 +15,13 @@
     "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts"
   },
   "devDependencies": {
+    "@grpc/grpc-js": "1.14.3",
     "@packages/configs": "*",
+    "@sweet-monads/either": "3.3.1",
+    "@types/pug": "2.0.10",
     "protobufjs": "7.5.4",
+    "pug": "3.0.3",
+    "rxjs": "7.8.2",
     "tsconfig-paths": "4.2.0",
     "ts-morph": "27.0.2",
     "ts-node-dev": "2.0.0",

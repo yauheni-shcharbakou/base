@@ -1,6 +1,6 @@
 import { MongoMapper } from '@backend/persistence';
 import { GrpcUser, GrpcUserQuery } from '@backend/grpc';
-import { UserEntity } from 'common/entities/user.entity';
+import { UserEntity } from 'common/repositories/user/entities/user.entity';
 import _ from 'lodash';
 import { QueryFilter } from 'mongoose';
 

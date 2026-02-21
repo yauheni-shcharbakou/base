@@ -1,10 +1,11 @@
-import { GrpcModule } from '@backend/transport';
+import { GrpcAccessModule, GrpcModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { GrpcAuthService } from '@backend/grpc';
 import { config } from 'config';
 import { AuthModule } from 'modules/auth/auth.module';
+import { FileModule } from 'modules/file/file.module';
 
 @Module({
   imports: [
@@ -26,7 +27,9 @@ import { AuthModule } from 'modules/auth/auth.module';
         auth: [GrpcAuthService.name],
       },
     }),
+    GrpcAccessModule,
     AuthModule,
+    FileModule,
   ],
 })
 export class AppModule {}

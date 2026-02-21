@@ -1,171 +1,102 @@
 import { constantCase, pascalCase } from 'change-case-all';
 import { TransformTask } from 'compiler/tasks';
 import { ProtoContextService } from 'compiler/types';
-import {
-  MethodSignature,
-  OptionalKind,
-  PropertySignatureStructure,
-  VariableDeclarationKind,
-} from 'ts-morph';
+import { MethodSignature, SyntaxKind } from 'ts-morph';
 
-type Names = {
-  client: string;
-  controller: string;
-  serviceNameConst: string;
-  proxyMethodParams: string;
-  controllerClass: string;
-  controllerDecorator: string;
-  schema: string;
+type MethodDefinition = {
+  name: string;
+  requestType: string;
+  responseType: string;
+};
+
+type StreamMethodDefinition = MethodDefinition & {
+  streamType: string;
+};
+
+type MethodTypes = {
+  unaryMethods: MethodDefinition[];
+  streamMethods: StreamMethodDefinition[];
 };
 
 export class AddNestServiceSchemasTask extends TransformTask {
   private packageName: string | undefined;
 
-  private getNames(service: ProtoContextService): Names {
-    return {
-      client: pascalCase(`grpc.${service.name}.client`),
-      controller: pascalCase(`grpc.${service.name}.controller`),
-      serviceNameConst: constantCase(`${service.name}.name`),
-      proxyMethodParams: pascalCase(`grpc.${service.id}.proxy.method.params`),
-      controllerClass: pascalCase(`grpc.${service.id}.proxy.controller`),
-      controllerDecorator: pascalCase(`${service.name}.controller.methods`),
-      schema: pascalCase(`grpc.${service.name}`),
-    };
-  }
-
   private declareImports() {
     this.addOrUpdateImport('path', ['join']);
     this.addOrUpdateImport('@grpc/grpc-js', ['Metadata']);
-    this.addOrUpdateImport('@nestjs/common', ['Type']);
-    this.addOrUpdateImport('@nestjs/microservices', ['ClientGrpc']);
-    this.addOrUpdateImport('rxjs', ['Observable', 'OperatorFunction']);
+    this.addOrUpdateImport('@nestjs/common', ['Type', 'ForbiddenException', 'Inject']);
+    this.addOrUpdateImport('@nestjs/microservices', ['ClientGrpc', 'RpcException']);
+    this.addOrUpdateImport('rxjs', [
+      'catchError',
+      'finalize',
+      'map',
+      'Observable',
+      'ReplaySubject',
+      'switchMap',
+      'OperatorFunction',
+      'throwError',
+    ]);
 
     this.addOrUpdateImport(this.importFromCompilerPath, [
       'GrpcProxyControllerFactoryParams',
       'GrpcProxyControllerFactoryResult',
       'GrpcProxyControllerFactory',
       'GrpcProxyMethodParams',
+      'GrpcProxyStreamMethodParams',
+      'GrpcAccessService',
       'PROTO_PATH',
+      'GRPC_ACCESS_SERVICE',
     ]);
   }
 
-  private declareInterfaces(names: Names, controllerMethods: MethodSignature[]) {
-    return this.sourceFile.addInterface({
-      name: names.proxyMethodParams,
-      properties: controllerMethods.reduce(
-        (acc: OptionalKind<PropertySignatureStructure>[], method: MethodSignature) => {
-          const name = method.getName();
-          const firstArgument = method.getParameter('request');
+  private declareSchema(service: ProtoContextService, controllerMethods: MethodSignature[]) {
+    const methodTypes: MethodTypes = controllerMethods.reduce(
+      (acc: MethodTypes, method) => {
+        const name = method.getName();
+        const firstArgument = method.getParameter('request');
+        const responseType = method.getReturnType()?.getText();
 
-          if (!firstArgument) {
+        if (!firstArgument || !responseType) {
+          return acc;
+        }
+
+        const requestType = firstArgument.getType().getText();
+        const typeNode = firstArgument.getTypeNode();
+
+        if (typeNode && typeNode.isKind(SyntaxKind.TypeReference)) {
+          const typeArgs = typeNode.getTypeArguments() ?? [];
+
+          if (typeArgs?.length) {
+            acc.streamMethods.push({
+              name,
+              streamType: typeArgs[0].getText(),
+              responseType,
+              requestType,
+            });
+
             return acc;
           }
+        }
 
-          const type = firstArgument.getType();
+        acc.unaryMethods.push({ name, requestType, responseType });
+        return acc;
+      },
+      { unaryMethods: [], streamMethods: [] },
+    );
 
-          acc.push({
-            name,
-            type: `GrpcProxyMethodParams<${type.getText()}>`,
-            hasQuestionToken: true,
-          });
-
-          return acc;
-        },
-        [],
-      ),
+    const schemaDeclaration = this.renderTemplate('nest.service-schema', {
+      data: {
+        service,
+        package: this.packageName,
+        protoPath: this.protoContext.protoPath,
+        unaryMethods: methodTypes.unaryMethods,
+        streamMethods: methodTypes.streamMethods,
+      },
+      pascalCase,
+      constantCase,
     });
-  }
 
-  private declareFactory(
-    names: Names,
-    controllerMethods: MethodSignature[],
-    serviceNameValue: string,
-  ) {
-    return this.sourceFile.addVariableStatement({
-      declarationKind: VariableDeclarationKind.Const,
-      isExported: true,
-      declarations: [
-        {
-          name: names.schema,
-          initializer: (writer) => {
-            writer
-              .inlineBlock(() => {
-                writer
-                  .writeLine(`name: ${serviceNameValue},`)
-                  .write(`definition: `)
-                  .inlineBlock(() => {
-                    writer
-                      .writeLine(`package: ${this.packageName},`)
-                      .writeLine(`protoPath: join(PROTO_PATH, '${this.protoContext.protoPath}'),`);
-                  })
-                  .write(',')
-                  .writeLine(
-                    `proxyFactory: (methodParams: ${names.proxyMethodParams} = {}): GrpcProxyControllerFactory => `,
-                  )
-                  .inlineBlock(() => {
-                    writer
-                      .writeLine(
-                        'return (controllerParams: GrpcProxyControllerFactoryParams): GrpcProxyControllerFactoryResult => ',
-                      )
-                      .inlineBlock(() => {
-                        writer
-                          .writeLine(
-                            'const { GrpcController, GrpcMethod, InjectGrpcService, proxyPipes } = controllerParams;',
-                          )
-                          .blankLine()
-                          .writeLine('@GrpcController()')
-                          .writeLine(`@${names.controllerDecorator}()`)
-                          .write(`class ${names.controllerClass}`)
-                          .inlineBlock(() => {
-                            writer.write(
-                              `constructor(@InjectGrpcService(${names.serviceNameConst}) private readonly client: ${names.client}) {}`,
-                            );
-
-                            controllerMethods.forEach((method) => {
-                              const methodName = method.getName();
-                              const firstArgument = method.getParameter('request');
-                              const returnType = method.getReturnType();
-
-                              if (!firstArgument) {
-                                return;
-                              }
-
-                              const firstArgumentType = firstArgument.getType();
-
-                              writer
-                                .blankLineIfLastNot()
-                                .writeLine(`@GrpcMethod(methodParams.${methodName})`)
-                                .write(
-                                  `${methodName}(request: ${firstArgumentType.getText()}, metadata?: Metadata): ${returnType.getText()}`,
-                                )
-                                .inlineBlock(() => {
-                                  writer
-                                    .writeLine('//@ts-ignore')
-                                    .writeLine(
-                                      `return this.client.${methodName}(request).pipe(...proxyPipes);`,
-                                    );
-                                });
-                            });
-                          })
-                          .blankLine()
-                          .write('return ')
-                          .inlineBlock(() => {
-                            writer.writeLine(`Controller: ${names.controllerClass},`);
-                            writer.writeLine(`service: ${serviceNameValue},`);
-                          })
-                          .write(';');
-                      });
-                  })
-                  .write(',')
-                  .writeLine(
-                    `ControllerMethods: (): ClassDecorator => ${names.controllerDecorator}(),`,
-                  );
-              })
-              .write(' as const');
-          },
-        },
-      ],
-    });
+    this.sourceFile.addStatements(schemaDeclaration);
   }
 
   protected onInit() {
@@ -184,13 +115,15 @@ export class AddNestServiceSchemasTask extends TransformTask {
     this.declareImports();
 
     this.protoContext.services.forEach((service) => {
-      const names = this.getNames(service);
+      const controllerName = pascalCase(`grpc.${service.name}.controller`);
+      const clientName = pascalCase(`grpc.${service.name}.client`);
+      const serviceConstName = constantCase(`${service.name}.name`);
 
-      const controllerInterface = this.sourceFile.getInterface(names.controller);
-      const clientInterface = this.sourceFile.getInterface(names.client);
+      const controllerInterface = this.sourceFile.getInterface(controllerName);
+      const clientInterface = this.sourceFile.getInterface(clientName);
 
       const serviceNameValue = this.sourceFile
-        .getVariableDeclaration(names.serviceNameConst)
+        .getVariableDeclaration(serviceConstName)
         ?.getInitializer()
         ?.getText();
 
@@ -199,9 +132,7 @@ export class AddNestServiceSchemasTask extends TransformTask {
       }
 
       const controllerMethods = controllerInterface.getMethods();
-
-      this.declareInterfaces(names, controllerMethods);
-      this.declareFactory(names, controllerMethods, serviceNameValue);
+      this.declareSchema(service, controllerMethods);
     });
   }
 }

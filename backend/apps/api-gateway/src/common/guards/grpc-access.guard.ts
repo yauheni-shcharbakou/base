@@ -1,31 +1,18 @@
-import { GrpcAuthService, GrpcAuthServiceClient, GrpcUserRole } from '@backend/grpc';
-import { GrpcRxPipe, InjectGrpcService } from '@backend/transport';
+import { GRPC_ACCESS_SERVICE, GrpcAccessService, GrpcUserRole } from '@backend/grpc';
+import { GrpcRxPipe } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { MetadataAccessType, MetadataKey } from 'common/enums/metadata.enums';
+import { MetadataKey } from 'common/enums/metadata.enums';
+import _ from 'lodash';
 import { map, Observable } from 'rxjs';
 
 @Injectable()
 export class GrpcAccessGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
-    @InjectGrpcService(GrpcAuthService.name)
-    private readonly authServiceClient: GrpcAuthServiceClient,
+    @Inject(GRPC_ACCESS_SERVICE) private readonly accessService: GrpcAccessService,
   ) {}
-
-  private checkAccess(accessToken: string, accessType: MetadataAccessType): Observable<boolean> {
-    return this.authServiceClient.me({ accessToken }).pipe(
-      map((user) => {
-        if (accessType === MetadataAccessType.ADMIN && user.role !== GrpcUserRole.ADMIN) {
-          throw new UnauthorizedException('Only admin can use this endpoint');
-        }
-
-        return true;
-      }),
-      GrpcRxPipe.rpcException,
-    );
-  }
 
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     const contextType = context.getType();
@@ -34,26 +21,31 @@ export class GrpcAccessGuard implements CanActivate {
       return true;
     }
 
-    const accessType = this.reflector.getAllAndOverride<MetadataAccessType>(
-      MetadataKey.ACCESS_TYPE,
-      [context.getHandler(), context.getClass()],
-    );
+    const skipAuth = this.reflector.getAllAndOverride<boolean>(MetadataKey.SKIP_AUTH, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
-    if (accessType === MetadataAccessType.PUBLIC) {
+    if (skipAuth) {
       return true;
     }
 
-    try {
-      const metadata = context.switchToRpc().getContext<Metadata>();
-      const [accessToken] = (metadata?.get('access-token') as string[]) ?? [];
+    const allowedRoles = this.reflector.getAllAndOverride<GrpcUserRole[]>(
+      MetadataKey.ALLOWED_ROLES,
+      [context.getHandler(), context.getClass()],
+    );
 
-      if (!accessToken) {
-        throw new UnauthorizedException('Access token not found');
-      }
+    const metadata = context.switchToRpc().getContext<Metadata>();
 
-      return this.checkAccess(accessToken, accessType);
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
-    }
+    return this.accessService.checkAccess(metadata, allowedRoles ?? _.values(GrpcUserRole)).pipe(
+      map((meta) => {
+        if (meta.isLeft()) {
+          throw meta.value;
+        }
+
+        return !!meta.value;
+      }),
+      GrpcRxPipe.rpcException,
+    );
   }
 }

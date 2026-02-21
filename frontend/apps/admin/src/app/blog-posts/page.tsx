@@ -1,6 +1,6 @@
 'use client';
 
-import { ResourceList } from '@/components/resource-list';
+import { ResourceList } from '@/common/components/resource-list';
 import { Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { useMany } from '@refinedev/core';

@@ -1,0 +1,97 @@
+syntax = 'proto3';
+
+package file;
+
+import "common/service.proto";
+import "models/file.proto";
+
+// query
+
+message FileQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string mimeType = 3;
+  repeated string mimeTypes = 4;
+  optional bool isPublic = 5;
+  optional string user = 6;
+  repeated string users = 7;
+  optional models.file.FileType type = 8;
+  optional string extension = 9;
+}
+
+message FileRequest {
+  optional FileQuery query = 1;
+}
+
+// get
+
+message FileList {
+  repeated models.file.File items = 1;
+}
+
+message FileGetListResponse {
+  repeated models.file.File items = 1;
+  int32 total = 2;
+}
+
+message FileSignedUrls {
+  map<string, string> urls = 1;
+}
+
+// create
+
+message FileCreate {
+  string name = 1;
+  string originalName = 2;
+  int32 size = 3;
+  string mimeType = 4;
+  bool isPublic = 5;
+}
+
+// upload
+
+message FileUploadRequest {
+  oneof payload {
+    FileCreate create = 1;
+    bytes chunk = 2;
+  }
+}
+
+message FileUploadResponse {
+  oneof payload {
+    float percent = 1;
+    models.file.File file = 2;
+  }
+}
+
+// update
+
+message FileUpdateSet {
+  optional bool isPublic = 1;
+  optional string name = 2;
+}
+
+message FileUpdate {
+  optional FileUpdateSet set = 1;
+}
+
+message FileUpdateRequest {
+  FileQuery query = 1;
+  FileUpdate update = 2;
+}
+
+message FileUpdateByIdRequest {
+  string id = 1;
+  FileUpdate update = 2;
+}
+
+service FileService {
+  rpc getSignedUrls (common.service.BaseQuery) returns (FileSignedUrls) {}
+  rpc getById (common.service.IdField) returns (models.file.File) {}
+  rpc getList (common.service.GetListRequest) returns (FileGetListResponse) {}
+  rpc createOne (FileCreate) returns (models.file.File) {}
+  rpc uploadOne (stream FileUploadRequest) returns (models.file.File) {}
+  rpc uploadOneDuplex (stream FileUploadRequest) returns (stream FileUploadResponse) {}
+  rpc updateById (FileUpdateByIdRequest) returns (models.file.File) {}
+  rpc deleteById (common.service.IdField) returns (models.file.File) {}
+}

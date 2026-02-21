@@ -1,8 +1,7 @@
-// @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import typescriptEslint from 'typescript-eslint';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -10,12 +9,12 @@ export default function nestConfig(url) {
   const __filename = fileURLToPath(url);
   const __dirname = dirname(__filename);
 
-  return tseslint.config(
+  return typescriptEslint.config(
     {
       ignores: ['eslint.config.mjs', 'node_modules/*', 'dist/*'],
     },
     eslint.configs.recommended,
-    ...tseslint.configs.recommendedTypeChecked,
+    ...typescriptEslint.configs.recommendedTypeChecked,
     eslintPluginPrettierRecommended,
     {
       languageOptions: {

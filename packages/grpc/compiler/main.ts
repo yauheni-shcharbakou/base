@@ -6,8 +6,8 @@ import { PROTO_EXT_REG_EXP, PROTO_SRC_ROOT } from 'compiler/constants';
 import { ContextService } from 'compiler/services';
 import { OnFilePayload, OnFolderPayload } from 'compiler/types';
 import { parseProtoTree } from 'compiler/utils';
-import { EventEmitter } from 'events';
-import { readdir } from 'fs/promises';
+import { EventEmitter } from 'node:events';
+import { readdir } from 'node:fs/promises';
 
 const getAdapters = (contextService: ContextService, adapterFactories: AdapterFactory[]) => {
   return adapterFactories.reduce((acc: BaseAdapter[], adapterFactory) => {

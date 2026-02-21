@@ -1,11 +1,11 @@
+import { MongoModule } from '@backend/persistence';
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { UserEntity, UserSchema } from 'common/entities/user.entity';
+import { UserEntity } from 'common/repositories/user/entities/user.entity';
 import { UserRepositoryImpl } from 'common/repositories/user/impl/user.repository.impl';
 import { USER_REPOSITORY } from 'common/repositories/user/user.repository';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: UserEntity.name, schema: UserSchema }])],
+  imports: [MongoModule.forFeature(UserEntity)],
   providers: [
     {
       provide: USER_REPOSITORY,
