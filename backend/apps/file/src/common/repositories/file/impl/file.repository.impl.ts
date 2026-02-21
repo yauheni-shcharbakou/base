@@ -2,8 +2,9 @@ import { GrpcFile, GrpcFileQuery, GrpcFileType, GrpcFileUpdate } from '@backend/
 import { CreateOf, MongoRepositoryImpl } from '@backend/persistence';
 import { InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { FileDatabaseEntity } from '@packages/common';
 import { Either } from '@sweet-monads/either';
-import { FileEntity } from 'common/entities/file.entity';
+import { FileEntity } from 'common/repositories/file/entities/file.entity';
 import { FileCreate, FileRepository } from 'common/repositories/file/file.repository';
 import { FileMapper } from 'common/repositories/file/mappers/file.mapper';
 import { Model } from 'mongoose';
@@ -19,7 +20,7 @@ export class FileRepositoryImpl
   >
   implements FileRepository
 {
-  constructor(@InjectModel(FileEntity.name) protected readonly model: Model<FileEntity>) {
+  constructor(@InjectModel(FileDatabaseEntity.FILE) protected readonly model: Model<FileEntity>) {
     super(model, new FileMapper());
   }
 

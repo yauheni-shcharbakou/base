@@ -1,5 +1,5 @@
-import { ResourceLayout } from '@/components/resource-layout';
+import { AuthorizedLayout } from '@/features/auth/components';
 
 export const dynamic = 'force-dynamic';
 
-export default ResourceLayout;
+export default AuthorizedLayout;

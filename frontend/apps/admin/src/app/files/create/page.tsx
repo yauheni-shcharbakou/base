@@ -1,10 +1,10 @@
 'use client';
 
-import { FileUploader } from '@/components/file-uploader';
-import { ONE_MB_BYTES } from '@/constants';
-import { useUpload } from '@/hooks/use-upload';
+import { ONE_MB_BYTES } from '@/common/constants';
+import { FileUploader } from '@/features/file/components';
+import { useFileUpload } from '@/features/file/hooks';
 import { Box, Checkbox, FormControlLabel, TextField } from '@mui/material';
-import { FileDatabaseCollection } from '@packages/common';
+import { FileDatabaseEntity } from '@packages/common';
 import { GrpcFile } from '@packages/grpc';
 import React from 'react';
 import { Create } from '@refinedev/mui';
@@ -18,8 +18,8 @@ type CreateForm = {
 };
 
 export default function FileCreate() {
-  const { isUploading, progress, handleUpload } = useUpload({
-    resource: FileDatabaseCollection.FILE,
+  const { isUploading, progress, handleUpload } = useFileUpload({
+    resource: FileDatabaseEntity.FILE,
   });
 
   const {
@@ -100,7 +100,11 @@ export default function FileCreate() {
           onChange={handleFileChange}
           required
           maxSize={100 * ONE_MB_BYTES}
-          types={['image/*', 'text/*', 'application/*', 'audio/*']}
+          accept={{
+            'image/*': [],
+            'application/pdf': [],
+          }}
+          allowedTypes={['image', 'pdf']}
         />
       </Box>
     </Create>

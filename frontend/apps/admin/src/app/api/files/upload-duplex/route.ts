@@ -1,8 +1,9 @@
-import { fileGrpcClient } from '@/grpc/clients';
-import { getErrorMessage } from '@/helpers/error.helpers';
-import { authService, configService } from '@/services';
+import { getErrorMessage } from '@/common/helpers';
+import { configService } from '@/common/services';
+import { authService } from '@/features/auth/services';
+import { grpcDataService } from '@/features/grpc/services';
 import { GrpcFile, GrpcFileUploadResponse } from '@frontend/grpc';
-import { sendToGrpcStream } from '@packages/common';
+import { FileDatabaseEntity, sendToGrpcStream } from '@packages/common';
 import { NextResponse } from 'next/server';
 import Busboy from 'busboy';
 import { Readable } from 'node:stream';
@@ -32,7 +33,9 @@ export async function POST(req: Request): Promise<Response> {
       },
     });
 
-    const request$ = fileGrpcClient.uploadOneDuplex(authMetadata);
+    const request$ = grpcDataService
+      .getClient(FileDatabaseEntity.FILE)
+      .uploadOneDuplex(authMetadata);
 
     request$.on('data', (response: GrpcFileUploadResponse) => {
       if (response.percent) {

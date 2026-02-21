@@ -1,11 +1,11 @@
 'use client';
 
-import { ResourceList } from '@/components/resource-list';
-import { useResourceList } from '@/hooks/use-resource-list';
-import { GridColumnsBuilder } from '@/utils/grid-columns.builder';
+import { ResourceList } from '@/common/components';
+import { useResourceList } from '@/common/hooks';
+import { GridColumnsBuilder } from '@/common/utils';
 import { type GridColDef } from '@mui/x-data-grid';
 import { GrpcUser } from '@packages/grpc';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 export default function UserList() {
   const { dataGridProps, isMounted } = useResourceList<GrpcUser>();

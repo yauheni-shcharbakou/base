@@ -1,5 +1,8 @@
-import { DevtoolsProvider } from '@/providers/devtools';
-import { AuthDatabaseCollection, Database, FileDatabaseCollection } from '@packages/common';
+import { DevtoolsProvider } from '@/common/components';
+import { authProvider } from '@/features/auth/providers';
+import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
+import { httpDataProvider } from '@/features/http/providers';
+import { AuthDatabaseEntity, Database, FileDatabaseEntity } from '@packages/common';
 import { Refine } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
 import { RefineSnackbarProvider, useNotificationProvider } from '@refinedev/mui';
@@ -8,9 +11,7 @@ import { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import React, { Suspense } from 'react';
 
-import { ColorModeContextProvider } from '@/contexts/color-mode';
-import { authProvider } from '@/providers/auth-provider';
-import { httpDataProvider, grpcDataProvider, uploadDataProvider } from '@/providers/data-provider';
+import { ColorModeContextProvider } from '@/common/contexts';
 
 export const metadata: Metadata = {
   title: 'Base admin panel',
@@ -42,7 +43,7 @@ export default async function RootLayout({
                     dataProvider={{
                       default: grpcDataProvider,
                       http: httpDataProvider,
-                      upload: uploadDataProvider,
+                      upload: grpcUploadDataProvider,
                     }}
                     notificationProvider={useNotificationProvider}
                     authProvider={authProvider}
@@ -61,22 +62,22 @@ export default async function RootLayout({
                       },
 
                       {
-                        name: AuthDatabaseCollection.USER,
-                        list: `/${AuthDatabaseCollection.USER}`,
-                        create: `/${AuthDatabaseCollection.USER}/create`,
-                        edit: `/${AuthDatabaseCollection.USER}/edit/:id`,
-                        show: `/${AuthDatabaseCollection.USER}/show/:id`,
+                        name: AuthDatabaseEntity.USER,
+                        list: `/${AuthDatabaseEntity.USER}`,
+                        create: `/${AuthDatabaseEntity.USER}/create`,
+                        edit: `/${AuthDatabaseEntity.USER}/edit/:id`,
+                        show: `/${AuthDatabaseEntity.USER}/show/:id`,
                         meta: {
                           canDelete: true,
                           parent: Database.AUTH,
                         },
                       },
                       {
-                        name: FileDatabaseCollection.FILE,
-                        list: `/${FileDatabaseCollection.FILE}`,
-                        create: `/${FileDatabaseCollection.FILE}/create`,
-                        edit: `/${FileDatabaseCollection.FILE}/edit/:id`,
-                        show: `/${FileDatabaseCollection.FILE}/show/:id`,
+                        name: FileDatabaseEntity.FILE,
+                        list: `/${FileDatabaseEntity.FILE}`,
+                        create: `/${FileDatabaseEntity.FILE}/create`,
+                        edit: `/${FileDatabaseEntity.FILE}/edit/:id`,
+                        show: `/${FileDatabaseEntity.FILE}/show/:id`,
                         meta: {
                           canDelete: true,
                           dataProviderName: 'upload',

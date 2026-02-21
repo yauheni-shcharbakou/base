@@ -1,6 +1,6 @@
-import { getErrorMessage } from '@/helpers/error.helpers';
-import { fileGrpcRepository } from '@/grpc/repositories';
-import { authService } from '@/services';
+import { getErrorMessage } from '@/common/helpers';
+import { authService } from '@/features/auth/services';
+import { fileGrpcRepository } from '@/features/grpc/repositories';
 import { NextResponse } from 'next/server';
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {

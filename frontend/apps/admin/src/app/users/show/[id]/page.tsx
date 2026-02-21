@@ -1,8 +1,7 @@
 'use client';
 
-import { StringEntityField } from '@/components/entity-fields';
-import { RecordView } from '@/components/record-view';
-import { useResourceShow } from '@/hooks/use-resource-show';
+import { RecordView, StringEntityField } from '@/common/components';
+import { useResourceShow } from '@/common/hooks';
 import { GrpcUser } from '@packages/grpc';
 import { Show } from '@refinedev/mui';
 

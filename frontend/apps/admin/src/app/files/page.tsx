@@ -1,8 +1,8 @@
 'use client';
 
-import { ResourceList } from '@/components/resource-list';
-import { useResourceList } from '@/hooks/use-resource-list';
-import { GridColumnsBuilder } from '@/utils/grid-columns.builder';
+import { ResourceList } from '@/common/components';
+import { useResourceList } from '@/common/hooks';
+import { GridColumnsBuilder } from '@/common/utils';
 import { type GridColDef } from '@mui/x-data-grid';
 import { GrpcFile } from '@packages/grpc';
 import React, { useMemo } from 'react';

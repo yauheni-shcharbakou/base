@@ -45,7 +45,7 @@
     "zod": "4.3.5"
   },
   "devDependencies": {
-    "@turbo/gen": "2.8.9",
+    "@turbo/gen": "2.8.10",
     "@types/lodash": "4.14.202",
     "@types/node": "22.19.3",
     "change-case-all": "2.1.0",
@@ -53,7 +53,7 @@
     "minimatch": "10.1.1",
     "prettier": "3.7.4",
     "tsup": "8.5.1",
-    "turbo": "2.8.9",
+    "turbo": "2.8.10",
     "typescript": "latest",
     "yarn": "1.22.22"
   },

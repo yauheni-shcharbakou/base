@@ -1,7 +1,9 @@
-import { fileGrpcClient } from '@/grpc/clients';
-import { authService, configService } from '@/services';
+import { configService } from '@/common/services';
+import { authService } from '@/features/auth/services';
+import { grpcDataService } from '@/features/grpc/services';
 import { GrpcFileUploadRequest } from '@backend/grpc';
 import { ClientWritableStream } from '@grpc/grpc-js';
+import { FileDatabaseEntity } from '@packages/common';
 import { NextResponse } from 'next/server';
 import Busboy from 'busboy';
 import { Readable } from 'node:stream';
@@ -28,17 +30,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       busboy$.on('file', async (_name, file$, _info) => {
         fileProcessed = true;
 
-        request$ = fileGrpcClient.uploadOne(authMetadata, (error, response) => {
-          if (error) {
-            reqBody$.unpipe(busboy$);
-            reqBody$.destroy();
-            busboy$.removeAllListeners();
+        request$ = grpcDataService
+          .getClient(FileDatabaseEntity.FILE)
+          .uploadOne(authMetadata, (error, response) => {
+            if (error) {
+              reqBody$.unpipe(busboy$);
+              reqBody$.destroy();
+              busboy$.removeAllListeners();
 
-            resolve(NextResponse.json({ message: error.details }, { status: 500 }));
-          } else {
-            resolve(NextResponse.json(response));
-          }
-        });
+              resolve(NextResponse.json({ message: error.details }, { status: 500 }));
+            } else {
+              resolve(NextResponse.json(response));
+            }
+          });
 
         request$.write({
           create: {

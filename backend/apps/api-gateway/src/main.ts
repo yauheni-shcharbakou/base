@@ -1,5 +1,5 @@
 import { MICROSERVICE_GRPC_OPTIONS } from '@backend/transport';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
@@ -13,7 +13,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
   const configService = app.get(ConfigService<Config>);
   const port = configService.get('port', { infer: true });
-  const logger = new Logger();
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new RpcExceptionFilter(), new HttpExceptionFilter());
@@ -36,6 +35,6 @@ async function bootstrap() {
 
   app.connectMicroservice(app.get(MICROSERVICE_GRPC_OPTIONS));
   await app.startAllMicroservices();
-  await app.listen(port, () => logger.log(`API Gateway running on http://localhost:${port}`));
+  await app.listen(port);
 }
 bootstrap();

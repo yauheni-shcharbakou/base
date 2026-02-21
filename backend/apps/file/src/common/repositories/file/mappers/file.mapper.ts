@@ -1,6 +1,6 @@
 import { MongoMapper } from '@backend/persistence';
 import { GrpcFile, GrpcFileQuery } from '@backend/grpc';
-import { FileEntity } from 'common/entities/file.entity';
+import { FileEntity } from 'common/repositories/file/entities/file.entity';
 import _ from 'lodash';
 import { QueryFilter } from 'mongoose';
 

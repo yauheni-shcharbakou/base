@@ -14,6 +14,9 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "reset": "rm -rf .turbo dist node_modules"
   },
+  "dependencies": {
+    "@grpc/grpc-js": "1.14.3"
+  },
   "devDependencies": {
     "@packages/configs": "*"
   }

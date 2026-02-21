@@ -1,0 +1,23 @@
+- var service = pascalCase(data.serviceId)
+
+|
+|export class Grpc#{service}Repository extends GrpcRepository<Grpc#{service}ServiceClient> {
+|   constructor(
+|       address: string,
+|       credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+|       options?: Partial<ClientOptions>
+|   ) {
+|       super(new Grpc#{service}ServiceClient(address, credentials, options));
+|   }
+|
+each method in data.methods
+    |
+    |   #{method.name}(
+    |       request: !{method.requestType},
+    |       metadata: Metadata = new Metadata(),
+    |       options: Partial<CallOptions> = {},
+    |   ): Promise<!{method.responseType}> {
+    |       return this.exec<!{method.requestType}, !{method.responseType}>("#{method.name}", request, metadata, options);
+    |   }
+    |
+|}

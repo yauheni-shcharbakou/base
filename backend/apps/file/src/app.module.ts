@@ -3,7 +3,7 @@ import { GrpcModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Database } from '@packages/common';
-import { FileEntity, FileSchema } from 'common/entities/file.entity';
+import { FileEntity } from 'common/repositories/file/entities/file.entity';
 import { migrationTasks } from 'common/migrations';
 import { config } from 'config';
 import { FileModule } from 'modules/file/file.module';
@@ -16,7 +16,7 @@ import { FileModule } from 'modules/file/file.module';
       migration: {
         imports: [ConfigModule],
         tasks: migrationTasks,
-        entities: [{ name: FileEntity.name, schema: FileSchema }],
+        entities: [FileEntity],
       },
     }),
     GrpcModule.forRoot({ host: 'file' }),

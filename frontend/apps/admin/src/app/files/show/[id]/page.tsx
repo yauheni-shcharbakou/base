@@ -1,10 +1,9 @@
 'use client';
 
-import { DownloadButton } from '@/components/buttons/download';
-import { BooleanEntityField, StringEntityField } from '@/components/entity-fields';
-import { RecordView } from '@/components/record-view';
-import { getFileSize } from '@/helpers/file.helpers';
-import { useResourceShow } from '@/hooks/use-resource-show';
+import { BooleanEntityField, RecordView, StringEntityField } from '@/common/components';
+import { useResourceShow } from '@/common/hooks';
+import { DownloadButton } from '@/features/file/components';
+import { getFileSize } from '@/features/file/helpers';
 import { OpenInBrowserOutlined } from '@mui/icons-material';
 import Button from '@mui/material/Button';
 import { GrpcFile } from '@packages/grpc';
