@@ -6,13 +6,13 @@ import {
   GrpcProxyStreamMethod,
   InjectGrpcService,
 } from 'grpc/decorators';
-import { GrpcHost } from 'grpc/grpc.config';
+import { GrpcConfigHost } from 'grpc/grpc.config';
 import { GrpcModule } from 'grpc/grpc.module';
 import _ from 'lodash';
 import { GrpcRxPipe } from 'grpc/pipes';
 
 export type GrpcProxyControllerParams = {
-  host: GrpcHost;
+  host: GrpcConfigHost;
   controllerFactory: GrpcProxyControllerFactory;
   custom?: Partial<GrpcProxyControllerFactoryParams>;
 };
@@ -20,7 +20,7 @@ export type GrpcProxyControllerParams = {
 type ControllerAccumulator = {
   controllers: Type[];
   strategy: {
-    [Host in GrpcHost]?: any[];
+    [Host in GrpcConfigHost]?: any[];
   };
 };
 

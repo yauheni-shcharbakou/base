@@ -1,23 +1,31 @@
 import { ConfigService } from '@/common/services/config.service';
 import { GrpcDataRepository } from '@/features/grpc/types';
-import { GrpcFileRepository, GrpcFileServiceClient, GrpcUserRepository } from '@frontend/grpc';
+import {
+  GrpcFileRepository,
+  GrpcFileServiceClient,
+  GrpcStorageObjectRepository,
+  GrpcUserRepository,
+} from '@frontend/grpc';
 import { ChannelCredentials } from '@grpc/grpc-js';
-import { AuthDatabaseEntity, FileDatabaseEntity } from '@packages/common';
+import { AuthDatabaseEntity, StorageDatabaseEntity } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
 
 export class GrpcDataService {
   constructor(private readonly configService: ConfigService) {}
 
+  private readonly grpcUrl = this.configService.getGrpcUrl();
+
   private readonly clients = {
-    [FileDatabaseEntity.FILE]: new GrpcFileServiceClient(
-      this.configService.getGrpcUrl(),
+    [StorageDatabaseEntity.FILE]: new GrpcFileServiceClient(
+      this.grpcUrl,
       ChannelCredentials.createInsecure(),
     ),
   } as const;
 
   private readonly repositories: Record<string, Partial<GrpcDataRepository<any>>> = {
-    [AuthDatabaseEntity.USER]: new GrpcUserRepository(this.configService.getGrpcUrl()),
-    [FileDatabaseEntity.FILE]: new GrpcFileRepository(this.configService.getGrpcUrl()),
+    [AuthDatabaseEntity.USER]: new GrpcUserRepository(this.grpcUrl),
+    [StorageDatabaseEntity.FILE]: new GrpcFileRepository(this.grpcUrl),
+    [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectRepository(this.grpcUrl),
   };
 
   getClient<Entity extends keyof typeof this.clients>(

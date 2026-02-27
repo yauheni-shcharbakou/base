@@ -4,7 +4,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { GrpcAuthServiceClient, GrpcAuthService } from '@backend/grpc';
 import { plainToInstance } from 'class-transformer';
 import { Method } from 'common/decorators/method.decorator';
-import { AuthLoginDto, AuthTokensDto } from 'common/dto/services/auth.service.dto';
+import { AuthLoginDto, AuthTokensDto } from 'common/dto/services/auth/auth.service.dto';
 
 @ApiTags('auth')
 @Controller('auth')

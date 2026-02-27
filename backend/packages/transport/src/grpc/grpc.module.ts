@@ -1,7 +1,7 @@
 import { DynamicModule, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientGrpc, ClientsModule, ClientsProviderAsyncOptions } from '@nestjs/microservices';
-import { grpcConfig, GrpcConfig, GrpcHost } from 'grpc/grpc.config';
+import { grpcConfig, GrpcConfig, GrpcConfigHost, GrpcConfigService } from 'grpc/grpc.config';
 import { getGrpcClientToken, getGrpcServiceToken } from 'grpc/helpers';
 import _ from 'lodash';
 import { GRPC_CONFIG_SERVICE, MICROSERVICE_GRPC_OPTIONS } from 'grpc/grpc.constants';
@@ -13,21 +13,25 @@ type GrpcServiceDefinition = {
 
 export type GrpcModuleForFeatureParams = {
   strategy: {
-    [Host in GrpcHost]?: (keyof GrpcConfig[Host]['services'])[];
+    [Host in GrpcConfigHost]?: GrpcConfigService<Host>[];
   };
 };
 
 export type GrpcModuleForRootParams = {
-  host?: GrpcHost;
+  host?: GrpcConfigHost;
   appClientStrategy?: GrpcModuleForFeatureParams['strategy'];
 };
 
 export class GrpcModule {
-  private static getServiceDefinitions(hostConfig: GrpcConfig[GrpcHost], services: string[]) {
+  private static getServiceDefinitions(hostConfig: GrpcConfig[GrpcConfigHost], services: string[]) {
     const result = _.reduce(
       services,
       (acc: { package: Set<string>; protoPath: Set<string> }, service) => {
         const definition: GrpcServiceDefinition = hostConfig.services[service];
+
+        if (!definition) {
+          throw new Error('Service definition is required');
+        }
 
         acc.package.add(definition.package);
         acc.protoPath.add(definition.protoPath);
@@ -57,7 +61,7 @@ export class GrpcModule {
         inject: [GRPC_CONFIG_SERVICE],
         name: clientToken,
         useFactory: (configService: ConfigService) => {
-          const hostConfig: GrpcConfig[GrpcHost] = configService.getOrThrow(clientName);
+          const hostConfig: GrpcConfig[GrpcConfigHost] = configService.getOrThrow(clientName);
           const serviceDefinitions = this.getServiceDefinitions(hostConfig, services);
 
           return _.merge(_.omit(hostConfig, ['services']), { options: serviceDefinitions });

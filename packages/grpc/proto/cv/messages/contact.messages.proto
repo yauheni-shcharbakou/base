@@ -1,0 +1,20 @@
+syntax = 'proto3';
+
+package cv.messages;
+
+import "cv/models/contact.proto";
+
+message ContactQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string name = 3;
+  optional bool isPublic = 4;
+}
+
+message ContactRequest {
+  optional ContactQuery query = 1;
+}
+
+message ContactList {
+  repeated models.Contact items = 1;
+}

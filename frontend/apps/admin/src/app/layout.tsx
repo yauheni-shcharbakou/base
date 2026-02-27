@@ -2,7 +2,7 @@ import { DevtoolsProvider } from '@/common/components';
 import { authProvider } from '@/features/auth/providers';
 import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
 import { httpDataProvider } from '@/features/http/providers';
-import { AuthDatabaseEntity, Database, FileDatabaseEntity } from '@packages/common';
+import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { Refine } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
 import { RefineSnackbarProvider, useNotificationProvider } from '@refinedev/mui';
@@ -55,33 +55,45 @@ export default async function RootLayout({
                         },
                       },
                       {
-                        name: Database.FILE,
+                        name: Database.STORAGE,
                         meta: {
-                          label: Database.FILE,
+                          label: Database.STORAGE,
                         },
                       },
 
                       {
                         name: AuthDatabaseEntity.USER,
-                        list: `/${AuthDatabaseEntity.USER}`,
-                        create: `/${AuthDatabaseEntity.USER}/create`,
-                        edit: `/${AuthDatabaseEntity.USER}/edit/:id`,
-                        show: `/${AuthDatabaseEntity.USER}/show/:id`,
+                        list: `/${Database.AUTH}/${AuthDatabaseEntity.USER}`,
+                        create: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/create`,
+                        edit: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/edit/:id`,
+                        show: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/show/:id`,
                         meta: {
                           canDelete: true,
                           parent: Database.AUTH,
                         },
                       },
+
                       {
-                        name: FileDatabaseEntity.FILE,
-                        list: `/${FileDatabaseEntity.FILE}`,
-                        create: `/${FileDatabaseEntity.FILE}/create`,
-                        edit: `/${FileDatabaseEntity.FILE}/edit/:id`,
-                        show: `/${FileDatabaseEntity.FILE}/show/:id`,
+                        name: StorageDatabaseEntity.FILE,
+                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}`,
+                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}/create`,
+                        // edit: `/${StorageDatabaseEntity.FILE}/edit/:id`,
+                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}/show/:id`,
                         meta: {
                           canDelete: true,
                           dataProviderName: 'upload',
-                          parent: Database.FILE,
+                          parent: Database.STORAGE,
+                        },
+                      },
+                      {
+                        name: StorageDatabaseEntity.STORAGE_OBJECT,
+                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}`,
+                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/create`,
+                        edit: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/edit/:id`,
+                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/show/:id`,
+                        meta: {
+                          canDelete: true,
+                          parent: Database.STORAGE,
                         },
                       },
 

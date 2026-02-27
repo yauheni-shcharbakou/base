@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Logger, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
@@ -18,8 +18,6 @@ import _ from 'lodash';
 import { AuthService } from 'modules/auth/service/auth.service';
 
 export class AuthServiceImpl implements AuthService {
-  private readonly logger = new Logger(AuthServiceImpl.name);
-
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<Config>,

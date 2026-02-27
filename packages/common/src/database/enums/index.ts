@@ -1,7 +1,7 @@
 export enum Database {
   AUTH = 'auth',
   MAIN = 'main',
-  FILE = 'file',
+  STORAGE = 'storage',
 }
 
 export enum CommonDatabaseEntity {
@@ -12,8 +12,10 @@ export enum AuthDatabaseEntity {
   USER = 'users',
 }
 
-export enum FileDatabaseEntity {
+export enum StorageDatabaseEntity {
   FILE = 'files',
+  IMAGE = 'images',
+  STORAGE_OBJECT = 'storage-objects',
   VIDEO = 'videos',
 }
 

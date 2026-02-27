@@ -1,0 +1,24 @@
+syntax = 'proto3';
+
+package storage.models;
+
+import "google/protobuf/timestamp.proto";
+
+enum FileUploadStatus {
+  PENDING = 0;
+  FAILED = 1;
+  READY = 2;
+}
+
+message File {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string user = 4;
+  string originalName = 5;
+  int32 size = 6;
+  string mimeType = 7;
+  string extension = 8;
+  FileUploadStatus uploadStatus = 9;
+}

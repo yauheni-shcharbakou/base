@@ -1,0 +1,78 @@
+syntax = 'proto3';
+
+package storage.messages;
+
+import "google/protobuf/timestamp.proto";
+import "common/service.proto";
+import "storage/models/file.proto";
+//import "storage/models/storage-object.proto";
+import "storage/messages/storage-object.messages.proto";
+
+// query
+
+message FileQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string mimeType = 3;
+  repeated string mimeTypes = 4;
+  optional string user = 5;
+  repeated string users = 6;
+  optional string extension = 7;
+  optional models.FileUploadStatus uploadStatus = 8;
+  repeated models.FileUploadStatus uploadStatuses = 9;
+  optional google.protobuf.Timestamp createdAfter = 10;
+}
+
+message FileRequest {
+  FileQuery query = 1;
+}
+
+// get
+
+message FileGetListResponse {
+  repeated models.File items = 1;
+  int32 total = 2;
+}
+
+message FileSignedUrls {
+  map<string, string> urls = 1;
+}
+
+// create
+
+message FileCreate {
+  string originalName = 1;
+  int32 size = 2;
+  string mimeType = 3;
+}
+
+message FileCreateRequest {
+  FileCreate file = 1;
+  optional StorageObjectMetadata storage = 2;
+}
+
+// upload
+
+//message FileUpload {
+//  FileCreate file = 1;
+//  StorageObjectCreate storage = 2;
+//}
+
+message FileUploadRequest {
+  oneof payload {
+    string file = 1;
+    bytes chunk = 2;
+  }
+}
+
+//message FileUploadResponse {
+//  models.File file = 1;
+//  models.StorageObject storageObject = 2;
+//}
+
+//message FileUploadResponse {
+//  oneof payload {
+//    float percent = 1;
+//    models.File file = 2;
+//  }
+//}

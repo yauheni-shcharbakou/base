@@ -1,0 +1,56 @@
+syntax = 'proto3';
+
+package storage.models;
+
+import "google/protobuf/timestamp.proto";
+
+import "storage/models/file.proto";
+import "storage/models/image.proto";
+import "storage/models/video.proto";
+
+enum StorageObjectType {
+  FOLDER = 0;
+  FILE = 1;
+  IMAGE = 2;
+  VIDEO = 3;
+}
+
+message StorageObject {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string user = 4;
+  string name = 5;
+  bool isPublic = 6;
+  StorageObjectType type = 7;
+
+  optional string parent = 8;
+  optional string file = 9;
+
+  oneof metadata {
+    string folderPath = 10;
+    string image = 11;
+    string video = 12;
+  }
+}
+
+message StorageObjectPopulated {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string user = 4;
+  string name = 5;
+  bool isPublic = 6;
+  StorageObjectType type = 7;
+
+  optional string parent = 8;
+  optional models.File file = 9;
+
+  oneof metadata {
+    string folderPath = 10;
+    models.Image image = 11;
+    models.Video video = 12;
+  }
+}

@@ -1,7 +1,15 @@
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import { GrpcAuthService, GrpcFileService, GrpcUserService, PROTO_PATH } from '@backend/grpc';
+import {
+  GrpcAuthService,
+  GrpcFileService,
+  GrpcImageService,
+  GrpcStorageObjectService,
+  GrpcUserService,
+  GrpcVideoService,
+  PROTO_PATH,
+} from '@backend/grpc';
 import { wrappers } from 'protobufjs';
 import zod from 'zod';
 
@@ -26,7 +34,7 @@ const env = validateEnv({
   API_GATEWAY_GRPC_URL: zod.string().default('0.0.0.0:8000'),
 
   AUTH_GRPC_URL: zod.string().default('0.0.0.0:8001'),
-  FILE_GRPC_URL: zod.string().default('0.0.0.0:8002'),
+  STORAGE_GRPC_URL: zod.string().default('0.0.0.0:8002'),
 });
 
 export const grpcConfig = () => {
@@ -52,7 +60,12 @@ export const grpcConfig = () => {
         [GrpcAuthService.name]: GrpcAuthService.definition,
         [GrpcUserService.name]: GrpcUserService.definition,
 
+        // [GrpcFileProxyService.name]: GrpcFileProxyService.definition,
+        // [GrpcImageProxyService.name]: GrpcImageProxyService.definition,
         [GrpcFileService.name]: GrpcFileService.definition,
+        [GrpcImageService.name]: GrpcImageService.definition,
+        [GrpcStorageObjectService.name]: GrpcStorageObjectService.definition,
+        [GrpcVideoService.name]: GrpcVideoService.definition,
       },
     },
     auth: {
@@ -66,14 +79,17 @@ export const grpcConfig = () => {
         [GrpcUserService.name]: GrpcUserService.definition,
       },
     },
-    file: {
+    storage: {
       transport: Transport.GRPC,
       options: {
         ...commonGrpcOptions,
-        url: env.FILE_GRPC_URL,
+        url: env.STORAGE_GRPC_URL,
       },
       services: {
         [GrpcFileService.name]: GrpcFileService.definition,
+        [GrpcImageService.name]: GrpcImageService.definition,
+        [GrpcStorageObjectService.name]: GrpcStorageObjectService.definition,
+        [GrpcVideoService.name]: GrpcVideoService.definition,
       },
     },
   } as const;
@@ -81,4 +97,6 @@ export const grpcConfig = () => {
 
 export type GrpcConfig = ReturnType<typeof grpcConfig>;
 
-export type GrpcHost = keyof GrpcConfig;
+export type GrpcConfigHost = keyof GrpcConfig;
+
+export type GrpcConfigService<Host extends GrpcConfigHost> = keyof GrpcConfig[Host]['services'];

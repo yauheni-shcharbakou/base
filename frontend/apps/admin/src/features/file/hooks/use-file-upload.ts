@@ -2,14 +2,13 @@
 
 import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
+import { GrpcFileCreate, GrpcIdField } from '@packages/grpc';
 import { BaseRecord, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 
 type Params = {
   resource: string;
 };
-
-type FormParams = Record<string, string | number | boolean | null | undefined>;
 
 export const useFileUpload = ({ resource }: Params) => {
   const [progress, setProgress] = useState(0);
@@ -19,32 +18,23 @@ export const useFileUpload = ({ resource }: Params) => {
 
   const handleUpload = async <UploadResponse extends BaseRecord = BaseRecord>(
     file: File,
-    additionalParams: FormParams = {},
+    createFactory: (fileMetadata: GrpcFileCreate) => Promise<GrpcIdField>,
   ): Promise<UploadResponse | undefined> => {
     setIsUploading(() => true);
     setProgress(() => 0);
 
-    const formData = Object.entries(additionalParams).reduce((acc, [key, value]) => {
-      if (typeof value === 'boolean') {
-        acc.append(key, value ? 'true' : 'false');
-        return acc;
-      }
-
-      if (value || typeof value === 'number') {
-        acc.append(key, value.toString());
-      }
-
-      return acc;
-    }, new FormData());
-
-    formData.append('file.mimeType', file.type);
-    formData.append('file.originalName', file.name);
-    formData.append('file.size', file.size.toString());
+    const formData = new FormData();
     formData.append('file', file);
 
     try {
+      const { id } = await createFactory({
+        originalName: file.name,
+        size: file.size || 0,
+        mimeType: file.type,
+      });
+
       const response = await internalHttpClient.post<UploadResponse>(
-        `${resource}/upload`,
+        `${resource}/${id}/upload`,
         formData,
         {
           onUploadProgress: (progressEvent) => {

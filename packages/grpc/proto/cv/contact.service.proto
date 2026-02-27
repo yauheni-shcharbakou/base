@@ -1,0 +1,10 @@
+syntax = 'proto3';
+
+package cv;
+
+import "cv/models/contact.proto";
+import "cv/messages/contact.messages.proto";
+
+service ContactService {
+  rpc getMany (messages.ContactRequest) returns (messages.ContactList) {}
+}

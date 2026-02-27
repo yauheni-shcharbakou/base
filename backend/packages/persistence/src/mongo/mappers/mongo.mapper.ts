@@ -1,14 +1,13 @@
 import {
-  GrpcBaseQuery,
   GrpcCrudConditionalFilter,
   GrpcCrudConditionalOperator,
   GrpcCrudLogicalFilter,
   GrpcCrudLogicalOperator,
   GrpcCrudSorter,
-  GrpcIdField,
+  GrpcEntityWithTimestamps,
 } from '@backend/grpc';
 import { MongoEntity } from 'mongo/entities';
-import { DatabaseRepositoryGetList } from 'common/interfaces';
+import { DatabaseRepositoryGetList, QueryOf } from 'common/interfaces';
 import _ from 'lodash';
 import { MongoSort } from 'mongo/mongo.types';
 import { FilterOperators } from 'mongodb';
@@ -21,9 +20,9 @@ interface ParsedLogicalFilter extends Omit<GrpcCrudLogicalFilter, 'string' | 'nu
 type FilterConverter = (filter: ParsedLogicalFilter) => any;
 
 export class MongoMapper<
-  Entity extends GrpcIdField,
+  Entity extends GrpcEntityWithTimestamps,
   Doc extends MongoEntity,
-  Query extends GrpcBaseQuery = GrpcBaseQuery & Partial<Entity>,
+  Query extends QueryOf<Entity> = QueryOf<Entity>,
 > {
   protected readonly fieldNameConverter: Record<string, keyof Doc | string>;
 

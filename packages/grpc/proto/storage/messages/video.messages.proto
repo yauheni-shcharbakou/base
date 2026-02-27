@@ -1,0 +1,85 @@
+syntax = 'proto3';
+
+package storage.messages;
+
+import "common/service.proto";
+import "storage/models/video.proto";
+import "storage/messages/file.messages.proto";
+import "storage/messages/storage-object.messages.proto";
+
+// query
+
+message VideoQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string file = 3;
+  optional string providerId = 4;
+  repeated string providerIds = 5;
+}
+
+// get
+
+message VideoGetListResponse {
+  repeated models.Video items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message VideoCreate {
+  string file = 1;
+  string providerId = 2;
+  optional int32 duration = 3;
+  optional string description = 4;
+}
+
+message VideoMetadata {
+  string providerId = 1;
+  optional int32 duration = 2;
+  optional string description = 3;
+}
+
+message VideoCreateRequest {
+  VideoMetadata video = 1;
+  FileCreate file = 2;
+  optional StorageObjectMetadata storage = 3;
+}
+
+// upload
+
+//message VideoMetadata {
+//  optional string description = 1;
+//}
+
+//message VideoUpload {
+//  FileCreate file = 1;
+//  VideoMetadata video = 2;
+//  StorageObjectCreate storage = 3;
+//}
+
+message VideoUploadRequest {
+  oneof payload {
+    string video = 1;
+    bytes chunk = 2;
+  }
+}
+
+// update
+
+message VideoUpdateSet {
+  optional string description = 1;
+}
+
+message VideoUpdate {
+  optional VideoUpdateSet set = 1;
+}
+
+message VideoUpdateRequest {
+  VideoQuery query = 1;
+  VideoUpdate update = 2;
+}
+
+message VideoUpdateByIdRequest {
+  string id = 1;
+  VideoUpdateRequest update = 2;
+}

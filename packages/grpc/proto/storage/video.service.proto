@@ -1,0 +1,16 @@
+syntax = 'proto3';
+
+package storage;
+
+import "common/service.proto";
+import "storage/models/video.proto";
+import "storage/messages/video.messages.proto";
+
+service VideoService {
+  rpc getById (common.IdField) returns (models.Video) {}
+  rpc getList (common.GetListRequest) returns (messages.VideoGetListResponse) {}
+  rpc createOne (messages.VideoCreateRequest) returns (models.Video) {}
+  rpc updateById (messages.VideoUpdateByIdRequest) returns (models.Video) {}
+  rpc uploadOne (messages.VideoUploadRequest) returns (models.Video) {}
+//  rpc deleteById (common.IdField) returns (models.Video) {}
+}

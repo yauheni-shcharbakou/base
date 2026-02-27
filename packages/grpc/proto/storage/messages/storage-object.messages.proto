@@ -1,0 +1,72 @@
+syntax = 'proto3';
+
+package storage.messages;
+
+import "common/service.proto";
+import "storage/models/storage-object.proto";
+
+// get
+
+message StorageObjectQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional models.StorageObjectType type = 3;
+  optional string user = 4;
+  optional bool isPublic = 5;
+  optional string parent = 6;
+  optional string file = 7;
+}
+
+message StorageObjectRequest {
+  StorageObjectQuery query = 1;
+}
+
+message StorageObjectList {
+  repeated models.StorageObject items = 1;
+}
+
+message StorageObjectGetListResponse {
+  repeated models.StorageObjectPopulated items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message StorageObjectCreate {
+  string name = 1;
+  bool isPublic = 2;
+  string parent = 3;
+  models.StorageObjectType type = 4;
+  optional string file = 5;
+  optional string image = 6;
+  optional string video = 7;
+}
+
+message StorageObjectMetadata {
+  string name = 1;
+  bool isPublic = 2;
+  string parent = 3;
+  models.StorageObjectType type = 4;
+}
+
+// update
+
+message StorageObjectUpdateSet {
+  optional string name = 1;
+  optional bool isPublic = 2;
+  optional string parent = 3;
+}
+
+message StorageObjectUpdate {
+  optional StorageObjectUpdateSet set = 1;
+}
+
+message StorageObjectUpdateRequest {
+  common.BaseQuery query = 1;
+  StorageObjectUpdate update = 2;
+}
+
+message StorageObjectUpdateByIdRequest {
+  string id = 1;
+  StorageObjectUpdate update = 2;
+}

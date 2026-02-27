@@ -1,0 +1,24 @@
+syntax = 'proto3';
+
+package storage;
+
+import "common/service.proto";
+import "storage/models/image.proto";
+import "storage/messages/image.messages.proto";
+
+service ImageService {
+  rpc getById (common.IdField) returns (models.Image) {}
+  rpc getList (common.GetListRequest) returns (messages.ImageGetListResponse) {}
+  rpc createOne (messages.ImageCreateRequest) returns (models.Image) {}
+  rpc updateById (messages.ImageUpdateByIdRequest) returns (models.Image) {}
+//  rpc deleteById (common.IdField) returns (models.Image) {}
+}
+
+//service ImageProxyService {
+//  rpc getById (common.IdField) returns (models.Image) {}
+//  rpc getList (common.GetListRequest) returns (messages.ImageGetListResponse) {}
+//  rpc createOne (messages.ImageCreate) returns (models.Image) {}
+//  rpc updateById (messages.ImageUpdateByIdRequest) returns (models.Image) {}
+//  rpc uploadOne (stream messages.ImageUploadRequest) returns (models.Image) {}
+//  rpc deleteById (common.IdField) returns (models.Image) {}
+//}

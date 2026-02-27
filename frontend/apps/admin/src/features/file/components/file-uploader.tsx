@@ -2,7 +2,6 @@
 
 import { getFileSize } from '@/features/file/helpers';
 import { Box, Button, Card, LinearProgress, Stack, Typography } from '@mui/material';
-import { types } from 'node:util';
 import React, { FC, useEffect, useState, useCallback, MouseEvent } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 import { Accept, useDropzone } from 'react-dropzone';

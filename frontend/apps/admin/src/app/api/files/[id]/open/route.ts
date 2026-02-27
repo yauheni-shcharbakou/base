@@ -6,11 +6,10 @@ import { NextResponse } from 'next/server';
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authMeta = await authService.getAuthMetadata();
-    const pathParams = await params;
-    const fileId = pathParams.id;
+    const id = (await params).id;
 
-    const response = await fileGrpcRepository.getSignedUrls({ id: fileId, ids: [] }, authMeta);
-    const url = response.urls.get(fileId);
+    const response = await fileGrpcRepository.getSignedUrls({ id, ids: [] }, authMeta);
+    const url = response.urls.get(id);
 
     if (!url) {
       throw new Error("Can't get signed url for file");

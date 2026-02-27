@@ -1,21 +1,21 @@
-import { MongoEntity, MongoProp, MongoSchema } from '@backend/persistence';
+import { PostgresEntity, PostgresProp, PostgresSchema } from '@backend/persistence';
+import { Property } from '@mikro-orm/core';
 import { AuthDatabaseEntity } from '@packages/common';
 import { GrpcUserRole } from '@backend/grpc';
 import { User } from 'common/interfaces/user.interface';
 
-@MongoSchema({ collection: AuthDatabaseEntity.USER })
-export class UserEntity extends MongoEntity implements User {
-  @MongoProp.String({ required: true, unique: true, index: true })
+@PostgresSchema({ tableName: AuthDatabaseEntity.USER })
+export class UserEntity extends PostgresEntity implements User {
+  @Property({ unique: true, index: true })
   email: string;
 
-  @MongoProp.String({
-    required: false,
+  @PostgresProp.Enum({
     enum: GrpcUserRole,
-    default: () => GrpcUserRole.USER,
+    default: GrpcUserRole.USER,
     index: true,
   })
   role: GrpcUserRole;
 
-  @MongoProp.String({ required: true })
+  @Property()
   hash: string;
 }

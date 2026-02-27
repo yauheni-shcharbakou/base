@@ -1,0 +1,89 @@
+syntax = 'proto3';
+
+package storage.messages;
+
+import "common/service.proto";
+import "storage/models/image.proto";
+import "storage/messages/file.messages.proto";
+import "storage/messages/storage-object.messages.proto";
+
+// query
+
+message ImageQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string file = 3;
+}
+
+// get
+
+message ImageList {
+  repeated models.Image items = 1;
+}
+
+message ImageGetListResponse {
+  repeated models.Image items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message ImageCreate {
+  string file = 1;
+  int32 width = 2;
+  int32 height = 3;
+  string alt = 4;
+}
+
+message ImageMetadata {
+  int32 width = 1;
+  int32 height = 2;
+  string alt = 3;
+}
+
+message ImageCreateRequest {
+  ImageMetadata image = 1;
+  FileCreate file = 2;
+  optional StorageObjectMetadata storage = 3;
+}
+
+// upload
+
+//message ImageMetadata {
+//  int32 width = 3;
+//  int32 height = 4;
+//  string alt = 5;
+//}
+//
+//message ImageUpload {
+//  FileCreate file = 1;
+//  ImageMetadata image = 2;
+//  StorageObjectCreate storage = 3;
+//}
+//
+//message ImageUploadRequest {
+//  oneof payload {
+//    ImageUpload create = 1;
+//    bytes chunk = 2;
+//  }
+//}
+
+// update
+
+message ImageUpdateSet {
+  optional string alt = 1;
+}
+
+message ImageUpdate {
+  optional ImageUpdateSet set = 1;
+}
+
+message ImageUpdateRequest {
+  ImageQuery query = 1;
+  ImageUpdate update = 2;
+}
+
+message ImageUpdateByIdRequest {
+  string id = 1;
+  ImageUpdate update = 2;
+}

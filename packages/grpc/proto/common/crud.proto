@@ -1,6 +1,6 @@
 syntax = 'proto3';
 
-package common.crud;
+package common;
 
 enum CrudLogicalOperator {
   eq = 0;

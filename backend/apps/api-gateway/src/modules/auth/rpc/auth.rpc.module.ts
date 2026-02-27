@@ -4,13 +4,12 @@ import { GrpcAuthService, GrpcUserService } from '@backend/grpc';
 import { AdminGrpcController, PublicGrpcController } from 'common/decorators/access.decorator';
 import { GetListRequestDto } from 'common/dto/get-list-request.dto';
 import { IdFieldDto } from 'common/dto/id-field.dto';
-import { AuthLoginDto, AuthMeDto, AuthRefreshDto } from 'common/dto/services/auth.service.dto';
+import { AuthLoginDto, AuthMeDto, AuthRefreshDto } from 'common/dto/services/auth/auth.service.dto';
 import {
   UserCreateDto,
   UserRequestDto,
   UserUpdateByIdRequestDto,
-  UserUpdateRequestDto,
-} from 'common/dto/services/user.service.dto';
+} from 'common/dto/services/auth/user.service.dto';
 
 @Module({
   imports: [
@@ -34,8 +33,6 @@ import {
           getMany: UserRequestDto,
           getList: GetListRequestDto,
           createOne: UserCreateDto,
-          updateOne: UserUpdateRequestDto,
-          deleteOne: UserRequestDto,
           updateById: UserUpdateByIdRequestDto,
           deleteById: IdFieldDto,
         }),
