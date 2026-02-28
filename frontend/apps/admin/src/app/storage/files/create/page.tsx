@@ -3,16 +3,9 @@
 import { ONE_MB_BYTES } from '@/common/constants';
 import { FileUploader } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
-import { createFile } from '@/features/grpc/actions';
 import { Box, Checkbox, FormControlLabel, MenuItem, TextField } from '@mui/material';
 import { StorageDatabaseEntity } from '@packages/common';
-import {
-  GrpcFile,
-  GrpcFileCreateRequest,
-  GrpcStorageObject,
-  GrpcStorageObjectType,
-  GrpcUser,
-} from '@packages/grpc';
+import { GrpcFile, GrpcStorageObject, GrpcStorageObjectType, GrpcUser } from '@packages/grpc';
 import { useList, useGetIdentity } from '@refinedev/core';
 import React from 'react';
 import { Create } from '@refinedev/mui';
@@ -78,22 +71,15 @@ export default function FileCreate() {
       return;
     }
 
-    const createdFile = await handleUpload<GrpcFile>(file, async (fileMetadata) => {
-      const createData: GrpcFileCreateRequest = {
-        file: fileMetadata,
-      };
+    const formData = new FormData();
 
-      if (data.parent) {
-        createData.storage = {
-          name: data.name || file.name,
-          isPublic: data.isPublic || false,
-          parent: data.parent,
-          type: GrpcStorageObjectType.FILE,
-        };
-      }
+    if (data.parent) {
+      formData.append('storage.name', data.name || '');
+      formData.append('storage.isPublic', data.isPublic ? 'true' : 'false');
+      formData.append('storage.parent', data.parent);
+    }
 
-      return createFile(createData);
-    });
+    const createdFile = await handleUpload<GrpcFile>(file, formData);
 
     if (!createdFile) {
       return;
@@ -177,7 +163,7 @@ export default function FileCreate() {
           maxSize={100 * ONE_MB_BYTES}
           accept={{
             'image/*': [],
-            'application/pdf': [],
+            'application/*': [],
           }}
           allowedTypes={['image', 'pdf']}
         />

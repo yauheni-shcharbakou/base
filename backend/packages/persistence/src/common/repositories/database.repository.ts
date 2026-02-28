@@ -1,10 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import {
-  GrpcBaseQuery,
-  GrpcEntityWithTimestamps,
-  GrpcGetListRequest,
-  GrpcIdField,
-} from '@backend/grpc';
+import { GrpcBaseQuery, GrpcEntityWithTimestamps, GrpcGetListRequest } from '@backend/grpc';
 import { Either } from '@sweet-monads/either';
 
 export type ExcludeDatabaseSystemFields<Entity> = Omit<Entity, 'id' | 'createdAt' | 'updatedAt'>;
@@ -87,6 +82,4 @@ export interface DatabaseRepository<
     options?: Partial<Options>,
   ): Promise<Either<NotFoundException, Entity>>;
   deleteMany(query?: Partial<Query>, options?: Partial<Options>): Promise<boolean>;
-
-  isolatedRun<Res>(callback: () => Promise<Res>): Promise<Res>;
 }

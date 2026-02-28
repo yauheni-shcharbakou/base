@@ -1,7 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcEntityWithTimestamps } from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
-import { OptionsOf, QueryOf } from 'common';
 import { MongoEntity } from 'mongo/entities';
 import {
   CreateOf,
@@ -9,7 +8,9 @@ import {
   DatabaseRepositoryGetList,
   DatabaseRepositoryGetListRes,
   UpdateOf,
-} from 'common/interfaces';
+  OptionsOf,
+  QueryOf,
+} from 'common';
 import { MongoMapper } from 'mongo/mappers';
 import { Model } from 'mongoose';
 
@@ -191,9 +192,5 @@ export abstract class MongoRepositoryImpl<
     }
 
     return right(this.mapper.stringify(entity));
-  }
-
-  async isolatedRun<Res>(callback: () => Promise<Res>): Promise<Res> {
-    return callback();
   }
 }

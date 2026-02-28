@@ -16,9 +16,9 @@ export default function FileList() {
     () =>
       new GridColumnsBuilder<GrpcFile>()
         .string('originalName', { headerName: 'Name' })
-        .string('mimeType', { maxWidth: 100 })
         .string('extension', { maxWidth: 100 })
         .string('size', { maxWidth: 100, valueGetter: (value) => getFileSize(value) })
+        .enum('uploadStatus')
         .date('createdAt')
         .date('updatedAt')
         .actions({

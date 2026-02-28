@@ -8,11 +8,11 @@ import {
   GrpcFileUploadStatus,
   GrpcStorageObjectType,
 } from '@backend/grpc';
-import { CrudServiceImpl } from '@backend/persistence';
-import { CreateRequestContext } from '@mikro-orm/core';
+import { CrudServiceImpl, PERSISTENCE_SERVICE, PersistenceService } from '@backend/persistence';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   InternalServerErrorException,
   Logger,
@@ -40,12 +40,19 @@ import moment from 'moment';
 import { PassThrough } from 'node:stream';
 import {
   catchError,
+  concat,
   concatMap,
-  filter,
   finalize,
   firstValueFrom,
+  from,
+  ignoreElements,
   Observable,
+  of,
+  share,
+  switchMap,
   take,
+  takeWhile,
+  tap,
   timeout,
 } from 'rxjs';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
@@ -61,6 +68,7 @@ export class FileServiceImpl
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
+    @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
   ) {
     super();
   }
@@ -127,86 +135,121 @@ export class FileServiceImpl
     request$: Observable<GrpcFileUploadRequest>,
     user?: string,
   ): Observable<Either<Error, GrpcFile>> {
+    const sharedRequest$ = request$.pipe(share());
+
+    type Params = {
+      file: GrpcFile;
+      upload$: PassThrough;
+      uploadPromise: Promise<boolean>;
+    };
+
     let uploadedFile: GrpcFile;
-    let isSuccess = false;
-    let uploadPromise: Promise<any>;
-    let totalBytes = 0;
 
-    const upload$ = new PassThrough();
-
-    return request$.pipe(
-      timeout(60_000),
-      concatMap(async (message): Promise<number | null> => {
-        if (message.file) {
-          if (!user) {
-            throw new BadRequestException(`User is required`);
-          }
-
-          const file = await this.repository.isolatedRun(async () => {
-            return this.repository.getOne({ id: message.file, user });
-          });
-
-          if (file.isLeft()) {
-            throw file.value;
-          }
-
-          uploadedFile = file.value;
-          uploadPromise = firstValueFrom(this.fileStorageService.uploadFile(uploadedFile, upload$));
-          return 0;
-        }
-
-        if (message.chunk) {
-          if (!uploadedFile) {
-            throw new ConflictException('File id should be provided before chunks');
-          }
-
-          await sendToWritable(upload$, Buffer.from(message.chunk));
-          totalBytes += message.chunk.length;
-          return (totalBytes / uploadedFile.size) * 100;
-        }
-
-        return null;
-      }),
-      catchError((err) => {
-        throw err;
-      }),
-      filter((res) => res && res >= 100),
+    return sharedRequest$.pipe(
       take(1),
-      concatMap(async () => {
-        if (!uploadedFile) {
-          throw new Error('No data received');
+      timeout(5_000),
+      switchMap(async (message): Promise<Params> => {
+        if (!user) {
+          throw new ForbiddenException(`User is required`);
         }
 
-        if (totalBytes < uploadedFile.size) {
-          throw new Error('File upload interrupted: size mismatch');
+        if (!message.file) {
+          throw new ConflictException('File id should be provided before chunks');
         }
 
-        upload$.end();
-        await uploadPromise;
-
-        const file = await this.repository.isolatedRun(async () => {
-          return this.updateById(uploadedFile.id, {
-            set: {
-              uploadStatus: GrpcFileUploadStatus.READY,
-            },
-          });
+        const file = await this.persistenceService.isolatedRun(async () => {
+          return this.repository.getOne({ id: message.file, user });
         });
 
         if (file.isLeft()) {
           throw file.value;
         }
 
-        isSuccess = true;
-        this.logger.log(`File ${uploadedFile.id} uploaded`);
-        return right(file.value);
+        if (file.value.uploadStatus === GrpcFileUploadStatus.READY) {
+          throw new BadRequestException('File should have pending or failed upload status');
+        }
+
+        const upload$ = new PassThrough();
+
+        uploadedFile = file.value;
+
+        const uploadPromise = firstValueFrom(
+          this.fileStorageService.uploadFile(uploadedFile, upload$),
+        );
+
+        uploadPromise.catch(() => {});
+
+        return { file: file.value, upload$, uploadPromise };
+      }),
+      switchMap(({ file, upload$, uploadPromise }) => {
+        let totalBytes = 0;
+        const initialResponse = of(right(file));
+
+        const chunkProcessor$ = sharedRequest$.pipe(
+          timeout(10_000),
+          concatMap(async (message): Promise<number> => {
+            if (!message.chunk) {
+              throw new ConflictException('Only chunks should be provided after file id');
+            }
+
+            await sendToWritable(upload$, Buffer.from(message.chunk));
+            totalBytes += message.chunk.length;
+            return (totalBytes / uploadedFile.size) * 100;
+          }),
+          takeWhile((percent) => percent < 100, true),
+          tap({
+            complete: () => {
+              upload$.end();
+            },
+          }),
+          ignoreElements(),
+          catchError((err) => {
+            upload$.destroy();
+            throw err;
+          }),
+        );
+
+        const finalResponse = from(uploadPromise).pipe(
+          concatMap(async (isUploaded) => {
+            if (!isUploaded) {
+              throw new InternalServerErrorException('File upload failed');
+            }
+
+            if (totalBytes < uploadedFile.size) {
+              throw new InternalServerErrorException('File upload interrupted: size mismatch');
+            }
+
+            const updatedFile = await this.persistenceService.isolatedRun(async () => {
+              return this.updateById(uploadedFile.id, {
+                set: {
+                  uploadStatus: GrpcFileUploadStatus.READY,
+                },
+              });
+            });
+
+            if (updatedFile.isLeft()) {
+              throw updatedFile.value;
+            }
+
+            this.logger.log(`File ${uploadedFile.id} uploaded`);
+            return right(updatedFile.value);
+          }),
+        );
+
+        return concat(initialResponse, chunkProcessor$, finalResponse).pipe(
+          finalize(() => {
+            if (!upload$.destroyed) {
+              upload$.destroy();
+            }
+          }),
+        );
       }),
       catchError(async (err) => {
         this.logger.error('File upload error:', err.message, err.stack);
-        upload$.destroy();
 
         if (uploadedFile?.id) {
-          await Promise.all([
-            this.repository.isolatedRun(async () => {
+          await Promise.allSettled([
+            this.persistenceService.isolatedRun(async () => {
               await this.updateById(uploadedFile.id, {
                 set: {
                   uploadStatus: GrpcFileUploadStatus.FAILED,
@@ -215,16 +258,9 @@ export class FileServiceImpl
             }),
             firstValueFrom(this.fileStorageService.deleteFile(uploadedFile)),
           ]);
-
-          // this.eventEmitter.emit('file.delete', { id: uploadedFile.id });
         }
 
         return left(err);
-      }),
-      finalize(() => {
-        if (!isSuccess && !upload$.destroyed) {
-          upload$.destroy();
-        }
       }),
     );
   }
@@ -232,7 +268,7 @@ export class FileServiceImpl
   @Cron(CronExpression.EVERY_HOUR)
   async cleanupFiles() {
     try {
-      await this.repository.isolatedRun(async () => {
+      await this.persistenceService.isolatedRun(async () => {
         let page = 1;
         let hasNext = true;
         const createdAfter = moment().subtract(1, 'hour').toDate();

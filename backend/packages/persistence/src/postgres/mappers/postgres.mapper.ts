@@ -10,7 +10,7 @@ import {
 } from '@backend/grpc';
 import { FilterObject, ObjectQuery, wrap } from '@mikro-orm/core';
 import { OperatorMap } from '@mikro-orm/core/typings';
-import { DatabaseRepositoryGetList, QueryOf } from 'common/interfaces';
+import { DatabaseRepositoryGetList, QueryOf } from 'common';
 import _ from 'lodash';
 import { PostgresEntity } from 'postgres/entities';
 import { PostgresSorting } from 'postgres/postgres.types';

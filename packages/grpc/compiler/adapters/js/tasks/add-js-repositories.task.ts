@@ -11,9 +11,12 @@ type MethodData = {
 
 export class AddJsRepositoriesTask extends TransformTask {
   private declareImports() {
-    this.addOrUpdateImport('@grpc/grpc-js', ['CallOptions', 'Metadata']);
-
-    this.addOrUpdateImport(this.importFromCompilerPath, ['GrpcRepository']);
+    this.addOrUpdateImport('@grpc/grpc-js', [
+      'CallOptions',
+      'ClientOptions',
+      'ChannelCredentials',
+      'Metadata',
+    ]);
   }
 
   private declareRepository(service: ProtoContextService) {
@@ -34,7 +37,7 @@ export class AddJsRepositoriesTask extends TransformTask {
       }
     }
 
-    const methods: MethodData[] = Array.from(clientMethods.entries()).reduce(
+    const unaryMethods: MethodData[] = Array.from(clientMethods.entries()).reduce(
       (acc: MethodData[], [name, method]) => {
         const requestType = method.getParameter('request')?.getType()?.getText();
         const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
@@ -58,7 +61,7 @@ export class AddJsRepositoriesTask extends TransformTask {
     const repositoryDeclaration = this.renderTemplate('js.repository', {
       data: {
         serviceId: service.id,
-        methods,
+        unaryMethods,
       },
       pascalCase,
     });

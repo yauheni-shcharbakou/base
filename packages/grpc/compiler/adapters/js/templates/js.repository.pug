@@ -1,23 +1,38 @@
 - var service = pascalCase(data.serviceId)
+- var client = `Grpc${service}ServiceClient`
 
 |
-|export class Grpc#{service}Repository extends GrpcRepository<Grpc#{service}ServiceClient> {
+|export class Grpc#{service}Repository {
+|   protected readonly client: #{client};
+|
 |   constructor(
 |       address: string,
 |       credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
 |       options?: Partial<ClientOptions>
 |   ) {
-|       super(new Grpc#{service}ServiceClient(address, credentials, options));
+|       this.client = new #{client}(address, credentials, options);
 |   }
 |
-each method in data.methods
+|   getClient(): #{client} {
+|       return this.client;
+|   }
+|
+each unaryMethod in data.unaryMethods
     |
-    |   #{method.name}(
-    |       request: !{method.requestType},
+    |   #{unaryMethod.name}(
+    |       request: !{unaryMethod.requestType},
     |       metadata: Metadata = new Metadata(),
     |       options: Partial<CallOptions> = {},
-    |   ): Promise<!{method.responseType}> {
-    |       return this.exec<!{method.requestType}, !{method.responseType}>("#{method.name}", request, metadata, options);
+    |   ): Promise<!{unaryMethod.responseType}> {
+    |       return new Promise<!{unaryMethod.responseType}>((resolve, reject) => {
+    |           this.client.#{unaryMethod.name}(request, metadata, options, (err, response) => {
+    |               if (err) {
+    |                   reject(err);
+    |               } else {
+    |                   resolve(response);
+    |               }
+    |           });
+    |       });
     |   }
     |
 |}

@@ -1,23 +1,30 @@
-import { RequestContext } from '@mikro-orm/core';
-import { MikroORM } from '@mikro-orm/postgresql';
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Reflector } from '@nestjs/core';
+import { PERSISTENCE_SERVICE, PersistenceService } from 'common';
+import { from, lastValueFrom, Observable } from 'rxjs';
 
 @Injectable()
 export class PostgresRequestInterceptor implements NestInterceptor {
-  constructor(@Inject(MikroORM) private readonly orm: MikroORM) {}
+  constructor(
+    @Inject(Reflector) private readonly reflector: Reflector,
+    @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
+  ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    return new Observable((observer) => {
-      RequestContext.create(this.orm.em, () => {
-        const subscription = next.handle().subscribe({
-          next: (val) => observer.next(val),
-          error: (err) => observer.error(err),
-          complete: () => observer.complete(),
-        });
+    // TODO: move to @packages/common as a decorator
+    const shouldSkip: boolean = this.reflector.getAllAndOverride('grpc-stream', [
+      context.getHandler(),
+      context.getClass,
+    ]);
 
-        return () => subscription.unsubscribe();
-      });
-    });
+    if (shouldSkip) {
+      return next.handle();
+    }
+
+    return from(
+      this.persistenceService.isolatedRun(async () => {
+        return lastValueFrom(next.handle());
+      }),
+    );
   }
 }

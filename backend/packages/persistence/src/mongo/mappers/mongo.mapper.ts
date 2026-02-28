@@ -7,7 +7,7 @@ import {
   GrpcEntityWithTimestamps,
 } from '@backend/grpc';
 import { MongoEntity } from 'mongo/entities';
-import { DatabaseRepositoryGetList, QueryOf } from 'common/interfaces';
+import { DatabaseRepositoryGetList, QueryOf } from 'common';
 import _ from 'lodash';
 import { MongoSort } from 'mongo/mongo.types';
 import { FilterOperators } from 'mongodb';

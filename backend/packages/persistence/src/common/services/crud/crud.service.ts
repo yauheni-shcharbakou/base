@@ -8,7 +8,7 @@ import {
   JoinField,
   QueryOf,
   UpdateOf,
-} from 'common/interfaces';
+} from 'common/repositories';
 
 export interface CrudService<
   Entity extends GrpcEntityWithTimestamps = GrpcEntityWithTimestamps,

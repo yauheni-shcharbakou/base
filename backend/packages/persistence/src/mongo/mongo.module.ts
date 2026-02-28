@@ -2,6 +2,7 @@ import { DynamicModule, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ModelDefinition, MongooseModule } from '@nestjs/mongoose';
 import { Database } from '@packages/common';
+import { PERSISTENCE_SERVICE, PersistenceServiceImpl } from 'common';
 import { MongoEntity } from 'mongo/entities';
 import { convertEntitiesToMongoDefinitions } from 'mongo/helpers';
 import { MongoMigrationModule, MongoMigrationModuleParams } from 'mongo/modules/migration';
@@ -9,6 +10,8 @@ import { MongoConfig, mongoConfig } from 'mongo/mongo.config';
 import { MONGO_CONFIG_SERVICE } from 'mongo/mongo.constants';
 import { Connection } from 'mongoose';
 import { MongoIdPlugin } from 'mongo/plugins';
+
+// TODO: implement migrator, populate logic, try to reduce module exports
 
 type MongoModuleForRootParams = {
   database: Database;
@@ -44,6 +47,10 @@ export class MongoModule {
           provide: MONGO_CONFIG_SERVICE,
           useClass: ConfigService,
         },
+        {
+          provide: PERSISTENCE_SERVICE,
+          useClass: PersistenceServiceImpl,
+        },
       ],
       exports: [MongooseModule, MONGO_CONFIG_SERVICE],
       global: true,
@@ -53,10 +60,11 @@ export class MongoModule {
 
   static forFeature(...entities: Type<MongoEntity>[]): DynamicModule {
     const definitions: ModelDefinition[] = convertEntitiesToMongoDefinitions(entities);
+    const mongooseModule = MongooseModule.forFeature(definitions);
 
     return {
-      imports: [MongooseModule.forFeature(definitions)],
-      exports: [MongooseModule],
+      imports: [mongooseModule],
+      exports: [mongooseModule],
       module: MongoModule,
     };
   }

@@ -9,7 +9,7 @@ import {
   JoinField,
   QueryOf,
   UpdateOf,
-} from 'common/interfaces';
+} from 'common/repositories';
 import { CrudService } from 'common/services/crud/crud.service';
 
 export abstract class CrudServiceImpl<

@@ -6,7 +6,7 @@ import { DownloadButton } from '@/features/file/components';
 import { getFileSize } from '@/features/file/helpers';
 import { OpenInBrowserOutlined } from '@mui/icons-material';
 import Button from '@mui/material/Button';
-import { GrpcFile } from '@packages/grpc';
+import { GrpcFile, GrpcFileUploadStatus } from '@packages/grpc';
 import { Show } from '@refinedev/mui';
 import React from 'react';
 
@@ -19,7 +19,7 @@ export default function FileShow() {
       isLoading={isLoading || !record?.id}
       headerButtons={({ defaultButtons }) => (
         <>
-          {record?.id && (
+          {record?.id && record.uploadStatus === GrpcFileUploadStatus.READY && (
             <>
               <Button
                 variant="text"
@@ -47,6 +47,7 @@ export default function FileShow() {
         <StringEntityField label="Size" value={getFileSize(record?.size)} />
         <StringEntityField label="Mime type" value={record?.mimeType} />
         <StringEntityField label="Extension" value={record?.extension} />
+        <StringEntityField label="Upload status" value={record?.uploadStatus} />
       </RecordView>
     </Show>
   );

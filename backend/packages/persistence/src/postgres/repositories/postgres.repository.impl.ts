@@ -1,12 +1,5 @@
 import { GrpcEntityWithTimestamps } from '@backend/grpc';
-import {
-  EntityData,
-  Populate,
-  raw,
-  RequestContext,
-  RequiredEntityData,
-  wrap,
-} from '@mikro-orm/core';
+import { EntityData, Populate, raw, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
@@ -267,18 +260,5 @@ export abstract class PostgresRepositoryImpl<
     } catch (error) {
       return left(error as NotFoundException);
     }
-  }
-
-  async isolatedRun<Res>(callback: () => Promise<Res>): Promise<Res> {
-    return new Promise<Res>((resolve, reject) => {
-      RequestContext.create(this.em, async () => {
-        try {
-          const res = await callback();
-          resolve(res);
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
   }
 }
