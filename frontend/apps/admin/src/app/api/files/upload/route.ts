@@ -11,13 +11,18 @@ import { ClientDuplexStream } from '@grpc/grpc-js';
 import Busboy from 'busboy';
 import { NextResponse } from 'next/server';
 import { Readable } from 'node:stream';
+import { ReadableStream } from 'node:stream/web';
 
 export async function POST(req: Request): Promise<NextResponse> {
+  if (!req.body) {
+    return NextResponse.json({ message: 'Body is required' }, { status: 400 });
+  }
+
   try {
     const authMetadata = await authService.getAuthMetadata();
 
     const headers = Object.fromEntries(req.headers.entries());
-    const reqBody$ = Readable.fromWeb(req.body as any);
+    const reqBody$ = Readable.fromWeb(req.body as ReadableStream);
     let request$: ClientDuplexStream<GrpcFileUploadRequest, GrpcFile>;
 
     return new Promise<NextResponse>((resolve) => {
@@ -29,11 +34,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
       const timeout = setTimeout(() => {
         clearTimeout(timeout);
-
-        if (request$) {
-          request$.cancel();
-        }
-
+        request$?.cancel();
         reqBody$.destroy();
         resolve(NextResponse.json({ message: 'Upload timeout' }, { status: 504 }));
       }, 180_000);
@@ -42,21 +43,23 @@ export async function POST(req: Request): Promise<NextResponse> {
         formData[name] = val;
       });
 
-      busboy$.on('file', (_name, file$, _info) => {
+      busboy$.on('file', (_name, file$, fileInfo) => {
+        reqBody$.pause();
         file$.pause();
+
         fileProcessed = true;
 
         const createData: GrpcFileCreateRequest = {
           file: {
-            originalName: formData['file.name'],
+            originalName: fileInfo.filename,
             size: +(formData['file.size'] || 0),
-            mimeType: formData['file.type'],
+            mimeType: fileInfo.mimeType,
           },
         };
 
         if (formData['storage.parent']) {
           createData.storage = {
-            name: formData['storage.name'] || formData['file.name'],
+            name: formData['storage.name'] || fileInfo.filename,
             isPublic: formData['storage.isPublic'] === 'true',
             parent: formData['storage.parent'],
             type: GrpcStorageObjectType.FILE,
@@ -81,8 +84,13 @@ export async function POST(req: Request): Promise<NextResponse> {
                   const result = request$.write({ chunk: Buffer.from(chunk) });
 
                   if (!result) {
+                    reqBody$.pause();
                     file$.pause();
-                    request$.once('drain', () => file$.resume());
+
+                    request$.once('drain', () => {
+                      file$.resume();
+                      reqBody$.resume();
+                    });
                   }
                 });
 
@@ -96,6 +104,7 @@ export async function POST(req: Request): Promise<NextResponse> {
                 });
 
                 file$.resume();
+                reqBody$.resume();
                 return;
               }
             });
@@ -120,7 +129,7 @@ export async function POST(req: Request): Promise<NextResponse> {
           .catch((error) => {
             clearTimeout(timeout);
 
-            request$.cancel();
+            request$?.cancel();
             reqBody$.unpipe(busboy$);
             reqBody$.destroy();
             busboy$.removeAllListeners();
@@ -136,22 +145,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
       busboy$.on('error', (err) => {
         clearTimeout(timeout);
-
-        if (request$) {
-          request$.cancel();
-        }
-
+        request$?.cancel();
         reqBody$.destroy();
-
         resolve(NextResponse.json({ message: 'Parse error' }, { status: 500 }));
       });
 
       busboy$.on('finish', () => {
         if (!fileProcessed) {
-          if (request$) {
-            request$.cancel();
-          }
-
+          request$?.cancel();
           resolve(NextResponse.json({ error: 'No file provided' }, { status: 400 }));
         }
       });

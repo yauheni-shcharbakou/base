@@ -22,9 +22,7 @@ export const useFileUpload = ({ resource }: Params) => {
     setIsUploading(() => true);
     setProgress(() => 0);
 
-    formData.append('file.name', file.name);
     formData.append('file.size', file.size.toString());
-    formData.append('file.type', file.type);
     formData.append('file', file);
 
     try {
