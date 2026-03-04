@@ -14,6 +14,8 @@ async function bootstrap() {
   const configService = app.get(ConfigService<Config>);
   const port = configService.get('port', { infer: true });
 
+  app.enableShutdownHooks();
+
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new RpcExceptionFilter(), new HttpExceptionFilter());
   app.useGlobalInterceptors(new HttpRequestInterceptor());

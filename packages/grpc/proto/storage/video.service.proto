@@ -11,6 +11,6 @@ service VideoService {
   rpc getList (common.GetListRequest) returns (messages.VideoGetListResponse) {}
   rpc createOne (messages.VideoCreateRequest) returns (models.Video) {}
   rpc updateById (messages.VideoUpdateByIdRequest) returns (models.Video) {}
-  rpc uploadOne (messages.VideoUploadRequest) returns (models.Video) {}
+  rpc uploadOne (messages.VideoUploadRequest) returns (messages.VideoUploadResponse) {}
 //  rpc deleteById (common.IdField) returns (models.Video) {}
 }

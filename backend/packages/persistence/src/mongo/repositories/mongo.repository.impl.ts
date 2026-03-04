@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcEntityWithTimestamps } from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
+import _ from 'lodash';
 import { MongoEntity } from 'mongo/entities';
 import {
   CreateOf,
@@ -27,6 +28,14 @@ export abstract class MongoRepositoryImpl<
     protected readonly mapper: MongoMapper<Entity, Doc, Query> = new MongoMapper(),
   ) {}
 
+  private getPopulate(options: Partial<Options> = {}) {
+    if (!options.populate) {
+      return undefined;
+    }
+
+    return _.map(options.populate, (populateField) => populateField.toString());
+  }
+
   async isExistsById(id: string, options: Partial<Options> = {}): Promise<boolean> {
     return this.isExists({ id } as Partial<Query>, options);
   }
@@ -51,7 +60,11 @@ export abstract class MongoRepositoryImpl<
     query: Partial<Query> = {},
     options: Partial<Options> = {},
   ): Promise<Either<NotFoundException, Entity>> {
-    const entity = await this.model.findOne<Doc>(this.mapper.transformQuery(query)).exec();
+    const entity = await this.model
+      .findOne<Doc>(this.mapper.transformQuery(query), null, {
+        populate: this.getPopulate(options),
+      })
+      .exec();
 
     if (!entity) {
       return left(new NotFoundException(`${this.model.modelName} not found`));
@@ -61,7 +74,10 @@ export abstract class MongoRepositoryImpl<
   }
 
   async getMany(query: Partial<Query> = {}, options: Partial<Options> = {}): Promise<Entity[]> {
-    const entities = await this.model.find<Doc>(this.mapper.transformQuery(query)).exec();
+    const entities = await this.model
+      .find<Doc>(this.mapper.transformQuery(query), null, { populate: this.getPopulate(options) })
+      .exec();
+
     return this.mapper.stringifyMany(entities);
   }
 
@@ -72,20 +88,25 @@ export abstract class MongoRepositoryImpl<
     try {
       const query = this.mapper.transformListQuery(request);
       const sort = this.mapper.transformSorters(request.sorters);
+      const populate = this.getPopulate(options);
 
       const page = request.pagination?.page || 1;
       const limit = request.pagination?.limit || 100;
       const skip = (page - 1) * limit;
 
+      let entityQuery = this.model.find<Doc>(query).limit(limit).skip(skip);
+
+      if (populate) {
+        entityQuery.populate(populate);
+      }
+
+      if (!_.isEmpty(sort)) {
+        entityQuery.sort(sort);
+      }
+
       const [total, entities] = await Promise.all([
         this.model.countDocuments(query),
-        this.model
-          .find<Doc>(query)
-          .populate((options.populate as unknown as string[]) ?? [])
-          .limit(limit)
-          .skip(skip)
-          .sort(sort)
-          .exec(),
+        entityQuery.exec(),
       ]);
 
       return {
@@ -137,7 +158,11 @@ export abstract class MongoRepositoryImpl<
     query: Partial<Query> = {},
     options: Partial<Options> = {},
   ): Promise<Either<NotFoundException, Entity>> {
-    const entity = await this.model.findOneAndDelete<Doc>(this.mapper.transformQuery(query)).exec();
+    const entity = await this.model
+      .findOneAndDelete<Doc>(this.mapper.transformQuery(query), {
+        populate: this.getPopulate(options),
+      })
+      .exec();
 
     if (!entity) {
       return left(new NotFoundException(`${this.model.modelName} not found`));
@@ -183,7 +208,7 @@ export abstract class MongoRepositoryImpl<
           $unset: updateData['remove'] ?? {},
           $inc: updateData['inc'] ?? {},
         },
-        { new: true },
+        { new: true, populate: this.getPopulate(options) },
       )
       .exec();
 

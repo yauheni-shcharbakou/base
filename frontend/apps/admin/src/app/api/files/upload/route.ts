@@ -1,10 +1,9 @@
 import { authService } from '@/features/auth/services';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
 import {
-  GrpcFile,
   GrpcFileCreateRequest,
   GrpcFileUploadRequest,
-  GrpcFileUploadStatus,
+  GrpcFileUploadResponse,
   GrpcStorageObjectType,
 } from '@frontend/grpc';
 import { ClientDuplexStream } from '@grpc/grpc-js';
@@ -23,7 +22,7 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     const headers = Object.fromEntries(req.headers.entries());
     const reqBody$ = Readable.fromWeb(req.body as ReadableStream);
-    let request$: ClientDuplexStream<GrpcFileUploadRequest, GrpcFile>;
+    let request$: ClientDuplexStream<GrpcFileUploadRequest, GrpcFileUploadResponse>;
 
     return new Promise<NextResponse>((resolve) => {
       const busboy$ = Busboy({ headers });
@@ -71,13 +70,13 @@ export async function POST(req: Request): Promise<NextResponse> {
           .then((createdFile) => {
             request$ = fileGrpcRepository.getClient().uploadOne(authMetadata);
 
-            request$.on('data', (file: GrpcFile) => {
-              if (file.uploadStatus === GrpcFileUploadStatus.READY) {
+            request$.on('data', (response: GrpcFileUploadResponse) => {
+              if (response.file) {
                 clearTimeout(timeout);
-                return resolve(NextResponse.json(file));
+                return resolve(NextResponse.json(response.file));
               }
 
-              if (!fileStreamingStarted) {
+              if (response.canSendChunks && !fileStreamingStarted) {
                 fileStreamingStarted = true;
 
                 file$.on('data', (chunk: Buffer) => {
@@ -105,7 +104,6 @@ export async function POST(req: Request): Promise<NextResponse> {
 
                 file$.resume();
                 reqBody$.resume();
-                return;
               }
             });
 

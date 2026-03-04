@@ -65,6 +65,13 @@ message FileUploadRequest {
   }
 }
 
+message FileUploadResponse {
+  oneof payload {
+    models.File file = 1;
+    bool canSendChunks = 2;
+  }
+}
+
 //message FileUploadResponse {
 //  models.File file = 1;
 //  models.StorageObject storageObject = 2;

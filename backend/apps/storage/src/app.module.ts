@@ -11,21 +11,12 @@ import { ImageModule } from 'modules/image/image.module';
 import { StorageObjectModule } from 'modules/storage-object/storage-object.module';
 
 // TODO: implement video entity stuff, check postgres cascade deletion
-// TODO: refactor all fromPromise to from
 
 @Module({
   imports: [
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    // MongoModule.forRoot({
-    //   database: Database.STORAGE,
-    //   migration: {
-    //     imports: [ConfigModule],
-    //     tasks: migrationTasks,
-    //     entities: [MongoFileEntity],
-    //   },
-    // }),
     PostgresModule.forRoot({ database: Database.STORAGE }),
     GrpcModule.forRoot({ host: 'storage' }),
     FileModule,

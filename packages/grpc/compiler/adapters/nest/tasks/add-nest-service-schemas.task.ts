@@ -1,7 +1,7 @@
 import { constantCase, pascalCase } from 'change-case-all';
 import { TransformTask } from 'compiler/tasks';
 import { ProtoContextService } from 'compiler/types';
-import { MethodSignature, SyntaxKind } from 'ts-morph';
+import { SyntaxKind } from 'ts-morph';
 
 type MethodDefinition = {
   name: string;
@@ -18,24 +18,19 @@ type MethodTypes = {
   streamMethods: StreamMethodDefinition[];
 };
 
+type TemplateData = MethodTypes & {
+  id: string;
+  name: string;
+};
+
 export class AddNestServiceSchemasTask extends TransformTask {
   private packageName: string | undefined;
 
   private declareImports() {
     this.addOrUpdateImport('path', ['join']);
     this.addOrUpdateImport('@grpc/grpc-js', ['Metadata']);
-    this.addOrUpdateImport('@nestjs/common', ['Type', 'ForbiddenException', 'Inject']);
-    this.addOrUpdateImport('@nestjs/microservices', ['ClientGrpc', 'RpcException']);
-    this.addOrUpdateImport('rxjs', [
-      'catchError',
-      'finalize',
-      'map',
-      'Observable',
-      'ReplaySubject',
-      'switchMap',
-      'OperatorFunction',
-      'throwError',
-    ]);
+    this.addOrUpdateImport('@nestjs/common', ['Type']);
+    this.addOrUpdateImport('@nestjs/microservices', ['ClientGrpc']);
 
     this.addOrUpdateImport(this.importFromCompilerPath, [
       'GrpcProxyControllerFactoryParams',
@@ -43,54 +38,78 @@ export class AddNestServiceSchemasTask extends TransformTask {
       'GrpcProxyControllerFactory',
       'GrpcProxyMethodParams',
       'GrpcProxyStreamMethodParams',
-      'GrpcAccessService',
       'PROTO_PATH',
-      'GRPC_ACCESS_SERVICE',
     ]);
   }
 
-  private declareSchema(service: ProtoContextService, controllerMethods: MethodSignature[]) {
-    const methodTypes: MethodTypes = controllerMethods.reduce(
-      (acc: MethodTypes, method) => {
-        const name = method.getName();
-        const firstArgument = method.getParameter('request');
-        const responseType = method.getReturnType()?.getText();
+  private declareSchemas(services: ProtoContextService[]) {
+    const serviceTemplateData = services.reduce((acc: TemplateData[], service) => {
+      const controllerName = pascalCase(`grpc.${service.name}.controller`);
+      const clientName = pascalCase(`grpc.${service.name}.client`);
+      const serviceConstName = constantCase(`${service.name}.name`);
 
-        if (!firstArgument || !responseType) {
-          return acc;
-        }
+      const controllerInterface = this.sourceFile.getInterface(controllerName);
+      const clientInterface = this.sourceFile.getInterface(clientName);
 
-        const requestType = firstArgument.getType().getText();
-        const typeNode = firstArgument.getTypeNode();
+      const serviceNameValue = this.sourceFile
+        .getVariableDeclaration(serviceConstName)
+        ?.getInitializer()
+        ?.getText();
 
-        if (typeNode && typeNode.isKind(SyntaxKind.TypeReference)) {
-          const typeArgs = typeNode.getTypeArguments() ?? [];
-
-          if (typeArgs?.length) {
-            acc.streamMethods.push({
-              name,
-              streamType: typeArgs[0].getText(),
-              responseType,
-              requestType,
-            });
-
-            return acc;
-          }
-        }
-
-        acc.unaryMethods.push({ name, requestType, responseType });
+      if (!controllerInterface || !clientInterface || !serviceNameValue) {
         return acc;
-      },
-      { unaryMethods: [], streamMethods: [] },
-    );
+      }
+
+      const controllerMethods = controllerInterface.getMethods();
+
+      const methodTypes: MethodTypes = controllerMethods.reduce(
+        (methods: MethodTypes, method) => {
+          const name = method.getName();
+          const firstArgument = method.getParameter('request');
+          const responseType = method.getReturnType()?.getText();
+
+          if (!firstArgument || !responseType) {
+            return methods;
+          }
+
+          const requestType = firstArgument.getType().getText();
+          const typeNode = firstArgument.getTypeNode();
+
+          if (typeNode && typeNode.isKind(SyntaxKind.TypeReference)) {
+            const typeArgs = typeNode.getTypeArguments() ?? [];
+
+            if (typeArgs?.length) {
+              methods.streamMethods.push({
+                name,
+                streamType: typeArgs[0].getText(),
+                responseType,
+                requestType,
+              });
+
+              return methods;
+            }
+          }
+
+          methods.unaryMethods.push({ name, requestType, responseType });
+          return methods;
+        },
+        { unaryMethods: [], streamMethods: [] },
+      );
+
+      acc.push({
+        id: service.id,
+        name: service.name,
+        ...methodTypes,
+      });
+
+      return acc;
+    }, []);
 
     const schemaDeclaration = this.renderTemplate('nest.service-schema', {
       data: {
-        service,
+        services: serviceTemplateData,
         package: this.packageName,
         protoPath: this.protoContext.protoPath,
-        unaryMethods: methodTypes.unaryMethods,
-        streamMethods: methodTypes.streamMethods,
       },
       pascalCase,
       constantCase,
@@ -113,26 +132,6 @@ export class AddNestServiceSchemasTask extends TransformTask {
     }
 
     this.declareImports();
-
-    this.protoContext.services.forEach((service) => {
-      const controllerName = pascalCase(`grpc.${service.name}.controller`);
-      const clientName = pascalCase(`grpc.${service.name}.client`);
-      const serviceConstName = constantCase(`${service.name}.name`);
-
-      const controllerInterface = this.sourceFile.getInterface(controllerName);
-      const clientInterface = this.sourceFile.getInterface(clientName);
-
-      const serviceNameValue = this.sourceFile
-        .getVariableDeclaration(serviceConstName)
-        ?.getInitializer()
-        ?.getText();
-
-      if (!controllerInterface || !clientInterface || !serviceNameValue) {
-        return;
-      }
-
-      const controllerMethods = controllerInterface.getMethods();
-      this.declareSchema(service, controllerMethods);
-    });
+    this.declareSchemas(this.protoContext.services);
   }
 }

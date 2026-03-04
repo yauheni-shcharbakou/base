@@ -1,6 +1,7 @@
 export * from './decorators';
 export * from './entities';
 export * from './mappers';
+export * from './modules';
 export * from './plugins';
 export * from './repositories';
 export * from './mongo.constants';

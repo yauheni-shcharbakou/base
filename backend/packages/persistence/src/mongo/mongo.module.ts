@@ -5,17 +5,13 @@ import { Database } from '@packages/common';
 import { PERSISTENCE_SERVICE, PersistenceServiceImpl } from 'common';
 import { MongoEntity } from 'mongo/entities';
 import { convertEntitiesToMongoDefinitions } from 'mongo/helpers';
-import { MongoMigrationModule, MongoMigrationModuleParams } from 'mongo/modules/migration';
 import { MongoConfig, mongoConfig } from 'mongo/mongo.config';
 import { MONGO_CONFIG_SERVICE } from 'mongo/mongo.constants';
 import { Connection } from 'mongoose';
 import { MongoIdPlugin } from 'mongo/plugins';
 
-// TODO: implement migrator, populate logic, try to reduce module exports
-
 type MongoModuleForRootParams = {
   database: Database;
-  migration?: MongoMigrationModuleParams;
 };
 
 export class MongoModule {
@@ -40,7 +36,6 @@ export class MongoModule {
             };
           },
         }),
-        MongoMigrationModule.register(params.migration),
       ],
       providers: [
         {
@@ -52,7 +47,7 @@ export class MongoModule {
           useClass: PersistenceServiceImpl,
         },
       ],
-      exports: [MongooseModule, MONGO_CONFIG_SERVICE],
+      exports: [MONGO_CONFIG_SERVICE, PERSISTENCE_SERVICE],
       global: true,
       module: MongoModule,
     };

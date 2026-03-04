@@ -11,7 +11,7 @@ service FileService {
   rpc getById (common.IdField) returns (models.File) {}
   rpc getList (common.GetListRequest) returns (messages.FileGetListResponse) {}
   rpc createOne (messages.FileCreateRequest) returns (models.File) {}
-  rpc uploadOne (stream messages.FileUploadRequest) returns (stream models.File) {}
+  rpc uploadOne (stream messages.FileUploadRequest) returns (stream messages.FileUploadResponse) {}
   //  rpc uploadOneDuplex (stream messages.FileUploadRequest) returns (stream messages.FileUploadResponse) {}
   rpc deleteById (common.IdField) returns (models.File) {}
 }

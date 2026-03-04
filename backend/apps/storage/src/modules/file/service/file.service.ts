@@ -5,6 +5,7 @@ import {
   GrpcFileQuery,
   GrpcFileSignedUrls,
   GrpcFileUploadRequest,
+  GrpcFileUploadResponse,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
 import { Either } from '@sweet-monads/either';
@@ -14,10 +15,10 @@ import { Observable } from 'rxjs';
 export const FILE_SERVICE = Symbol('FileService');
 
 export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, FileCreate> {
-  getSignedUrls(request: GrpcBaseQuery): Observable<GrpcFileSignedUrls>;
+  getSignedUrls(request: GrpcBaseQuery): Promise<GrpcFileSignedUrls>;
   createOne(request: GrpcFileCreateRequest, user: string): Promise<Either<Error, GrpcFile>>;
   uploadOne(
     request$: Observable<GrpcFileUploadRequest>,
     user?: string,
-  ): Observable<Either<Error, GrpcFile>>;
+  ): Observable<Either<Error, GrpcFileUploadResponse>>;
 }

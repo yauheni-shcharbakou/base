@@ -4,10 +4,9 @@ import {
   GrpcFileService,
   GrpcImageService,
   GrpcStorageObjectService,
-  GrpcUserRole,
   GrpcVideoService,
 } from '@backend/grpc';
-import { AdminGrpcController } from 'common/decorators/access.decorator';
+import { AdminAccess, AdminGrpcController } from 'common/decorators/access.decorator';
 import { GrpcProxyStreamMethod } from 'common/decorators/grpc-proxy-method.decorator';
 import { GetListRequestDto } from 'common/dto/get-list-request.dto';
 import { IdFieldDto } from 'common/dto/id-field.dto';
@@ -26,7 +25,7 @@ import {
           getById: IdFieldDto,
           getList: GetListRequestDto,
           uploadOne: {
-            allowedRoles: [GrpcUserRole.ADMIN],
+            decorators: [AdminAccess()],
           },
           deleteById: IdFieldDto,
         }),

@@ -1,8 +1,9 @@
-import { GrpcAccessModule, GrpcModule } from '@backend/transport';
+import { GrpcModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { GrpcAuthService } from '@backend/grpc';
+import { GrpcAccessModule } from 'common/services/grpc-access/grpc-access.module';
 import { config } from 'config';
 import { AuthModule } from 'modules/auth/auth.module';
 import { StorageModule } from 'modules/storage/storage.module';

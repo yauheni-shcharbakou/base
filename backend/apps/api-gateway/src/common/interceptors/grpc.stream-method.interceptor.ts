@@ -1,7 +1,7 @@
 import { GrpcUserRole } from '@backend/grpc';
-import { GrpcRxPipe } from '@backend/transport';
+import { GrpcExceptionMapper } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MetadataKey } from 'common/enums/metadata.enums';
 import {
@@ -9,21 +9,22 @@ import {
   GrpcAccessService,
 } from 'common/services/grpc-access/grpc-access.service';
 import _ from 'lodash';
-import { isObservable, map, Observable } from 'rxjs';
+import { catchError, isObservable, map, Observable, switchMap, throwError } from 'rxjs';
 
 @Injectable()
-export class GrpcAccessGuard implements CanActivate {
+export class GrpcStreamMethodInterceptor implements NestInterceptor {
   constructor(
     private readonly reflector: Reflector,
     @Inject(GRPC_ACCESS_SERVICE) private readonly accessService: GrpcAccessService,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const contextType = context.getType();
     const rpc = context.switchToRpc();
+    const data$ = rpc.getData();
 
-    if (contextType !== 'rpc' || isObservable(rpc.getData())) {
-      return true;
+    if (contextType !== 'rpc' || !isObservable(data$)) {
+      return next.handle();
     }
 
     const skipAuth = this.reflector.getAllAndOverride<boolean>(MetadataKey.SKIP_AUTH, [
@@ -32,7 +33,7 @@ export class GrpcAccessGuard implements CanActivate {
     ]);
 
     if (skipAuth) {
-      return true;
+      return next.handle();
     }
 
     const allowedRoles = this.reflector.getAllAndOverride<GrpcUserRole[]>(
@@ -48,9 +49,15 @@ export class GrpcAccessGuard implements CanActivate {
           throw meta.value;
         }
 
-        return !!meta.value;
+        return meta.value;
       }),
-      GrpcRxPipe.rpcException,
+      switchMap((meta) => {
+        rpc.getContext = () => meta as any;
+        return next.handle();
+      }),
+      catchError((err) => {
+        return throwError(() => GrpcExceptionMapper.toRpcException(err));
+      }),
     );
   }
 }

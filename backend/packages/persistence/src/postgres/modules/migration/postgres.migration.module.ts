@@ -10,7 +10,7 @@ import { PostgresMigrationEntity } from 'postgres/modules/migration/postgres.mig
 import { PostgresMigrationService } from 'postgres/modules/migration/postgres.migration.service';
 import { PostgresModule } from 'postgres/postgres.module';
 
-export type PostgresMigrationModuleParams = {
+type PostgresMigrationModuleParams = {
   database: Database;
   imports?: DynamicModule['imports'];
   tasks?: Type<MigrationTask>[];

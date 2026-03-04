@@ -34,9 +34,8 @@ message VideoCreate {
 }
 
 message VideoMetadata {
-  string providerId = 1;
-  optional int32 duration = 2;
-  optional string description = 3;
+  string title = 1;
+  optional string description = 2;
 }
 
 message VideoCreateRequest {
@@ -47,16 +46,6 @@ message VideoCreateRequest {
 
 // upload
 
-//message VideoMetadata {
-//  optional string description = 1;
-//}
-
-//message VideoUpload {
-//  FileCreate file = 1;
-//  VideoMetadata video = 2;
-//  StorageObjectCreate storage = 3;
-//}
-
 message VideoUploadRequest {
   oneof payload {
     string video = 1;
@@ -64,10 +53,18 @@ message VideoUploadRequest {
   }
 }
 
+message VideoUploadResponse {
+  oneof payload {
+    models.Video video = 1;
+    bool canSendChunks = 2;
+  }
+}
+
 // update
 
 message VideoUpdateSet {
-  optional string description = 1;
+  optional string title = 1;
+  optional string description = 2;
 }
 
 message VideoUpdate {

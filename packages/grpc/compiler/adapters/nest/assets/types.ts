@@ -10,7 +10,6 @@ export type GrpcProxyMethodParams<T = any> =
 
 export type GrpcProxyStreamMethodParams = {
   decorators?: MethodDecorator[];
-  allowedRoles?: string[];
 };
 
 export interface GrpcProxyControllerFactoryParams {

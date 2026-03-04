@@ -5,6 +5,7 @@ import {
   GrpcFileQuery,
   GrpcFileSignedUrls,
   GrpcFileUploadRequest,
+  GrpcFileUploadResponse,
   GrpcFileUploadStatus,
   GrpcStorageObjectType,
 } from '@backend/grpc';
@@ -55,7 +56,6 @@ import {
   tap,
   timeout,
 } from 'rxjs';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 
 export class FileServiceImpl
   extends CrudServiceImpl<GrpcFile, GrpcFileQuery, FileCreate>
@@ -73,24 +73,21 @@ export class FileServiceImpl
     super();
   }
 
-  getSignedUrls(request: GrpcBaseQuery): Observable<GrpcFileSignedUrls> {
-    return fromPromise(this.repository.getMany(request)).pipe(
-      concatMap(async (files) => {
-        const urls: GrpcFileSignedUrls['urls'] = {};
+  async getSignedUrls(request: GrpcBaseQuery): Promise<GrpcFileSignedUrls> {
+    const files = await this.repository.getMany(request);
+    const urls: GrpcFileSignedUrls['urls'] = {};
 
-        await Promise.all(
-          _.map(files, async (file) => {
-            const url = await firstValueFrom(this.fileStorageService.getFileSignedUrl(file));
+    await Promise.all(
+      _.map(files, async (file) => {
+        const url = await firstValueFrom(this.fileStorageService.getFileSignedUrl(file));
 
-            if (url.isRight()) {
-              urls[file.id] = url.value;
-            }
-          }),
-        );
-
-        return { urls };
+        if (url.isRight()) {
+          urls[file.id] = url.value;
+        }
       }),
     );
+
+    return { urls };
   }
 
   async deleteById(id: string): Promise<Either<NotFoundException, GrpcFile>> {
@@ -134,7 +131,7 @@ export class FileServiceImpl
   uploadOne(
     request$: Observable<GrpcFileUploadRequest>,
     user?: string,
-  ): Observable<Either<Error, GrpcFile>> {
+  ): Observable<Either<Error, GrpcFileUploadResponse>> {
     const sharedRequest$ = request$.pipe(share());
 
     type Params = {
@@ -181,69 +178,72 @@ export class FileServiceImpl
 
         return { file: file.value, upload$, uploadPromise };
       }),
-      switchMap(({ file, upload$, uploadPromise }) => {
-        let totalBytes = 0;
-        const initialResponse = of(right(file));
+      switchMap(
+        ({ file, upload$, uploadPromise }): Observable<Either<Error, GrpcFileUploadResponse>> => {
+          let totalBytes = 0;
 
-        const chunkProcessor$ = sharedRequest$.pipe(
-          timeout(10_000),
-          concatMap(async (message): Promise<number> => {
-            if (!message.chunk) {
-              throw new ConflictException('Only chunks should be provided after file id');
-            }
+          const initialResponse = of(right({ canSendChunks: true }));
 
-            await sendToWritable(upload$, Buffer.from(message.chunk));
-            totalBytes += message.chunk.length;
-            return (totalBytes / uploadedFile.size) * 100;
-          }),
-          takeWhile((percent) => percent < 100, true),
-          tap({
-            complete: () => {
-              upload$.end();
-            },
-          }),
-          ignoreElements(),
-          catchError((err) => {
-            upload$.destroy();
-            throw err;
-          }),
-        );
+          const chunkProcessor$ = sharedRequest$.pipe(
+            timeout(10_000),
+            concatMap(async (message): Promise<number> => {
+              if (!message.chunk) {
+                throw new ConflictException('Only chunks should be provided after file id');
+              }
 
-        const finalResponse = from(uploadPromise).pipe(
-          concatMap(async (isUploaded) => {
-            if (!isUploaded) {
-              throw new InternalServerErrorException('File upload failed');
-            }
-
-            if (totalBytes < uploadedFile.size) {
-              throw new InternalServerErrorException('File upload interrupted: size mismatch');
-            }
-
-            const updatedFile = await this.persistenceService.isolatedRun(async () => {
-              return this.updateById(uploadedFile.id, {
-                set: {
-                  uploadStatus: GrpcFileUploadStatus.READY,
-                },
-              });
-            });
-
-            if (updatedFile.isLeft()) {
-              throw updatedFile.value;
-            }
-
-            this.logger.log(`File ${uploadedFile.id} uploaded`);
-            return right(updatedFile.value);
-          }),
-        );
-
-        return concat(initialResponse, chunkProcessor$, finalResponse).pipe(
-          finalize(() => {
-            if (!upload$.destroyed) {
+              await sendToWritable(upload$, Buffer.from(message.chunk));
+              totalBytes += message.chunk.length;
+              return (totalBytes / uploadedFile.size) * 100;
+            }),
+            takeWhile((percent) => percent < 100, true),
+            tap({
+              complete: () => {
+                upload$.end();
+              },
+            }),
+            ignoreElements(),
+            catchError((err) => {
               upload$.destroy();
-            }
-          }),
-        );
-      }),
+              throw err;
+            }),
+          );
+
+          const finalResponse = from(uploadPromise).pipe(
+            concatMap(async (isUploaded) => {
+              if (!isUploaded) {
+                throw new InternalServerErrorException('File upload failed');
+              }
+
+              if (totalBytes < uploadedFile.size) {
+                throw new InternalServerErrorException('File upload interrupted: size mismatch');
+              }
+
+              const updatedFile = await this.persistenceService.isolatedRun(async () => {
+                return this.updateById(uploadedFile.id, {
+                  set: {
+                    uploadStatus: GrpcFileUploadStatus.READY,
+                  },
+                });
+              });
+
+              if (updatedFile.isLeft()) {
+                throw updatedFile.value;
+              }
+
+              this.logger.log(`File ${uploadedFile.id} uploaded`);
+              return right({ file: updatedFile.value });
+            }),
+          );
+
+          return concat(initialResponse, chunkProcessor$, finalResponse).pipe(
+            finalize(() => {
+              if (!upload$.destroyed) {
+                upload$.destroy();
+              }
+            }),
+          );
+        },
+      ),
       catchError(async (err) => {
         this.logger.error('File upload error:', err.message, err.stack);
 

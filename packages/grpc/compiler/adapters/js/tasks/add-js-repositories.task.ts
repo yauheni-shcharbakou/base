@@ -9,6 +9,11 @@ type MethodData = {
   responseType: string;
 };
 
+type TemplateData = {
+  id: string;
+  unaryMethods: MethodData[];
+};
+
 export class AddJsRepositoriesTask extends TransformTask {
   private declareImports() {
     this.addOrUpdateImport('@grpc/grpc-js', [
@@ -19,49 +24,53 @@ export class AddJsRepositoriesTask extends TransformTask {
     ]);
   }
 
-  private declareRepository(service: ProtoContextService) {
-    const clientInterfaceName = pascalCase(`grpc.${service.name}.client`);
-    const clientInterface = this.sourceFile.getInterface(clientInterfaceName);
+  private declareRepositories(services: ProtoContextService[]) {
+    const templateData: TemplateData[] = services.reduce((acc: TemplateData[], service) => {
+      const clientInterfaceName = pascalCase(`grpc.${service.name}.client`);
+      const clientInterface = this.sourceFile.getInterface(clientInterfaceName);
 
-    if (!clientInterface) {
-      return;
-    }
-
-    const clientMethods = new Map<string, MethodSignature>();
-
-    for (const method of clientInterface.getMethods()) {
-      const name = method.getName();
-
-      if (!clientMethods.has(name)) {
-        clientMethods.set(name, method);
-      }
-    }
-
-    const unaryMethods: MethodData[] = Array.from(clientMethods.entries()).reduce(
-      (acc: MethodData[], [name, method]) => {
-        const requestType = method.getParameter('request')?.getType()?.getText();
-        const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
-
-        if (!requestType || !Node.isFunctionTypeNode(callbackTypeNode)) {
-          return acc;
-        }
-
-        const responseType = callbackTypeNode.getParameter('response')?.getType()?.getText();
-
-        if (!responseType) {
-          return acc;
-        }
-
-        acc.push({ name, requestType, responseType });
+      if (!clientInterface) {
         return acc;
-      },
-      [],
-    );
+      }
+
+      const clientMethods = new Map<string, MethodSignature>();
+
+      for (const method of clientInterface.getMethods()) {
+        const name = method.getName();
+
+        if (!clientMethods.has(name)) {
+          clientMethods.set(name, method);
+        }
+      }
+
+      const unaryMethods: MethodData[] = Array.from(clientMethods.entries()).reduce(
+        (methods: MethodData[], [name, method]) => {
+          const requestType = method.getParameter('request')?.getType()?.getText();
+          const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
+
+          if (!requestType || !Node.isFunctionTypeNode(callbackTypeNode)) {
+            return methods;
+          }
+
+          const responseType = callbackTypeNode.getParameter('response')?.getType()?.getText();
+
+          if (!responseType) {
+            return methods;
+          }
+
+          methods.push({ name, requestType, responseType });
+          return methods;
+        },
+        [],
+      );
+
+      acc.push({ id: service.id, unaryMethods });
+      return acc;
+    }, []);
 
     const repositoryDeclaration = this.renderTemplate('js.repository', {
       data: {
-        serviceId: service.id,
-        unaryMethods,
+        services: templateData,
       },
       pascalCase,
     });
@@ -75,6 +84,6 @@ export class AddJsRepositoriesTask extends TransformTask {
 
   transform(): void {
     this.declareImports();
-    this.protoContext.services.forEach((service) => this.declareRepository(service));
+    this.declareRepositories(this.protoContext.services);
   }
 }

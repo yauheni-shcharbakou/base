@@ -1,7 +1,8 @@
-import { GRPC_ACCESS_SERVICE, GrpcAuthService } from '@backend/grpc';
+import { GrpcAuthService } from '@backend/grpc';
+import { GrpcModule } from '@backend/transport';
 import { Global, Module } from '@nestjs/common';
-import { GrpcModule } from 'grpc/grpc.module';
-import { GrpcAccessServiceImpl } from 'grpc/modules/access/grpc.access.service.impl';
+import { GRPC_ACCESS_SERVICE } from 'common/services/grpc-access/grpc-access.service';
+import { GrpcAccessServiceImpl } from 'common/services/grpc-access/impl/grpc-access.service.impl';
 
 @Global()
 @Module({

@@ -12,7 +12,8 @@ message Video {
   string user = 4;
   string file = 5;
   string providerId = 6;
-  int32 duration = 7;
-  int32 views = 8;
-  optional string description = 9;
+  string title = 7;
+  int32 duration = 8;
+  int32 views = 9;
+  optional string description = 10;
 }

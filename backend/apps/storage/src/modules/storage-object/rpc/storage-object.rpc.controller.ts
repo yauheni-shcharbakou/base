@@ -8,6 +8,7 @@ import {
   GrpcStorageObjectCreate,
   GrpcStorageObjectGetListResponse,
   GrpcStorageObjectList,
+  GrpcStorageObjectPopulated,
   GrpcStorageObjectRequest,
   GrpcStorageObjectService,
   GrpcStorageObjectServiceController,
@@ -17,8 +18,7 @@ import {
   STORAGE_OBJECT_SERVICE,
   StorageObjectService,
 } from 'modules/storage-object/service/storage-object.service';
-import { map, Observable } from 'rxjs';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
+import { from, map, Observable } from 'rxjs';
 
 @GrpcController()
 @GrpcStorageObjectService.ControllerMethods()
@@ -29,7 +29,7 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
   ) {}
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcStorageObject> {
-    const stream$ = fromPromise(this.storageObjectService.getById(request.id));
+    const stream$ = from(this.storageObjectService.getById(request.id));
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
@@ -37,7 +37,7 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     request: GrpcStorageObjectRequest,
     metadata?: Metadata,
   ): Promise<GrpcStorageObjectList> | Observable<GrpcStorageObjectList> | GrpcStorageObjectList {
-    const stream$ = fromPromise(this.storageObjectService.getMany(request.query));
+    const stream$ = from(this.storageObjectService.getMany(request.query));
     return stream$.pipe(map((items) => ({ items })));
   }
 
@@ -45,12 +45,18 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     request: GrpcGetListRequest,
     metadata?: Metadata,
   ): Observable<GrpcStorageObjectGetListResponse> {
-    return fromPromise(this.storageObjectService.getList(request, ['file', 'image', 'video']));
+    return from(
+      this.storageObjectService.getList<GrpcStorageObjectPopulated>(request, [
+        'file',
+        'image',
+        'video',
+      ]),
+    );
   }
 
   createOne(request: GrpcStorageObjectCreate, metadata?: Metadata): Observable<GrpcStorageObject> {
     const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
-    const stream$ = fromPromise(this.storageObjectService.saveOne({ ...request, user }));
+    const stream$ = from(this.storageObjectService.saveOne({ ...request, user }));
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
@@ -58,12 +64,12 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     request: GrpcStorageObjectUpdateByIdRequest,
     metadata?: Metadata,
   ): Observable<GrpcStorageObject> {
-    const stream$ = fromPromise(this.storageObjectService.updateById(request.id, request.update));
+    const stream$ = from(this.storageObjectService.updateById(request.id, request.update));
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   deleteById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcStorageObject> {
-    const stream$ = fromPromise(this.storageObjectService.deleteById(request.id));
+    const stream$ = from(this.storageObjectService.deleteById(request.id));
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 }

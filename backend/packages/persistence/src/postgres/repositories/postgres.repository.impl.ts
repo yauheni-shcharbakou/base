@@ -57,8 +57,12 @@ export abstract class PostgresRepositoryImpl<
   //   return options?.isolated ? this.em.fork() : this.em;
   // }
 
-  protected getPopulate(options?: Partial<Options>) {
-    return options?.populate as unknown as Populate<Doc>;
+  protected getPopulate(options: Partial<Options> = {}) {
+    if (!options.populate) {
+      return undefined;
+    }
+
+    return options.populate as unknown as Populate<Doc>;
   }
 
   // protected convertOptions(options?: Partial<Options>) {

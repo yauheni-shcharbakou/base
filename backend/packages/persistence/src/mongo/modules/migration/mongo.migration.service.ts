@@ -1,14 +1,14 @@
-import { Inject, Injectable, Logger, OnModuleInit, Type } from '@nestjs/common';
+import { Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
 import { CommonDatabaseEntity } from '@packages/common';
-import { MigrationStatus, MigrationTask } from 'common';
+import { MigrationService, MigrationStatus, MigrationTask } from 'common';
 import { MONGO_MIGRATION_TASKS } from 'mongo/modules/migration/mongo.migration.constants';
 import { MongoMigrationEntity } from 'mongo/modules/migration/mongo.migration.entity';
 import { Model } from 'mongoose';
 
 @Injectable()
-export class MongoMigrationService implements OnModuleInit {
+export class MongoMigrationService implements MigrationService {
   private readonly logger = new Logger(MongoMigrationService.name);
 
   constructor(
@@ -18,7 +18,7 @@ export class MongoMigrationService implements OnModuleInit {
     private readonly migrationModel: Model<MongoMigrationEntity>,
   ) {}
 
-  async onModuleInit() {
+  async runTasks() {
     const completedTasks = await this.migrationModel
       .distinct('name', { status: MigrationStatus.SUCCESS })
       .exec();
