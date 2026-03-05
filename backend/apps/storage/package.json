@@ -14,7 +14,7 @@
     "start:debug": "dotenv -- nest start --debug --watch service",
     "start:prod": "node dist/migrator/main -- postgres-migration && node dist/main",
     "migrate": "dotenv -- nest start migrator -- postgres-migration",
-    "migrate:create": "dotenv -- nest start migrator -- postgres-migration --create",
+    "migrate:create": "dotenv -- nest start migrator -- postgres-migration --new",
     "migrate:initial": "dotenv -- nest start migrator -- postgres-migration --initial",
     "migrate:sql": "dotenv -- nest start migrator -- postgres-migration --up",
     "migrate:tasks": "dotenv -- nest start migrator -- postgres-migration --tasks",

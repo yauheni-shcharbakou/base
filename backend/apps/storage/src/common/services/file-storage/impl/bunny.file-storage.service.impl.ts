@@ -64,6 +64,9 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
           'Content-Type': 'application/octet-stream',
           'Content-Length': file.size.toString(),
         },
+        timeout: 0,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
       })
       .pipe(map(() => true));
   }

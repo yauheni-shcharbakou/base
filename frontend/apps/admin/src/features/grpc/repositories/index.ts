@@ -1,4 +1,7 @@
 import { configService } from '@/common/services';
-import { GrpcFileRepository } from '@frontend/grpc';
+import { GrpcFileRepository, GrpcImageRepository } from '@frontend/grpc';
 
-export const fileGrpcRepository = new GrpcFileRepository(configService.getGrpcUrl());
+const grpcUrl = configService.getGrpcUrl();
+
+export const fileGrpcRepository = new GrpcFileRepository(grpcUrl);
+export const imageGrpcRepository = new GrpcImageRepository(grpcUrl);

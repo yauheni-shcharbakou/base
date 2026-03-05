@@ -491,6 +491,16 @@
           "length": 255,
           "mappedType": "string"
         },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
         "duration": {
           "name": "duration",
           "type": "int",
@@ -498,6 +508,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "0",
           "mappedType": "integer"
         },
         "views": {
@@ -507,6 +518,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
+          "default": "0",
           "mappedType": "integer"
         },
         "description": {

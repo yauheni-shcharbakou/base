@@ -4,7 +4,10 @@ import { StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile, GrpcStorageObject, GrpcVideo } from '@backend/grpc';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.VIDEO })
-export class VideoEntity extends PostgresEntity implements Omit<GrpcVideo, 'file'> {
+export class VideoEntity
+  extends PostgresEntity<'duration' | 'views'>
+  implements Omit<GrpcVideo, 'file'>
+{
   @Property({ index: true })
   user: string;
 
@@ -31,10 +34,13 @@ export class VideoEntity extends PostgresEntity implements Omit<GrpcVideo, 'file
   providerId: string;
 
   @Property()
-  duration: number;
+  title: string;
 
-  @Property()
-  views: number;
+  @Property({ default: 0 })
+  duration: number = 0;
+
+  @Property({ default: 0 })
+  views: number = 0;
 
   @Property({ nullable: true })
   description?: string;

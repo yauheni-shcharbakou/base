@@ -77,10 +77,21 @@ export default async function RootLayout({
                         name: StorageDatabaseEntity.FILE,
                         list: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}`,
                         create: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}/create`,
-                        // edit: `/${StorageDatabaseEntity.FILE}/edit/:id`,
                         show: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}/show/:id`,
                         meta: {
                           canDelete: true,
+                          dataProviderName: 'upload',
+                          parent: Database.STORAGE,
+                        },
+                      },
+                      {
+                        name: StorageDatabaseEntity.IMAGE,
+                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}`,
+                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/create`,
+                        edit: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/edit/:id`,
+                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/show/:id`,
+                        meta: {
+                          canDelete: false,
                           dataProviderName: 'upload',
                           parent: Database.STORAGE,
                         },

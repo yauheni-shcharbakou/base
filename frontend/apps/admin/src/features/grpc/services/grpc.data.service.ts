@@ -2,6 +2,7 @@ import { ConfigService } from '@/common/services/config.service';
 import { GrpcDataRepository } from '@/features/grpc/types';
 import {
   GrpcFileRepository,
+  GrpcImageRepository,
   GrpcStorageObjectRepository,
   GrpcUserRepository,
 } from '@frontend/grpc';
@@ -16,6 +17,7 @@ export class GrpcDataService {
   private readonly repositories: Record<string, Partial<GrpcDataRepository<any>>> = {
     [AuthDatabaseEntity.USER]: new GrpcUserRepository(this.grpcUrl),
     [StorageDatabaseEntity.FILE]: new GrpcFileRepository(this.grpcUrl),
+    [StorageDatabaseEntity.IMAGE]: new GrpcImageRepository(this.grpcUrl),
     [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectRepository(this.grpcUrl),
   };
 
