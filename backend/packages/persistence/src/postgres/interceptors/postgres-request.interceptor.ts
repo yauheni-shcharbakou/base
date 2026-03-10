@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
-import { PERSISTENCE_SERVICE, PersistenceService } from 'common';
+import { PERSISTENCE_SERVICE, type PersistenceService } from 'common';
 import { from, isObservable, lastValueFrom, Observable } from 'rxjs';
 
 @Injectable()

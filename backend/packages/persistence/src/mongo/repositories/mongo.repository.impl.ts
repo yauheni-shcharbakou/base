@@ -208,7 +208,18 @@ export abstract class MongoRepositoryImpl<
           return {
             updateOne: {
               filter: { [bulkUpdate.filter.key]: bulkUpdate.filter.value },
-              update: { $set: bulkUpdate.update },
+              update: {
+                $set: bulkUpdate.update.set ?? {},
+                $unset: _.reduce(
+                  _.keys(bulkUpdate.update.remove ?? {}),
+                  (acc: Partial<Entity>, field) => {
+                    acc[field] = '';
+                    return acc;
+                  },
+                  {},
+                ),
+                $inc: bulkUpdate.update.inc ?? {},
+              },
             },
           };
         }),

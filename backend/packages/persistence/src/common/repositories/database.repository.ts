@@ -44,7 +44,7 @@ export type BulkUpdate<Entity extends GrpcEntityWithTimestamps> = {
     key: keyof Entity | string;
     value: any;
   };
-  update: UpdateSetOf<Entity>;
+  update: UpdateOf<Entity>;
 };
 
 export interface DatabaseRepository<

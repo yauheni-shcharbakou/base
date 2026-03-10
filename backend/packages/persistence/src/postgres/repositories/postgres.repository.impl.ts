@@ -1,5 +1,5 @@
 import { GrpcEntityWithTimestamps } from '@backend/grpc';
-import { EntityData, FilterQuery, Populate, raw, RequiredEntityData, wrap } from '@mikro-orm/core';
+import { FilterQuery, Populate, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
@@ -72,8 +72,32 @@ export abstract class PostgresRepositoryImpl<
   }
 
   async deleteMany(query?: Partial<Query>): Promise<boolean> {
-    const rows = await this.repository.nativeDelete(this.mapper.transformQuery(query));
-    return !!rows;
+    try {
+      const transformedQuery = this.mapper.transformQuery(query);
+
+      let page = 1;
+      let hasNext = false;
+      const limit = 100;
+
+      do {
+        const [entities, total] = await this.repository.findAndCount(transformedQuery, {
+          limit,
+          offset: (page - 1) * limit,
+        });
+
+        _.forEach(entities, (entity) => {
+          this.em.remove(entity);
+        });
+
+        hasNext = page * limit < total;
+        page += 1;
+      } while (hasNext);
+
+      await this.em.flush();
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   async deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>> {
@@ -188,31 +212,28 @@ export abstract class PostgresRepositoryImpl<
 
   async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {
     try {
-      const updateQuery = this.em.createQueryBuilder<Doc>(this.repository.getEntityName());
+      const transformedQuery = this.mapper.transformQuery(query);
 
-      const plainData: EntityData<Doc> = {
-        ...(updateData['set'] ?? {}),
-        updatedAt: new Date(),
-      };
+      let page = 1;
+      let hasNext = false;
+      const limit = 100;
 
-      if (updateData['remove']) {
-        _.forEach(_.keys(updateData['remove']), (key) => {
-          plainData[key] = null;
+      do {
+        const [entities, total] = await this.repository.findAndCount(transformedQuery, {
+          limit,
+          offset: (page - 1) * limit,
         });
-      }
 
-      if (updateData['inc']) {
-        _.forEach(_.entries(updateData['inc']), ([key, value]) => {
-          plainData[key] = raw('?? + ?', [key, value]);
+        _.forEach(entities, (entity) => {
+          this.convertUpdate(entity, updateData);
         });
-      }
 
-      const result = await updateQuery
-        .update(plainData)
-        .where(this.mapper.transformQuery(query))
-        .execute('run');
+        hasNext = page * limit < total;
+        page += 1;
+      } while (hasNext);
 
-      return !!result.affectedRows;
+      await this.em.flush();
+      return true;
     } catch (error) {
       return false;
     }
@@ -259,7 +280,7 @@ export abstract class PostgresRepositoryImpl<
             return;
           }
 
-          wrap(entity).assign(bulkUpdate.update as object);
+          this.convertUpdate(entity, bulkUpdate.update as Update);
         });
       }
 

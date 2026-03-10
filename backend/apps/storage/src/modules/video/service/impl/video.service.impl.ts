@@ -375,8 +375,10 @@ export class VideoServiceImpl
                   value: item.providerId,
                 },
                 update: {
-                  duration: item.duration,
-                  views: item.views,
+                  set: {
+                    duration: item.duration,
+                    views: item.views,
+                  },
                 },
               };
             }),
