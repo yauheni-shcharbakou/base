@@ -1,126 +1,68 @@
 import { DynamicModule, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientGrpc, ClientsModule, ClientsProviderAsyncOptions } from '@nestjs/microservices';
-import { grpcConfig, GrpcConfig, GrpcConfigHost, GrpcConfigService } from 'grpc/grpc.config';
-import { getGrpcClientToken, getGrpcServiceToken } from 'grpc/helpers';
+import { ClientsModule } from '@nestjs/microservices';
+import { grpcConfig, GrpcConfig, GrpcConfigHost } from 'grpc/grpc.config';
+import { GrpcStrategy } from 'grpc/grpc.types';
+import { getServiceDefinitions } from 'grpc/helpers';
+import { GrpcClientRegistry } from 'grpc/utils';
 import _ from 'lodash';
-import { GRPC_CONFIG_SERVICE, MICROSERVICE_GRPC_OPTIONS } from 'grpc/grpc.constants';
-
-type GrpcServiceDefinition = {
-  package: string;
-  protoPath: string;
-};
+import { GRPC_CONFIG_SERVICE, GRPC_MICROSERVICE_OPTIONS } from 'grpc/grpc.constants';
 
 export type GrpcModuleForFeatureParams = {
-  strategy: {
-    [Host in GrpcConfigHost]?: GrpcConfigService<Host>[];
-  };
+  strategy: GrpcStrategy;
 };
 
 export type GrpcModuleForRootParams = {
   host?: GrpcConfigHost;
-  appClientStrategy?: GrpcModuleForFeatureParams['strategy'];
+  appClientStrategy?: GrpcStrategy;
 };
 
+const globalClientRegistry = new GrpcClientRegistry();
+
 export class GrpcModule {
-  private static getServiceDefinitions(hostConfig: GrpcConfig[GrpcConfigHost], services: string[]) {
-    const result = _.reduce(
-      services,
-      (acc: { package: Set<string>; protoPath: Set<string> }, service) => {
-        const definition: GrpcServiceDefinition = hostConfig.services[service];
-
-        if (!definition) {
-          throw new Error('Service definition is required');
-        }
-
-        acc.package.add(definition.package);
-        acc.protoPath.add(definition.protoPath);
-        return acc;
-      },
-      {
-        package: new Set<string>(),
-        protoPath: new Set<string>(),
-      },
-    );
-
-    return {
-      package: Array.from(result.package),
-      protoPath: Array.from(result.protoPath),
-    };
-  }
-
-  private static getClientParams(strategy: GrpcModuleForFeatureParams['strategy']) {
-    const clients: ClientsProviderAsyncOptions[] = [];
-    const providers: Provider[] = [];
-    const exports: DynamicModule['exports'] = [ClientsModule];
-
-    for (const [clientName, services] of _.entries(strategy)) {
-      const clientToken = getGrpcClientToken(clientName);
-
-      clients.push({
-        inject: [GRPC_CONFIG_SERVICE],
-        name: clientToken,
-        useFactory: (configService: ConfigService) => {
-          const hostConfig: GrpcConfig[GrpcConfigHost] = configService.getOrThrow(clientName);
-          const serviceDefinitions = this.getServiceDefinitions(hostConfig, services);
-
-          return _.merge(_.omit(hostConfig, ['services']), { options: serviceDefinitions });
-        },
-      });
-
-      _.forEach(services, (service) => {
-        const serviceToken = getGrpcServiceToken(service);
-
-        providers.push({
-          provide: serviceToken,
-          inject: [clientToken],
-          useFactory: (client: ClientGrpc) => client.getService(service),
-        });
-
-        exports.push(serviceToken);
-      });
+  static forRoot(params: GrpcModuleForRootParams = {}): DynamicModule {
+    if (params.appClientStrategy) {
+      globalClientRegistry.append(params.appClientStrategy);
     }
 
-    return { clients, providers, exports };
-  }
+    const clientParams = globalClientRegistry.getClients();
 
-  static forRoot(params: GrpcModuleForRootParams = {}): DynamicModule {
-    const imports: DynamicModule['imports'] = [ConfigModule.forFeature(grpcConfig)];
+    const imports: DynamicModule['imports'] = [
+      ConfigModule.forFeature(grpcConfig),
+      ...clientParams.imports,
+    ];
 
     const providers: Provider[] = [
       {
         provide: GRPC_CONFIG_SERVICE,
         useClass: ConfigService,
       },
+      ...clientParams.providers,
     ];
 
-    const exports: DynamicModule['exports'] = [GRPC_CONFIG_SERVICE];
+    const exports: DynamicModule['exports'] = [GRPC_CONFIG_SERVICE, ...clientParams.exports];
 
     if (params.host) {
       providers.push({
-        provide: MICROSERVICE_GRPC_OPTIONS,
+        provide: GRPC_MICROSERVICE_OPTIONS,
         inject: [GRPC_CONFIG_SERVICE],
         useFactory: (configService: ConfigService<GrpcConfig>) => {
           const hostConfig = configService.getOrThrow(params.host, { infer: true });
-
-          const serviceDefinitions = this.getServiceDefinitions(
-            hostConfig,
-            _.keys(hostConfig.services),
-          );
+          const serviceDefinitions = getServiceDefinitions(hostConfig, _.keys(hostConfig.services));
 
           return _.merge(_.omit(hostConfig, ['services']), { options: serviceDefinitions });
         },
       });
 
-      exports.push(MICROSERVICE_GRPC_OPTIONS);
+      exports.push(GRPC_MICROSERVICE_OPTIONS);
     }
 
     if (params.appClientStrategy) {
-      const clientParams = this.getClientParams(params.appClientStrategy);
+      const localClientRegistry = new GrpcClientRegistry(params.appClientStrategy);
+      const serviceParams = localClientRegistry.getServices();
 
-      providers.push(...clientParams.providers);
-      exports.push(...clientParams.exports);
-      imports.push(ClientsModule.registerAsync({ clients: clientParams.clients }));
+      providers.push(...serviceParams.providers);
+      exports.push(...serviceParams.exports);
     }
 
     return {
@@ -133,10 +75,13 @@ export class GrpcModule {
   }
 
   static forFeature(params: GrpcModuleForFeatureParams): DynamicModule {
-    const { clients, providers, exports } = this.getClientParams(params.strategy);
+    globalClientRegistry.append(params.strategy);
+
+    const localClientRegistry = new GrpcClientRegistry(params.strategy);
+    const { providers, exports } = localClientRegistry.getServices();
 
     return {
-      imports: [ClientsModule.registerAsync({ clients })],
+      imports: [ClientsModule],
       providers,
       exports,
       module: GrpcModule,

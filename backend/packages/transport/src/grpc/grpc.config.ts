@@ -60,8 +60,6 @@ export const grpcConfig = () => {
         [GrpcAuthService.name]: GrpcAuthService.definition,
         [GrpcUserService.name]: GrpcUserService.definition,
 
-        // [GrpcFileProxyService.name]: GrpcFileProxyService.definition,
-        // [GrpcImageProxyService.name]: GrpcImageProxyService.definition,
         [GrpcFileService.name]: GrpcFileService.definition,
         [GrpcImageService.name]: GrpcImageService.definition,
         [GrpcStorageObjectService.name]: GrpcStorageObjectService.definition,

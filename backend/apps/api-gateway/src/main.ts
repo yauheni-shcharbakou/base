@@ -1,4 +1,4 @@
-import { MICROSERVICE_GRPC_OPTIONS } from '@backend/transport';
+import { GRPC_MICROSERVICE_OPTIONS } from '@backend/transport';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -35,7 +35,7 @@ async function bootstrap() {
     },
   });
 
-  app.connectMicroservice(app.get(MICROSERVICE_GRPC_OPTIONS));
+  app.connectMicroservice(app.get(GRPC_MICROSERVICE_OPTIONS));
   await app.startAllMicroservices();
   await app.listen(port);
 }
