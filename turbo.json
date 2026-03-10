@@ -14,6 +14,7 @@
     },
     "prod": {},
     "format": {},
+    "lint": {},
     "reset": {},
     "compile": {}
   }

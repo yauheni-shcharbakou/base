@@ -34,12 +34,6 @@ export class PostgresMigrationService implements MigrationService {
   }
 
   async runTasks() {
-    // try {
-    //   await this.orm.migrator.createInitialMigration();
-    // } catch (e) {}
-    //
-    // await this.orm.migrator.up();
-
     await RequestContext.create(this.orm.em, async () => {
       const em = this.orm.em as EntityManager;
 

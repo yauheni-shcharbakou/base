@@ -1,4 +1,4 @@
-import { DynamicModule, Provider } from '@nestjs/common';
+import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientGrpc, ClientsModule, ClientsProviderAsyncOptions } from '@nestjs/microservices';
 import { GrpcConfig, GrpcConfigHost } from 'grpc/grpc.config';
@@ -95,7 +95,7 @@ export class GrpcClientRegistry {
         providers.push({
           provide: serviceToken,
           inject: [clientToken],
-          useFactory: (client: ClientGrpc) => client.getService(service),
+          useFactory: (client: ClientGrpc): Type => client.getService(service),
         });
 
         exports.push(serviceToken);

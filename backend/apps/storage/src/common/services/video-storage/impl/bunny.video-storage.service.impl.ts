@@ -155,7 +155,7 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
     );
   }
 
-  async getPlayerUrl(providerId: string): Promise<Either<Error, string>> {
+  getPlayerUrl(providerId: string): Either<Error, string> {
     try {
       const expires = moment().add(this.streamConfig.cdn.expiresInMinutes, 'minutes').unix();
       const hashableBase = this.streamConfig.cdn.privateKey + providerId + expires;

@@ -8,7 +8,7 @@
     "dev": "yarn start:dev",
     "prod": "yarn start:prod",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" --config ../../../.prettierrc",
+    "format": "prettier --write \"src/**/*.ts\" --config ../../../.prettierrc",
     "start": "dotenv -- nest start",
     "start:dev": "dotenv -- nest start --watch service",
     "start:debug": "dotenv -- nest start --debug --watch service",

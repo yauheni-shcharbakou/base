@@ -15,8 +15,8 @@ export interface VideoStorageService {
     updateData: Partial<GrpcVideoMetadata>,
   ): Observable<Either<Error, boolean>>;
   getList(page: number, limit: number): Observable<VideoStorageList>;
-  getPlayerUrl(providerId: string): Promise<Either<Error, string>>;
-  getDownloadUrl(providerId: string): Promise<Either<Error, string>>;
+  getPlayerUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
+  getDownloadUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
 }
 
 export interface VideoStorageData extends Pick<GrpcVideo, 'providerId' | 'duration' | 'views'> {}

@@ -9,12 +9,12 @@ export class HttpExceptionMapper {
       return response;
     }
 
-    const message = response['message'];
+    const message: string = response['message'];
 
     if (_.isArray(message)) {
       return message.join(', ');
     }
 
-    return message ?? exception.message;
+    return message?.toString() ?? exception.message;
   }
 }

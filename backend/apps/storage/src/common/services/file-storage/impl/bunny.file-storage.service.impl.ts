@@ -67,7 +67,7 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
       .pipe(map(() => true));
   }
 
-  async getFileSignedUrl(file: GrpcFile): Promise<Either<Error, string>> {
+  getFileSignedUrl(file: GrpcFile): Either<Error, string> {
     try {
       const filePath = this.getFilePath(file);
       const path = `/${filePath}`;

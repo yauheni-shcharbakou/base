@@ -97,7 +97,7 @@ export abstract class MongoRepositoryImpl<
       const limit = request.pagination?.limit || 100;
       const skip = (page - 1) * limit;
 
-      let entityQuery = this.model.find<Doc>(query).limit(limit).skip(skip);
+      const entityQuery = this.model.find<Doc>(query).limit(limit).skip(skip);
 
       if (populate) {
         entityQuery.populate(populate);

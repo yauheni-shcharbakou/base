@@ -15,7 +15,8 @@ import zod from 'zod';
 
 const declareProtobufWrappers = () => {
   wrappers['.google.protobuf.Timestamp'] = {
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     fromObject(value: Date) {
       return {
         seconds: value.getTime() / 1000,

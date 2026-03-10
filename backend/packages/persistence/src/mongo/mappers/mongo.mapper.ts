@@ -320,7 +320,8 @@ export class MongoMapper<
         return;
       }
 
-      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       queryFilter[this.convertFieldName(filter.field)] = generated;
     });
 
@@ -332,7 +333,8 @@ export class MongoMapper<
       }
 
       if (filter.key) {
-        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         queryFilter[this.convertFieldName(filter.key)] = generated;
         return;
       }

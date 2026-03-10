@@ -46,7 +46,9 @@ export abstract class PostgresRepositoryImpl<
 
     if (updateData['inc']) {
       _.forEach(_.entries(updateData['inc']), ([key, val]) => {
-        entity[key] = (entity[key] || 0) + val;
+        if (_.isNumber(val)) {
+          entity[key] = (entity[key] || 0) + val;
+        }
       });
     }
 

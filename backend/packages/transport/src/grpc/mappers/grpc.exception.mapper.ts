@@ -8,12 +8,14 @@ import { GrpcStatusCodeMapper } from 'grpc/mappers/grpc.status-code.mapper';
 export class GrpcExceptionMapper {
   static getMessage(exception: RpcException): string {
     const error = exception.getError();
-    return _.isString(error) ? error : error['details'] || 'Unknown exception';
+    return _.isString(error)
+      ? error
+      : (error['details'] as string)?.toString() || 'Unknown exception';
   }
 
   static getStatus(exception: RpcException): GrpcStatus {
     const error = exception.getError();
-    return error['code'] || GrpcStatus.UNKNOWN;
+    return (error['code'] as GrpcStatus) || GrpcStatus.UNKNOWN;
   }
 
   static toHttpException(exception: RpcException): HttpException {

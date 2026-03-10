@@ -5,4 +5,6 @@ const migrator = async () => {
   await CommandFactory.run(MigratorModule, ['log', 'error']);
 };
 
-migrator();
+migrator()
+  .then()
+  .catch(() => {});
