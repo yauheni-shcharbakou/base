@@ -1,11 +1,25 @@
-import { Checkbox } from '@mui/material';
+import { IdField } from '@/common/components';
+import { Checkbox, IconButton } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
+import { Database } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
 import { DateField, DeleteButton, EditButton, ShowButton } from '@refinedev/mui';
 import { capitalCase } from 'change-case-all';
+import { ExternalIcon } from 'next/dist/client/components/react-dev-overlay/ui/icons/external';
 import React from 'react';
 
+type RefParams<Entity extends BaseRecord> = Partial<GridColDef<Entity>> & {
+  database: Database;
+  resource: string;
+};
+
 export class GridColumnsBuilder<Entity extends BaseRecord> {
+  private readonly columns: GridColDef<Entity>[] = [];
+
+  constructor() {
+    this.id('id');
+  }
+
   private getDefaultProps(
     field: keyof Entity | string,
     type: GridColDef<Entity>['type'],
@@ -22,9 +36,9 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     };
   }
 
-  private readonly columns: GridColDef<Entity>[] = [
-    {
-      field: 'id',
+  id(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
+    this.columns.push({
+      field: field.toString(),
       headerName: 'ID',
       type: 'string',
       width: 200,
@@ -32,10 +46,16 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
       align: 'left',
       headerAlign: 'left',
       filterable: false,
-    },
-  ];
+      renderCell: function render({ value }) {
+        return <IdField value={value} />;
+      },
+      ...options,
+    });
 
-  string(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
+    return this;
+  }
+
+  string(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'string'),
       ...options,
@@ -44,7 +64,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     return this;
   }
 
-  enum(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
+  enum(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'singleSelect'),
       align: 'center',
@@ -55,7 +75,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     return this;
   }
 
-  number(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
+  number(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'number'),
       ...options,
@@ -64,7 +84,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     return this;
   }
 
-  date(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
+  date(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'dateTime'),
       renderCell: function render({ value }) {
@@ -76,7 +96,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     return this;
   }
 
-  boolean(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
+  boolean(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'boolean'),
       width: 50,
@@ -91,9 +111,37 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     return this;
   }
 
-  custom(field: keyof Entity | string, options: Partial<GridColDef<Entity>> = {}): this {
+  custom(field: keyof Entity, options: Partial<GridColDef<Entity>> = {}): this {
     this.columns.push({
       ...this.getDefaultProps(field, 'custom'),
+      ...options,
+    });
+
+    return this;
+  }
+
+  ref(field: keyof Entity, { database, resource, ...options }: RefParams<Entity>): this {
+    this.columns.push({
+      ...this.getDefaultProps(field, 'singleSelect'),
+      width: 50,
+      align: 'center',
+      headerAlign: 'center',
+      flex: 0,
+      renderCell: function render({ value }) {
+        if (!value) {
+          return <span></span>;
+        }
+
+        const id = typeof value === 'string' ? value : value.id;
+
+        return (
+          <IconButton
+            href={`/${database}/${resource}/show/${id}`}
+            children={<ExternalIcon />}
+            color="primary"
+          />
+        );
+      },
       ...options,
     });
 

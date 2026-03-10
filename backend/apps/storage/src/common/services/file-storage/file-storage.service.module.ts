@@ -11,12 +11,12 @@ import { Config } from 'config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<Config>) => {
-        const { url, apiKey, zone } = configService.getOrThrow('bunny.storage', {
+        const { url, apiKey, cdn } = configService.getOrThrow('bunny.storage', {
           infer: true,
         });
 
         return {
-          baseURL: `${url}/${zone}`,
+          baseURL: `${url}/${cdn.zone}`,
           headers: {
             AccessKey: apiKey,
           },

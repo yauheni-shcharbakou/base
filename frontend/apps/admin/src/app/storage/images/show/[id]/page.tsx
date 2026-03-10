@@ -1,60 +1,101 @@
 'use client';
 
-import { RecordView, StringEntityField } from '@/common/components';
+import { RecordView, RefButtonContainer, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/file/components';
-import { OpenInBrowserOutlined } from '@mui/icons-material';
+import { getFileSize } from '@/features/file/helpers';
+import { ImagePreview } from '@/features/image/components';
+import { OpenInBrowserOutlined, ExpandMore } from '@mui/icons-material';
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
-import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcFile, GrpcImage } from '@packages/grpc';
-import { useOne } from '@refinedev/core';
+import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
+import { GrpcFileUploadStatus, GrpcImagePopulated } from '@packages/grpc';
 import { Show } from '@refinedev/mui';
 import React from 'react';
 
 export default function ImageShow() {
-  const { isLoading, record } = useResourceShow<GrpcImage>();
-  const openLink = `/api/files/${record?.file}/open`;
-
-  const { query } = useOne<GrpcFile>({ resource: StorageDatabaseEntity.FILE, id: record?.file });
-
-  const file = query?.data?.data;
+  const { isLoading, record } = useResourceShow<GrpcImagePopulated>();
+  const isFileReady = record?.file?.uploadStatus === GrpcFileUploadStatus.READY;
 
   return (
     <Show
       isLoading={isLoading || !record?.id}
       headerButtons={({ defaultButtons }) => (
         <>
-          {record?.id && (
+          {isFileReady && (
             <>
               <Button
                 variant="text"
                 startIcon={<OpenInBrowserOutlined />}
                 component="a"
                 target="_blank"
-                href={openLink}
+                href={`/api/files/${record?.fileId}/open`}
               >
                 Open
               </Button>
+              <DownloadButton
+                variant="text"
+                resource={StorageDatabaseEntity.FILE}
+                id={record.fileId}
+              />
             </>
-          )}
-          {file && (
-            <DownloadButton
-              variant="text"
-              url={openLink}
-              fileName={`${file.id}.${file.extension}`}
-            />
           )}
           {defaultButtons}
         </>
       )}
     >
-      <RecordView record={record}>
-        <StringEntityField label="User" value={record?.user} />
-        <StringEntityField label="File" value={record?.file} />
-        <StringEntityField label="Alt" value={record?.alt} />
-        <StringEntityField label="Width" value={record?.width?.toString()} />
-        <StringEntityField label="Height" value={record?.height?.toString()} />
-      </RecordView>
+      {isFileReady && (
+        <Accordion defaultExpanded>
+          <AccordionSummary
+            expandIcon={<ExpandMore />}
+            aria-controls="preview-content"
+            id="preview"
+          >
+            <Typography component="span">Preview</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <ImagePreview image={record} />
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMore />} aria-controls="refs-content" id="refs">
+          <Typography component="span">References</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <RefButtonContainer
+            refs={[
+              {
+                database: Database.AUTH,
+                resource: AuthDatabaseEntity.USER,
+                id: record?.userId,
+                label: 'User',
+              },
+              {
+                database: Database.STORAGE,
+                resource: StorageDatabaseEntity.FILE,
+                id: record?.fileId,
+                label: 'File',
+              },
+            ]}
+          />
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion defaultExpanded>
+        <AccordionSummary expandIcon={<ExpandMore />} aria-controls="info-content" id="info">
+          <Typography component="span">Image info</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <RecordView record={record}>
+            <StringEntityField label="Alt" value={record?.alt} />
+            <StringEntityField label="Width" value={record?.width?.toString()} />
+            <StringEntityField label="Height" value={record?.height?.toString()} />
+            <StringEntityField label="Size" value={getFileSize(record?.file?.size)} />
+          </RecordView>
+        </AccordionDetails>
+      </Accordion>
     </Show>
   );
 }

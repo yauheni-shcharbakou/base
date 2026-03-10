@@ -8,15 +8,11 @@ import { useNotification } from '@refinedev/core';
 import { FC, useState } from 'react';
 
 type Props = Omit<ButtonOwnProps, 'onClick' | 'disabled' | 'startIcon'> & {
-  url: string;
-  fileName: string;
+  resource: string;
+  id: string;
 };
 
-export const DownloadButton: FC<Props> = ({
-  url: downloadUrl,
-  fileName,
-  ...buttonProps
-}: Props) => {
+export const DownloadButton: FC<Props> = ({ resource, id, ...buttonProps }: Props) => {
   const [loading, setLoading] = useState(false);
   const { open } = useNotification();
 
@@ -24,18 +20,12 @@ export const DownloadButton: FC<Props> = ({
     setLoading(() => true);
 
     try {
-      const response = await fetch(downloadUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
       const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
+      link.href = `/api/${resource}/${id}/download`;
+      link.setAttribute('download', '');
       document.body.appendChild(link);
       link.click();
-
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      link.remove();
     } catch (error) {
       open?.({
         type: 'error',
@@ -50,10 +40,10 @@ export const DownloadButton: FC<Props> = ({
 
   return (
     <Button
-      {...buttonProps}
       onClick={handleDownload}
       disabled={loading}
       startIcon={<DownloadOutlined />}
+      {...buttonProps}
     >
       {loading ? 'Loading...' : 'Download'}
     </Button>

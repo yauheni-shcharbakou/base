@@ -4,12 +4,9 @@ import { StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile, GrpcStorageObject, GrpcVideo } from '@backend/grpc';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.VIDEO })
-export class VideoEntity
-  extends PostgresEntity<'duration' | 'views'>
-  implements Omit<GrpcVideo, 'file'>
-{
+export class VideoEntity extends PostgresEntity<'duration' | 'views'> implements GrpcVideo {
   @Property({ index: true })
-  user: string;
+  userId: string;
 
   @OneToOne({
     entity: 'FileEntity',
@@ -19,6 +16,11 @@ export class VideoEntity
     ref: true,
   })
   file: Ref<GrpcFile>;
+
+  @Property({ persist: false })
+  get fileId() {
+    return this.file.id;
+  }
 
   @OneToOne({
     entity: 'StorageObjectEntity',

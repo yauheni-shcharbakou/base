@@ -1,23 +1,27 @@
 'use client';
 
+import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
-import { FileUploader } from '@/features/file/components';
+import { FileUploader, FolderSelect } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
-import { Box, Checkbox, FormControlLabel, MenuItem, TextField } from '@mui/material';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcFile, GrpcStorageObject, GrpcStorageObjectType, GrpcUser } from '@packages/grpc';
-import { useList, useGetIdentity } from '@refinedev/core';
+import { GrpcUser } from '@packages/grpc';
+import { HttpError, useGetIdentity } from '@refinedev/core';
 import React from 'react';
 import { Create } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
-import { Controller } from 'react-hook-form';
+import zod, { z } from 'zod';
 
-type CreateForm = {
-  file?: File;
-  isPublic?: boolean;
-  name?: string;
-  parent?: string;
-};
+const schema = zod.object({
+  parent: zod.string().optional(),
+  name: zod.string().optional(),
+  isPublic: zod.boolean(),
+  file: zod.file(),
+});
+
+type Params = z.infer<typeof schema>;
 
 export default function FileCreate() {
   const { isUploading, progress, handleUpload } = useFileUpload({
@@ -27,44 +31,21 @@ export default function FileCreate() {
   const { data: user } = useGetIdentity<GrpcUser>();
 
   const {
-    result: { data: folders },
-  } = useList<GrpcStorageObject>({
-    resource: StorageDatabaseEntity.STORAGE_OBJECT,
-    filters: [
-      {
-        field: 'user',
-        value: user?.id,
-        operator: 'eq',
-      },
-      {
-        field: 'type',
-        value: GrpcStorageObjectType.FOLDER,
-        operator: 'eq',
-      },
-    ],
-    pagination: {
-      pageSize: 100,
-      currentPage: 1,
-    },
-    queryOptions: {
-      enabled: !!user?.id,
-    },
-  });
-
-  const {
     watch,
     formState: { errors, isValid },
     control,
     setValue,
     refineCore: { onFinish, formLoading },
     handleSubmit,
-  } = useForm<CreateForm>();
+  } = useForm<Params, HttpError, Params>({
+    resolver: zodResolver(schema),
+  });
 
   const handleFileChange = (file?: File) => {
     setValue('name', file?.name ?? '');
   };
 
-  const handleSave = async (data: CreateForm) => {
+  const handleSave = async (data: Params) => {
     const file = data.file;
 
     if (!file) {
@@ -79,7 +60,7 @@ export default function FileCreate() {
       formData.append('storage.parent', data.parent);
     }
 
-    const createdFile = await handleUpload<GrpcFile>(file, formData);
+    const createdFile = await handleUpload<any>(file, formData);
 
     if (!createdFile) {
       return;
@@ -96,76 +77,44 @@ export default function FileCreate() {
       }}
       isLoading={formLoading}
     >
-      <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Controller
-          control={control}
-          name="parent"
-          rules={{ required: true }}
-          render={({ field }) => {
-            return (
-              <TextField
-                {...field}
-                value={field?.value || ''}
-                error={!!errors?.parent}
-                helperText={errors?.parent?.message?.toString()}
-                select
+      <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
+        <Stack gap={2}>
+          <Card variant="outlined">
+            <CardHeader title="Storage" />
+            <CardContent>
+              <FolderSelect
                 label="Folder"
-                fullWidth
-                margin="normal"
-              >
-                {folders.map((folder) => (
-                  <MenuItem key={folder.id} value={folder.id}>
-                    {folder.folderPath}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }}
-        />
-        <Controller
-          control={control}
-          name="name"
-          defaultValue={''}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              error={!!errors?.name}
-              helperText={errors?.name?.message?.toString()}
-              margin="normal"
-              fullWidth
-              type="text"
-              label={'Name'}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="isPublic"
-          defaultValue={false}
-          render={({ field }) => (
-            <FormControlLabel
-              {...field}
-              value={field.value ?? false}
-              control={<Checkbox />}
-              label="Public"
-            />
-          )}
-        />
-        <FileUploader
-          formField="file"
-          errors={errors}
-          control={control}
-          watch={watch}
-          progress={progress}
-          isUploading={isUploading}
-          onChange={handleFileChange}
-          required
-          maxSize={100 * ONE_MB_BYTES}
-          accept={{
-            'application/*': ['.pdf'],
-          }}
-          allowedTypes={['pdf']}
-        />
+                formField="parent"
+                errors={errors}
+                control={control}
+                userId={user?.id}
+              />
+              <ControlledTextField
+                control={control}
+                formField="name"
+                fieldError={errors?.name}
+                label="Name"
+              />
+              <ControlledBooleanField control={control} formField="isPublic" label="Public" />
+            </CardContent>
+          </Card>
+
+          <FileUploader
+            formField="file"
+            errors={errors}
+            control={control}
+            watch={watch}
+            progress={progress}
+            isUploading={isUploading}
+            onChange={handleFileChange}
+            required
+            maxSize={100 * ONE_MB_BYTES}
+            accept={{
+              'application/pdf': [],
+            }}
+            allowedTypes={['pdf']}
+          />
+        </Stack>
       </Box>
     </Create>
   );

@@ -2,10 +2,31 @@ syntax = 'proto3';
 
 package storage.messages;
 
+import "google/protobuf/timestamp.proto";
+
 import "common/service.proto";
+import "storage/models/file.proto";
 import "storage/models/video.proto";
 import "storage/messages/file.messages.proto";
 import "storage/messages/storage-object.messages.proto";
+
+// populate
+
+message VideoPopulated {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string title = 4;
+  int32 duration = 5;
+  int32 views = 6;
+  optional string description = 7;
+  string providerId = 8;
+
+  string userId = 9;
+  string fileId = 10;
+  models.File file = 11;
+}
 
 // query
 
@@ -15,12 +36,13 @@ message VideoQuery {
   optional string file = 3;
   optional string providerId = 4;
   repeated string providerIds = 5;
+  optional string userId = 6;
 }
 
 // get
 
 message VideoGetListResponse {
-  repeated models.Video items = 1;
+  repeated VideoPopulated items = 1;
   int32 total = 2;
 }
 
@@ -78,5 +100,5 @@ message VideoUpdateRequest {
 
 message VideoUpdateByIdRequest {
   string id = 1;
-  VideoUpdateRequest update = 2;
+  VideoUpdate update = 2;
 }

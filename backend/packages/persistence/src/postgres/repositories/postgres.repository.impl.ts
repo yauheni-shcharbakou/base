@@ -1,9 +1,10 @@
 import { GrpcEntityWithTimestamps } from '@backend/grpc';
-import { EntityData, Populate, raw, RequiredEntityData, wrap } from '@mikro-orm/core';
+import { EntityData, FilterQuery, Populate, raw, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import {
+  BulkUpdate,
   CreateOf,
   DatabaseRepository,
   DatabaseRepositoryGetList,
@@ -22,13 +23,12 @@ export abstract class PostgresRepositoryImpl<
   Query extends QueryOf<Entity> = QueryOf<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
-  Options extends OptionsOf<Entity> = OptionsOf<Entity>,
-> implements DatabaseRepository<Entity, Query, Create, Update, Options> {
+> implements DatabaseRepository<Entity, Query, Create, Update> {
   protected readonly em: EntityManager;
 
   protected constructor(
     protected readonly repository: EntityRepository<Doc>,
-    protected readonly mapper: PostgresMapper<Entity, Doc, Query> = new PostgresMapper(),
+    protected readonly mapper: PostgresMapper<Doc, Entity, Query> = new PostgresMapper(),
   ) {
     this.em = repository.getEntityManager();
   }
@@ -53,11 +53,7 @@ export abstract class PostgresRepositoryImpl<
     return entity;
   }
 
-  // protected getEm(options?: Partial<Options>) {
-  //   return options?.isolated ? this.em.fork() : this.em;
-  // }
-
-  protected getPopulate(options: Partial<Options> = {}) {
+  protected getPopulate<E extends GrpcEntityWithTimestamps = Entity>(options: OptionsOf<E> = {}) {
     if (!options.populate) {
       return undefined;
     }
@@ -65,36 +61,22 @@ export abstract class PostgresRepositoryImpl<
     return options.populate as unknown as Populate<Doc>;
   }
 
-  // protected convertOptions(options?: Partial<Options>) {
-  //   return {
-  //     em: options?.isolated ? this.em.fork() : undefined,
-  //     populate: this.getPopulate(options),
-  //   };
-  // }
-
-  async count(query: Partial<Query> = {}, options: Partial<Options> = {}): Promise<number> {
+  async count(query: Partial<Query> = {}): Promise<number> {
     return this.repository.count(this.mapper.transformQuery(query));
   }
 
-  async deleteById(
-    id: string,
-    options: Partial<Options> = {},
-  ): Promise<Either<NotFoundException, Entity>> {
-    return this.deleteOne({ id } as Partial<Query>, options);
+  async deleteById(id: string): Promise<Either<NotFoundException, Entity>> {
+    return this.deleteOne({ id } as Partial<Query>);
   }
 
-  async deleteMany(query?: Partial<Query>, options: Partial<Options> = {}): Promise<boolean> {
+  async deleteMany(query?: Partial<Query>): Promise<boolean> {
     const rows = await this.repository.nativeDelete(this.mapper.transformQuery(query));
     return !!rows;
   }
 
-  async deleteOne(
-    query?: Partial<Query>,
-    options: Partial<Options> = {},
-  ): Promise<Either<NotFoundException, Entity>> {
+  async deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>> {
     try {
-      const populate = this.getPopulate(options);
-      const entity = await this.repository.findOne(this.mapper.transformQuery(query), { populate });
+      const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
       if (!entity) {
         return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
@@ -107,16 +89,16 @@ export abstract class PostgresRepositoryImpl<
     }
   }
 
-  async getById(
+  async getById<E extends GrpcEntityWithTimestamps = Entity>(
     id: string,
-    options: Partial<Options> = {},
-  ): Promise<Either<NotFoundException, Entity>> {
+    options: OptionsOf<E> = {},
+  ): Promise<Either<NotFoundException, E>> {
     return this.getOne({ id } as Partial<Query>, options);
   }
 
-  async getList<E = Entity>(
+  async getList<E extends GrpcEntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
-    options: Partial<Options> = {},
+    options: OptionsOf<E> = {},
   ): Promise<DatabaseRepositoryGetListRes<E>> {
     try {
       const populate = this.getPopulate(options);
@@ -141,16 +123,19 @@ export abstract class PostgresRepositoryImpl<
     }
   }
 
-  async getMany(query?: Partial<Query>, options: Partial<Options> = {}): Promise<Entity[]> {
+  async getMany<E extends GrpcEntityWithTimestamps = Entity>(
+    query?: Partial<Query>,
+    options: OptionsOf<E> = {},
+  ): Promise<E[]> {
     const populate = this.getPopulate(options);
     const entities = await this.repository.find(this.mapper.transformQuery(query), { populate });
-    return this.mapper.stringifyMany(entities);
+    return this.mapper.stringifyMany(entities) as unknown as E[];
   }
 
-  async getOne(
+  async getOne<E extends GrpcEntityWithTimestamps = Entity>(
     query: Partial<Query> = {},
-    options: Partial<Options> = {},
-  ): Promise<Either<NotFoundException, Entity>> {
+    options: OptionsOf<E> = {},
+  ): Promise<Either<NotFoundException, E>> {
     const populate = this.getPopulate(options);
     const entity = await this.repository.findOne(this.mapper.transformQuery(query), { populate });
 
@@ -158,22 +143,19 @@ export abstract class PostgresRepositoryImpl<
       return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
     }
 
-    return right(this.mapper.stringify(entity));
+    return right(this.mapper.stringify(entity) as unknown as E);
   }
 
-  async isExists(query: Partial<Query> = {}, options: Partial<Options> = {}): Promise<boolean> {
-    const count = await this.count(query, options);
+  async isExists(query: Partial<Query> = {}): Promise<boolean> {
+    const count = await this.count(query);
     return !!count;
   }
 
-  async isExistsById(id: string, options: Partial<Options> = {}): Promise<boolean> {
-    return this.isExists({ id } as Partial<Query>, options);
+  async isExistsById(id: string): Promise<boolean> {
+    return this.isExists({ id } as Partial<Query>);
   }
 
-  async saveMany(
-    createData: Create[],
-    options: Partial<Options> = {},
-  ): Promise<Either<Error, Entity[]>> {
+  async saveMany(createData: Create[]): Promise<Either<Error, Entity[]>> {
     try {
       const entities = _.map(createData, (data) => {
         const entity = this.repository.create(data as RequiredEntityData<Doc>);
@@ -188,10 +170,7 @@ export abstract class PostgresRepositoryImpl<
     }
   }
 
-  async saveOne(
-    createData: Create,
-    options: Partial<Options> = {},
-  ): Promise<Either<Error, Entity>> {
+  async saveOne(createData: Create): Promise<Either<Error, Entity>> {
     try {
       const entity = this.repository.create(createData as RequiredEntityData<Doc>);
       await this.em.persist(entity).flush();
@@ -201,19 +180,11 @@ export abstract class PostgresRepositoryImpl<
     }
   }
 
-  async updateById(
-    id: string,
-    updateData: Update,
-    options: Partial<Options> = {},
-  ): Promise<Either<NotFoundException, Entity>> {
-    return this.updateOne({ id } as Partial<Query>, updateData, options);
+  async updateById(id: string, updateData: Update): Promise<Either<NotFoundException, Entity>> {
+    return this.updateOne({ id } as Partial<Query>, updateData);
   }
 
-  async updateMany(
-    query: Partial<Query>,
-    updateData: Update,
-    options: Partial<Options> = {},
-  ): Promise<boolean> {
+  async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {
     try {
       const updateQuery = this.em.createQueryBuilder<Doc>(this.repository.getEntityName());
 
@@ -248,11 +219,9 @@ export abstract class PostgresRepositoryImpl<
   async updateOne(
     query: Partial<Query>,
     updateData: Update,
-    options: Partial<Options> = {},
   ): Promise<Either<NotFoundException, Entity>> {
     try {
-      const populate = this.getPopulate(options);
-      const entity = await this.repository.findOne(this.mapper.transformQuery(query), { populate });
+      const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
       if (!entity) {
         return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
@@ -263,6 +232,39 @@ export abstract class PostgresRepositoryImpl<
       return right(this.mapper.stringify(updatedEntity));
     } catch (error) {
       return left(error as NotFoundException);
+    }
+  }
+
+  async bulkUpdate(updates: BulkUpdate<Entity>[]): Promise<Either<Error, boolean>> {
+    try {
+      if (!updates.length) {
+        return right(true);
+      }
+
+      const groups = _.groupBy(updates, (update) => update.filter.key.toString());
+
+      for (const key in groups) {
+        const bulkUpdates = groups[key];
+        const values = _.map(bulkUpdates, ({ filter }) => filter.value);
+
+        const entities = await this.repository.find({ [key]: { $in: values } } as FilterQuery<Doc>);
+        const entityByValue = new Map(_.map(entities, (entity) => [entity[key], entity]));
+
+        _.forEach(bulkUpdates, (bulkUpdate) => {
+          const entity = entityByValue.get(bulkUpdate.filter.value);
+
+          if (!entity) {
+            return;
+          }
+
+          wrap(entity).assign(bulkUpdate.update as object);
+        });
+      }
+
+      await this.em.flush();
+      return right(true);
+    } catch (error) {
+      return left(error as Error);
     }
   }
 }

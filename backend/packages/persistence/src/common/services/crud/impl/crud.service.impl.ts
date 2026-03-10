@@ -6,7 +6,7 @@ import {
   DatabaseRepository,
   DatabaseRepositoryGetList,
   DatabaseRepositoryGetListRes,
-  JoinField,
+  OptionsOf,
   QueryOf,
   UpdateOf,
 } from 'common/repositories';
@@ -30,23 +30,32 @@ export abstract class CrudServiceImpl<
     return this.repository.deleteById(id);
   }
 
-  getById(id: string): Promise<Either<NotFoundException, Entity>> {
-    return this.repository.getById(id);
+  getById<E extends GrpcEntityWithTimestamps = Entity>(
+    id: string,
+    options?: OptionsOf<E>,
+  ): Promise<Either<NotFoundException, E>> {
+    return this.repository.getById(id, options);
   }
 
-  getOne(query?: Query): Promise<Either<NotFoundException, Entity>> {
-    return this.repository.getOne(query);
+  getOne<E extends GrpcEntityWithTimestamps = Entity>(
+    query?: Query,
+    options?: OptionsOf<E>,
+  ): Promise<Either<NotFoundException, E>> {
+    return this.repository.getOne(query, options);
   }
 
-  getMany(query?: Query): Promise<Entity[]> {
-    return this.repository.getMany(query);
+  getMany<E extends GrpcEntityWithTimestamps = Entity>(
+    query?: Query,
+    options?: OptionsOf<E>,
+  ): Promise<E[]> {
+    return this.repository.getMany(query, options);
   }
 
-  getList<E = Entity>(
+  getList<E extends GrpcEntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
-    populate?: JoinField<Entity>[],
+    options?: OptionsOf<E>,
   ): Promise<DatabaseRepositoryGetListRes<E>> {
-    return this.repository.getList(request, { populate });
+    return this.repository.getList(request, options);
   }
 
   saveOne(createData: Create): Promise<Either<Error, Entity>> {

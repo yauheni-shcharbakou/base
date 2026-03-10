@@ -1,54 +1,80 @@
 'use client';
 
-import { RecordView, StringEntityField } from '@/common/components';
+import { RecordView, RefButtonContainer, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/file/components';
-import { getFileSize } from '@/features/file/helpers';
-import { OpenInBrowserOutlined } from '@mui/icons-material';
+import { getFileSize, getFileUploadStatusColor } from '@/features/file/helpers';
+import { ExpandMore, OpenInBrowserOutlined } from '@mui/icons-material';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
+import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile, GrpcFileUploadStatus } from '@packages/grpc';
 import { Show } from '@refinedev/mui';
 import React from 'react';
 
 export default function FileShow() {
   const { isLoading, record } = useResourceShow<GrpcFile>();
-  const openLink = `/api/files/${record?.id}/open`;
+  const isFileReady = record?.uploadStatus === GrpcFileUploadStatus.READY;
 
   return (
     <Show
       isLoading={isLoading || !record?.id}
       headerButtons={({ defaultButtons }) => (
         <>
-          {record?.id && record.uploadStatus === GrpcFileUploadStatus.READY && (
+          {isFileReady && (
             <>
               <Button
                 variant="text"
                 startIcon={<OpenInBrowserOutlined />}
                 component="a"
                 target="_blank"
-                href={openLink}
+                href={`/api/files/${record.id}/open`}
               >
                 Open
               </Button>
-              <DownloadButton
-                variant="text"
-                url={openLink}
-                fileName={`${record.id}.${record.extension}`}
-              />
+              <DownloadButton variant="text" resource={StorageDatabaseEntity.FILE} id={record.id} />
             </>
           )}
           {defaultButtons}
         </>
       )}
     >
-      <RecordView record={record}>
-        <StringEntityField label="User" value={record?.user} />
-        <StringEntityField label="Original name" value={record?.originalName} />
-        <StringEntityField label="Size" value={getFileSize(record?.size)} />
-        <StringEntityField label="Mime type" value={record?.mimeType} />
-        <StringEntityField label="Extension" value={record?.extension} />
-        <StringEntityField label="Upload status" value={record?.uploadStatus} />
-      </RecordView>
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMore />} aria-controls="refs-content" id="refs">
+          <Typography component="span">References</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <RefButtonContainer
+            refs={[
+              {
+                database: Database.AUTH,
+                resource: AuthDatabaseEntity.USER,
+                id: record?.userId,
+                label: 'User',
+              },
+            ]}
+          />
+        </AccordionDetails>
+      </Accordion>
+
+      <Accordion defaultExpanded>
+        <AccordionSummary expandIcon={<ExpandMore />} aria-controls="info-content" id="info">
+          <Typography component="span">Image info</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <RecordView record={record}>
+            <StringEntityField label="Original name" value={record?.originalName} />
+            <StringEntityField label="Size" value={getFileSize(record?.size)} />
+            <StringEntityField label="Mime type" value={record?.mimeType} />
+            <StringEntityField label="Extension" value={record?.extension} />
+            <StringEntityField
+              label="Upload status"
+              value={record?.uploadStatus}
+              color={getFileUploadStatusColor(record?.uploadStatus)}
+            />
+          </RecordView>
+        </AccordionDetails>
+      </Accordion>
     </Show>
   );
 }

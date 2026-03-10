@@ -1,10 +1,22 @@
 'use client';
 
-import { Box, MenuItem, TextField } from '@mui/material';
+import { ControlledSingleSelect, TextEditField } from '@/common/components';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Box } from '@mui/material';
 import { GrpcUser, GrpcUserRole } from '@packages/grpc';
+import { HttpError } from '@refinedev/core';
 import { Edit } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
-import { Controller } from 'react-hook-form';
+import React from 'react';
+import zod, { z } from 'zod';
+
+const schema = zod.object({
+  email: zod.email().optional(),
+  password: zod.string().min(8).optional(),
+  role: zod.enum(Object.values(GrpcUserRole)).optional(),
+});
+
+type Params = z.infer<typeof schema>;
 
 export default function UserEdit() {
   const {
@@ -13,55 +25,37 @@ export default function UserEdit() {
     formState: { errors },
     refineCore: { formLoading, query },
     control,
-  } = useForm<GrpcUser>({});
+    watch,
+  } = useForm<GrpcUser, HttpError, Params>({
+    resolver: zodResolver(schema),
+  });
 
   const entity = query?.data?.data;
 
   return (
     <Edit isLoading={formLoading && !!entity} saveButtonProps={saveButtonProps}>
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }} autoComplete="off">
-        <TextField
-          {...register('email')}
-          error={!!errors?.email}
-          helperText={errors?.email?.message?.toString()}
-          margin="normal"
-          fullWidth
+        <TextEditField
+          register={register('email', { setValueAs: (value) => value || undefined })}
+          label="Email"
+          value={entity?.email}
+          fieldError={errors?.email}
           type="email"
-          label={'Email'}
-          name="email"
         />
-        <TextField
-          {...register('password', { minLength: 8, setValueAs: (value) => value || undefined })}
-          error={!!errors?.password}
-          helperText={errors?.password?.message?.toString()}
-          margin="normal"
-          fullWidth
+        <TextEditField
+          register={register('password', { setValueAs: (value) => value || undefined })}
+          label="Password"
+          value={watch('password')}
+          fieldError={errors?.password}
           type="password"
-          label={'Password'}
-          name="password"
-          defaultValue={''}
         />
-        <Controller
-          name={'role'}
+        <ControlledSingleSelect
           control={control}
-          render={({ field }) => {
-            return (
-              <TextField
-                {...field}
-                value={field?.value || GrpcUserRole.USER}
-                select
-                label="Role"
-                fullWidth
-                margin="normal"
-              >
-                {Object.values(GrpcUserRole).map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {role}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }}
+          formField="role"
+          defaultValue={entity?.role}
+          label="Role"
+          options={Object.values(GrpcUserRole)}
+          required
         />
       </Box>
     </Edit>

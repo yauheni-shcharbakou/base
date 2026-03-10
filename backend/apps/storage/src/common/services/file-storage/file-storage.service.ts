@@ -9,5 +9,5 @@ export const FILE_STORAGE_SERVICE = Symbol('FileStorageService');
 export interface FileStorageService {
   uploadFile(file: GrpcFile, upload$: PassThrough): Observable<boolean>;
   deleteFile(file: GrpcFile): Observable<Either<InternalServerErrorException, boolean>>;
-  getFileSignedUrl(file: GrpcFile): Observable<Either<Error, string>>;
+  getFileSignedUrl(file: GrpcFile): Promise<Either<Error, string>>;
 }

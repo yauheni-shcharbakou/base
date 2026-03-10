@@ -12,7 +12,7 @@ import { StorageDatabaseEntity } from '@packages/common';
 @PostgresSchema({ tableName: StorageDatabaseEntity.FILE })
 export class FileEntity extends PostgresEntity implements GrpcFile {
   @Property({ index: true })
-  user: string;
+  userId: string;
 
   @Property()
   originalName: string;

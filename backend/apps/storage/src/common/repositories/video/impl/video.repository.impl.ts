@@ -4,10 +4,10 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { VideoEntity } from 'common/repositories/video/entities/video.entity';
 import { VideoMapper } from 'common/repositories/video/mappers/video.mapper';
-import { VideoRepository } from 'common/repositories/video/video.repository';
+import { VideoCreate, VideoRepository } from 'common/repositories/video/video.repository';
 
 export class VideoRepositoryImpl
-  extends PostgresRepositoryImpl<VideoEntity, GrpcVideo, GrpcVideoQuery>
+  extends PostgresRepositoryImpl<VideoEntity, GrpcVideo, GrpcVideoQuery, VideoCreate>
   implements VideoRepository
 {
   constructor(

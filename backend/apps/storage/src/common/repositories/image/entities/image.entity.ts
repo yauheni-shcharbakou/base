@@ -4,9 +4,9 @@ import { StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile, GrpcImage, GrpcStorageObject } from '@backend/grpc';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.IMAGE })
-export class ImageEntity extends PostgresEntity implements Omit<GrpcImage, 'file'> {
+export class ImageEntity extends PostgresEntity implements GrpcImage {
   @Property({ index: true })
-  user: string;
+  userId: string;
 
   @OneToOne({
     entity: 'FileEntity',
@@ -16,6 +16,11 @@ export class ImageEntity extends PostgresEntity implements Omit<GrpcImage, 'file
     ref: true,
   })
   file: Ref<GrpcFile>;
+
+  @Property({ persist: false })
+  get fileId() {
+    return this.file.id;
+  }
 
   @OneToOne({
     entity: 'StorageObjectEntity',

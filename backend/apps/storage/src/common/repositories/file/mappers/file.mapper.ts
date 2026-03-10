@@ -3,10 +3,10 @@ import { GrpcFile, GrpcFileQuery } from '@backend/grpc';
 import { ObjectQuery } from '@mikro-orm/core';
 import { FileEntity } from 'common/repositories/file/entities/file.entity';
 
-export class FileMapper extends PostgresMapper<GrpcFile, FileEntity, GrpcFileQuery> {
+export class FileMapper extends PostgresMapper<FileEntity, GrpcFile, GrpcFileQuery> {
   transformQuery({
     mimeTypes,
-    users,
+    userIds,
     uploadStatuses,
     createdAfter,
     ...rest
@@ -17,8 +17,8 @@ export class FileMapper extends PostgresMapper<GrpcFile, FileEntity, GrpcFileQue
       result.mimeType = { $in: mimeTypes };
     }
 
-    if (users?.length) {
-      result.user = { $in: users };
+    if (userIds?.length) {
+      result.userId = { $in: userIds };
     }
 
     if (uploadStatuses?.length) {

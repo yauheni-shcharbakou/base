@@ -20,8 +20,8 @@ interface ParsedLogicalFilter extends Omit<GrpcCrudLogicalFilter, 'string' | 'nu
 type FilterConverter = (filter: ParsedLogicalFilter) => any;
 
 export class MongoMapper<
-  Entity extends GrpcEntityWithTimestamps,
   Doc extends MongoEntity,
+  Entity extends GrpcEntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
 > {
   protected readonly fieldNameConverter: Record<string, keyof Doc | string>;

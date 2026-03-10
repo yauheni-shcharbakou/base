@@ -10,6 +10,7 @@ import {
   GrpcImageServiceController,
   GrpcImageUpdateByIdRequest,
   GrpcImageCreateRequest,
+  GrpcImagePopulated,
 } from '@backend/grpc';
 import { IMAGE_SERVICE, ImageService } from 'modules/image/service/image.service';
 import { from, Observable } from 'rxjs';
@@ -19,13 +20,16 @@ import { from, Observable } from 'rxjs';
 export class ImageRpcController implements GrpcImageServiceController {
   constructor(@Inject(IMAGE_SERVICE) private readonly imageService: ImageService) {}
 
-  getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcImage> {
-    const stream$ = from(this.imageService.getById(request.id));
+  getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcImagePopulated> {
+    const stream$ = from(
+      this.imageService.getById<GrpcImagePopulated>(request.id, { populate: ['file'] }),
+    );
+
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   getList(request: GrpcGetListRequest, metadata?: Metadata): Observable<GrpcImageGetListResponse> {
-    return from(this.imageService.getList(request));
+    return from(this.imageService.getList<GrpcImagePopulated>(request, { populate: ['file'] }));
   }
 
   createOne(request: GrpcImageCreateRequest, metadata?: Metadata): Observable<GrpcImage> {

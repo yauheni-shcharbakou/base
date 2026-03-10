@@ -4,10 +4,20 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { StorageObjectEntity } from 'common/repositories/storage-object/entities/storage-object.entity';
 import { StorageObjectMapper } from 'common/repositories/storage-object/mappers/storage-object.mapper';
-import { StorageObjectRepository } from 'common/repositories/storage-object/storage-object.repository';
+import {
+  StorageObjectCreate,
+  StorageObjectRepository,
+  StorageObjectUpdate,
+} from 'common/repositories/storage-object/storage-object.repository';
 
 export class StorageObjectRepositoryImpl
-  extends PostgresRepositoryImpl<StorageObjectEntity, GrpcStorageObject, GrpcStorageObjectQuery>
+  extends PostgresRepositoryImpl<
+    StorageObjectEntity,
+    GrpcStorageObject,
+    GrpcStorageObjectQuery,
+    StorageObjectCreate,
+    StorageObjectUpdate
+  >
   implements StorageObjectRepository
 {
   constructor(

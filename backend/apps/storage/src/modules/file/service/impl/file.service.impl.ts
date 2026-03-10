@@ -1,13 +1,15 @@
 import {
   GrpcBaseQuery,
+  GrpcDownloadMap,
   GrpcFile,
+  GrpcFileCreate,
   GrpcFileCreateRequest,
   GrpcFileQuery,
-  GrpcFileSignedUrls,
   GrpcFileUploadRequest,
   GrpcFileUploadResponse,
   GrpcFileUploadStatus,
   GrpcStorageObjectType,
+  GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudServiceImpl, PERSISTENCE_SERVICE, PersistenceService } from '@backend/persistence';
 import {
@@ -22,11 +24,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
-import {
-  FILE_REPOSITORY,
-  FileCreate,
-  FileRepository,
-} from 'common/repositories/file/file.repository';
+import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import {
   STORAGE_OBJECT_REPOSITORY,
   StorageObjectRepository,
@@ -58,7 +56,7 @@ import {
 } from 'rxjs';
 
 export class FileServiceImpl
-  extends CrudServiceImpl<GrpcFile, GrpcFileQuery, FileCreate>
+  extends CrudServiceImpl<GrpcFile, GrpcFileQuery, GrpcFileCreate>
   implements FileService
 {
   private readonly logger = new Logger(FileServiceImpl.name);
@@ -73,21 +71,41 @@ export class FileServiceImpl
     super();
   }
 
-  async getSignedUrls(request: GrpcBaseQuery): Promise<GrpcFileSignedUrls> {
+  async getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap> {
     const files = await this.repository.getMany(request);
-    const urls: GrpcFileSignedUrls['urls'] = {};
+    const items: GrpcUrlMap['items'] = {};
 
     await Promise.all(
       _.map(files, async (file) => {
-        const url = await firstValueFrom(this.fileStorageService.getFileSignedUrl(file));
+        const url = await this.fileStorageService.getFileSignedUrl(file);
 
         if (url.isRight()) {
-          urls[file.id] = url.value;
+          items[file.id] = url.value;
         }
       }),
     );
 
-    return { urls };
+    return { items };
+  }
+
+  async getDownloadMap(request: GrpcBaseQuery): Promise<GrpcDownloadMap> {
+    const files = await this.repository.getMany(request);
+    const items: GrpcDownloadMap['items'] = {};
+
+    await Promise.all(
+      _.map(files, async (file) => {
+        const url = await this.fileStorageService.getFileSignedUrl(file);
+
+        if (url.isRight()) {
+          items[file.id] = {
+            url: url.value,
+            fileName: `${file.id}.${file.extension}`,
+          };
+        }
+      }),
+    );
+
+    return { items };
   }
 
   async deleteById(id: string): Promise<Either<NotFoundException, GrpcFile>> {
@@ -106,8 +124,11 @@ export class FileServiceImpl
     return deletedFile;
   }
 
-  async createOne(request: GrpcFileCreateRequest, user: string): Promise<Either<Error, GrpcFile>> {
-    const file = await this.saveOne({ ...request.file, user });
+  async createOne(
+    request: GrpcFileCreateRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcFile>> {
+    const file = await this.repository.saveOne({ ...request.file, userId });
 
     if (file.isLeft() || !request.storage) {
       return file;
@@ -115,7 +136,7 @@ export class FileServiceImpl
 
     const storage = await this.storageObjectRepository.saveOne({
       ...request.storage,
-      user,
+      userId,
       file: file.value.id,
       type: GrpcStorageObjectType.FILE,
     });
@@ -130,7 +151,7 @@ export class FileServiceImpl
 
   uploadOne(
     request$: Observable<GrpcFileUploadRequest>,
-    user?: string,
+    userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>> {
     const sharedRequest$ = request$.pipe(share());
 
@@ -146,7 +167,7 @@ export class FileServiceImpl
       take(1),
       timeout(5_000),
       switchMap(async (message): Promise<Params> => {
-        if (!user) {
+        if (!userId) {
           throw new ForbiddenException(`User is required`);
         }
 
@@ -155,7 +176,7 @@ export class FileServiceImpl
         }
 
         const file = await this.persistenceService.isolatedRun(async () => {
-          return this.repository.getOne({ id: message.file, user });
+          return this.repository.getOne({ id: message.file, userId });
         });
 
         if (file.isLeft()) {
@@ -176,7 +197,7 @@ export class FileServiceImpl
 
         uploadPromise.catch(() => {});
 
-        return { file: file.value, upload$, uploadPromise };
+        return { file: uploadedFile, upload$, uploadPromise };
       }),
       switchMap(
         ({ file, upload$, uploadPromise }): Observable<Either<Error, GrpcFileUploadResponse>> => {
@@ -193,7 +214,7 @@ export class FileServiceImpl
 
               await sendToWritable(upload$, Buffer.from(message.chunk));
               totalBytes += message.chunk.length;
-              return (totalBytes / uploadedFile.size) * 100;
+              return (totalBytes / file.size) * 100;
             }),
             takeWhile((percent) => percent < 100, true),
             tap({
@@ -214,12 +235,12 @@ export class FileServiceImpl
                 throw new InternalServerErrorException('File upload failed');
               }
 
-              if (totalBytes < uploadedFile.size) {
+              if (totalBytes < file.size) {
                 throw new InternalServerErrorException('File upload interrupted: size mismatch');
               }
 
               const updatedFile = await this.persistenceService.isolatedRun(async () => {
-                return this.updateById(uploadedFile.id, {
+                return this.updateById(file.id, {
                   set: {
                     uploadStatus: GrpcFileUploadStatus.READY,
                   },
@@ -230,7 +251,7 @@ export class FileServiceImpl
                 throw updatedFile.value;
               }
 
-              this.logger.log(`File ${uploadedFile.id} uploaded`);
+              this.logger.log(`File ${file.id} uploaded`);
               return right({ file: updatedFile.value });
             }),
           );
@@ -298,90 +319,4 @@ export class FileServiceImpl
       this.logger.error('File cleanup error:', error.message, error.stack);
     }
   }
-
-  // uploadOneDuplex(
-  //   request$: Observable<GrpcFileUploadRequest>,
-  //   user?: string,
-  // ): Observable<Either<Error, GrpcFileUploadResponse>> {
-  //   let createdFile: GrpcFile;
-  //   let isSuccess = false;
-  //   let uploadPromise: Promise<any>;
-  //   let totalBytes = 0;
-  //
-  //   const upload$ = new PassThrough();
-  //
-  //   const progress$ = request$.pipe(
-  //     timeout(30_000),
-  //     concatMap(async (message): Promise<GrpcFileUploadResponse | null> => {
-  //       if (message.create) {
-  //         if (!user) {
-  //           throw new BadRequestException('User is required');
-  //         }
-  //
-  //         const file = await this.repository.saveOne({ ...message.create, user });
-  //
-  //         if (file.isLeft()) {
-  //           throw file.value;
-  //         }
-  //
-  //         createdFile = file.value;
-  //         uploadPromise = firstValueFrom(this.fileStorageService.uploadFile(createdFile, upload$));
-  //         return null;
-  //       }
-  //
-  //       if (message.chunk) {
-  //         await sendToWritable(upload$, Buffer.from(message.chunk));
-  //         totalBytes += message.chunk.length;
-  //         const percent = (totalBytes / createdFile.size) * 100;
-  //         return { percent };
-  //       }
-  //
-  //       return null;
-  //     }),
-  //     filter((res) => !!res),
-  //     takeWhile((res) => res.percent < 100, true),
-  //     map((res) => right({ percent: res.percent })),
-  //   );
-  //
-  //   const finish$ = defer(async (): Promise<Either<Error, GrpcFileUploadResponse>> => {
-  //     if (!createdFile) {
-  //       throw new Error('File was not created');
-  //     }
-  //
-  //     if (totalBytes < createdFile.size) {
-  //       throw new Error('File upload interrupted: size mismatch');
-  //     }
-  //
-  //     upload$.end();
-  //     await uploadPromise;
-  //
-  //     isSuccess = true;
-  //     this.logger.log(`File ${createdFile.id} uploaded`);
-  //     return right({ file: createdFile });
-  //   });
-  //
-  //   return concat(progress$, finish$).pipe(
-  //     catchError(async (err) => {
-  //       this.logger.error('File upload error:', err.message, err.stack);
-  //       upload$.destroy();
-  //
-  //       if (createdFile?.id) {
-  //         await firstValueFrom(this.deleteById(createdFile.id));
-  //       }
-  //
-  //       return left(err);
-  //     }),
-  //     finalize(() => {
-  //       if (!isSuccess) {
-  //         if (!upload$.destroyed) {
-  //           upload$.destroy();
-  //         }
-  //
-  //         if (createdFile) {
-  //           this.fileStorageService.deleteFile(createdFile);
-  //         }
-  //       }
-  //     }),
-  //   );
-  // }
 }

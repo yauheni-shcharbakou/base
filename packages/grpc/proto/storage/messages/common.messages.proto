@@ -1,0 +1,16 @@
+syntax = 'proto3';
+
+package storage.messages;
+
+message DownloadData {
+  string url = 1;
+  string fileName = 2;
+}
+
+message UrlMap {
+  map<string, string> items = 1;
+}
+
+message DownloadMap {
+  map<string, DownloadData> items = 1;
+}

@@ -2,8 +2,41 @@ syntax = 'proto3';
 
 package storage.messages;
 
+import "google/protobuf/timestamp.proto";
+
 import "common/service.proto";
+import "storage/models/file.proto";
+import "storage/models/image.proto";
 import "storage/models/storage-object.proto";
+import "storage/models/video.proto";
+
+// populate
+
+message StorageObjectPopulated {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string name = 4;
+  bool isPublic = 5;
+  models.StorageObjectType type = 6;
+
+  string userId = 7;
+  optional string fileId = 8;
+  optional string parentId = 9;
+  optional models.File file = 10;
+
+  oneof metadata {
+    string folderPath = 11;
+    string imageId = 12;
+    string videoId = 13;
+  }
+
+  oneof populatedMetadata {
+    models.Image image = 14;
+    models.Video video = 15;
+  }
+}
 
 // get
 
@@ -11,7 +44,7 @@ message StorageObjectQuery {
   optional string id = 1;
   repeated string ids = 2;
   optional models.StorageObjectType type = 3;
-  optional string user = 4;
+  optional string userId = 4;
   optional bool isPublic = 5;
   optional string parent = 6;
   optional string file = 7;
@@ -22,11 +55,11 @@ message StorageObjectRequest {
 }
 
 message StorageObjectList {
-  repeated models.StorageObject items = 1;
+  repeated StorageObjectPopulated items = 1;
 }
 
 message StorageObjectGetListResponse {
-  repeated models.StorageObjectPopulated items = 1;
+  repeated StorageObjectPopulated items = 1;
   int32 total = 2;
 }
 
@@ -37,6 +70,7 @@ message StorageObjectCreate {
   bool isPublic = 2;
   string parent = 3;
   models.StorageObjectType type = 4;
+
   optional string file = 5;
   optional string image = 6;
   optional string video = 7;

@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   },
 };
 
+// TODO: create custom list view
+// TODO: implement custom hook for useForm (zod validation)
+// TODO: uploadMany logic for files / images / videos
+// TODO: try migrate to 16 Next
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -104,6 +109,18 @@ export default async function RootLayout({
                         show: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/show/:id`,
                         meta: {
                           canDelete: true,
+                          parent: Database.STORAGE,
+                        },
+                      },
+                      {
+                        name: StorageDatabaseEntity.VIDEO,
+                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}`,
+                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/create`,
+                        edit: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/edit/:id`,
+                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/show/:id`,
+                        meta: {
+                          canDelete: false,
+                          dataProviderName: 'upload',
                           parent: Database.STORAGE,
                         },
                       },

@@ -5,6 +5,7 @@ import {
   GrpcImageRepository,
   GrpcStorageObjectRepository,
   GrpcUserRepository,
+  GrpcVideoRepository,
 } from '@frontend/grpc';
 import { AuthDatabaseEntity, StorageDatabaseEntity } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
@@ -19,6 +20,7 @@ export class GrpcDataService {
     [StorageDatabaseEntity.FILE]: new GrpcFileRepository(this.grpcUrl),
     [StorageDatabaseEntity.IMAGE]: new GrpcImageRepository(this.grpcUrl),
     [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectRepository(this.grpcUrl),
+    [StorageDatabaseEntity.VIDEO]: new GrpcVideoRepository(this.grpcUrl),
   };
 
   getRepository<Entity extends BaseRecord>(resource: string): GrpcDataRepository<Entity> {

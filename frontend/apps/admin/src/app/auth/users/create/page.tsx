@@ -1,69 +1,59 @@
 'use client';
 
-import { Box, TextField, MenuItem } from '@mui/material';
-import { GrpcUser, GrpcUserRole } from '@packages/grpc';
+import { ControlledSingleSelect, ControlledTextField } from '@/common/components';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Box } from '@mui/material';
+import { GrpcUserRole } from '@packages/grpc';
+import { HttpError } from '@refinedev/core';
 import { Create } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
-import { Controller } from 'react-hook-form';
+import React from 'react';
+import zod, { z } from 'zod';
+
+const schema = zod.object({
+  email: zod.email(),
+  password: zod.string().min(8),
+  role: zod.enum(Object.values(GrpcUserRole)),
+});
+
+type Params = z.infer<typeof schema>;
 
 export default function UserCreate() {
   const {
     saveButtonProps,
     refineCore: { formLoading },
-    register,
-    formState: { errors, isValid },
+    formState: { errors },
     control,
-  } = useForm<GrpcUser>({});
+  } = useForm<Params, HttpError, Params>({
+    resolver: zodResolver(schema),
+  });
 
   return (
-    <Create
-      isLoading={formLoading}
-      saveButtonProps={{ ...saveButtonProps, disabled: !isValid || formLoading }}
-    >
+    <Create isLoading={formLoading} saveButtonProps={{ ...saveButtonProps, disabled: formLoading }}>
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }} autoComplete="off">
-        <TextField
-          {...register('email', { required: true })}
-          error={!!errors?.email}
-          helperText={errors?.email?.message?.toString()}
-          margin="normal"
-          fullWidth
-          type="email"
-          label={'Email'}
-          name="email"
-          required
-        />
-        <TextField
-          {...register('password', { required: true, minLength: 8 })}
-          error={!!errors?.password}
-          helperText={errors?.password?.message?.toString()}
-          margin="normal"
-          fullWidth
-          type="password"
-          label={'Password'}
-          name="password"
-          required
-        />
-        <Controller
-          name={'role'}
+        <ControlledTextField
           control={control}
-          render={({ field }) => {
-            return (
-              <TextField
-                {...field}
-                value={field?.value || GrpcUserRole.USER}
-                select
-                label="Role"
-                fullWidth
-                margin="normal"
-              >
-                {Object.values(GrpcUserRole).map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {role}
-                  </MenuItem>
-                ))}
-              </TextField>
-            );
-          }}
+          formField="email"
+          fieldError={errors?.email}
+          label="Email"
+          type="email"
+          required
+        />
+        <ControlledTextField
+          control={control}
+          formField="password"
+          fieldError={errors?.password}
+          label="Password"
+          type="password"
+          required
+        />
+        <ControlledSingleSelect
+          control={control}
+          formField="role"
+          defaultValue={GrpcUserRole.USER}
+          label="Role"
+          options={Object.values(GrpcUserRole)}
+          required
         />
       </Box>
     </Create>

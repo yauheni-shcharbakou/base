@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  GrpcUser,
   GrpcUserCreate,
   GrpcUserQuery,
   GrpcUserRequest,
@@ -17,19 +16,7 @@ import {
   UpdateDto,
   UpdateRequestDto,
 } from 'common/dto/grpc-types.dto';
-import { EntityWithTimestampsDto } from 'common/dto/entity-with-timestamps.dto';
-
-export class UserDto extends EntityWithTimestampsDto implements GrpcUser {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  email: string;
-
-  @ApiProperty({ enum: GrpcUserRole, enumName: 'UserRole' })
-  @IsNotEmpty()
-  @IsEnum(GrpcUserRole)
-  role: GrpcUserRole;
-}
+import { UserDto } from 'common/dto/services/auth/models/user.dto';
 
 export class UserQueryDto extends BaseQueryDto implements GrpcUserQuery {
   @ApiProperty({ required: false })

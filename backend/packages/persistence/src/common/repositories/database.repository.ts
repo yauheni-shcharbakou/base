@@ -39,47 +39,47 @@ export type OptionsOf<Entity extends GrpcEntityWithTimestamps> = {
   populate?: JoinField<Entity>[];
 };
 
+export type BulkUpdate<Entity extends GrpcEntityWithTimestamps> = {
+  filter: {
+    key: keyof Entity | string;
+    value: any;
+  };
+  update: UpdateSetOf<Entity>;
+};
+
 export interface DatabaseRepository<
   Entity extends GrpcEntityWithTimestamps = GrpcEntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
-  Options extends OptionsOf<Entity> = OptionsOf<Entity>,
 > {
-  isExistsById(id: string, options?: Partial<Options>): Promise<boolean>;
-  isExists(query?: Partial<Query>, options?: Partial<Options>): Promise<boolean>;
-  count(query?: Partial<Query>, options?: Partial<Options>): Promise<number>;
-  getById(id: string, options?: Partial<Options>): Promise<Either<NotFoundException, Entity>>;
-  getOne(
-    query?: Partial<Query>,
-    options?: Partial<Options>,
-  ): Promise<Either<NotFoundException, Entity>>;
-  getMany(query?: Partial<Query>, options?: Partial<Options>): Promise<Entity[]>;
-  getList<E = Entity>(
-    request: DatabaseRepositoryGetList<Query>,
-    options?: Partial<Options>,
-  ): Promise<DatabaseRepositoryGetListRes<E>>;
-  saveOne(createData: Create, options?: Partial<Options>): Promise<Either<Error, Entity>>;
-  saveMany(createData: Create[], options?: Partial<Options>): Promise<Either<Error, Entity[]>>;
-  updateById(
+  isExistsById(id: string): Promise<boolean>;
+  isExists(query?: Partial<Query>): Promise<boolean>;
+  count(query?: Partial<Query>): Promise<number>;
+  getById<E extends GrpcEntityWithTimestamps = Entity>(
     id: string,
-    updateData: Update,
-    options?: Partial<Options>,
-  ): Promise<Either<NotFoundException, Entity>>;
-  updateOne(
-    query: Partial<Query>,
-    updateData: Update,
-    options?: Partial<Options>,
-  ): Promise<Either<NotFoundException, Entity>>;
-  updateMany(
-    query: Partial<Query>,
-    updateData: Update,
-    options?: Partial<Options>,
-  ): Promise<boolean>;
-  deleteById(id: string, options?: Partial<Options>): Promise<Either<NotFoundException, Entity>>;
-  deleteOne(
+    options?: OptionsOf<E>,
+  ): Promise<Either<NotFoundException, E>>;
+  getOne<E extends GrpcEntityWithTimestamps = Entity>(
     query?: Partial<Query>,
-    options?: Partial<Options>,
-  ): Promise<Either<NotFoundException, Entity>>;
-  deleteMany(query?: Partial<Query>, options?: Partial<Options>): Promise<boolean>;
+    options?: OptionsOf<E>,
+  ): Promise<Either<NotFoundException, E>>;
+  getMany<E extends GrpcEntityWithTimestamps = Entity>(
+    query?: Partial<Query>,
+    options?: OptionsOf<E>,
+  ): Promise<E[]>;
+  getList<E extends GrpcEntityWithTimestamps = Entity>(
+    request: DatabaseRepositoryGetList<Query>,
+    options?: OptionsOf<E>,
+  ): Promise<DatabaseRepositoryGetListRes<E>>;
+  saveOne(createData: Create): Promise<Either<Error, Entity>>;
+  saveMany(createData: Create[]): Promise<Either<Error, Entity[]>>;
+  updateById(id: string, updateData: Update): Promise<Either<NotFoundException, Entity>>;
+  updateOne(query: Partial<Query>, updateData: Update): Promise<Either<NotFoundException, Entity>>;
+  updateMany(query: Partial<Query>, updateData: Update): Promise<boolean>;
+  deleteById(id: string): Promise<Either<NotFoundException, Entity>>;
+  deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>>;
+  deleteMany(query?: Partial<Query>): Promise<boolean>;
+
+  bulkUpdate(updates: BulkUpdate<Entity>[]): Promise<Either<Error, boolean>>;
 }

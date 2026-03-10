@@ -1,6 +1,14 @@
 import { DatabaseRepository } from '@backend/persistence';
-import { GrpcImageQuery, GrpcImage } from '@backend/grpc';
+import { GrpcImageQuery, GrpcImage, GrpcImageCreate } from '@backend/grpc';
 
 export const IMAGE_REPOSITORY = Symbol('ImageRepository');
 
-export interface ImageRepository extends DatabaseRepository<GrpcImage, GrpcImageQuery> {}
+export interface ImageRepository extends DatabaseRepository<
+  GrpcImage,
+  GrpcImageQuery,
+  ImageCreate
+> {}
+
+export interface ImageCreate extends GrpcImageCreate {
+  userId: string;
+}

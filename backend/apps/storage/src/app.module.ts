@@ -9,8 +9,13 @@ import { config } from 'config';
 import { FileModule } from 'modules/file/file.module';
 import { ImageModule } from 'modules/image/image.module';
 import { StorageObjectModule } from 'modules/storage-object/storage-object.module';
+import { VideoModule } from 'modules/video/video.module';
 
-// TODO: implement video entity stuff, check postgres cascade deletion
+// TODO: delete methods for image & video
+// TODO: storage object update recursive hooks (isPublic)
+// TODO: separate delete / update video-storage / file-storage hooks
+// TODO: bunny documentation
+// TODO: bunny ip token auth
 
 @Module({
   imports: [
@@ -22,6 +27,7 @@ import { StorageObjectModule } from 'modules/storage-object/storage-object.modul
     FileModule,
     ImageModule,
     StorageObjectModule,
+    VideoModule,
   ],
 })
 export class AppModule {}

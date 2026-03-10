@@ -4,14 +4,15 @@ package storage;
 
 import "common/service.proto";
 import "storage/models/file.proto";
+import "storage/messages/common.messages.proto";
 import "storage/messages/file.messages.proto";
 
 service FileService {
-  rpc getSignedUrls (common.BaseQuery) returns (messages.FileSignedUrls) {}
+  rpc getUrlMap (common.BaseQuery) returns (messages.UrlMap) {}
+  rpc getDownloadMap (common.BaseQuery) returns (messages.DownloadMap) {}
   rpc getById (common.IdField) returns (models.File) {}
   rpc getList (common.GetListRequest) returns (messages.FileGetListResponse) {}
   rpc createOne (messages.FileCreateRequest) returns (models.File) {}
   rpc uploadOne (stream messages.FileUploadRequest) returns (stream messages.FileUploadResponse) {}
-  //  rpc uploadOneDuplex (stream messages.FileUploadRequest) returns (stream messages.FileUploadResponse) {}
   rpc deleteById (common.IdField) returns (models.File) {}
 }

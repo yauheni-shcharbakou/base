@@ -1,23 +1,28 @@
-import {
-  CreateOf,
-  DatabaseRepository,
-  DatabaseRepositoryGetList,
-  DatabaseRepositoryGetListRes,
-  UpdateOf,
-} from '@backend/persistence';
+import { DatabaseRepository } from '@backend/persistence';
 import {
   GrpcStorageObject,
-  GrpcStorageObjectPopulated,
+  GrpcStorageObjectCreate,
   GrpcStorageObjectQuery,
+  GrpcStorageObjectUpdate,
 } from '@backend/grpc';
 
 export const STORAGE_OBJECT_REPOSITORY = Symbol('StorageObjectRepository');
 
 export interface StorageObjectRepository extends DatabaseRepository<
   GrpcStorageObject,
-  GrpcStorageObjectQuery
-> {
-  // getListPopulated(
-  //   request: DatabaseRepositoryGetList<GrpcStorageObjectQuery>,
-  // ): Promise<DatabaseRepositoryGetListRes<GrpcStorageObjectPopulated>>;
+  GrpcStorageObjectQuery,
+  StorageObjectCreate,
+  StorageObjectUpdate
+> {}
+
+export interface StorageObjectCreate extends GrpcStorageObjectCreate {
+  userId: string;
+  folderPath?: string;
+}
+
+export interface StorageObjectUpdate extends GrpcStorageObjectUpdate {
+  set?: GrpcStorageObjectUpdate['set'] & {
+    parent?: string;
+    folderPath?: string;
+  };
 }

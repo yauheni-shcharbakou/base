@@ -28,16 +28,26 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     private readonly storageObjectService: StorageObjectService,
   ) {}
 
-  getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcStorageObject> {
-    const stream$ = from(this.storageObjectService.getById(request.id));
+  getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcStorageObjectPopulated> {
+    const stream$ = from(
+      this.storageObjectService.getById<GrpcStorageObjectPopulated>(request.id, {
+        populate: ['video', 'image', 'file'],
+      }),
+    );
+
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   getMany(
     request: GrpcStorageObjectRequest,
     metadata?: Metadata,
-  ): Promise<GrpcStorageObjectList> | Observable<GrpcStorageObjectList> | GrpcStorageObjectList {
-    const stream$ = from(this.storageObjectService.getMany(request.query));
+  ): Observable<GrpcStorageObjectList> {
+    const stream$ = from(
+      this.storageObjectService.getMany<GrpcStorageObjectPopulated>(request.query, {
+        populate: ['video', 'image', 'file'],
+      }),
+    );
+
     return stream$.pipe(map((items) => ({ items })));
   }
 
@@ -46,17 +56,15 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     metadata?: Metadata,
   ): Observable<GrpcStorageObjectGetListResponse> {
     return from(
-      this.storageObjectService.getList<GrpcStorageObjectPopulated>(request, [
-        'file',
-        'image',
-        'video',
-      ]),
+      this.storageObjectService.getList<GrpcStorageObjectPopulated>(request, {
+        populate: ['file', 'image', 'video'],
+      }),
     );
   }
 
   createOne(request: GrpcStorageObjectCreate, metadata?: Metadata): Observable<GrpcStorageObject> {
-    const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
-    const stream$ = from(this.storageObjectService.saveOne({ ...request, user }));
+    const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    const stream$ = from(this.storageObjectService.createOne(request, userId));
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 

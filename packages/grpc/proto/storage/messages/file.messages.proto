@@ -3,9 +3,9 @@ syntax = 'proto3';
 package storage.messages;
 
 import "google/protobuf/timestamp.proto";
+
 import "common/service.proto";
 import "storage/models/file.proto";
-//import "storage/models/storage-object.proto";
 import "storage/messages/storage-object.messages.proto";
 
 // query
@@ -15,8 +15,8 @@ message FileQuery {
   repeated string ids = 2;
   optional string mimeType = 3;
   repeated string mimeTypes = 4;
-  optional string user = 5;
-  repeated string users = 6;
+  optional string userId = 5;
+  repeated string userIds = 6;
   optional string extension = 7;
   optional models.FileUploadStatus uploadStatus = 8;
   repeated models.FileUploadStatus uploadStatuses = 9;
@@ -34,10 +34,6 @@ message FileGetListResponse {
   int32 total = 2;
 }
 
-message FileSignedUrls {
-  map<string, string> urls = 1;
-}
-
 // create
 
 message FileCreate {
@@ -53,11 +49,6 @@ message FileCreateRequest {
 
 // upload
 
-//message FileUpload {
-//  FileCreate file = 1;
-//  StorageObjectCreate storage = 2;
-//}
-
 message FileUploadRequest {
   oneof payload {
     string file = 1;
@@ -71,15 +62,3 @@ message FileUploadResponse {
     bool canSendChunks = 2;
   }
 }
-
-//message FileUploadResponse {
-//  models.File file = 1;
-//  models.StorageObject storageObject = 2;
-//}
-
-//message FileUploadResponse {
-//  oneof payload {
-//    float percent = 1;
-//    models.File file = 2;
-//  }
-//}

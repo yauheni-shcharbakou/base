@@ -9,11 +9,12 @@ message Video {
   google.protobuf.Timestamp createdAt = 2;
   optional google.protobuf.Timestamp updatedAt = 3;
 
-  string user = 4;
-  string file = 5;
-  string providerId = 6;
-  string title = 7;
-  int32 duration = 8;
-  int32 views = 9;
-  optional string description = 10;
+  string title = 4;
+  int32 duration = 5;
+  int32 views = 6;
+  optional string description = 7;
+  string providerId = 8;
+
+  string userId = 9;
+  string fileId = 10;
 }

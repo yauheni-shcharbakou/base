@@ -14,8 +14,7 @@ import { catchError, map, Observable, of } from 'rxjs';
 @Injectable()
 export class BunnyFileStorageServiceImpl implements FileStorageService {
   private readonly logger = new Logger(BunnyFileStorageServiceImpl.name);
-  private readonly cdnConfig: Config['bunny']['cdn'];
-  private readonly rootDir: string;
+  private readonly storageConfig: Config['bunny']['storage'];
 
   constructor(
     private readonly configService: ConfigService<Config>,
@@ -38,14 +37,11 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
       throw axiosError;
     });
 
-    const config = this.configService.getOrThrow('bunny', { infer: true });
-
-    this.cdnConfig = config.cdn;
-    this.rootDir = config.storage.rootDir;
+    this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
   }
 
   private getFilePath(file: GrpcFile): string {
-    return `${this.rootDir}/${file.user}/${file.id}.${file.extension}`;
+    return `${this.storageConfig.rootDir}/${file.userId}/${file.id}.${file.extension}`;
   }
 
   deleteFile(file: GrpcFile): Observable<Either<InternalServerErrorException, boolean>> {
@@ -71,12 +67,12 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
       .pipe(map(() => true));
   }
 
-  getFileSignedUrl(file: GrpcFile): Observable<Either<Error, string>> {
+  async getFileSignedUrl(file: GrpcFile): Promise<Either<Error, string>> {
     try {
       const filePath = this.getFilePath(file);
       const path = `/${filePath}`;
-      const expires = moment().add(this.cdnConfig.expiresInMinutes, 'minutes').unix();
-      const hashableBase = this.cdnConfig.privateKey + path + expires;
+      const expires = moment().add(this.storageConfig.cdn.expiresInMinutes, 'minutes').unix();
+      const hashableBase = this.storageConfig.cdn.privateKey + path + expires;
       const md5String = createHash('md5').update(hashableBase).digest('binary');
 
       const token = Buffer.from(md5String, 'binary')
@@ -85,14 +81,14 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
         .replace(/\//g, '_')
         .replace(/=/g, '');
 
-      const url = new URL(this.cdnConfig.url + path);
+      const url = new URL(`https://${this.storageConfig.cdn.zone}.b-cdn.net${path}`);
 
       url.searchParams.set('token', token);
       url.searchParams.set('expires', expires.toString());
 
-      return of(right(url.toString()));
+      return right(url.toString());
     } catch (error) {
-      return of(left(error));
+      return left(error);
     }
   }
 }

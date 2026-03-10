@@ -1,7 +1,8 @@
 'use client';
 
-import { DateEntityField, StringEntityField } from '@/common/components/entity-fields';
-import { Divider, Stack } from '@mui/material';
+import { DateEntityField } from '@/common/components/entity-fields';
+import { IdField } from '@/common/components/id-field';
+import { Divider, Skeleton, Stack, Typography } from '@mui/material';
 import { GrpcEntityWithTimestamps } from '@packages/grpc';
 import React, { FC, ReactNode } from 'react';
 
@@ -11,9 +12,16 @@ type Props = {
 };
 
 export const RecordView: FC<Props> = ({ record, children }: Props) => {
+  if (!record) {
+    return <Skeleton variant="rectangular" height={200} animation="wave" />;
+  }
+
   return (
     <Stack gap={1}>
-      <StringEntityField label="ID" value={record?.id} />
+      <Typography variant="body1" fontWeight="bold" color="info">
+        ID
+      </Typography>
+      <IdField value={record?.id} />
       <Divider />
       {children}
       <Divider />

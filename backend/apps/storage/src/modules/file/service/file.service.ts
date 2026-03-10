@@ -1,24 +1,26 @@
 import {
   GrpcBaseQuery,
+  GrpcDownloadMap,
   GrpcFile,
+  GrpcFileCreate,
   GrpcFileCreateRequest,
   GrpcFileQuery,
-  GrpcFileSignedUrls,
   GrpcFileUploadRequest,
   GrpcFileUploadResponse,
+  GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
 import { Either } from '@sweet-monads/either';
-import { FileCreate } from 'common/repositories/file/file.repository';
 import { Observable } from 'rxjs';
 
 export const FILE_SERVICE = Symbol('FileService');
 
-export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, FileCreate> {
-  getSignedUrls(request: GrpcBaseQuery): Promise<GrpcFileSignedUrls>;
-  createOne(request: GrpcFileCreateRequest, user: string): Promise<Either<Error, GrpcFile>>;
+export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, GrpcFileCreate> {
+  getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap>;
+  getDownloadMap(request: GrpcBaseQuery): Promise<GrpcDownloadMap>;
+  createOne(request: GrpcFileCreateRequest, userId: string): Promise<Either<Error, GrpcFile>>;
   uploadOne(
     request$: Observable<GrpcFileUploadRequest>,
-    user?: string,
+    userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>>;
 }

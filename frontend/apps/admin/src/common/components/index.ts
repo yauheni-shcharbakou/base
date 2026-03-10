@@ -3,3 +3,6 @@ export * from './devtools.provider';
 export * from './resource-list';
 export * from './record-view';
 export * from './entity-fields';
+export * from './ref-button';
+export * from './id-field';
+export * from './edit-fields';

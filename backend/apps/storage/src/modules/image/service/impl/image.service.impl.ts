@@ -1,7 +1,9 @@
 import {
   GrpcImage,
+  GrpcImageCreate,
   GrpcImageCreateRequest,
   GrpcImageQuery,
+  GrpcImageUpdate,
   GrpcStorageObjectType,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
@@ -14,10 +16,11 @@ import {
   STORAGE_OBJECT_REPOSITORY,
   StorageObjectRepository,
 } from 'common/repositories/storage-object/storage-object.repository';
+import _ from 'lodash';
 import { ImageService } from 'modules/image/service/image.service';
 
 export class ImageServiceImpl
-  extends CrudServiceImpl<GrpcImage, GrpcImageQuery>
+  extends CrudServiceImpl<GrpcImage, GrpcImageQuery, GrpcImageCreate, GrpcImageUpdate>
   implements ImageService
 {
   constructor(
@@ -32,10 +35,10 @@ export class ImageServiceImpl
 
   async createOne(
     request: GrpcImageCreateRequest,
-    user: string,
+    userId: string,
   ): Promise<Either<Error, GrpcImage>> {
     const revertHooks: (() => Promise<any>)[] = [];
-    const file = await this.fileRepository.saveOne({ ...request.file, user });
+    const file = await this.fileRepository.saveOne({ ...request.file, userId });
 
     if (file.isLeft()) {
       return left(file.value);
@@ -43,14 +46,18 @@ export class ImageServiceImpl
 
     revertHooks.push(() => this.fileRepository.deleteById(file.value.id));
 
-    const image = await this.saveOne({
+    const image = await this.repository.saveOne({
       ...request.image,
-      user,
+      userId,
       file: file.value.id,
     });
 
-    if (image.isLeft() || !request.storage) {
-      await Promise.all(revertHooks);
+    if (image.isLeft()) {
+      await Promise.all(_.map(revertHooks, (hook) => hook()));
+      return image;
+    }
+
+    if (!request.storage) {
       return image;
     }
 
@@ -58,14 +65,14 @@ export class ImageServiceImpl
 
     const storage = await this.storageObjectRepository.saveOne({
       ...request.storage,
-      user,
+      userId,
       file: file.value.id,
       image: image.value.id,
       type: GrpcStorageObjectType.IMAGE,
     });
 
     if (storage.isLeft()) {
-      await Promise.all(revertHooks);
+      await Promise.all(_.map(revertHooks, (hook) => hook()));
       return left(storage.value);
     }
 

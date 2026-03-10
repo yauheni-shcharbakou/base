@@ -4,14 +4,40 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
 import { AxiosError } from 'axios';
-import { VideoStorageService } from 'common/services/video-storage/video-storage.service';
+import {
+  VideoStorageList,
+  VideoStorageService,
+} from 'common/services/video-storage/video-storage.service';
 import { Config } from 'config';
+import _ from 'lodash';
+import moment from 'moment';
+import { createHash } from 'node:crypto';
 import { PassThrough } from 'node:stream';
-import { catchError, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, firstValueFrom, map, Observable, of, switchMap } from 'rxjs';
+
+type UpdateBody = {
+  title?: string;
+  metaTags?: { property: string; value: string }[];
+};
+
+type BunnyVideo = {
+  guid: string;
+  title: string;
+  description?: string;
+  length: number;
+  views: number;
+  availableResolutions?: string;
+};
+
+type BunnyVideoList = {
+  totalItems: number;
+  items: BunnyVideo[];
+};
 
 @Injectable()
 export class BunnyVideoStorageServiceImpl implements VideoStorageService {
   private readonly logger = new Logger(BunnyVideoStorageServiceImpl.name);
+  private readonly streamConfig: Config['bunny']['stream'];
 
   constructor(
     private readonly configService: ConfigService<Config>,
@@ -33,10 +59,12 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
 
       throw axiosError;
     });
+
+    this.streamConfig = configService.getOrThrow('bunny.stream', { infer: true });
   }
 
   createVideo(video: GrpcVideoMetadata): Observable<Either<InternalServerErrorException, string>> {
-    return this.httpService.post<{ guid: string }>('videos', { title: video.title }).pipe(
+    return this.httpService.post<BunnyVideo>('videos', { title: video.title }).pipe(
       switchMap((response) => {
         const id = response.data.guid;
 
@@ -64,6 +92,9 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
   uploadVideo(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean> {
     return this.httpService
       .put(`videos/${providerId}`, upload$, {
+        timeout: 0,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
         headers: {
           'Content-Type': 'application/octet-stream',
           'Content-Length': fileSize.toString(),
@@ -79,5 +110,111 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
         of(left(new InternalServerErrorException("Can't delete video from bunny stream"))),
       ),
     );
+  }
+
+  updateVideo(
+    providerId: string,
+    updateData: Partial<GrpcVideoMetadata>,
+  ): Observable<Either<Error, boolean>> {
+    const body: UpdateBody = {};
+
+    if (updateData.title) {
+      body.title = updateData.title;
+    }
+
+    if (updateData.description) {
+      body.metaTags = [
+        {
+          property: 'description',
+          value: updateData.description,
+        },
+      ];
+    }
+
+    return this.httpService.post(`videos/${providerId}`, body).pipe(
+      map(() => right(true)),
+      catchError((error) => of(left(error))),
+    );
+  }
+
+  getList(page: number, limit: number): Observable<VideoStorageList> {
+    return this.httpService.get<BunnyVideoList>(`videos?page=${page}&itemsPerPage=${limit}`).pipe(
+      map((response) => {
+        return {
+          total: response.data.totalItems,
+          items: _.map(response.data.items, (item) => {
+            return {
+              providerId: item.guid,
+              duration: item.length,
+              views: item.views,
+            };
+          }),
+        };
+      }),
+      catchError((error) => of({ total: 0, items: [] })),
+    );
+  }
+
+  async getPlayerUrl(providerId: string): Promise<Either<Error, string>> {
+    try {
+      const expires = moment().add(this.streamConfig.cdn.expiresInMinutes, 'minutes').unix();
+      const hashableBase = this.streamConfig.cdn.privateKey + providerId + expires;
+      const token = createHash('sha256').update(hashableBase).digest('hex');
+
+      const url = new URL(
+        `https://iframe.mediadelivery.net/embed/${this.streamConfig.libraryId}/${providerId}`,
+      );
+
+      url.searchParams.set('token', token);
+      url.searchParams.set('expires', expires.toString());
+      url.searchParams.set('autoplay', 'false');
+      url.searchParams.set('loop', 'false');
+      url.searchParams.set('muted', 'false');
+      url.searchParams.set('preload', 'true');
+      url.searchParams.set('responsive', 'true');
+
+      return right(url.toString());
+    } catch (error) {
+      return left(error);
+    }
+  }
+
+  async getDownloadUrl(providerId: string): Promise<Either<Error, string>> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<BunnyVideo>(`videos/${providerId}`),
+      );
+
+      const availableResolutions = response.data.availableResolutions;
+
+      if (!availableResolutions) {
+        throw new Error('No available resolutions');
+      }
+
+      const resolutions = availableResolutions.split(',').map((resolution) => {
+        return +resolution.replace('p', '');
+      });
+
+      const maxResolution = _.max(resolutions);
+      const path = `/${providerId}/play_${maxResolution}p.mp4`;
+      const expires = moment().add(this.streamConfig.cdn.expiresInMinutes, 'minutes').unix();
+      const hashableBase = this.streamConfig.cdn.privateKey + path + expires;
+      const md5String = createHash('md5').update(hashableBase).digest('binary');
+
+      const token = Buffer.from(md5String, 'binary')
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+
+      const url = new URL(`https://${this.streamConfig.cdn.zone}.b-cdn.net${path}`);
+
+      url.searchParams.set('token', token);
+      url.searchParams.set('expires', expires.toString());
+
+      return right(url.toString());
+    } catch (error) {
+      return left(error);
+    }
   }
 }

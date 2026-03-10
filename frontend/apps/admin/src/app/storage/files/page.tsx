@@ -5,6 +5,7 @@ import { useResourceList } from '@/common/hooks';
 import { GridColumnsBuilder } from '@/common/utils';
 import { getFileSize } from '@/features/file/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
+import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile } from '@packages/grpc';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
@@ -15,6 +16,11 @@ export default function FileList() {
   const columns = useMemo<GridColDef<GrpcFile>[]>(
     () =>
       new GridColumnsBuilder<GrpcFile>()
+        .ref('userId', {
+          headerName: 'User',
+          database: Database.AUTH,
+          resource: AuthDatabaseEntity.USER,
+        })
         .string('originalName', { headerName: 'Name' })
         .string('extension', { maxWidth: 100 })
         .string('size', { maxWidth: 100, valueGetter: (value) => getFileSize(value) })

@@ -9,9 +9,10 @@ message Image {
   google.protobuf.Timestamp createdAt = 2;
   optional google.protobuf.Timestamp updatedAt = 3;
 
-  string user = 4;
-  string file = 5;
-  int32 width = 6;
-  int32 height = 7;
-  string alt = 8;
+  int32 width = 4;
+  int32 height = 5;
+  string alt = 6;
+
+  string userId = 7;
+  string fileId = 8;
 }

@@ -1,19 +1,20 @@
 import {
   GrpcBaseQuery,
+  GrpcDownloadMap,
   GrpcFile,
   GrpcFileCreateRequest,
   GrpcFileGetListResponse,
   GrpcFileService,
   GrpcFileServiceController,
-  GrpcFileSignedUrls,
   GrpcFileUploadRequest,
   GrpcFileUploadResponse,
   GrpcGetListRequest,
   GrpcIdField,
+  GrpcUrlMap,
 } from '@backend/grpc';
 import { GrpcController, GrpcMetadataMapper, GrpcRxPipe } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
-import { Inject, SetMetadata } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { FILE_SERVICE, FileService } from 'modules/file/service/file.service';
 import { from, Observable } from 'rxjs';
 
@@ -22,8 +23,12 @@ import { from, Observable } from 'rxjs';
 export class FileRpcController implements GrpcFileServiceController {
   constructor(@Inject(FILE_SERVICE) private readonly fileService: FileService) {}
 
-  getSignedUrls(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcFileSignedUrls> {
-    return from(this.fileService.getSignedUrls(request));
+  getUrlMap(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcUrlMap> {
+    return from(this.fileService.getUrlMap(request));
+  }
+
+  getDownloadMap(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcDownloadMap> {
+    return from(this.fileService.getDownloadMap(request));
   }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {
@@ -35,17 +40,16 @@ export class FileRpcController implements GrpcFileServiceController {
   }
 
   createOne(request: GrpcFileCreateRequest, metadata?: Metadata): Observable<GrpcFile> {
-    const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
-    return from(this.fileService.createOne(request, user)).pipe(GrpcRxPipe.unwrapEither);
+    const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    return from(this.fileService.createOne(request, userId)).pipe(GrpcRxPipe.unwrapEither);
   }
 
-  @SetMetadata('grpc-stream', true)
   uploadOne(
     request: Observable<GrpcFileUploadRequest>,
     metadata?: Metadata,
   ): Observable<GrpcFileUploadResponse> {
-    const user = new GrpcMetadataMapper(metadata).get('user');
-    return this.fileService.uploadOne(request, user).pipe(GrpcRxPipe.unwrapEither);
+    const userId = new GrpcMetadataMapper(metadata).get('user');
+    return this.fileService.uploadOne(request, userId).pipe(GrpcRxPipe.unwrapEither);
   }
 
   deleteById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {

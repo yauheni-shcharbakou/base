@@ -2,7 +2,7 @@ import { GrpcStorageObjectType, GrpcUserService, GrpcUserServiceClient } from '@
 import { MigrationTask } from '@backend/persistence';
 import { InjectGrpcService } from '@backend/transport';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { StorageObjectEntity } from 'common/repositories/storage-object/entities/storage-object.entity';
 import _ from 'lodash';
 import { firstValueFrom } from 'rxjs';
@@ -22,7 +22,7 @@ export class CreateRootFoldersTask implements MigrationTask {
 
     _.forEach(users.items, (user) => {
       const folder = this.entityManager.create(StorageObjectEntity, {
-        user: user.id,
+        userId: user.id,
         type: GrpcStorageObjectType.FOLDER,
         name: '',
         isPublic: false,

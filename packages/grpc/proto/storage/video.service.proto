@@ -4,13 +4,15 @@ package storage;
 
 import "common/service.proto";
 import "storage/models/video.proto";
+import "storage/messages/common.messages.proto";
 import "storage/messages/video.messages.proto";
 
 service VideoService {
-  rpc getById (common.IdField) returns (models.Video) {}
+  rpc getUrlMap (common.BaseQuery) returns (messages.UrlMap) {}
+  rpc getDownloadMap (common.BaseQuery) returns (messages.DownloadMap) {}
+  rpc getById (common.IdField) returns (messages.VideoPopulated) {}
   rpc getList (common.GetListRequest) returns (messages.VideoGetListResponse) {}
   rpc createOne (messages.VideoCreateRequest) returns (models.Video) {}
   rpc updateById (messages.VideoUpdateByIdRequest) returns (models.Video) {}
-  rpc uploadOne (messages.VideoUploadRequest) returns (messages.VideoUploadResponse) {}
-//  rpc deleteById (common.IdField) returns (models.Video) {}
+  rpc uploadOne (stream messages.VideoUploadRequest) returns (stream messages.VideoUploadResponse) {}
 }

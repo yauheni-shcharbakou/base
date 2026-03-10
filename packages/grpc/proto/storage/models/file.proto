@@ -15,10 +15,11 @@ message File {
   google.protobuf.Timestamp createdAt = 2;
   optional google.protobuf.Timestamp updatedAt = 3;
 
-  string user = 4;
-  string originalName = 5;
-  int32 size = 6;
-  string mimeType = 7;
-  string extension = 8;
-  FileUploadStatus uploadStatus = 9;
+  string originalName = 4;
+  int32 size = 5;
+  string mimeType = 6;
+  string extension = 7;
+  FileUploadStatus uploadStatus = 8;
+
+  string userId = 9;
 }

@@ -1,78 +1,26 @@
 import {
-  GrpcStorageObject,
   GrpcStorageObjectType,
-  GrpcStorageObjectPopulated,
   GrpcStorageObjectQuery,
   GrpcStorageObjectRequest,
   GrpcStorageObjectCreate,
-  GrpcStorageObjectMetadata,
   GrpcStorageObjectUpdate,
   GrpcStorageObjectUpdateByIdRequest,
   GrpcStorageObjectUpdateRequest,
 } from '@backend/grpc';
-import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import { TransformToBoolean } from 'common/decorators/transform.decorator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
-import { EntityWithTimestampsDto } from 'common/dto/entity-with-timestamps.dto';
 import {
   RequestDto,
   UpdateByIdRequestDto,
   UpdateDto,
   UpdateRequestDto,
 } from 'common/dto/grpc-types.dto';
-
-export class StorageObjectDto extends EntityWithTimestampsDto implements GrpcStorageObject {
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  file?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  folderPath?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  image?: string;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsBoolean()
-  @TransformToBoolean()
-  isPublic: boolean;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  parent?: string;
-
-  @ApiProperty({ enum: GrpcStorageObjectType, enumName: 'GrpcStorageObjectType' })
-  @IsNotEmpty()
-  @IsEnum(GrpcStorageObjectType)
-  type: GrpcStorageObjectType;
-
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  user: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  video?: string;
-}
-
-export class StorageObjectPopulatedDto
-  extends OmitType(StorageObjectDto, ['file', 'image', 'video'] as const)
-  implements GrpcStorageObjectPopulated {}
+import {
+  StorageObjectDto,
+  StorageObjectMetadataDto,
+} from 'common/dto/services/storage/models/storage-object.dto';
 
 export class StorageObjectQueryDto extends BaseQueryDto implements GrpcStorageObjectQuery {
   @ApiProperty({ required: false, enum: GrpcStorageObjectType, enumName: 'GrpcStorageObjectType' })
@@ -83,7 +31,7 @@ export class StorageObjectQueryDto extends BaseQueryDto implements GrpcStorageOb
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  user?: string;
+  userId?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -107,25 +55,24 @@ export class StorageObjectRequestDto
   implements GrpcStorageObjectRequest {}
 
 export class StorageObjectCreateDto
-  extends PickType(StorageObjectDto, [
-    'name',
-    'isPublic',
-    'type',
-    'file',
-    'image',
-    'video',
-  ] as const)
+  extends StorageObjectMetadataDto
   implements GrpcStorageObjectCreate
 {
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
-  parent: string;
-}
+  file?: string;
 
-export class StorageObjectMetadataDto
-  extends PickType(StorageObjectCreateDto, ['name', 'isPublic', 'parent', 'type'] as const)
-  implements GrpcStorageObjectMetadata {}
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  video?: string;
+}
 
 export class StorageObjectUpdateDto
   extends UpdateDto(StorageObjectDto)

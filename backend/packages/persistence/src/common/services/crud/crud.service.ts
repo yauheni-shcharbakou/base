@@ -5,7 +5,7 @@ import {
   CreateOf,
   DatabaseRepositoryGetList,
   DatabaseRepositoryGetListRes,
-  JoinField,
+  OptionsOf,
   QueryOf,
   UpdateOf,
 } from 'common/repositories';
@@ -16,12 +16,21 @@ export interface CrudService<
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
 > {
-  getById(id: string): Promise<Either<NotFoundException, Entity>>;
-  getOne(query?: Query): Promise<Either<NotFoundException, Entity>>;
-  getMany(query?: Query): Promise<Entity[]>;
-  getList<E = Entity>(
+  getById<E extends GrpcEntityWithTimestamps = Entity>(
+    id: string,
+    options?: OptionsOf<E>,
+  ): Promise<Either<NotFoundException, E>>;
+  getOne<E extends GrpcEntityWithTimestamps = Entity>(
+    query?: Query,
+    options?: OptionsOf<E>,
+  ): Promise<Either<NotFoundException, E>>;
+  getMany<E extends GrpcEntityWithTimestamps = Entity>(
+    query?: Query,
+    options?: OptionsOf<E>,
+  ): Promise<E[]>;
+  getList<E extends GrpcEntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
-    populate?: JoinField<Entity>[],
+    options?: OptionsOf<E>,
   ): Promise<DatabaseRepositoryGetListRes<E>>;
   saveOne(createData: Create): Promise<Either<Error, Entity>>;
   updateById(id: string, updateData: Update): Promise<Either<NotFoundException, Entity>>;

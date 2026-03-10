@@ -5,8 +5,8 @@ import { StorageObjectEntity } from 'common/repositories/storage-object/entities
 import _ from 'lodash';
 
 export class StorageObjectMapper extends PostgresMapper<
-  GrpcStorageObject,
   StorageObjectEntity,
+  GrpcStorageObject,
   GrpcStorageObjectQuery
 > {
   transformQuery({

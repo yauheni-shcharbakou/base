@@ -6,15 +6,25 @@ import {
   GrpcStorageObjectService,
   GrpcVideoService,
 } from '@backend/grpc';
-import { AdminAccess, AdminGrpcController } from 'common/decorators/access.decorator';
+import { AdminGrpcController } from 'common/decorators/access.decorator';
 import { GrpcProxyStreamMethod } from 'common/decorators/grpc-proxy-method.decorator';
+import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { GetListRequestDto } from 'common/dto/get-list-request.dto';
 import { IdFieldDto } from 'common/dto/id-field.dto';
+import { FileCreateRequestDto } from 'common/dto/services/storage/file.service.dto';
+import {
+  ImageCreateRequestDto,
+  ImageUpdateByIdRequestDto,
+} from 'common/dto/services/storage/image.service.dto';
 import {
   StorageObjectCreateDto,
   StorageObjectRequestDto,
   StorageObjectUpdateByIdRequestDto,
 } from 'common/dto/services/storage/storage-object.service.dto';
+import {
+  VideoCreateRequestDto,
+  VideoUpdateByIdRequestDto,
+} from 'common/dto/services/storage/video.service.dto';
 
 @Module({
   imports: [
@@ -22,11 +32,11 @@ import {
       {
         host: 'storage',
         controllerFactory: GrpcFileService.proxyFactory({
+          getUrlMap: BaseQueryDto,
+          getDownloadMap: BaseQueryDto,
           getById: IdFieldDto,
           getList: GetListRequestDto,
-          uploadOne: {
-            decorators: [AdminAccess()],
-          },
+          createOne: FileCreateRequestDto,
           deleteById: IdFieldDto,
         }),
         custom: {
@@ -39,7 +49,8 @@ import {
         controllerFactory: GrpcImageService.proxyFactory({
           getById: IdFieldDto,
           getList: GetListRequestDto,
-          // deleteById: IdFieldDto,
+          createOne: ImageCreateRequestDto,
+          updateById: ImageUpdateByIdRequestDto,
         }),
         custom: {
           GrpcController: AdminGrpcController,
@@ -62,9 +73,12 @@ import {
       {
         host: 'storage',
         controllerFactory: GrpcVideoService.proxyFactory({
+          getUrlMap: BaseQueryDto,
+          getDownloadMap: BaseQueryDto,
           getById: IdFieldDto,
           getList: GetListRequestDto,
-          // deleteById: IdFieldDto,
+          createOne: VideoCreateRequestDto,
+          updateById: VideoUpdateByIdRequestDto,
         }),
         custom: {
           GrpcController: AdminGrpcController,
@@ -72,13 +86,6 @@ import {
         },
       },
     ),
-    // GrpcModule.forFeature({
-    //   strategy: {
-    //     storage: [GrpcFileService.name],
-    //   },
-    // }),
-    // StorageServiceModule,
   ],
-  // controllers: [FileRpcController],
 })
 export class StorageRpcModule {}

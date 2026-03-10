@@ -24,8 +24,8 @@ type FilterConverter = (
 ) => Partial<OperatorMap<any>> | FilterObject<any>[string];
 
 export class PostgresMapper<
-  Entity extends GrpcEntityWithTimestamps,
   Doc extends PostgresEntity<any>,
+  Entity extends GrpcEntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
 > {
   constructor(protected readonly fieldNameConverter: Record<string, keyof Doc | string> = {}) {}
@@ -195,7 +195,6 @@ export class PostgresMapper<
       queryFilter = _.merge(queryFilter, generated);
     });
 
-    console.log(queryFilter);
     return queryFilter;
   }
 

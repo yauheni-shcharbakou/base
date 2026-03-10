@@ -137,7 +137,7 @@ export async function POST(req: Request): Promise<NextResponse> {
         );
       });
 
-      request$.write({ file: image.file });
+      request$.write({ file: image.fileId });
     });
   } catch (err) {
     return NextResponse.json({ message: getErrorMessage(err) }, { status: 500 });

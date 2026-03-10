@@ -10,12 +10,9 @@ import {
 } from '@backend/grpc';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.STORAGE_OBJECT })
-export class StorageObjectEntity
-  extends PostgresEntity<'children'>
-  implements Omit<GrpcStorageObject, 'video' | 'image' | 'file' | 'parent'>
-{
+export class StorageObjectEntity extends PostgresEntity<'children'> implements GrpcStorageObject {
   @Property({ index: true })
-  user: string;
+  userId: string;
 
   @Property()
   name: string;
@@ -28,6 +25,11 @@ export class StorageObjectEntity
 
   @ManyToOne(() => StorageObjectEntity, { nullable: true, ref: true })
   parent?: Ref<StorageObjectEntity>;
+
+  @Property({ persist: false })
+  get parentId() {
+    return this.parent?.id;
+  }
 
   @OneToMany(() => StorageObjectEntity, (child) => child.parent)
   children = new Collection<StorageObjectEntity>(this);
@@ -42,6 +44,11 @@ export class StorageObjectEntity
   })
   file?: Ref<GrpcFile>;
 
+  @Property({ persist: false })
+  get fileId() {
+    return this.file?.id;
+  }
+
   @Property({ nullable: true })
   folderPath?: string;
 
@@ -55,6 +62,11 @@ export class StorageObjectEntity
   })
   image?: Ref<GrpcImage>;
 
+  @Property({ persist: false })
+  get imageId() {
+    return this.image?.id;
+  }
+
   @OneToOne({
     entity: 'VideoEntity',
     mappedBy: 'storageObject',
@@ -64,4 +76,9 @@ export class StorageObjectEntity
     ref: true,
   })
   video?: Ref<GrpcVideo>;
+
+  @Property({ persist: false })
+  get videoId() {
+    return this.video?.id;
+  }
 }

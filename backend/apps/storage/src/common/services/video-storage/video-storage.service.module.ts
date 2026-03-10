@@ -17,9 +17,6 @@ import { Config } from 'config';
 
         return {
           baseURL: `${url}/library/${libraryId}`,
-          timeout: 0,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
           headers: {
             AccessKey: apiKey,
           },

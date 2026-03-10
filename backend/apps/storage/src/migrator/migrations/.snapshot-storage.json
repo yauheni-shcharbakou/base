@@ -36,8 +36,8 @@
           "length": 3,
           "mappedType": "datetime"
         },
-        "user": {
-          "name": "user",
+        "user_id": {
+          "name": "user_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -117,10 +117,10 @@
         },
         {
           "columnNames": [
-            "user"
+            "user_id"
           ],
           "composite": false,
-          "keyName": "files_user_index",
+          "keyName": "files_user_id_index",
           "constraint": false,
           "primary": false,
           "unique": false
@@ -182,8 +182,8 @@
           "length": 3,
           "mappedType": "datetime"
         },
-        "user": {
-          "name": "user",
+        "user_id": {
+          "name": "user_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -246,10 +246,10 @@
         },
         {
           "columnNames": [
-            "user"
+            "user_id"
           ],
           "composite": false,
-          "keyName": "images_user_index",
+          "keyName": "images_user_id_index",
           "constraint": false,
           "primary": false,
           "unique": false
@@ -461,8 +461,8 @@
           "length": 3,
           "mappedType": "datetime"
         },
-        "user": {
-          "name": "user",
+        "user_id": {
+          "name": "user_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -547,10 +547,10 @@
         },
         {
           "columnNames": [
-            "user"
+            "user_id"
           ],
           "composite": false,
-          "keyName": "videos_user_index",
+          "keyName": "videos_user_id_index",
           "constraint": false,
           "primary": false,
           "unique": false
@@ -636,8 +636,8 @@
           "length": 3,
           "mappedType": "datetime"
         },
-        "user": {
-          "name": "user",
+        "user_id": {
+          "name": "user_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -748,10 +748,10 @@
         },
         {
           "columnNames": [
-            "user"
+            "user_id"
           ],
           "composite": false,
-          "keyName": "storage-objects_user_index",
+          "keyName": "storage-objects_user_id_index",
           "constraint": false,
           "primary": false,
           "unique": false
