@@ -4,15 +4,15 @@
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.cts",
   "type": "module",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "yarn build -- --watch",
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsdown src/index.ts --format cjs,esm --dts",
     "reset": "rm -rf .turbo dist node_modules"
   },
   "dependencies": {
