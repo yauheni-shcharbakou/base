@@ -1,7 +1,9 @@
 import {
+  GrpcFileUploadStatus,
   GrpcImage,
   GrpcImageCreate,
   GrpcImageCreateRequest,
+  GrpcImagePopulated,
   GrpcImageQuery,
   GrpcImageUpdate,
   GrpcStorageObjectType,
@@ -10,14 +12,20 @@ import { CrudServiceImpl } from '@backend/persistence';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Either, left } from '@sweet-monads/either';
+import { FileEventPattern, FileDeleteOneEvent } from 'common/events/file.events';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import { IMAGE_REPOSITORY, ImageRepository } from 'common/repositories/image/image.repository';
 import {
   STORAGE_OBJECT_REPOSITORY,
   StorageObjectRepository,
 } from 'common/repositories/storage-object/storage-object.repository';
+import {
+  FILE_STORAGE_SERVICE,
+  FileStorageService,
+} from 'common/services/file-storage/file-storage.service';
 import _ from 'lodash';
 import { ImageService } from 'modules/image/service/image.service';
+import { firstValueFrom } from 'rxjs';
 
 export class ImageServiceImpl
   extends CrudServiceImpl<GrpcImage, GrpcImageQuery, GrpcImageCreate, GrpcImageUpdate>
@@ -29,6 +37,7 @@ export class ImageServiceImpl
     @Inject(IMAGE_REPOSITORY) protected readonly repository: ImageRepository,
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
+    @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
   ) {
     super();
   }
@@ -38,7 +47,20 @@ export class ImageServiceImpl
     userId: string,
   ): Promise<Either<Error, GrpcImage>> {
     const revertHooks: (() => Promise<any>)[] = [];
-    const file = await this.fileRepository.saveOne({ ...request.file, userId });
+
+    const providerId = await firstValueFrom(
+      this.fileStorageService.createFile({ ...request.file, userId }),
+    );
+
+    if (providerId.isLeft()) {
+      return left(providerId.value);
+    }
+
+    const file = await this.fileRepository.saveOne({
+      ...request.file,
+      userId,
+      providerId: providerId.value,
+    });
 
     if (file.isLeft()) {
       return left(file.value);
@@ -80,16 +102,21 @@ export class ImageServiceImpl
   }
 
   async deleteById(id: string): Promise<Either<NotFoundException, GrpcImage>> {
-    const image = await super.deleteById(id);
+    const image = await this.repository.getById<GrpcImagePopulated>(id, { populate: ['file'] });
 
-    if (image.isRight()) {
-      // this.eventEmitter.emit('file.delete', { id: image.value.file });
+    if (image.isLeft()) {
+      return image;
+    }
+
+    const deletedImage = await super.deleteById(id);
+
+    if (deletedImage.isRight() && image.value.file.uploadStatus === GrpcFileUploadStatus.READY) {
+      this.eventEmitter.emit(
+        FileEventPattern.DELETE_ONE,
+        new FileDeleteOneEvent(image.value.file.providerId),
+      );
     }
 
     return image;
-  }
-
-  async onFileDelete(file: string): Promise<void> {
-    await this.repository.deleteOne({ file });
   }
 }

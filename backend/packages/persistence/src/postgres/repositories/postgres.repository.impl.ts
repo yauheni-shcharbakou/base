@@ -67,6 +67,37 @@ export abstract class PostgresRepositoryImpl<
     return this.repository.count(this.mapper.transformQuery(query));
   }
 
+  async distinct<Field extends keyof Entity>(
+    field: Field,
+    query?: Partial<Query>,
+  ): Promise<Set<Entity[Field]>> {
+    try {
+      const transformedQuery = this.mapper.transformQuery(query);
+
+      const entities = await this.repository.find(transformedQuery, {
+        limit: 1_000,
+        fields: [field.toString() as any],
+      });
+
+      return _.reduce(
+        entities,
+        (acc: Set<Entity[Field]>, entity: Doc) => {
+          const wrappedEntity = wrap(entity).toJSON();
+          const value = wrappedEntity[field.toString()];
+
+          if (!_.isNil(value)) {
+            acc.add(value);
+          }
+
+          return acc;
+        },
+        new Set(),
+      );
+    } catch (e) {
+      return new Set();
+    }
+  }
+
   async deleteById(id: string): Promise<Either<NotFoundException, Entity>> {
     return this.deleteOne({ id } as Partial<Query>);
   }

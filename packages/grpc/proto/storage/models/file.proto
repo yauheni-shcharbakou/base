@@ -20,6 +20,7 @@ message File {
   string mimeType = 6;
   string extension = 7;
   FileUploadStatus uploadStatus = 8;
+  optional string providerId = 9;
 
-  string userId = 9;
+  string userId = 10;
 }

@@ -21,9 +21,11 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
+import { FileDeleteOneEvent, FileEventPattern } from 'common/events/file.events';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import {
   STORAGE_OBJECT_REPOSITORY,
@@ -62,6 +64,7 @@ export class FileServiceImpl
   private readonly logger = new Logger(FileServiceImpl.name);
 
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     @Inject(FILE_REPOSITORY) protected readonly repository: FileRepository,
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
@@ -77,7 +80,11 @@ export class FileServiceImpl
 
     await Promise.all(
       _.map(files, async (file) => {
-        const url = await this.fileStorageService.getFileSignedUrl(file);
+        if (!file.providerId) {
+          return;
+        }
+
+        const url = await this.fileStorageService.getFileSignedUrl(file.providerId);
 
         if (url.isRight()) {
           items[file.id] = url.value;
@@ -94,7 +101,11 @@ export class FileServiceImpl
 
     await Promise.all(
       _.map(files, async (file) => {
-        const url = await this.fileStorageService.getFileSignedUrl(file);
+        if (!file.providerId) {
+          return;
+        }
+
+        const url = await this.fileStorageService.getFileSignedUrl(file.providerId);
 
         if (url.isRight()) {
           items[file.id] = {
@@ -109,26 +120,35 @@ export class FileServiceImpl
   }
 
   async deleteById(id: string): Promise<Either<NotFoundException, GrpcFile>> {
-    const file = await super.getById(id);
+    const file = await super.deleteById(id);
 
-    if (file.isLeft()) {
-      return file;
+    if (file.isRight() && file.value.uploadStatus === GrpcFileUploadStatus.READY) {
+      this.eventEmitter.emit(
+        FileEventPattern.DELETE_ONE,
+        new FileDeleteOneEvent(file.value.providerId),
+      );
     }
 
-    const deletedFile = await super.deleteById(file.value.id);
-
-    if (deletedFile.isRight() && file.value.uploadStatus === GrpcFileUploadStatus.READY) {
-      await firstValueFrom(this.fileStorageService.deleteFile(file.value));
-    }
-
-    return deletedFile;
+    return file;
   }
 
   async createOne(
     request: GrpcFileCreateRequest,
     userId: string,
   ): Promise<Either<Error, GrpcFile>> {
-    const file = await this.repository.saveOne({ ...request.file, userId });
+    const providerId = await firstValueFrom(
+      this.fileStorageService.createFile({ ...request.file, userId }),
+    );
+
+    if (providerId.isLeft()) {
+      return left(providerId.value);
+    }
+
+    const file = await this.repository.saveOne({
+      ...request.file,
+      userId,
+      providerId: providerId.value,
+    });
 
     if (file.isLeft() || !request.storage) {
       return file;
@@ -183,6 +203,10 @@ export class FileServiceImpl
           throw file.value;
         }
 
+        if (!file.value.providerId) {
+          throw new BadRequestException('File should have providerId');
+        }
+
         if (file.value.uploadStatus === GrpcFileUploadStatus.READY) {
           throw new BadRequestException('File should have pending or failed upload status');
         }
@@ -192,7 +216,7 @@ export class FileServiceImpl
         uploadedFile = file.value;
 
         const uploadPromise = firstValueFrom(
-          this.fileStorageService.uploadFile(uploadedFile, upload$),
+          this.fileStorageService.uploadFile(uploadedFile.providerId, uploadedFile.size, upload$),
         );
 
         uploadPromise.catch(() => {});
@@ -269,16 +293,18 @@ export class FileServiceImpl
         this.logger.error('File upload error:', err.message, err.stack);
 
         if (uploadedFile?.id) {
-          await Promise.allSettled([
-            this.persistenceService.isolatedRun(async () => {
-              await this.updateById(uploadedFile.id, {
-                set: {
-                  uploadStatus: GrpcFileUploadStatus.FAILED,
-                },
-              });
-            }),
-            firstValueFrom(this.fileStorageService.deleteFile(uploadedFile)),
-          ]);
+          await this.persistenceService.isolatedRun(async () => {
+            await this.updateById(uploadedFile.id, {
+              set: {
+                uploadStatus: GrpcFileUploadStatus.FAILED,
+              },
+            });
+          });
+
+          this.eventEmitter.emit(
+            FileEventPattern.DELETE_ONE,
+            new FileDeleteOneEvent(uploadedFile.providerId),
+          );
         }
 
         return left(err);
@@ -318,5 +344,11 @@ export class FileServiceImpl
     } catch (error) {
       this.logger.error('File cleanup error:', error.message, error.stack);
     }
+  }
+
+  async onFileDelete(data: FileDeleteOneEvent): Promise<void> {
+    await this.persistenceService.isolatedRun(async () => {
+      await firstValueFrom(this.fileStorageService.deleteFile(data.providerId));
+    });
   }
 }

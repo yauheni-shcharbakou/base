@@ -7,7 +7,6 @@ import { getVideoDuration } from '@/features/video/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { GrpcVideoPopulated } from '@packages/grpc';
-import { EditButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
 
 export default function VideoList() {
@@ -31,16 +30,7 @@ export default function VideoList() {
         .number('views', { maxWidth: 100 })
         .date('createdAt')
         .date('updatedAt')
-        .actions({
-          renderCell: function render({ row }) {
-            return (
-              <>
-                <ShowButton hideText recordItemId={row.id} />
-                <EditButton hideText recordItemId={row.id} />
-              </>
-            );
-          },
-        })
+        .actions()
         .build(),
     [],
   );

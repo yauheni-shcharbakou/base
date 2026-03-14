@@ -19,5 +19,4 @@ export interface StorageObjectService extends CrudService<
     request: GrpcStorageObjectCreate,
     userId: string,
   ): Promise<Either<Error, GrpcStorageObject>>;
-  onFileDelete(file: string): Promise<void>;
 }

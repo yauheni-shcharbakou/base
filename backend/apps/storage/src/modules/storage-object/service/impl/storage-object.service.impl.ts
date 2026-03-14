@@ -1,6 +1,8 @@
 import {
+  GrpcFileUploadStatus,
   GrpcStorageObject,
   GrpcStorageObjectCreate,
+  GrpcStorageObjectPopulated,
   GrpcStorageObjectQuery,
   GrpcStorageObjectType,
   GrpcStorageObjectUpdate,
@@ -9,6 +11,8 @@ import { CrudServiceImpl } from '@backend/persistence';
 import { BadRequestException, HttpException, Inject, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Either, left, right } from '@sweet-monads/either';
+import { FileDeleteOneEvent, FileEventPattern } from 'common/events/file.events';
+import { VideoDeleteOneEvent, VideoEventPattern } from 'common/events/video.events';
 import {
   STORAGE_OBJECT_REPOSITORY,
   StorageObjectRepository,
@@ -109,17 +113,45 @@ export class StorageObjectServiceImpl
     return this.repository.updateById(id, updateData);
   }
 
-  // async deleteById(id: string): Promise<Either<NotFoundException, GrpcStorageObject>> {
-  //   const storageObject = await super.deleteById(id);
-  //
-  //   // if (storageObject.isRight() && storageObject.value.file) {
-  //   //   this.eventEmitter.emit('file.delete', { id: storageObject.value.file });
-  //   // }
-  //
-  //   return storageObject;
-  // }
+  async deleteById(id: string): Promise<Either<NotFoundException, GrpcStorageObject>> {
+    const entity = await this.repository.getById<GrpcStorageObjectPopulated>(id, {
+      populate: ['file', 'video'],
+    });
 
-  async onFileDelete(file: string): Promise<void> {
-    await this.repository.deleteOne({ file });
+    if (entity.isLeft()) {
+      return entity;
+    }
+
+    const isFileReady = entity.value.file?.uploadStatus === GrpcFileUploadStatus.READY;
+
+    const deletedEntity = await super.deleteById(id);
+
+    if (deletedEntity.isRight() && isFileReady) {
+      switch (entity.value.type) {
+        case GrpcStorageObjectType.VIDEO:
+          if (!entity.value.video) {
+            break;
+          }
+
+          this.eventEmitter.emit(
+            VideoEventPattern.DELETE_ONE,
+            new VideoDeleteOneEvent(entity.value.video.providerId),
+          );
+
+          break;
+        case GrpcStorageObjectType.FILE:
+        case GrpcStorageObjectType.IMAGE:
+          this.eventEmitter.emit(
+            FileEventPattern.DELETE_ONE,
+            new FileDeleteOneEvent(entity.value.file.providerId),
+          );
+
+          break;
+        default:
+          break;
+      }
+    }
+
+    return deletedEntity;
   }
 }

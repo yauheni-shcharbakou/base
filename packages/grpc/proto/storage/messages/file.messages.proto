@@ -37,13 +37,21 @@ message FileGetListResponse {
 // create
 
 message FileCreate {
+  string userId = 1;
+  string originalName = 2;
+  int32 size = 3;
+  string mimeType = 4;
+  optional string providerId = 5;
+}
+
+message FileMetadata {
   string originalName = 1;
   int32 size = 2;
   string mimeType = 3;
 }
 
 message FileCreateRequest {
-  FileCreate file = 1;
+  FileMetadata file = 1;
   optional StorageObjectMetadata storage = 2;
 }
 

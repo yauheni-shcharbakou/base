@@ -56,6 +56,10 @@ export interface DatabaseRepository<
   isExistsById(id: string): Promise<boolean>;
   isExists(query?: Partial<Query>): Promise<boolean>;
   count(query?: Partial<Query>): Promise<number>;
+  distinct<Field extends keyof Entity>(
+    field: Field,
+    query?: Partial<Query>,
+  ): Promise<Set<Entity[Field]>>;
   getById<E extends GrpcEntityWithTimestamps = Entity>(
     id: string,
     options?: OptionsOf<E>,

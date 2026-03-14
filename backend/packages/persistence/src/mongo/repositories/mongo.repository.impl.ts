@@ -49,6 +49,33 @@ export abstract class MongoRepositoryImpl<
     return this.model.countDocuments(this.mapper.transformQuery(query));
   }
 
+  async distinct<Field extends keyof Entity>(
+    field: Field,
+    query?: Partial<Query>,
+  ): Promise<Set<Entity[Field]>> {
+    try {
+      const transformedQuery = this.mapper.transformQuery(query);
+
+      const values = (await this.model
+        .distinct(field.toString(), transformedQuery, { limit: 1_000 })
+        .exec()) as Entity[Field][];
+
+      return _.reduce(
+        values,
+        (acc: Set<Entity[Field]>, value: Entity[Field]) => {
+          if (!_.isNil(value)) {
+            acc.add(value);
+          }
+
+          return acc;
+        },
+        new Set(),
+      );
+    } catch (e) {
+      return new Set();
+    }
+  }
+
   async getById<E extends GrpcEntityWithTimestamps = Entity>(
     id: string,
     options: OptionsOf<E> = {},

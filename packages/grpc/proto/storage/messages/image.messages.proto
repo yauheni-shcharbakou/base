@@ -45,10 +45,11 @@ message ImageGetListResponse {
 // create
 
 message ImageCreate {
-  string file = 1;
-  int32 width = 2;
-  int32 height = 3;
-  string alt = 4;
+  string userId = 1;
+  string file = 2;
+  int32 width = 3;
+  int32 height = 4;
+  string alt = 5;
 }
 
 message ImageMetadata {
@@ -59,7 +60,7 @@ message ImageMetadata {
 
 message ImageCreateRequest {
   ImageMetadata image = 1;
-  FileCreate file = 2;
+  FileMetadata file = 2;
   optional StorageObjectMetadata storage = 3;
 }
 

@@ -51,6 +51,7 @@ import {
           getList: GetListRequestDto,
           createOne: ImageCreateRequestDto,
           updateById: ImageUpdateByIdRequestDto,
+          deleteById: IdFieldDto,
         }),
         custom: {
           GrpcController: AdminGrpcController,
@@ -79,6 +80,7 @@ import {
           getList: GetListRequestDto,
           createOne: VideoCreateRequestDto,
           updateById: VideoUpdateByIdRequestDto,
+          deleteById: IdFieldDto,
         }),
         custom: {
           GrpcController: AdminGrpcController,

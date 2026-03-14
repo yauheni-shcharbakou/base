@@ -49,10 +49,13 @@ message VideoGetListResponse {
 // create
 
 message VideoCreate {
-  string file = 1;
-  string providerId = 2;
-  optional int32 duration = 3;
-  optional string description = 4;
+  string userId = 1;
+  string file = 2;
+  string providerId = 3;
+  string title = 4;
+  optional int32 duration = 5;
+  optional int32 views = 6;
+  optional string description = 7;
 }
 
 message VideoMetadata {
@@ -62,7 +65,7 @@ message VideoMetadata {
 
 message VideoCreateRequest {
   VideoMetadata video = 1;
-  FileCreate file = 2;
+  FileMetadata file = 2;
   optional StorageObjectMetadata storage = 3;
 }
 

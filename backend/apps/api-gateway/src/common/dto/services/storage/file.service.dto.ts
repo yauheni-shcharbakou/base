@@ -17,7 +17,7 @@ import {
 import { TransformToArray } from 'common/decorators/transform.decorator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { RequestDto } from 'common/dto/grpc-types.dto';
-import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
+import { FileMetadataDto } from 'common/dto/services/storage/models/file.dto';
 import { StorageObjectMetadataDto } from 'common/dto/services/storage/models/storage-object.dto';
 
 export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
@@ -68,12 +68,12 @@ export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
 export class FileRequestDto extends RequestDto(FileQueryDto) implements GrpcFileRequest {}
 
 export class FileCreateRequestDto implements GrpcFileCreateRequest {
-  @ApiProperty({ type: FileCreateDto })
+  @ApiProperty({ type: FileMetadataDto })
   @IsNotEmpty()
   @IsObject()
   @ValidateNested()
-  @Type(() => FileCreateDto)
-  file: FileCreateDto;
+  @Type(() => FileMetadataDto)
+  file: FileMetadataDto;
 
   @ApiProperty({ required: false, type: StorageObjectMetadataDto })
   @IsOptional()

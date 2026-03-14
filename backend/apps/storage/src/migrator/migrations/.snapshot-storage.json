@@ -100,6 +100,16 @@
             "READY"
           ],
           "mappedType": "enum"
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "length": 255,
+          "mappedType": "string"
         }
       },
       "name": "files",
@@ -131,6 +141,16 @@
           ],
           "composite": false,
           "keyName": "files_upload_status_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "provider_id"
+          ],
+          "composite": false,
+          "keyName": "files_provider_id_index",
           "constraint": false,
           "primary": false,
           "unique": false

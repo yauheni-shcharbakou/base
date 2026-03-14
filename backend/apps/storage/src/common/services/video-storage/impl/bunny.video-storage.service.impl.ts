@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
 import { AxiosError } from 'axios';
 import {
+  VideoStorageCreateData,
   VideoStorageList,
   VideoStorageService,
 } from 'common/services/video-storage/video-storage.service';
@@ -63,12 +64,14 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
     this.streamConfig = configService.getOrThrow('bunny.stream', { infer: true });
   }
 
-  createVideo(video: GrpcVideoMetadata): Observable<Either<InternalServerErrorException, string>> {
-    return this.httpService.post<BunnyVideo>('videos', { title: video.title }).pipe(
+  createVideo(
+    data: VideoStorageCreateData,
+  ): Observable<Either<InternalServerErrorException, string>> {
+    return this.httpService.post<BunnyVideo>('videos', { title: data.title }).pipe(
       switchMap((response) => {
         const id = response.data.guid;
 
-        if (!video.description) {
+        if (!data.description) {
           return of(right(id));
         }
 
@@ -77,7 +80,7 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
             metaTags: [
               {
                 property: 'description',
-                value: video.description,
+                value: data.description,
               },
             ],
           })

@@ -1,13 +1,16 @@
-import { GrpcFile } from '@backend/grpc';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
 import { AxiosError } from 'axios';
-import { FileStorageService } from 'common/services/file-storage/file-storage.service';
+import {
+  FileStorageCreateData,
+  FileStorageService,
+} from 'common/services/file-storage/file-storage.service';
 import { Config } from 'config';
 import moment from 'moment';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { extname } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { catchError, map, Observable, of } from 'rxjs';
 
@@ -40,12 +43,16 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
     this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
   }
 
-  private getFilePath(file: GrpcFile): string {
-    return `${this.storageConfig.rootDir}/${file.userId}/${file.id}.${file.extension}`;
+  createFile(
+    data: FileStorageCreateData,
+  ): Observable<Either<InternalServerErrorException, string>> {
+    const extension = extname(data.originalName).replace(/^./g, '');
+    const filePath = `${this.storageConfig.rootDir}/${data.userId}/${randomUUID()}.${extension}`;
+    return of(right(filePath));
   }
 
-  deleteFile(file: GrpcFile): Observable<Either<InternalServerErrorException, boolean>> {
-    return this.httpService.delete(this.getFilePath(file)).pipe(
+  deleteFile(providerId: string): Observable<Either<InternalServerErrorException, boolean>> {
+    return this.httpService.delete(providerId).pipe(
       map(() => right(true)),
       catchError((error) =>
         of(left(new InternalServerErrorException("Can't delete file from bunny storage"))),
@@ -53,12 +60,12 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
     );
   }
 
-  uploadFile(file: GrpcFile, upload$: PassThrough): Observable<boolean> {
+  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean> {
     return this.httpService
-      .put(this.getFilePath(file), upload$, {
+      .put(providerId, upload$, {
         headers: {
           'Content-Type': 'application/octet-stream',
-          'Content-Length': file.size.toString(),
+          'Content-Length': fileSize.toString(),
         },
         timeout: 0,
         maxBodyLength: Infinity,
@@ -67,10 +74,9 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
       .pipe(map(() => true));
   }
 
-  getFileSignedUrl(file: GrpcFile): Either<Error, string> {
+  getFileSignedUrl(providerId: string): Either<Error, string> {
     try {
-      const filePath = this.getFilePath(file);
-      const path = `/${filePath}`;
+      const path = `/${providerId}`;
       const expires = moment().add(this.storageConfig.cdn.expiresInMinutes, 'minutes').unix();
       const hashableBase = this.storageConfig.cdn.privateKey + path + expires;
       const md5String = createHash('md5').update(hashableBase).digest('binary');

@@ -28,9 +28,15 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
+import {
+  VideoDeleteOneEvent,
+  VideoEventPattern,
+  VideoUpdateOneEvent,
+} from 'common/events/video.events';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import {
   STORAGE_OBJECT_REPOSITORY,
@@ -52,7 +58,6 @@ import {
   firstValueFrom,
   from,
   ignoreElements,
-  lastValueFrom,
   Observable,
   of,
   share,
@@ -70,6 +75,7 @@ export class VideoServiceImpl
   private readonly logger = new Logger(VideoServiceImpl.name);
 
   constructor(
+    private readonly eventEmitter: EventEmitter2,
     @Inject(VIDEO_REPOSITORY) protected readonly repository: VideoRepository,
     @Inject(FILE_REPOSITORY) protected readonly fileRepository: FileRepository,
     @Inject(STORAGE_OBJECT_REPOSITORY)
@@ -81,13 +87,22 @@ export class VideoServiceImpl
   }
 
   async deleteById(id: string): Promise<Either<NotFoundException, GrpcVideo>> {
-    const video = await super.getById(id);
+    const video = await this.repository.getById<GrpcVideoPopulated>(id, { populate: ['file'] });
 
-    if (video.isRight()) {
-      await firstValueFrom(this.videoStorageService.deleteVideo(video.value.providerId));
+    if (video.isLeft()) {
+      return video;
     }
 
-    return super.deleteById(id);
+    const deletedVideo = await super.deleteById(id);
+
+    if (deletedVideo.isRight() && video.value.file.uploadStatus === GrpcFileUploadStatus.READY) {
+      this.eventEmitter.emit(
+        VideoEventPattern.DELETE_ONE,
+        new VideoDeleteOneEvent(video.value.providerId),
+      );
+    }
+
+    return deletedVideo;
   }
 
   async getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap> {
@@ -144,14 +159,14 @@ export class VideoServiceImpl
 
     revertHooks.push(() => this.fileRepository.deleteById(file.value.id));
 
-    const providerId = await firstValueFrom(this.videoStorageService.createVideo(request.video));
+    const providerId = await firstValueFrom(
+      this.videoStorageService.createVideo({ ...request.video, userId }),
+    );
 
     if (providerId.isLeft()) {
       await Promise.all(_.map(revertHooks, (hook) => hook()));
       return left(providerId.value);
     }
-
-    revertHooks.push(() => firstValueFrom(this.videoStorageService.deleteVideo(providerId.value)));
 
     const video = await this.repository.saveOne({
       ...request.video,
@@ -314,16 +329,18 @@ export class VideoServiceImpl
         this.logger.error('Video upload error:', err.message, err.stack);
 
         if (uploadedVideo?.id) {
-          await Promise.allSettled([
-            this.persistenceService.isolatedRun(async () => {
-              await this.fileRepository.updateById(uploadedVideo.file.id, {
-                set: {
-                  uploadStatus: GrpcFileUploadStatus.FAILED,
-                },
-              });
-            }),
-            firstValueFrom(this.videoStorageService.deleteVideo(uploadedVideo.providerId)),
-          ]);
+          await this.persistenceService.isolatedRun(async () => {
+            await this.fileRepository.updateById(uploadedVideo.file.id, {
+              set: {
+                uploadStatus: GrpcFileUploadStatus.FAILED,
+              },
+            });
+          });
+
+          this.eventEmitter.emit(
+            VideoEventPattern.DELETE_ONE,
+            new VideoDeleteOneEvent(uploadedVideo.providerId),
+          );
         }
 
         return left(err);
@@ -342,13 +359,10 @@ export class VideoServiceImpl
         return video;
       }
 
-      const updateResult = await lastValueFrom(
-        this.videoStorageService.updateVideo(video.value.providerId, updateData.set),
+      this.eventEmitter.emit(
+        VideoEventPattern.UPDATE_ONE,
+        new VideoUpdateOneEvent(video.value.providerId, updateData.set),
       );
-
-      if (updateResult.isLeft()) {
-        return left(updateResult.value as NotFoundException);
-      }
     }
 
     return super.updateById(id, updateData);
@@ -391,5 +405,17 @@ export class VideoServiceImpl
     } catch (error) {
       this.logger.error('Update videos error:', error.message, error.stack);
     }
+  }
+
+  async onVideoDelete(data: VideoDeleteOneEvent): Promise<void> {
+    await this.persistenceService.isolatedRun(async () => {
+      await firstValueFrom(this.videoStorageService.deleteVideo(data.providerId));
+    });
+  }
+
+  async onVideoUpdate(data: VideoUpdateOneEvent): Promise<void> {
+    await this.persistenceService.isolatedRun(async () => {
+      await firstValueFrom(this.videoStorageService.updateVideo(data.providerId, data.update));
+    });
   }
 }

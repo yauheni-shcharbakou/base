@@ -96,7 +96,7 @@ export default async function RootLayout({
                         edit: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/edit/:id`,
                         show: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/show/:id`,
                         meta: {
-                          canDelete: false,
+                          canDelete: true,
                           dataProviderName: 'upload',
                           parent: Database.STORAGE,
                         },
@@ -119,7 +119,7 @@ export default async function RootLayout({
                         edit: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/edit/:id`,
                         show: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/show/:id`,
                         meta: {
-                          canDelete: false,
+                          canDelete: true,
                           dataProviderName: 'upload',
                           parent: Database.STORAGE,
                         },

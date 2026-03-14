@@ -1,6 +1,5 @@
 import {
   GrpcImageQuery,
-  GrpcImageCreate,
   GrpcImageCreateRequest,
   GrpcImageUpdate,
   GrpcImageUpdateRequest,
@@ -11,7 +10,7 @@ import { Type } from 'class-transformer';
 import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { UpdateByIdRequestDto, UpdateDto, UpdateRequestDto } from 'common/dto/grpc-types.dto';
-import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
+import { FileMetadataDto } from 'common/dto/services/storage/models/file.dto';
 import { ImageDto, ImageMetadataDto } from 'common/dto/services/storage/models/image.dto';
 import { StorageObjectMetadataDto } from 'common/dto/services/storage/models/storage-object.dto';
 
@@ -27,13 +26,6 @@ export class ImageQueryDto extends BaseQueryDto implements GrpcImageQuery {
   file?: string;
 }
 
-export class ImageCreateDto extends ImageMetadataDto implements GrpcImageCreate {
-  @ApiProperty()
-  @IsNotEmpty()
-  @IsString()
-  file: string;
-}
-
 export class ImageCreateRequestDto implements GrpcImageCreateRequest {
   @ApiProperty({ type: ImageMetadataDto })
   @IsNotEmpty()
@@ -42,12 +34,12 @@ export class ImageCreateRequestDto implements GrpcImageCreateRequest {
   @Type(() => ImageMetadataDto)
   image: ImageMetadataDto;
 
-  @ApiProperty({ type: FileCreateDto })
+  @ApiProperty({ type: FileMetadataDto })
   @IsNotEmpty()
   @IsObject()
   @ValidateNested()
-  @Type(() => FileCreateDto)
-  file: FileCreateDto;
+  @Type(() => FileMetadataDto)
+  file: FileMetadataDto;
 
   @ApiProperty({ required: false, type: StorageObjectMetadataDto })
   @IsOptional()

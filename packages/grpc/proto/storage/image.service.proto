@@ -11,4 +11,5 @@ service ImageService {
   rpc getList (common.GetListRequest) returns (messages.ImageGetListResponse) {}
   rpc createOne (messages.ImageCreateRequest) returns (models.Image) {}
   rpc updateById (messages.ImageUpdateByIdRequest) returns (models.Image) {}
+  rpc deleteById (common.IdField) returns (models.Image) {}
 }

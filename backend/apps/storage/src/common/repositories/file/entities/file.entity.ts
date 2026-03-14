@@ -33,6 +33,9 @@ export class FileEntity extends PostgresEntity implements GrpcFile {
   })
   uploadStatus: GrpcFileUploadStatus;
 
+  @Property({ nullable: true, index: true })
+  providerId?: string;
+
   @OneToOne({
     entity: 'ImageEntity',
     mappedBy: 'file',

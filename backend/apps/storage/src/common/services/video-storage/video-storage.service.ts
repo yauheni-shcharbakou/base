@@ -1,4 +1,4 @@
-import { GrpcVideo, GrpcVideoMetadata } from '@backend/grpc';
+import { GrpcFileCreate, GrpcVideo, GrpcVideoCreate, GrpcVideoMetadata } from '@backend/grpc';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 import { PassThrough } from 'node:stream';
@@ -7,7 +7,9 @@ import { Observable } from 'rxjs';
 export const VIDEO_STORAGE_SERVICE = Symbol('VideoStorageService');
 
 export interface VideoStorageService {
-  createVideo(video: GrpcVideoMetadata): Observable<Either<InternalServerErrorException, string>>;
+  createVideo(
+    data: VideoStorageCreateData,
+  ): Observable<Either<InternalServerErrorException, string>>;
   uploadVideo(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean>;
   deleteVideo(providerId: string): Observable<Either<InternalServerErrorException, boolean>>;
   updateVideo(
@@ -18,6 +20,8 @@ export interface VideoStorageService {
   getPlayerUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
   getDownloadUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
 }
+
+export interface VideoStorageCreateData extends Omit<GrpcVideoCreate, 'providerId' | 'file'> {}
 
 export interface VideoStorageData extends Pick<GrpcVideo, 'providerId' | 'duration' | 'views'> {}
 

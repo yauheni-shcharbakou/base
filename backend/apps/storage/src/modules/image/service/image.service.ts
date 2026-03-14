@@ -17,5 +17,4 @@ export interface ImageService extends CrudService<
   GrpcImageUpdate
 > {
   createOne(request: GrpcImageCreateRequest, userId: string): Promise<Either<Error, GrpcImage>>;
-  onFileDelete(file: string): Promise<void>;
 }

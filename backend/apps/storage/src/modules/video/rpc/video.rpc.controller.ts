@@ -63,4 +63,8 @@ export class VideoRpcController implements GrpcVideoServiceController {
     const userId = new GrpcMetadataMapper(metadata).get('user');
     return this.videoService.uploadOne(request, userId).pipe(GrpcRxPipe.unwrapEither);
   }
+
+  deleteById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcVideo> {
+    return from(this.videoService.deleteById(request.id)).pipe(GrpcRxPipe.unwrapEither);
+  }
 }
