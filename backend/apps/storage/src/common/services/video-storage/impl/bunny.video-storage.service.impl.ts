@@ -160,13 +160,13 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
 
   getPlayerUrl(providerId: string): Either<Error, string> {
     try {
-      const expires = moment().add(this.streamConfig.cdn.expiresInMinutes, 'minutes').unix();
-      const hashableBase = this.streamConfig.cdn.privateKey + providerId + expires;
+      const { cdn, playerUrl } = this.streamConfig;
+
+      const expires = moment().add(cdn.expiresInMinutes, 'minutes').unix();
+      const hashableBase = cdn.privateKey + providerId + expires;
       const token = createHash('sha256').update(hashableBase).digest('hex');
 
-      const url = new URL(
-        `https://iframe.mediadelivery.net/embed/${this.streamConfig.libraryId}/${providerId}`,
-      );
+      const url = new URL(`${playerUrl}/${providerId}`);
 
       url.searchParams.set('token', token);
       url.searchParams.set('expires', expires.toString());
@@ -184,6 +184,8 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
 
   async getDownloadUrl(providerId: string): Promise<Either<Error, string>> {
     try {
+      const { cdn } = this.streamConfig;
+
       const response = await firstValueFrom(
         this.httpService.get<BunnyVideo>(`videos/${providerId}`),
       );
@@ -200,8 +202,8 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
 
       const maxResolution = _.max(resolutions);
       const path = `/${providerId}/play_${maxResolution}p.mp4`;
-      const expires = moment().add(this.streamConfig.cdn.expiresInMinutes, 'minutes').unix();
-      const hashableBase = this.streamConfig.cdn.privateKey + path + expires;
+      const expires = moment().add(cdn.expiresInMinutes, 'minutes').unix();
+      const hashableBase = cdn.privateKey + path + expires;
       const md5String = createHash('md5').update(hashableBase).digest('binary');
 
       const token = Buffer.from(md5String, 'binary')
@@ -210,7 +212,7 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
         .replace(/\//g, '_')
         .replace(/=/g, '');
 
-      const url = new URL(`https://${this.streamConfig.cdn.zone}.b-cdn.net${path}`);
+      const url = new URL(cdn.url + path);
 
       url.searchParams.set('token', token);
       url.searchParams.set('expires', expires.toString());

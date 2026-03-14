@@ -77,8 +77,10 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
   getFileSignedUrl(providerId: string): Either<Error, string> {
     try {
       const path = `/${providerId}`;
-      const expires = moment().add(this.storageConfig.cdn.expiresInMinutes, 'minutes').unix();
-      const hashableBase = this.storageConfig.cdn.privateKey + path + expires;
+      const { url: cdnUrl, privateKey, expiresInMinutes } = this.storageConfig.cdn;
+
+      const expires = moment().add(expiresInMinutes, 'minutes').unix();
+      const hashableBase = privateKey + path + expires;
       const md5String = createHash('md5').update(hashableBase).digest('binary');
 
       const token = Buffer.from(md5String, 'binary')
@@ -87,7 +89,7 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
         .replace(/\//g, '_')
         .replace(/=/g, '');
 
-      const url = new URL(`https://${this.storageConfig.cdn.zone}.b-cdn.net${path}`);
+      const url = new URL(cdnUrl + path);
 
       url.searchParams.set('token', token);
       url.searchParams.set('expires', expires.toString());

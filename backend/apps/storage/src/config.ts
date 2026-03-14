@@ -3,14 +3,12 @@ import { validateEnv } from '@packages/common';
 import zod from 'zod';
 
 const env = validateEnv({
-  BUNNY_STORAGE_URL: zod.url(),
   BUNNY_STORAGE_API_KEY: zod.string(),
 
   BUNNY_STORAGE_CDN_ZONE: zod.string(),
   BUNNY_STORAGE_CDN_PRIVATE_KEY: zod.string(),
   BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES: zod.coerce.number().default(10),
 
-  BUNNY_STREAM_URL: zod.url(),
   BUNNY_STREAM_API_KEY: zod.string(),
   BUNNY_STREAM_LIBRARY_ID: zod.string(),
 
@@ -26,21 +24,21 @@ export const config = () => {
     ...common,
     bunny: {
       storage: {
-        url: env.BUNNY_STORAGE_URL,
-        rootDir: common.isDevelopment ? 'dev' : 'prod',
+        apiUrl: `https://storage.bunnycdn.com/${env.BUNNY_STORAGE_CDN_ZONE}`,
         apiKey: env.BUNNY_STORAGE_API_KEY,
+        rootDir: common.isDevelopment ? 'dev' : 'prod',
         cdn: {
-          zone: env.BUNNY_STORAGE_CDN_ZONE,
+          url: `https://${env.BUNNY_STORAGE_CDN_ZONE}.b-cdn.net`,
           privateKey: env.BUNNY_STORAGE_CDN_PRIVATE_KEY,
           expiresInMinutes: env.BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES,
         },
       },
       stream: {
-        url: env.BUNNY_STREAM_URL,
+        apiUrl: `https://video.bunnycdn.com/library/${env.BUNNY_STREAM_LIBRARY_ID}`,
         apiKey: env.BUNNY_STREAM_API_KEY,
-        libraryId: env.BUNNY_STREAM_LIBRARY_ID,
+        playerUrl: `https://iframe.mediadelivery.net/embed/${env.BUNNY_STREAM_LIBRARY_ID}`,
         cdn: {
-          zone: env.BUNNY_STREAM_CDN_ZONE,
+          url: `https://${env.BUNNY_STREAM_CDN_ZONE}.b-cdn.net`,
           privateKey: env.BUNNY_STREAM_CDN_PRIVATE_KEY,
           expiresInMinutes: env.BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES,
         },

@@ -11,12 +11,10 @@ import { Config } from 'config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<Config>) => {
-        const { url, apiKey, libraryId } = configService.getOrThrow('bunny.stream', {
-          infer: true,
-        });
+        const { apiUrl, apiKey } = configService.getOrThrow('bunny.stream', { infer: true });
 
         return {
-          baseURL: `${url}/library/${libraryId}`,
+          baseURL: apiUrl,
           headers: {
             AccessKey: apiKey,
           },
