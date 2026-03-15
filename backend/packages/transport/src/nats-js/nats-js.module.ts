@@ -38,8 +38,6 @@ export class NatsJsModule {
           provide: NATS_JS_MICROSERVICE_OPTIONS,
           inject: [NATS_JS_CONFIG_SERVICE],
           useFactory: (configService: ConfigService<NatsJsConfig>): CustomStrategy => {
-            console.log(globalStreamRegistry.getStreams());
-
             const options = configService.getOrThrow('getServerOptions', { infer: true })(
               params.host,
               globalStreamRegistry.getStreams(),
