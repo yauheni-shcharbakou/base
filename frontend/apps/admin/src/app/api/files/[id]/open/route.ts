@@ -1,5 +1,4 @@
 import { getErrorMessage, getRequestIp } from '@/common/helpers';
-import { configService } from '@/common/services';
 import { authService } from '@/features/auth/services';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,11 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const id = (await params).id;
     const ip = getRequestIp(request);
 
-    if (!configService.isDevelopment) {
-      if (!ip) {
-        throw new Error(`IP is required for production`);
-      }
-
+    if (ip) {
       authMeta.set('ip', ip);
     }
 

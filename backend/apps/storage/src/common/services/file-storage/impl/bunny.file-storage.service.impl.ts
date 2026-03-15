@@ -18,6 +18,7 @@ import { catchError, map, Observable, of } from 'rxjs';
 export class BunnyFileStorageServiceImpl implements FileStorageService {
   private readonly logger = new Logger(BunnyFileStorageServiceImpl.name);
   private readonly storageConfig: Config['bunny']['storage'];
+  private readonly isDev: boolean;
 
   constructor(
     private readonly configService: ConfigService<Config>,
@@ -41,6 +42,7 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
     });
 
     this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
+    this.isDev = this.configService.getOrThrow('isDevelopment', { infer: true });
   }
 
   createFile(
@@ -83,7 +85,11 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
 
       let hashableBase = privateKey + path + expires;
 
-      if (ip) {
+      if (!this.isDev) {
+        if (!ip) {
+          throw new Error('Unsupported IP address');
+        }
+
         hashableBase += ip;
       }
 
