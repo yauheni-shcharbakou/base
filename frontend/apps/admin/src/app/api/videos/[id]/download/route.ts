@@ -1,32 +1,24 @@
-import { getErrorMessage } from '@/common/helpers';
+import { getErrorMessage, getRequestIp } from '@/common/helpers';
+import { configService } from '@/common/services';
 import { authService } from '@/features/auth/services';
 import { videoGrpcRepository } from '@/features/grpc/repositories';
-import { NextResponse } from 'next/server';
-
-// export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-//   try {
-//     const authMeta = await authService.getAuthMetadata();
-//     const id = (await params).id;
-//
-//     const response = await videoGrpcRepository.getDownloadUrls({ id, ids: [] }, authMeta);
-//     const url = response.urls.get(id);
-//
-//     if (!url) {
-//       throw new Error("Can't get download url for video");
-//     }
-//
-//     return NextResponse.redirect(url);
-//   } catch (error) {
-//     return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
-//   }
-// }
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
+    const ip = getRequestIp(request);
+
+    if (!configService.isDevelopment) {
+      if (!ip) {
+        throw new Error(`IP is required for production`);
+      }
+
+      authMeta.set('ip', ip);
+    }
 
     const response = await videoGrpcRepository.getDownloadMap({ id, ids: [] }, authMeta);
     const downloadData = response.items.get(id);

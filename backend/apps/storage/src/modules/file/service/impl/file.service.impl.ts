@@ -73,7 +73,7 @@ export class FileServiceImpl
     super();
   }
 
-  async getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap> {
+  async getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap> {
     const files = await this.repository.getMany(request);
     const items: GrpcUrlMap['items'] = {};
 
@@ -83,7 +83,7 @@ export class FileServiceImpl
           return;
         }
 
-        const url = await this.fileStorageService.getFileSignedUrl(file.providerId);
+        const url = await this.fileStorageService.getFileSignedUrl(file.providerId, ip);
 
         if (url.isRight()) {
           items[file.id] = url.value;
@@ -94,7 +94,7 @@ export class FileServiceImpl
     return { items };
   }
 
-  async getDownloadMap(request: GrpcBaseQuery): Promise<GrpcDownloadMap> {
+  async getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap> {
     const files = await this.repository.getMany(request);
     const items: GrpcDownloadMap['items'] = {};
 
@@ -104,7 +104,7 @@ export class FileServiceImpl
           return;
         }
 
-        const url = await this.fileStorageService.getFileSignedUrl(file.providerId);
+        const url = await this.fileStorageService.getFileSignedUrl(file.providerId, ip);
 
         if (url.isRight()) {
           items[file.id] = {

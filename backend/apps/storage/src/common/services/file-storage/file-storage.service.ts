@@ -10,7 +10,10 @@ export interface FileStorageService {
   createFile(data: FileStorageCreateData): Observable<Either<InternalServerErrorException, string>>;
   uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean>;
   deleteFile(providerId: string): Observable<Either<InternalServerErrorException, boolean>>;
-  getFileSignedUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
+  getFileSignedUrl(
+    providerId: string,
+    ip?: string,
+  ): Either<Error, string> | Promise<Either<Error, string>>;
 }
 
 export interface FileStorageCreateData extends Omit<GrpcFileCreate, 'providerId'> {}

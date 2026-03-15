@@ -1,4 +1,5 @@
-import { getErrorMessage } from '@/common/helpers';
+import { getErrorMessage, getRequestIp } from '@/common/helpers';
+import { configService } from '@/common/services';
 import { authService } from '@/features/auth/services';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,6 +10,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
+    const ip = getRequestIp(request);
+
+    if (!configService.isDevelopment) {
+      if (!ip) {
+        throw new Error(`IP is required for production`);
+      }
+
+      authMeta.set('ip', ip);
+    }
+
     const query = request.nextUrl.searchParams;
 
     const response = await fileGrpcRepository.getUrlMap({ id, ids: [] }, authMeta);

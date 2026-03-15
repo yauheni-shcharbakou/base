@@ -99,14 +99,14 @@ export class VideoServiceImpl
     return deletedVideo;
   }
 
-  async getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap> {
+  async getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap> {
     const videos = await this.repository.getMany(request);
 
     const items: GrpcUrlMap['items'] = {};
 
     await Promise.all(
       _.map(videos, async (video) => {
-        const url = await this.videoStorageService.getPlayerUrl(video.providerId);
+        const url = await this.videoStorageService.getPlayerUrl(video.providerId, ip);
 
         if (url.isRight()) {
           items[video.id] = url.value;
@@ -117,7 +117,7 @@ export class VideoServiceImpl
     return { items };
   }
 
-  async getDownloadMap(request: GrpcBaseQuery): Promise<GrpcDownloadMap> {
+  async getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap> {
     const videos = await this.repository.getMany<GrpcVideoPopulated>(request, {
       populate: ['file'],
     });
@@ -126,7 +126,7 @@ export class VideoServiceImpl
 
     await Promise.all(
       _.map(videos, async (video) => {
-        const url = await this.videoStorageService.getDownloadUrl(video.providerId);
+        const url = await this.videoStorageService.getDownloadUrl(video.providerId, ip);
 
         if (url.isRight()) {
           items[video.id] = {

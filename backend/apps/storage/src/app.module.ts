@@ -11,7 +11,6 @@ import { StorageObjectModule } from 'modules/storage-object/storage-object.modul
 import { VideoModule } from 'modules/video/video.module';
 
 // TODO: bunny documentation
-// TODO: bunny ip token auth
 
 @Module({
   imports: [

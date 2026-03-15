@@ -1,4 +1,4 @@
-import { GrpcFileCreate, GrpcVideo, GrpcVideoCreate, GrpcVideoMetadata } from '@backend/grpc';
+import { GrpcVideo, GrpcVideoCreate, GrpcVideoMetadata } from '@backend/grpc';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 import { PassThrough } from 'node:stream';
@@ -17,8 +17,14 @@ export interface VideoStorageService {
     updateData: Partial<GrpcVideoMetadata>,
   ): Observable<Either<Error, boolean>>;
   getList(page: number, limit: number): Observable<VideoStorageList>;
-  getPlayerUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
-  getDownloadUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
+  getPlayerUrl(
+    providerId: string,
+    ip?: string,
+  ): Either<Error, string> | Promise<Either<Error, string>>;
+  getDownloadUrl(
+    providerId: string,
+    ip?: string,
+  ): Either<Error, string> | Promise<Either<Error, string>>;
 }
 
 export interface VideoStorageCreateData extends Omit<GrpcVideoCreate, 'providerId' | 'file'> {}

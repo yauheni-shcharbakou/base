@@ -74,13 +74,19 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
       .pipe(map(() => true));
   }
 
-  getFileSignedUrl(providerId: string): Either<Error, string> {
+  getFileSignedUrl(providerId: string, ip?: string): Either<Error, string> {
     try {
       const path = `/${providerId}`;
       const { url: cdnUrl, privateKey, expiresInMinutes } = this.storageConfig.cdn;
 
       const expires = moment().add(expiresInMinutes, 'minutes').unix();
-      const hashableBase = privateKey + path + expires;
+
+      let hashableBase = privateKey + path + expires;
+
+      if (ip) {
+        hashableBase += ip;
+      }
+
       const md5String = createHash('md5').update(hashableBase).digest('binary');
 
       const token = Buffer.from(md5String, 'binary')

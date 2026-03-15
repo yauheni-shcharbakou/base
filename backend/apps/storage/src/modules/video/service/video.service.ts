@@ -23,8 +23,8 @@ export interface VideoService extends CrudService<
   GrpcVideoCreate,
   GrpcVideoUpdate
 > {
-  getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap>;
-  getDownloadMap(request: GrpcBaseQuery): Promise<GrpcDownloadMap>;
+  getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap>;
+  getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap>;
   createOne(request: GrpcVideoCreateRequest, userId: string): Promise<Either<Error, GrpcVideo>>;
   uploadOne(
     request$: Observable<GrpcVideoUploadRequest>,

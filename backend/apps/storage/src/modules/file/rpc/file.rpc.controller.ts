@@ -24,11 +24,13 @@ export class FileRpcController implements GrpcFileServiceController {
   constructor(@Inject(FILE_SERVICE) private readonly fileService: FileService) {}
 
   getUrlMap(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcUrlMap> {
-    return from(this.fileService.getUrlMap(request));
+    const ip = new GrpcMetadataMapper(metadata).get('ip');
+    return from(this.fileService.getUrlMap(request, ip));
   }
 
   getDownloadMap(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcDownloadMap> {
-    return from(this.fileService.getDownloadMap(request));
+    const ip = new GrpcMetadataMapper(metadata).get('ip');
+    return from(this.fileService.getDownloadMap(request, ip));
   }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcFile> {

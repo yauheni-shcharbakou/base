@@ -17,8 +17,8 @@ import { Observable } from 'rxjs';
 export const FILE_SERVICE = Symbol('FileService');
 
 export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, GrpcFileCreate> {
-  getUrlMap(request: GrpcBaseQuery): Promise<GrpcUrlMap>;
-  getDownloadMap(request: GrpcBaseQuery): Promise<GrpcDownloadMap>;
+  getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap>;
+  getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap>;
   createOne(request: GrpcFileCreateRequest, userId: string): Promise<Either<Error, GrpcFile>>;
   uploadOne(
     request$: Observable<GrpcFileUploadRequest>,

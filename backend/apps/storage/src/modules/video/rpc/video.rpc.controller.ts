@@ -26,11 +26,13 @@ export class VideoRpcController implements GrpcVideoServiceController {
   constructor(@Inject(VIDEO_SERVICE) private readonly videoService: VideoService) {}
 
   getUrlMap(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcUrlMap> {
-    return from(this.videoService.getUrlMap(request));
+    const ip = new GrpcMetadataMapper(metadata).get('ip');
+    return from(this.videoService.getUrlMap(request, ip));
   }
 
   getDownloadMap(request: GrpcBaseQuery, metadata?: Metadata): Observable<GrpcDownloadMap> {
-    return from(this.videoService.getDownloadMap(request));
+    const ip = new GrpcMetadataMapper(metadata).get('ip');
+    return from(this.videoService.getDownloadMap(request, ip));
   }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcVideoPopulated> {
