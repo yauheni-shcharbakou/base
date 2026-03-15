@@ -1,14 +1,12 @@
-import { Controller, Inject } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { FileDeleteOneEvent, FileEventPattern } from 'common/events/file.events';
+import { NatsJsFileEventController, NatsJsFileService, ProviderIdEvent } from '@backend/transport';
+import { Inject } from '@nestjs/common';
 import { FILE_SERVICE, FileService } from 'modules/file/service/file.service';
 
-@Controller()
-export class FileEventController {
+@NatsJsFileService.Controller()
+export class FileEventController implements NatsJsFileEventController {
   constructor(@Inject(FILE_SERVICE) private readonly fileService: FileService) {}
 
-  @OnEvent(FileEventPattern.DELETE_ONE)
-  async onFileDelete(payload: FileDeleteOneEvent) {
-    await this.fileService.onFileDelete(payload);
+  async deleteOne(event: ProviderIdEvent): Promise<void> {
+    await this.fileService.onFileDelete(event);
   }
 }

@@ -10,8 +10,8 @@ import {
   GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
+import { ProviderIdEvent } from '@backend/transport';
 import { Either } from '@sweet-monads/either';
-import { FileDeleteOneEvent } from 'common/events/file.events';
 import { Observable } from 'rxjs';
 
 export const FILE_SERVICE = Symbol('FileService');
@@ -24,5 +24,5 @@ export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, GrpcFi
     request$: Observable<GrpcFileUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>>;
-  onFileDelete(data: FileDeleteOneEvent): Promise<void>;
+  onFileDelete(data: ProviderIdEvent): Promise<void>;
 }

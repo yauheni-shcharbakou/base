@@ -8,11 +8,9 @@ import {
   GrpcStorageObjectUpdate,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
+import { NatsJsClient, StorageObjectUpdateIsPublicEvent } from '@backend/transport';
 import { BadRequestException, HttpException, Inject, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Either, left, right } from '@sweet-monads/either';
-import { FileDeleteOneEvent, FileEventPattern } from 'common/events/file.events';
-import { VideoDeleteOneEvent, VideoEventPattern } from 'common/events/video.events';
 import {
   STORAGE_OBJECT_REPOSITORY,
   StorageObjectRepository,
@@ -20,6 +18,7 @@ import {
 } from 'common/repositories/storage-object/storage-object.repository';
 import _ from 'lodash';
 import { StorageObjectService } from 'modules/storage-object/service/storage-object.service';
+import { firstValueFrom } from 'rxjs';
 
 export class StorageObjectServiceImpl
   extends CrudServiceImpl<
@@ -31,8 +30,8 @@ export class StorageObjectServiceImpl
   implements StorageObjectService
 {
   constructor(
-    private readonly eventEmitter: EventEmitter2,
     @Inject(STORAGE_OBJECT_REPOSITORY) protected readonly repository: StorageObjectRepository,
+    private readonly natsJsClient: NatsJsClient,
   ) {
     super();
   }
@@ -110,7 +109,22 @@ export class StorageObjectServiceImpl
       update.set.folderPath = folderPath.value;
     }
 
-    return this.repository.updateById(id, updateData);
+    const entity = await this.repository.updateById(id, updateData);
+
+    if (
+      entity.isRight() &&
+      _.isBoolean(updateData.set?.isPublic) &&
+      entity.value.type === GrpcStorageObjectType.FOLDER
+    ) {
+      await firstValueFrom(
+        this.natsJsClient.storage.storageObject.updateIsPublic({
+          parent: entity.value.id,
+          isPublic: updateData.set.isPublic,
+        }),
+      );
+    }
+
+    return entity;
   }
 
   async deleteById(id: string): Promise<Either<NotFoundException, GrpcStorageObject>> {
@@ -133,17 +147,23 @@ export class StorageObjectServiceImpl
             break;
           }
 
-          this.eventEmitter.emit(
-            VideoEventPattern.DELETE_ONE,
-            new VideoDeleteOneEvent(entity.value.video.providerId),
+          await firstValueFrom(
+            this.natsJsClient.storage.video.deleteOne({
+              providerId: entity.value.video.providerId,
+            }),
           );
 
           break;
         case GrpcStorageObjectType.FILE:
         case GrpcStorageObjectType.IMAGE:
-          this.eventEmitter.emit(
-            FileEventPattern.DELETE_ONE,
-            new FileDeleteOneEvent(entity.value.file.providerId),
+          if (!entity.value.file) {
+            break;
+          }
+
+          await firstValueFrom(
+            this.natsJsClient.storage.file.deleteOne({
+              providerId: entity.value.file.providerId,
+            }),
           );
 
           break;
@@ -153,5 +173,28 @@ export class StorageObjectServiceImpl
     }
 
     return deletedEntity;
+  }
+
+  async onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Promise<void> {
+    const folderIds = await this.repository.distinct('id', {
+      parent: event.parent,
+      type: GrpcStorageObjectType.FOLDER,
+    });
+
+    await this.repository.updateMany(
+      { parent: event.parent, isPublic: !event.isPublic },
+      { set: { isPublic: event.isPublic } },
+    );
+
+    await Promise.all(
+      _.map(Array.from(folderIds), async (folderId) => {
+        await firstValueFrom(
+          this.natsJsClient.storage.storageObject.updateIsPublic({
+            parent: folderId,
+            isPublic: event.isPublic,
+          }),
+        );
+      }),
+    );
   }
 }

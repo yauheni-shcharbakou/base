@@ -11,8 +11,8 @@ import {
   GrpcVideoUploadResponse,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
+import { ProviderIdEvent, VideoUpdateOneEvent } from '@backend/transport';
 import { Either } from '@sweet-monads/either';
-import { VideoDeleteOneEvent, VideoUpdateOneEvent } from 'common/events/video.events';
 import { Observable } from 'rxjs';
 
 export const VIDEO_SERVICE = Symbol('VideoService');
@@ -30,6 +30,6 @@ export interface VideoService extends CrudService<
     request$: Observable<GrpcVideoUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcVideoUploadResponse>>;
-  onVideoDelete(data: VideoDeleteOneEvent): Promise<void>;
+  onVideoDelete(data: ProviderIdEvent): Promise<void>;
   onVideoUpdate(data: VideoUpdateOneEvent): Promise<void>;
 }

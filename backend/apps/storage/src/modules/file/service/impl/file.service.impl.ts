@@ -12,6 +12,7 @@ import {
   GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudServiceImpl, PERSISTENCE_SERVICE, PersistenceService } from '@backend/persistence';
+import { NatsJsClient, ProviderIdEvent } from '@backend/transport';
 import {
   BadRequestException,
   ConflictException,
@@ -21,11 +22,9 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
-import { FileDeleteOneEvent, FileEventPattern } from 'common/events/file.events';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import {
   STORAGE_OBJECT_REPOSITORY,
@@ -64,12 +63,12 @@ export class FileServiceImpl
   private readonly logger = new Logger(FileServiceImpl.name);
 
   constructor(
-    private readonly eventEmitter: EventEmitter2,
     @Inject(FILE_REPOSITORY) protected readonly repository: FileRepository,
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
+    private readonly natsJsClient: NatsJsClient,
   ) {
     super();
   }
@@ -123,9 +122,8 @@ export class FileServiceImpl
     const file = await super.deleteById(id);
 
     if (file.isRight() && file.value.uploadStatus === GrpcFileUploadStatus.READY) {
-      this.eventEmitter.emit(
-        FileEventPattern.DELETE_ONE,
-        new FileDeleteOneEvent(file.value.providerId),
+      await firstValueFrom(
+        this.natsJsClient.storage.file.deleteOne({ providerId: file.value.providerId }),
       );
     }
 
@@ -293,18 +291,18 @@ export class FileServiceImpl
         this.logger.error('File upload error:', err.message, err.stack);
 
         if (uploadedFile?.id) {
-          await this.persistenceService.isolatedRun(async () => {
-            await this.updateById(uploadedFile.id, {
-              set: {
-                uploadStatus: GrpcFileUploadStatus.FAILED,
-              },
-            });
-          });
-
-          this.eventEmitter.emit(
-            FileEventPattern.DELETE_ONE,
-            new FileDeleteOneEvent(uploadedFile.providerId),
-          );
+          await Promise.allSettled([
+            this.persistenceService.isolatedRun(async () => {
+              await this.updateById(uploadedFile.id, {
+                set: {
+                  uploadStatus: GrpcFileUploadStatus.FAILED,
+                },
+              });
+            }),
+            firstValueFrom(
+              this.natsJsClient.storage.file.deleteOne({ providerId: uploadedFile.providerId }),
+            ),
+          ]);
         }
 
         return left(err);
@@ -346,9 +344,7 @@ export class FileServiceImpl
     }
   }
 
-  async onFileDelete(data: FileDeleteOneEvent): Promise<void> {
-    await this.persistenceService.isolatedRun(async () => {
-      await firstValueFrom(this.fileStorageService.deleteFile(data.providerId));
-    });
+  async onFileDelete(data: ProviderIdEvent): Promise<void> {
+    await firstValueFrom(this.fileStorageService.deleteFile(data.providerId));
   }
 }

@@ -19,6 +19,7 @@ import {
   PERSISTENCE_SERVICE,
   PersistenceService,
 } from '@backend/persistence';
+import { NatsJsClient, ProviderIdEvent, VideoUpdateOneEvent } from '@backend/transport';
 import {
   BadRequestException,
   ConflictException,
@@ -28,15 +29,9 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
-import {
-  VideoDeleteOneEvent,
-  VideoEventPattern,
-  VideoUpdateOneEvent,
-} from 'common/events/video.events';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import {
   STORAGE_OBJECT_REPOSITORY,
@@ -75,13 +70,13 @@ export class VideoServiceImpl
   private readonly logger = new Logger(VideoServiceImpl.name);
 
   constructor(
-    private readonly eventEmitter: EventEmitter2,
     @Inject(VIDEO_REPOSITORY) protected readonly repository: VideoRepository,
     @Inject(FILE_REPOSITORY) protected readonly fileRepository: FileRepository,
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(VIDEO_STORAGE_SERVICE) private readonly videoStorageService: VideoStorageService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
+    private readonly natsJsClient: NatsJsClient,
   ) {
     super();
   }
@@ -96,9 +91,8 @@ export class VideoServiceImpl
     const deletedVideo = await super.deleteById(id);
 
     if (deletedVideo.isRight() && video.value.file.uploadStatus === GrpcFileUploadStatus.READY) {
-      this.eventEmitter.emit(
-        VideoEventPattern.DELETE_ONE,
-        new VideoDeleteOneEvent(video.value.providerId),
+      await firstValueFrom(
+        this.natsJsClient.storage.video.deleteOne({ providerId: video.value.providerId }),
       );
     }
 
@@ -329,18 +323,18 @@ export class VideoServiceImpl
         this.logger.error('Video upload error:', err.message, err.stack);
 
         if (uploadedVideo?.id) {
-          await this.persistenceService.isolatedRun(async () => {
-            await this.fileRepository.updateById(uploadedVideo.file.id, {
-              set: {
-                uploadStatus: GrpcFileUploadStatus.FAILED,
-              },
-            });
-          });
-
-          this.eventEmitter.emit(
-            VideoEventPattern.DELETE_ONE,
-            new VideoDeleteOneEvent(uploadedVideo.providerId),
-          );
+          await Promise.allSettled([
+            this.persistenceService.isolatedRun(async () => {
+              await this.fileRepository.updateById(uploadedVideo.file.id, {
+                set: {
+                  uploadStatus: GrpcFileUploadStatus.FAILED,
+                },
+              });
+            }),
+            firstValueFrom(
+              this.natsJsClient.storage.video.deleteOne({ providerId: uploadedVideo.providerId }),
+            ),
+          ]);
         }
 
         return left(err);
@@ -352,20 +346,18 @@ export class VideoServiceImpl
     id: string,
     updateData: GrpcVideoUpdate,
   ): Promise<Either<NotFoundException, GrpcVideo>> {
-    if (updateData.set) {
-      const video = await this.repository.getById(id);
+    const video = await super.updateById(id, updateData);
 
-      if (video.isLeft()) {
-        return video;
-      }
-
-      this.eventEmitter.emit(
-        VideoEventPattern.UPDATE_ONE,
-        new VideoUpdateOneEvent(video.value.providerId, updateData.set),
+    if (video.isRight() && updateData.set) {
+      await firstValueFrom(
+        this.natsJsClient.storage.video.updateOne({
+          providerId: video.value.providerId,
+          update: updateData.set,
+        }),
       );
     }
 
-    return super.updateById(id, updateData);
+    return video;
   }
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -407,15 +399,11 @@ export class VideoServiceImpl
     }
   }
 
-  async onVideoDelete(data: VideoDeleteOneEvent): Promise<void> {
-    await this.persistenceService.isolatedRun(async () => {
-      await firstValueFrom(this.videoStorageService.deleteVideo(data.providerId));
-    });
+  async onVideoDelete(data: ProviderIdEvent): Promise<void> {
+    await firstValueFrom(this.videoStorageService.deleteVideo(data.providerId));
   }
 
   async onVideoUpdate(data: VideoUpdateOneEvent): Promise<void> {
-    await this.persistenceService.isolatedRun(async () => {
-      await firstValueFrom(this.videoStorageService.updateVideo(data.providerId, data.update));
-    });
+    await firstValueFrom(this.videoStorageService.updateVideo(data.providerId, data.update));
   }
 }

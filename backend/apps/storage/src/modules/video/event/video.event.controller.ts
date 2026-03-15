@@ -1,23 +1,21 @@
-import { Controller, Inject } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
 import {
-  VideoDeleteOneEvent,
-  VideoEventPattern,
+  NatsJsVideoEventController,
+  NatsJsVideoService,
+  ProviderIdEvent,
   VideoUpdateOneEvent,
-} from 'common/events/video.events';
+} from '@backend/transport';
+import { Inject } from '@nestjs/common';
 import { VIDEO_SERVICE, VideoService } from 'modules/video/service/video.service';
 
-@Controller()
-export class VideoEventController {
+@NatsJsVideoService.Controller()
+export class VideoEventController implements NatsJsVideoEventController {
   constructor(@Inject(VIDEO_SERVICE) private readonly videoService: VideoService) {}
 
-  @OnEvent(VideoEventPattern.DELETE_ONE)
-  async onVideoDelete(payload: VideoDeleteOneEvent) {
-    await this.videoService.onVideoDelete(payload);
+  async deleteOne(event: ProviderIdEvent): Promise<void> {
+    await this.videoService.onVideoDelete(event);
   }
 
-  @OnEvent(VideoEventPattern.UPDATE_ONE)
-  async onVideoUpdate(payload: VideoUpdateOneEvent) {
-    await this.videoService.onVideoUpdate(payload);
+  async updateOne(event: VideoUpdateOneEvent): Promise<void> {
+    await this.videoService.onVideoUpdate(event);
   }
 }

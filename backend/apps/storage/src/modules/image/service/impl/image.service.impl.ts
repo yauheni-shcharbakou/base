@@ -9,10 +9,9 @@ import {
   GrpcStorageObjectType,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
+import { NatsJsClient } from '@backend/transport';
 import { Inject, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Either, left } from '@sweet-monads/either';
-import { FileEventPattern, FileDeleteOneEvent } from 'common/events/file.events';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import { IMAGE_REPOSITORY, ImageRepository } from 'common/repositories/image/image.repository';
 import {
@@ -32,12 +31,12 @@ export class ImageServiceImpl
   implements ImageService
 {
   constructor(
-    private readonly eventEmitter: EventEmitter2,
     @Inject(FILE_REPOSITORY) private readonly fileRepository: FileRepository,
     @Inject(IMAGE_REPOSITORY) protected readonly repository: ImageRepository,
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
+    private readonly natsJsClient: NatsJsClient,
   ) {
     super();
   }
@@ -111,9 +110,8 @@ export class ImageServiceImpl
     const deletedImage = await super.deleteById(id);
 
     if (deletedImage.isRight() && image.value.file.uploadStatus === GrpcFileUploadStatus.READY) {
-      this.eventEmitter.emit(
-        FileEventPattern.DELETE_ONE,
-        new FileDeleteOneEvent(image.value.file.providerId),
+      await firstValueFrom(
+        this.natsJsClient.storage.file.deleteOne({ providerId: image.value.file.providerId }),
       );
     }
 

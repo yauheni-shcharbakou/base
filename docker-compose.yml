@@ -39,37 +39,24 @@ services:
       - local
       - all
 
-#  redis:
-#    image: redis:latest
-#    restart: unless-stopped
-#    container_name: base-redis
-#    command: redis-server --appendonly yes
-#    ports:
-#      - '6379:6379'
-#    volumes:
-#      - redis_data:/data
-#    networks:
-#      - private_network
-#      - public_network
-#    profiles:
-#      - local
-#      - all
-#
-#  redis-ui:
-#    image: redis/redisinsight:latest
-#    container_name: base-redis-ui
-#    environment:
-#      REDIS_HOSTS: local:redis:6379
-#    ports:
-#      - "5540:5540"
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - redis
-#    profiles:
-#      - local
-#      - all
+  nats:
+    image: nats:latest
+    restart: unless-stopped
+    container_name: base-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: [
+      "-js",
+      "-m", "8222",
+      "-sd", "/data",
+      "--name", "nats-node"
+    ]
+    volumes:
+      - nats_data:/data
+    profiles:
+      - local
+      - all
 
 #  backend.auth:
 #    build:
@@ -149,4 +136,5 @@ networks:
 volumes:
   mongo_data:
   postgres_data:
-  redis_data:
+  nats_data:
+#  redis_data:

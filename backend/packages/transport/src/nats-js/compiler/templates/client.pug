@@ -1,0 +1,36 @@
+each host in data.hosts
+    each service in host.services
+        |
+        |class #{pascalCase(host.name + '_' + service.name)}Client {
+        |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+        |
+        each method in service.methods
+            |
+            |   #{method.name}(data: !{method.type}): Observable<any> {
+            |       return this.client.emit('!{method.event}', data);
+            |   }
+            |
+        |}
+        |
+
+    |
+    |class #{pascalCase(host.name)}Client {
+    |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+    |
+    each service in host.services
+        |
+        |   readonly #{service.name} = new #{pascalCase(host.name + '_' + service.name)}Client(this.client);
+        |
+    |}
+    |
+
+|
+|export class NatsJsClient {
+|   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+|
+each host in data.hosts
+    |
+    |   readonly #{host.name} = new #{pascalCase(host.name)}Client(this.client);
+    |
+|}
+|
