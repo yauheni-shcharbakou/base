@@ -1,73 +1,64 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+## Bunny Storage configuration
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+#### Storage > FTP & API access
+`Password` => env `BUNNY_STORAGE_API_KEY`
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+#### CDN > General > Origin
+`Storage zone` => env `BUNNY_STORAGE_CDN_ZONE`
 
-## Description
+#### CDN > Security > General
+- [x] `Block root path access`
+- [x] `Block POST requests`
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+#### CDN > Security > Token authentication
+- [x] `Token authentication`
+- [ ] `Token IP validation` (enable for `prod` storage cdn)
 
-## Installation
+`Url token authentication Key` => env `BUNNY_STORAGE_CDN_PRIVATE_KEY`
 
-```bash
-$ yarn install
-```
+#### CDN > Headers
+- [x] `Add CORS headers`
 
-## Running the app
+`Extension List`: `eot, ttf, woff, woff2, css, js, jpg, jpeg, png, webp, gif, mp3, mp4, mpeg, svg, webm, pdf`
 
-```bash
-# development
-$ yarn run start
+## Bunny Stream configuration
 
-# watch mode
-$ yarn run start:dev
+#### Stream > Encoding
+- [x] `Keep original files`
+- [x] `MP4 fallback`
+- [ ] `Content tagging`
 
-# production mode
-$ yarn run start:prod
-```
+#### Stream > Security > General
+- [ ] `Enable direct play`
+- [x] `Block direct url file access`
+- [x] `Embed view token authentication`
+- [x] `CDN token authentication`
 
-## Test
+`Allowed domains`: set list
 
-```bash
-# unit tests
-$ yarn run test
+`Token authentication key` => env `BUNNY_STREAM_CDN_PRIVATE_KEY`
 
-# e2e tests
-$ yarn run test:e2e
+#### Stream > API
+`Video library ID` => env `BUNNY_STREAM_LIBRARY_ID`
 
-# test coverage
-$ yarn run test:cov
-```
+`Pull zone` => env `BUNNY_STREAM_CDN_ZONE`
 
-## Support
+`API key` => env `BUNNY_STREAM_API_KEY`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+#### CDN > Security > General (stream-related CDN)
+- [x] `Block root path access`
+- [x] `Block POST requests`
+- [x] `Block direct url file access`
 
-## Stay in touch
+`Allowed referrers`: set list (same as `Allowed domains` in stream)
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+#### CDN > Security > Token authentication (stream-related CDN)
+- [x] `Token authentication`
+- [ ] `Token IP validation`
 
-## License
+`Url token authentication Key` => env `BUNNY_STREAM_CDN_PRIVATE_KEY`
 
-Nest is [MIT licensed](LICENSE).
+#### CDN > Headers
+- [x] `Add CORS headers`
+
+`Extension List`: `*`
