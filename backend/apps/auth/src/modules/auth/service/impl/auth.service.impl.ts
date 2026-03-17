@@ -11,8 +11,8 @@ import {
 } from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
 import { AuthJwtPayload, AuthJwtPayloadParsed } from 'common/interfaces/auth.interface';
-import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
 import { USER_REPOSITORY, UserRepository } from 'common/repositories/user/user.repository';
+import { CRYPTO_SERVICE, CryptoService } from 'common/services/crypto/crypto.service';
 import { Config } from 'config';
 import _ from 'lodash';
 import { AuthService } from 'modules/auth/service/auth.service';

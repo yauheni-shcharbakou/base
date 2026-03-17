@@ -10,9 +10,9 @@
     "format": "prettier src --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "yarn build -- --watch",
+    "compile": "ts-node-dev --transpile-only src/nats_/compiler/main.ts",
     "build": "tsdown src/index.ts --format cjs --dts",
-    "reset": "rm -rf .turbo dist node_modules src/nats-js/compiler/generated",
-    "compile": "ts-node-dev --transpile-only src/nats-js/compiler/main.ts"
+    "reset": "rm -rf .turbo dist node_modules src/nats_/compiler/generated"
   },
   "dependencies": {
     "@backend/common": "*",

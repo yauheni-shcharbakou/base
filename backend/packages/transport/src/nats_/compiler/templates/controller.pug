@@ -1,0 +1,53 @@
+- const service = pascalCase(data.service.id)
+- const streamName = `${kebabCase(data.service.nameSpace)}-stream`
+- const pattern = `Nats${service}EventPattern`
+
+|
+|const #{pattern} = {
+|
+each method in data.methods
+    |   #{constantCase(method.name)}: {
+    |       pattern: '!{method.event}',
+    |       registerStream: (): void => {
+    |           globalStreamRegistry.append({ name: '!{streamName}', subjects: ['!{method.event}'] });
+    |       },
+    |   },
+    |
+|};
+|
+|export const Nats#{service}Transport = {
+|   ...#{pattern},
+|   Controller: (): ClassDecorator => {
+|       const methodsDecorator = function(constructor: Function) {
+|
+each method in data.methods
+    |           EventPattern('!{method.event}')(
+    |               constructor.prototype['on#{pascalCase(method.name)}'],
+    |               'on#{pascalCase(method.name)}',
+    |               Reflect.getOwnPropertyDescriptor(constructor.prototype, 'on#{pascalCase(method.name)}')
+    |           );
+    |           #{pattern}.#{constantCase(method.name)}.registerStream();
+    |
+|       };
+|       return applyDecorators(Controller(), UseInterceptors(NatsControllerInterceptor), methodsDecorator);
+|   },
+|} as const;
+|
+|export interface Nats#{service}EventController {
+|
+each method in data.methods
+    |   on#{pascalCase(method.name)}(
+    |       event: !{method.type},
+    |       context?: NatsJetStreamContext,
+    |   ): void | Promise<void> | Observable<void>;
+    |
+|}
+|
+each method in data.methods
+    |export interface Nats#{service + pascalCase(method.name)}EventHandler {
+    |   on#{service + pascalCase(method.name)}(
+    |       event: !{method.type},
+    |       context?: NatsJetStreamContext,
+    |   ): void | Promise<void> | Observable<void>;
+    |}
+    |

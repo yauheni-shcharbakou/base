@@ -6,16 +6,18 @@ import {
   GrpcUserUpdate,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
+import { InjectNatsClient, NatsClient } from '@backend/transport';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
-import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
 import {
   USER_REPOSITORY,
   UserRepository,
   UserUpdate,
 } from 'common/repositories/user/user.repository';
+import { CRYPTO_SERVICE, CryptoService } from 'common/services/crypto/crypto.service';
 import _ from 'lodash';
 import { UserService } from 'modules/user/service/user.service';
+import { firstValueFrom } from 'rxjs';
 
 export class UserServiceImpl
   extends CrudServiceImpl<GrpcUser, GrpcUserQuery, GrpcUserCreate, GrpcUserUpdate, UserRepository>
@@ -24,6 +26,7 @@ export class UserServiceImpl
   constructor(
     @Inject(USER_REPOSITORY) protected readonly repository: UserRepository,
     @Inject(CRYPTO_SERVICE) private readonly cryptoService: CryptoService,
+    @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
     super();
   }
@@ -35,11 +38,17 @@ export class UserServiceImpl
       return left(hashedPassword.value);
     }
 
-    return this.repository.saveOne({
+    const user = await this.repository.saveOne({
       ...data,
       hash: hashedPassword.value,
       role: data.role ?? GrpcUserRole.USER,
     });
+
+    if (user.isRight()) {
+      await firstValueFrom(this.natsClient.auth.user.createOne({ id: user.value.id }));
+    }
+
+    return user;
   }
 
   async updateById(

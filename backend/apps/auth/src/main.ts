@@ -7,6 +7,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   app.connectMicroservice(app.get(GRPC_MICROSERVICE_OPTIONS), { inheritAppConfig: true });
+
   await app.startAllMicroservices();
   await app.init();
 }

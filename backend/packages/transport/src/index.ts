@@ -1,2 +1,2 @@
 export * from './grpc';
-export * from './nats-js';
+export * from 'nats_';

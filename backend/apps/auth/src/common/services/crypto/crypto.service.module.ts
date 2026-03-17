@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CryptoServiceImpl } from 'common/modules/crypto/impl/crypto.service.impl';
+import { CryptoServiceImpl } from 'common/services/crypto/impl/crypto.service.impl';
 import { Config } from 'config';
 import { CRYPTO_SERVICE } from './crypto.service';
 
@@ -16,4 +16,4 @@ import { CRYPTO_SERVICE } from './crypto.service';
   ],
   exports: [CRYPTO_SERVICE],
 })
-export class CryptoModule {}
+export class CryptoServiceModule {}

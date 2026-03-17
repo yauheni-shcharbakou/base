@@ -15,9 +15,10 @@ export interface StorageObjectRepository extends DatabaseRepository<
   StorageObjectUpdate
 > {}
 
-export interface StorageObjectCreate extends GrpcStorageObjectCreate {
+export interface StorageObjectCreate extends Omit<GrpcStorageObjectCreate, 'parent'> {
   userId: string;
   folderPath?: string;
+  parent?: string;
 }
 
 export interface StorageObjectUpdate extends GrpcStorageObjectUpdate {

@@ -185,7 +185,12 @@ export abstract class PostgresRepositoryImpl<
     options: OptionsOf<E> = {},
   ): Promise<E[]> {
     const populate = this.getPopulate(options);
-    const entities = await this.repository.find(this.mapper.transformQuery(query), { populate });
+    const transformedQuery = this.mapper.transformQuery(query);
+
+    const entities = _.isEmpty(transformedQuery)
+      ? await this.repository.findAll({ populate })
+      : await this.repository.find(this.mapper.transformQuery(query), { populate });
+
     return this.mapper.stringifyMany(entities) as unknown as E[];
   }
 

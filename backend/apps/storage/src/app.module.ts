@@ -1,5 +1,5 @@
 import { PostgresModule } from '@backend/persistence';
-import { GrpcModule, NatsJsModule } from '@backend/transport';
+import { GrpcModule, NatsModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -16,7 +16,7 @@ import { VideoModule } from 'modules/video/video.module';
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
     PostgresModule.forRoot({ database: Database.STORAGE }),
     GrpcModule.forRoot({ host: 'storage' }),
-    NatsJsModule.forRoot({ host: 'storage' }),
+    NatsModule.forRoot({ host: 'storage' }),
     FileModule,
     ImageModule,
     StorageObjectModule,

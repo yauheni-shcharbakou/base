@@ -1,6 +1,10 @@
+import { GrpcIdField } from '@backend/grpc';
 import {
-  NatsJsStorageObjectEventController,
-  NatsJsStorageObjectService,
+  NatsEvent,
+  NatsStorageObjectEventController,
+  NatsStorageObjectTransport,
+  NatsUserCreateOneEventHandler,
+  NatsUserTransport,
   StorageObjectUpdateIsPublicEvent,
 } from '@backend/transport';
 import { Inject } from '@nestjs/common';
@@ -8,14 +12,22 @@ import {
   STORAGE_OBJECT_SERVICE,
   StorageObjectService,
 } from 'modules/storage-object/service/storage-object.service';
+import { from, Observable } from 'rxjs';
 
-@NatsJsStorageObjectService.Controller()
-export class StorageObjectEventController implements NatsJsStorageObjectEventController {
+@NatsStorageObjectTransport.Controller()
+export class StorageObjectEventController
+  implements NatsStorageObjectEventController, NatsUserCreateOneEventHandler
+{
   constructor(
     @Inject(STORAGE_OBJECT_SERVICE) private readonly storageObjectService: StorageObjectService,
   ) {}
 
-  async updateIsPublic(event: StorageObjectUpdateIsPublicEvent): Promise<void> {
-    await this.storageObjectService.onUpdateIsPublic(event);
+  onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Observable<void> {
+    return from(this.storageObjectService.onUpdateIsPublic(event));
+  }
+
+  @NatsEvent(NatsUserTransport.CREATE_ONE)
+  onUserCreateOne(event: GrpcIdField): Observable<void> {
+    return from(this.storageObjectService.createRootFolder(event.id));
   }
 }

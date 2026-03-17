@@ -1,12 +1,13 @@
-import { NatsJsFileEventController, NatsJsFileService, ProviderIdEvent } from '@backend/transport';
+import { NatsFileEventController, NatsFileTransport, ProviderIdEvent } from '@backend/transport';
 import { Inject } from '@nestjs/common';
 import { FILE_SERVICE, FileService } from 'modules/file/service/file.service';
+import { from, Observable } from 'rxjs';
 
-@NatsJsFileService.Controller()
-export class FileEventController implements NatsJsFileEventController {
+@NatsFileTransport.Controller()
+export class FileEventController implements NatsFileEventController {
   constructor(@Inject(FILE_SERVICE) private readonly fileService: FileService) {}
 
-  async deleteOne(event: ProviderIdEvent): Promise<void> {
-    await this.fileService.onFileDelete(event);
+  onDeleteOne(event: ProviderIdEvent): Observable<void> {
+    return from(this.fileService.onDeleteOne(event));
   }
 }

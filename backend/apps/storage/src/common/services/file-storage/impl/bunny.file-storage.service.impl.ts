@@ -12,7 +12,7 @@ import moment from 'moment';
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { PassThrough } from 'node:stream';
-import { catchError, map, Observable, of } from 'rxjs';
+import { firstValueFrom, lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class BunnyFileStorageServiceImpl implements FileStorageService {
@@ -45,35 +45,35 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
     this.isDev = this.configService.getOrThrow('isDevelopment', { infer: true });
   }
 
-  createFile(
-    data: FileStorageCreateData,
-  ): Observable<Either<InternalServerErrorException, string>> {
+  createFile(data: FileStorageCreateData): Either<InternalServerErrorException, string> {
     const extension = extname(data.originalName).replace(/^./g, '');
     const filePath = `${this.storageConfig.rootDir}/${data.userId}/${randomUUID()}.${extension}`;
-    return of(right(filePath));
+    return right(filePath);
   }
 
-  deleteFile(providerId: string): Observable<Either<InternalServerErrorException, boolean>> {
-    return this.httpService.delete(providerId).pipe(
-      map(() => right(true)),
-      catchError((error) =>
-        of(left(new InternalServerErrorException("Can't delete file from bunny storage"))),
-      ),
+  async deleteFile(providerId: string): Promise<Either<InternalServerErrorException, boolean>> {
+    try {
+      await firstValueFrom(this.httpService.delete(providerId));
+      return right(true);
+    } catch (err) {
+      return left(new InternalServerErrorException("Can't delete file from bunny storage"));
+    }
+  }
+
+  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
+    return lastValueFrom(
+      this.httpService
+        .put(providerId, upload$, {
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': fileSize.toString(),
+          },
+          timeout: 0,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+        })
+        .pipe(map(() => true)),
     );
-  }
-
-  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean> {
-    return this.httpService
-      .put(providerId, upload$, {
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Content-Length': fileSize.toString(),
-        },
-        timeout: 0,
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-      })
-      .pipe(map(() => true));
   }
 
   getFileSignedUrl(providerId: string, ip?: string): Either<Error, string> {

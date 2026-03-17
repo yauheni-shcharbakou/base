@@ -1,5 +1,5 @@
 import { PostgresModule } from '@backend/persistence';
-import { GrpcModule } from '@backend/transport';
+import { GrpcModule, NatsModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Database } from '@packages/common';
@@ -12,6 +12,7 @@ import { UserModule } from 'modules/user/user.module';
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
     PostgresModule.forRoot({ database: Database.AUTH }),
     GrpcModule.forRoot({ host: 'auth' }),
+    NatsModule.forRoot({ host: 'auth', onlyEmitting: true }),
     AuthModule,
     UserModule,
   ],

@@ -30,6 +30,6 @@ export interface VideoService extends CrudService<
     request$: Observable<GrpcVideoUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcVideoUploadResponse>>;
-  onVideoDelete(data: ProviderIdEvent): Promise<void>;
-  onVideoUpdate(data: VideoUpdateOneEvent): Promise<void>;
+  onDeleteOne(data: ProviderIdEvent): Promise<void>;
+  onUpdateOne(data: VideoUpdateOneEvent): Promise<void>;
 }

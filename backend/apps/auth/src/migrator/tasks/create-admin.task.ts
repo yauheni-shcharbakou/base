@@ -4,7 +4,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from 'common/repositories/user/entities/user.entity';
-import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
+import { CRYPTO_SERVICE, CryptoService } from 'common/services/crypto/crypto.service';
 import { Config } from 'config';
 
 @Injectable()

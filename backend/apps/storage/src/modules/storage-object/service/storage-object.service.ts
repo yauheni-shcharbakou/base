@@ -21,4 +21,5 @@ export interface StorageObjectService extends CrudService<
     userId: string,
   ): Promise<Either<Error, GrpcStorageObject>>;
   onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Promise<void>;
+  createRootFolder(userId: string): Promise<void>;
 }

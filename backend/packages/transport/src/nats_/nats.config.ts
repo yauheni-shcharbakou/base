@@ -11,7 +11,7 @@ const env = validateEnv({
   NATS_URL: zod.string().default('nats://localhost:4222'),
 });
 
-export const natsJsConfig = () => {
+export const natsConfig = () => {
   const natsUrl = env.NATS_URL;
 
   return {
@@ -52,4 +52,4 @@ export const natsJsConfig = () => {
   } as const;
 };
 
-export type NatsJsConfig = ReturnType<typeof natsJsConfig>;
+export type NatsConfig = ReturnType<typeof natsConfig>;

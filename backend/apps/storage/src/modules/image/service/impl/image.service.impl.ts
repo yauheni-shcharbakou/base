@@ -9,7 +9,7 @@ import {
   GrpcStorageObjectType,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
-import { NatsJsClient } from '@backend/transport';
+import { InjectNatsClient, NatsClient } from '@backend/transport';
 import { Inject, NotFoundException } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
@@ -36,7 +36,7 @@ export class ImageServiceImpl
     @Inject(STORAGE_OBJECT_REPOSITORY)
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
-    private readonly natsJsClient: NatsJsClient,
+    @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
     super();
   }
@@ -47,9 +47,7 @@ export class ImageServiceImpl
   ): Promise<Either<Error, GrpcImage>> {
     const revertHooks: (() => Promise<any>)[] = [];
 
-    const providerId = await firstValueFrom(
-      this.fileStorageService.createFile({ ...request.file, userId }),
-    );
+    const providerId = await this.fileStorageService.createFile({ ...request.file, userId });
 
     if (providerId.isLeft()) {
       return left(providerId.value);
@@ -111,7 +109,7 @@ export class ImageServiceImpl
 
     if (deletedImage.isRight() && image.value.file.uploadStatus === GrpcFileUploadStatus.READY) {
       await firstValueFrom(
-        this.natsJsClient.storage.file.deleteOne({ providerId: image.value.file.providerId }),
+        this.natsClient.storage.file.deleteOne({ providerId: image.value.file.providerId }),
       );
     }
 

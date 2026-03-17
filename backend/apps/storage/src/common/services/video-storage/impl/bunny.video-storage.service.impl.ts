@@ -14,7 +14,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import { createHash } from 'node:crypto';
 import { PassThrough } from 'node:stream';
-import { catchError, firstValueFrom, map, Observable, of, switchMap } from 'rxjs';
+import { firstValueFrom, lastValueFrom, map } from 'rxjs';
 
 type UpdateBody = {
   title?: string;
@@ -64,98 +64,106 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
     this.streamConfig = configService.getOrThrow('bunny.stream', { infer: true });
   }
 
-  createVideo(
+  async createVideo(
     data: VideoStorageCreateData,
-  ): Observable<Either<InternalServerErrorException, string>> {
-    return this.httpService.post<BunnyVideo>('videos', { title: data.title }).pipe(
-      switchMap((response) => {
-        const id = response.data.guid;
+  ): Promise<Either<InternalServerErrorException, string>> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<BunnyVideo>('videos', { title: data.title }),
+      );
 
-        if (!data.description) {
-          return of(right(id));
-        }
+      const id = response.data.guid;
 
-        return this.httpService
-          .post(`videos/${id}`, {
+      if (data.description) {
+        await firstValueFrom(
+          this.httpService.post(`videos/${id}`, {
             metaTags: [
               {
                 property: 'description',
                 value: data.description,
               },
             ],
-          })
-          .pipe(map(() => right(id)));
-      }),
-      catchError((err) => {
-        return of(left(new InternalServerErrorException("Can't create video in Bunny Stream")));
-      }),
+          }),
+        );
+      }
+
+      return right(id);
+    } catch (e) {
+      return left(new InternalServerErrorException("Can't create video in Bunny Stream"));
+    }
+  }
+
+  uploadVideo(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
+    return lastValueFrom(
+      this.httpService
+        .put(`videos/${providerId}`, upload$, {
+          timeout: 0,
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': fileSize.toString(),
+          },
+        })
+        .pipe(map(() => true)),
     );
   }
 
-  uploadVideo(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean> {
-    return this.httpService
-      .put(`videos/${providerId}`, upload$, {
-        timeout: 0,
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Content-Length': fileSize.toString(),
-        },
-      })
-      .pipe(map(() => true));
+  async deleteVideo(providerId: string): Promise<Either<InternalServerErrorException, boolean>> {
+    try {
+      await firstValueFrom(this.httpService.delete(`videos/${providerId}`));
+      return right(true);
+    } catch (e) {
+      return left(new InternalServerErrorException("Can't delete video from bunny stream"));
+    }
   }
 
-  deleteVideo(providerId: string): Observable<Either<InternalServerErrorException, boolean>> {
-    return this.httpService.delete(`videos/${providerId}`).pipe(
-      map(() => right(true)),
-      catchError((error) =>
-        of(left(new InternalServerErrorException("Can't delete video from bunny stream"))),
-      ),
-    );
-  }
-
-  updateVideo(
+  async updateVideo(
     providerId: string,
     updateData: Partial<GrpcVideoMetadata>,
-  ): Observable<Either<Error, boolean>> {
-    const body: UpdateBody = {};
+  ): Promise<Either<Error, boolean>> {
+    try {
+      const body: UpdateBody = {};
 
-    if (updateData.title) {
-      body.title = updateData.title;
+      if (updateData.title) {
+        body.title = updateData.title;
+      }
+
+      if (updateData.description) {
+        body.metaTags = [
+          {
+            property: 'description',
+            value: updateData.description,
+          },
+        ];
+      }
+
+      await firstValueFrom(this.httpService.post(`videos/${providerId}`, body));
+      return right(true);
+    } catch (e) {
+      return left(e);
     }
-
-    if (updateData.description) {
-      body.metaTags = [
-        {
-          property: 'description',
-          value: updateData.description,
-        },
-      ];
-    }
-
-    return this.httpService.post(`videos/${providerId}`, body).pipe(
-      map(() => right(true)),
-      catchError((error) => of(left(error))),
-    );
   }
 
-  getList(page: number, limit: number): Observable<VideoStorageList> {
-    return this.httpService.get<BunnyVideoList>(`videos?page=${page}&itemsPerPage=${limit}`).pipe(
-      map((response) => {
-        return {
-          total: response.data.totalItems,
-          items: _.map(response.data.items, (item) => {
-            return {
-              providerId: item.guid,
-              duration: item.length,
-              views: item.views,
-            };
-          }),
-        };
-      }),
-      catchError((error) => of({ total: 0, items: [] })),
-    );
+  async getList(page: number, limit: number): Promise<VideoStorageList> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<BunnyVideoList>(`videos?page=${page}&itemsPerPage=${limit}`),
+      );
+
+      return {
+        total: response.data.totalItems,
+        items: _.map(response.data.items, (item) => {
+          return {
+            providerId: item.guid,
+            duration: item.length,
+            views: item.views,
+          };
+        }),
+      };
+    } catch (e) {
+      return { total: 0, items: [] };
+    }
   }
 
   getPlayerUrl(providerId: string): Either<Error, string> {

@@ -1,4 +1,9 @@
-import { ProviderIdEvent, StorageObjectUpdateIsPublicEvent, VideoUpdateOneEvent } from './events';
+import { GrpcIdField } from '@backend/grpc';
+import {
+  ProviderIdEvent,
+  StorageObjectUpdateIsPublicEvent,
+  VideoUpdateOneEvent,
+} from 'nats_/compiler/strategy/events';
 
 /**
  * @description Add new nats events with their types here
@@ -12,7 +17,11 @@ import { ProviderIdEvent, StorageObjectUpdateIsPublicEvent, VideoUpdateOneEvent 
  * }
  */
 export interface NatsStrategy {
-  auth: {};
+  auth: {
+    user: {
+      createOne: GrpcIdField;
+    };
+  };
   storage: {
     file: {
       deleteOne: ProviderIdEvent;

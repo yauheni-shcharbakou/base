@@ -2,7 +2,7 @@ import { NatsJetStreamContext } from '@nestjs-plugins/nestjs-nats-jetstream-tran
 import { CallHandler, ExecutionContext, Logger, NestInterceptor } from '@nestjs/common';
 import { catchError, Observable, tap, throwError } from 'rxjs';
 
-export class NatsJsControllerInterceptor implements NestInterceptor {
+export class NatsControllerInterceptor implements NestInterceptor {
   intercept(
     context: ExecutionContext,
     next: CallHandler,

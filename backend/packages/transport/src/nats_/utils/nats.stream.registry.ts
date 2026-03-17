@@ -1,8 +1,8 @@
 import { NatsStreamConfig } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
 import _ from 'lodash';
-import { NatsStreamData } from 'nats-js/nats-js.types';
+import { NatsStreamData } from 'nats_/nats.types';
 
-export class NatsJsStreamRegistry {
+export class NatsStreamRegistry {
   private readonly streamMap = new Map<string, Set<string>>();
 
   append(streamData: NatsStreamData) {

@@ -19,7 +19,12 @@ import {
   PERSISTENCE_SERVICE,
   PersistenceService,
 } from '@backend/persistence';
-import { NatsJsClient, ProviderIdEvent, VideoUpdateOneEvent } from '@backend/transport';
+import {
+  InjectNatsClient,
+  NatsClient,
+  ProviderIdEvent,
+  VideoUpdateOneEvent,
+} from '@backend/transport';
 import {
   BadRequestException,
   ConflictException,
@@ -76,7 +81,7 @@ export class VideoServiceImpl
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(VIDEO_STORAGE_SERVICE) private readonly videoStorageService: VideoStorageService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
-    private readonly natsJsClient: NatsJsClient,
+    @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
     super();
   }
@@ -92,7 +97,7 @@ export class VideoServiceImpl
 
     if (deletedVideo.isRight() && video.value.file.uploadStatus === GrpcFileUploadStatus.READY) {
       await firstValueFrom(
-        this.natsJsClient.storage.video.deleteOne({ providerId: video.value.providerId }),
+        this.natsClient.storage.video.deleteOne({ providerId: video.value.providerId }),
       );
     }
 
@@ -153,9 +158,7 @@ export class VideoServiceImpl
 
     revertHooks.push(() => this.fileRepository.deleteById(file.value.id));
 
-    const providerId = await firstValueFrom(
-      this.videoStorageService.createVideo({ ...request.video, userId }),
-    );
+    const providerId = await this.videoStorageService.createVideo({ ...request.video, userId });
 
     if (providerId.isLeft()) {
       await Promise.all(_.map(revertHooks, (hook) => hook()));
@@ -241,12 +244,10 @@ export class VideoServiceImpl
 
         const upload$ = new PassThrough();
 
-        const uploadPromise = firstValueFrom(
-          this.videoStorageService.uploadVideo(
-            uploadedVideo.providerId,
-            uploadedVideo.file.size,
-            upload$,
-          ),
+        const uploadPromise = this.videoStorageService.uploadVideo(
+          uploadedVideo.providerId,
+          uploadedVideo.file.size,
+          upload$,
         );
 
         uploadPromise.catch(() => {});
@@ -332,7 +333,9 @@ export class VideoServiceImpl
               });
             }),
             firstValueFrom(
-              this.natsJsClient.storage.video.deleteOne({ providerId: uploadedVideo.providerId }),
+              this.natsClient.storage.video.deleteOne({
+                providerId: uploadedVideo.providerId,
+              }),
             ),
           ]);
         }
@@ -350,7 +353,7 @@ export class VideoServiceImpl
 
     if (video.isRight() && updateData.set) {
       await firstValueFrom(
-        this.natsJsClient.storage.video.updateOne({
+        this.natsClient.storage.video.updateOne({
           providerId: video.value.providerId,
           update: updateData.set,
         }),
@@ -369,9 +372,7 @@ export class VideoServiceImpl
         const limit = 100;
 
         do {
-          const { items, total } = await firstValueFrom(
-            this.videoStorageService.getList(page, limit),
-          );
+          const { items, total } = await this.videoStorageService.getList(page, limit);
 
           await this.repository.bulkUpdate(
             _.map(items, (item): BulkUpdate<GrpcVideo> => {
@@ -399,11 +400,11 @@ export class VideoServiceImpl
     }
   }
 
-  async onVideoDelete(data: ProviderIdEvent): Promise<void> {
-    await firstValueFrom(this.videoStorageService.deleteVideo(data.providerId));
+  async onDeleteOne(data: ProviderIdEvent): Promise<void> {
+    await this.videoStorageService.deleteVideo(data.providerId);
   }
 
-  async onVideoUpdate(data: VideoUpdateOneEvent): Promise<void> {
-    await firstValueFrom(this.videoStorageService.updateVideo(data.providerId, data.update));
+  async onUpdateOne(data: VideoUpdateOneEvent): Promise<void> {
+    await this.videoStorageService.updateVideo(data.providerId, data.update);
   }
 }

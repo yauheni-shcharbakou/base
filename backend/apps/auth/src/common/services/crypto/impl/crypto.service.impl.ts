@@ -1,7 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { hash, compare } from 'bcrypt';
-import { CryptoService } from 'common/modules/crypto/crypto.service';
+import { CryptoService } from 'common/services/crypto/crypto.service';
 
 export class CryptoServiceImpl implements CryptoService {
   constructor(private readonly salt: number) {}

@@ -8,7 +8,7 @@ import {
   GrpcStorageObjectUpdate,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
-import { NatsJsClient, StorageObjectUpdateIsPublicEvent } from '@backend/transport';
+import { InjectNatsClient, NatsClient, StorageObjectUpdateIsPublicEvent } from '@backend/transport';
 import { BadRequestException, HttpException, Inject, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import {
@@ -25,13 +25,14 @@ export class StorageObjectServiceImpl
     GrpcStorageObject,
     GrpcStorageObjectQuery,
     GrpcStorageObjectCreate,
-    GrpcStorageObjectUpdate
+    GrpcStorageObjectUpdate,
+    StorageObjectRepository
   >
   implements StorageObjectService
 {
   constructor(
     @Inject(STORAGE_OBJECT_REPOSITORY) protected readonly repository: StorageObjectRepository,
-    private readonly natsJsClient: NatsJsClient,
+    @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
     super();
   }
@@ -117,7 +118,7 @@ export class StorageObjectServiceImpl
       entity.value.type === GrpcStorageObjectType.FOLDER
     ) {
       await firstValueFrom(
-        this.natsJsClient.storage.storageObject.updateIsPublic({
+        this.natsClient.storage.storageObject.updateIsPublic({
           parent: entity.value.id,
           isPublic: updateData.set.isPublic,
         }),
@@ -148,7 +149,7 @@ export class StorageObjectServiceImpl
           }
 
           await firstValueFrom(
-            this.natsJsClient.storage.video.deleteOne({
+            this.natsClient.storage.video.deleteOne({
               providerId: entity.value.video.providerId,
             }),
           );
@@ -161,7 +162,7 @@ export class StorageObjectServiceImpl
           }
 
           await firstValueFrom(
-            this.natsJsClient.storage.file.deleteOne({
+            this.natsClient.storage.file.deleteOne({
               providerId: entity.value.file.providerId,
             }),
           );
@@ -189,12 +190,31 @@ export class StorageObjectServiceImpl
     await Promise.all(
       _.map(Array.from(folderIds), async (folderId) => {
         await firstValueFrom(
-          this.natsJsClient.storage.storageObject.updateIsPublic({
+          this.natsClient.storage.storageObject.updateIsPublic({
             parent: folderId,
             isPublic: event.isPublic,
           }),
         );
       }),
     );
+  }
+
+  async createRootFolder(userId: string): Promise<void> {
+    const hasRootFolder = await this.repository.isExists({
+      userId,
+      type: GrpcStorageObjectType.FOLDER,
+    });
+
+    if (hasRootFolder) {
+      return;
+    }
+
+    await this.repository.saveOne({
+      userId,
+      type: GrpcStorageObjectType.FOLDER,
+      name: '',
+      isPublic: false,
+      folderPath: '/',
+    });
   }
 }

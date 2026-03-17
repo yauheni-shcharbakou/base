@@ -24,5 +24,5 @@ export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, GrpcFi
     request$: Observable<GrpcFileUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>>;
-  onFileDelete(data: ProviderIdEvent): Promise<void>;
+  onDeleteOne(data: ProviderIdEvent): Promise<void>;
 }

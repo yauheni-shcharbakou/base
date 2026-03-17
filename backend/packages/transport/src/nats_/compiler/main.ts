@@ -1,5 +1,4 @@
-import { PUG_EXT_REG_EXP } from '@packages/grpc/compiler/constants';
-import { dotCase, pascalCase, camelCase, constantCase, kebabCase } from 'change-case-all';
+import { dotCase, pascalCase, constantCase, kebabCase } from 'change-case-all';
 import { readdir, readFile, rm, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as Pug from 'pug';
@@ -16,6 +15,8 @@ type ClientHostData = {
     }[];
   }[];
 };
+
+const PUG_EXT_REG_EXP = /.pug$/g;
 
 const templatesPath = join(__dirname, 'templates');
 const strategyFolderPath = join(__dirname, 'strategy');
@@ -69,7 +70,7 @@ export const declareImports = (outputFile: SourceFile) => {
 
   outputFile.addImportDeclaration({
     moduleSpecifier: '../../interceptors',
-    namedImports: ['NatsJsControllerInterceptor'],
+    namedImports: ['NatsControllerInterceptor'],
   });
 
   outputFile.addImportDeclaration({
@@ -93,6 +94,11 @@ const compile = async () => {
     project.addSourceFilesAtPaths(`${strategyFolderPath}/**/*.ts`);
 
     const strategy = strategyFile.getInterfaceOrThrow('NatsStrategy');
+    const strategyImports = strategyFile.getImportDeclarations();
+
+    outputFile.addImportDeclarations(
+      strategyImports.map((declaration) => declaration.getStructure()),
+    );
 
     declareImports(outputFile);
 
@@ -127,7 +133,7 @@ const compile = async () => {
 
             for (const event of serviceProperties) {
               const eventName = event.getName();
-              const eventType = event.getType().getText();
+              const eventType = event.getType().getText(outputFile);
 
               const fullEventName = dotCase(`${hostName}_${serviceName}_${eventName}`);
 
@@ -152,9 +158,7 @@ const compile = async () => {
                   }),
                 },
                 pascalCase,
-                camelCase,
                 constantCase,
-                dotCase,
                 kebabCase,
               }),
             );

@@ -12,7 +12,7 @@ import {
   GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudServiceImpl, PERSISTENCE_SERVICE, PersistenceService } from '@backend/persistence';
-import { NatsJsClient, ProviderIdEvent } from '@backend/transport';
+import { InjectNatsClient, NatsClient, ProviderIdEvent } from '@backend/transport';
 import {
   BadRequestException,
   ConflictException,
@@ -68,7 +68,7 @@ export class FileServiceImpl
     private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
-    private readonly natsJsClient: NatsJsClient,
+    @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
     super();
   }
@@ -123,7 +123,7 @@ export class FileServiceImpl
 
     if (file.isRight() && file.value.uploadStatus === GrpcFileUploadStatus.READY) {
       await firstValueFrom(
-        this.natsJsClient.storage.file.deleteOne({ providerId: file.value.providerId }),
+        this.natsClient.storage.file.deleteOne({ providerId: file.value.providerId }),
       );
     }
 
@@ -134,9 +134,7 @@ export class FileServiceImpl
     request: GrpcFileCreateRequest,
     userId: string,
   ): Promise<Either<Error, GrpcFile>> {
-    const providerId = await firstValueFrom(
-      this.fileStorageService.createFile({ ...request.file, userId }),
-    );
+    const providerId = await this.fileStorageService.createFile({ ...request.file, userId });
 
     if (providerId.isLeft()) {
       return left(providerId.value);
@@ -213,8 +211,10 @@ export class FileServiceImpl
 
         uploadedFile = file.value;
 
-        const uploadPromise = firstValueFrom(
-          this.fileStorageService.uploadFile(uploadedFile.providerId, uploadedFile.size, upload$),
+        const uploadPromise = this.fileStorageService.uploadFile(
+          uploadedFile.providerId,
+          uploadedFile.size,
+          upload$,
         );
 
         uploadPromise.catch(() => {});
@@ -300,7 +300,7 @@ export class FileServiceImpl
               });
             }),
             firstValueFrom(
-              this.natsJsClient.storage.file.deleteOne({ providerId: uploadedFile.providerId }),
+              this.natsClient.storage.file.deleteOne({ providerId: uploadedFile.providerId }),
             ),
           ]);
         }
@@ -344,7 +344,7 @@ export class FileServiceImpl
     }
   }
 
-  async onFileDelete(data: ProviderIdEvent): Promise<void> {
-    await firstValueFrom(this.fileStorageService.deleteFile(data.providerId));
+  async onDeleteOne(data: ProviderIdEvent): Promise<void> {
+    await this.fileStorageService.deleteFile(data.providerId);
   }
 }

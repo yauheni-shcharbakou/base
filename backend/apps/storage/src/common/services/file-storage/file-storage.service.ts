@@ -7,9 +7,13 @@ import { Observable } from 'rxjs';
 export const FILE_STORAGE_SERVICE = Symbol('FileStorageService');
 
 export interface FileStorageService {
-  createFile(data: FileStorageCreateData): Observable<Either<InternalServerErrorException, string>>;
-  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Observable<boolean>;
-  deleteFile(providerId: string): Observable<Either<InternalServerErrorException, boolean>>;
+  createFile(
+    data: FileStorageCreateData,
+  ):
+    | Either<InternalServerErrorException, string>
+    | Promise<Either<InternalServerErrorException, string>>;
+  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean>;
+  deleteFile(providerId: string): Promise<Either<InternalServerErrorException, boolean>>;
   getFileSignedUrl(
     providerId: string,
     ip?: string,
