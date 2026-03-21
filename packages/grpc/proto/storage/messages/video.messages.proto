@@ -8,7 +8,6 @@ import "common/service.proto";
 import "storage/models/file.proto";
 import "storage/models/video.proto";
 import "storage/messages/file.messages.proto";
-import "storage/messages/storage-object.messages.proto";
 
 // populate
 
@@ -49,38 +48,20 @@ message VideoGetListResponse {
 // create
 
 message VideoCreate {
-  string userId = 1;
-  string file = 2;
-  string providerId = 3;
-  string title = 4;
-  optional int32 duration = 5;
-  optional int32 views = 6;
-  optional string description = 7;
-}
-
-message VideoMetadata {
   string title = 1;
   optional string description = 2;
 }
 
 message VideoCreateRequest {
-  VideoMetadata video = 1;
-  FileMetadata file = 2;
-  optional StorageObjectMetadata storage = 3;
+  VideoCreate video = 1;
+  FileCreate file = 2;
 }
 
 // upload
 
-message VideoUploadRequest {
-  oneof payload {
-    string video = 1;
-    bytes chunk = 2;
-  }
-}
-
 message VideoUploadResponse {
   oneof payload {
-    models.Video video = 1;
+    models.Video entity = 1;
     bool canSendChunks = 2;
   }
 }

@@ -8,7 +8,6 @@ import "common/service.proto";
 import "storage/models/file.proto";
 import "storage/models/image.proto";
 import "storage/messages/file.messages.proto";
-import "storage/messages/storage-object.messages.proto";
 
 // populate
 
@@ -45,23 +44,14 @@ message ImageGetListResponse {
 // create
 
 message ImageCreate {
-  string userId = 1;
-  string file = 2;
-  int32 width = 3;
-  int32 height = 4;
-  string alt = 5;
-}
-
-message ImageMetadata {
   int32 width = 1;
   int32 height = 2;
   string alt = 3;
 }
 
 message ImageCreateRequest {
-  ImageMetadata image = 1;
-  FileMetadata file = 2;
-  optional StorageObjectMetadata storage = 3;
+  ImageCreate image = 1;
+  FileCreate file = 2;
 }
 
 // update

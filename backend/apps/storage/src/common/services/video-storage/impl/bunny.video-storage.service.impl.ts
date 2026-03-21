@@ -1,4 +1,4 @@
-import { GrpcVideoMetadata } from '@backend/grpc';
+import { GrpcVideoUpdateSet } from '@backend/grpc';
 import { HttpService } from '@nestjs/axios';
 import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -120,7 +120,7 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
 
   async updateVideo(
     providerId: string,
-    updateData: Partial<GrpcVideoMetadata>,
+    updateData: GrpcVideoUpdateSet,
   ): Promise<Either<Error, boolean>> {
     try {
       const body: UpdateBody = {};

@@ -1,4 +1,4 @@
-import { GrpcVideo, GrpcVideoMetadata } from '@backend/grpc';
+import { GrpcVideo, GrpcVideoCreate } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
@@ -43,6 +43,6 @@ export class VideoDto extends EntityWithTimestampsDto implements GrpcVideo {
   providerId: string;
 }
 
-export class VideoMetadataDto
+export class VideoCreateDto
   extends PickType(VideoDto, ['title', 'description'] as const)
-  implements GrpcVideoMetadata {}
+  implements GrpcVideoCreate {}

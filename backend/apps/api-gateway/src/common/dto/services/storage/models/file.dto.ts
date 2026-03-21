@@ -1,4 +1,4 @@
-import { GrpcFile, GrpcFileMetadata, GrpcFileUploadStatus } from '@backend/grpc';
+import { GrpcFile, GrpcFileCreate, GrpcFileUploadStatus } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
@@ -42,6 +42,6 @@ export class FileDto extends EntityWithTimestampsDto implements GrpcFile {
   providerId?: string;
 }
 
-export class FileMetadataDto
+export class FileCreateDto
   extends PickType(FileDto, ['originalName', 'size', 'mimeType'] as const)
-  implements GrpcFileMetadata {}
+  implements GrpcFileCreate {}

@@ -6,7 +6,6 @@ import {
   GrpcImagePopulated,
   GrpcImageQuery,
   GrpcImageUpdate,
-  GrpcStorageObjectType,
 } from '@backend/grpc';
 import { CrudServiceImpl } from '@backend/persistence';
 import { InjectNatsClient, NatsClient } from '@backend/transport';
@@ -15,14 +14,9 @@ import { Either, left } from '@sweet-monads/either';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
 import { IMAGE_REPOSITORY, ImageRepository } from 'common/repositories/image/image.repository';
 import {
-  STORAGE_OBJECT_REPOSITORY,
-  StorageObjectRepository,
-} from 'common/repositories/storage-object/storage-object.repository';
-import {
   FILE_STORAGE_SERVICE,
   FileStorageService,
 } from 'common/services/file-storage/file-storage.service';
-import _ from 'lodash';
 import { ImageService } from 'modules/image/service/image.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -33,8 +27,6 @@ export class ImageServiceImpl
   constructor(
     @Inject(FILE_REPOSITORY) private readonly fileRepository: FileRepository,
     @Inject(IMAGE_REPOSITORY) protected readonly repository: ImageRepository,
-    @Inject(STORAGE_OBJECT_REPOSITORY)
-    private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
     @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
@@ -45,8 +37,6 @@ export class ImageServiceImpl
     request: GrpcImageCreateRequest,
     userId: string,
   ): Promise<Either<Error, GrpcImage>> {
-    const revertHooks: (() => Promise<any>)[] = [];
-
     const providerId = await this.fileStorageService.createFile({ ...request.file, userId });
 
     if (providerId.isLeft()) {
@@ -63,8 +53,6 @@ export class ImageServiceImpl
       return left(file.value);
     }
 
-    revertHooks.push(() => this.fileRepository.deleteById(file.value.id));
-
     const image = await this.repository.saveOne({
       ...request.image,
       userId,
@@ -72,27 +60,7 @@ export class ImageServiceImpl
     });
 
     if (image.isLeft()) {
-      await Promise.all(_.map(revertHooks, (hook) => hook()));
-      return image;
-    }
-
-    if (!request.storage) {
-      return image;
-    }
-
-    revertHooks.push(() => this.deleteById(image.value.id));
-
-    const storage = await this.storageObjectRepository.saveOne({
-      ...request.storage,
-      userId,
-      file: file.value.id,
-      image: image.value.id,
-      type: GrpcStorageObjectType.IMAGE,
-    });
-
-    if (storage.isLeft()) {
-      await Promise.all(_.map(revertHooks, (hook) => hook()));
-      return left(storage.value);
+      await this.fileRepository.deleteById(file.value.id);
     }
 
     return image;

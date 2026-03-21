@@ -3,12 +3,10 @@ import {
   GrpcDownloadMap,
   GrpcFile,
   GrpcFileCreate,
-  GrpcFileCreateRequest,
   GrpcFileQuery,
-  GrpcFileUploadRequest,
   GrpcFileUploadResponse,
   GrpcFileUploadStatus,
-  GrpcStorageObjectType,
+  GrpcUploadRequest,
   GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudServiceImpl, PERSISTENCE_SERVICE, PersistenceService } from '@backend/persistence';
@@ -26,10 +24,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
-import {
-  STORAGE_OBJECT_REPOSITORY,
-  StorageObjectRepository,
-} from 'common/repositories/storage-object/storage-object.repository';
 import {
   FILE_STORAGE_SERVICE,
   FileStorageService,
@@ -64,8 +58,6 @@ export class FileServiceImpl
 
   constructor(
     @Inject(FILE_REPOSITORY) protected readonly repository: FileRepository,
-    @Inject(STORAGE_OBJECT_REPOSITORY)
-    private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
     @InjectNatsClient() private readonly natsClient: NatsClient,
@@ -130,43 +122,18 @@ export class FileServiceImpl
     return file;
   }
 
-  async createOne(
-    request: GrpcFileCreateRequest,
-    userId: string,
-  ): Promise<Either<Error, GrpcFile>> {
-    const providerId = await this.fileStorageService.createFile({ ...request.file, userId });
+  async createOne(request: GrpcFileCreate, userId: string): Promise<Either<Error, GrpcFile>> {
+    const providerId = await this.fileStorageService.createFile({ ...request, userId });
 
     if (providerId.isLeft()) {
       return left(providerId.value);
     }
 
-    const file = await this.repository.saveOne({
-      ...request.file,
-      userId,
-      providerId: providerId.value,
-    });
-
-    if (file.isLeft() || !request.storage) {
-      return file;
-    }
-
-    const storage = await this.storageObjectRepository.saveOne({
-      ...request.storage,
-      userId,
-      file: file.value.id,
-      type: GrpcStorageObjectType.FILE,
-    });
-
-    if (storage.isLeft()) {
-      await this.repository.deleteById(file.value.id);
-      return left(storage.value);
-    }
-
-    return file;
+    return this.repository.saveOne({ ...request, userId, providerId: providerId.value });
   }
 
   uploadOne(
-    request$: Observable<GrpcFileUploadRequest>,
+    request$: Observable<GrpcUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>> {
     const sharedRequest$ = request$.pipe(share());
@@ -187,12 +154,12 @@ export class FileServiceImpl
           throw new ForbiddenException(`User is required`);
         }
 
-        if (!message.file) {
+        if (!message.id) {
           throw new ConflictException('File id should be provided before chunks');
         }
 
         const file = await this.persistenceService.isolatedRun(async () => {
-          return this.repository.getOne({ id: message.file, userId });
+          return this.repository.getOne({ id: message.id, userId });
         });
 
         if (file.isLeft()) {
@@ -274,7 +241,7 @@ export class FileServiceImpl
               }
 
               this.logger.log(`File ${file.id} uploaded`);
-              return right({ file: updatedFile.value });
+              return right({ entity: updatedFile.value });
             }),
           );
 

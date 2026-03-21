@@ -2,7 +2,7 @@ import {
   GrpcBaseQuery,
   GrpcDownloadMap,
   GrpcFileUploadStatus,
-  GrpcStorageObjectType,
+  GrpcUploadRequest,
   GrpcUrlMap,
   GrpcVideo,
   GrpcVideoCreate,
@@ -10,7 +10,6 @@ import {
   GrpcVideoPopulated,
   GrpcVideoQuery,
   GrpcVideoUpdate,
-  GrpcVideoUploadRequest,
   GrpcVideoUploadResponse,
 } from '@backend/grpc';
 import {
@@ -38,10 +37,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
-import {
-  STORAGE_OBJECT_REPOSITORY,
-  StorageObjectRepository,
-} from 'common/repositories/storage-object/storage-object.repository';
 import { VIDEO_REPOSITORY, VideoRepository } from 'common/repositories/video/video.repository';
 import {
   VIDEO_STORAGE_SERVICE,
@@ -77,8 +72,6 @@ export class VideoServiceImpl
   constructor(
     @Inject(VIDEO_REPOSITORY) protected readonly repository: VideoRepository,
     @Inject(FILE_REPOSITORY) protected readonly fileRepository: FileRepository,
-    @Inject(STORAGE_OBJECT_REPOSITORY)
-    private readonly storageObjectRepository: StorageObjectRepository,
     @Inject(VIDEO_STORAGE_SERVICE) private readonly videoStorageService: VideoStorageService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
     @InjectNatsClient() private readonly natsClient: NatsClient,
@@ -149,19 +142,16 @@ export class VideoServiceImpl
     request: GrpcVideoCreateRequest,
     userId: string,
   ): Promise<Either<Error, GrpcVideo>> {
-    const revertHooks: (() => Promise<any>)[] = [];
     const file = await this.fileRepository.saveOne({ ...request.file, userId });
 
     if (file.isLeft()) {
       return left(file.value);
     }
 
-    revertHooks.push(() => this.fileRepository.deleteById(file.value.id));
-
     const providerId = await this.videoStorageService.createVideo({ ...request.video, userId });
 
     if (providerId.isLeft()) {
-      await Promise.all(_.map(revertHooks, (hook) => hook()));
+      await this.fileRepository.deleteById(file.value.id);
       return left(providerId.value);
     }
 
@@ -173,34 +163,14 @@ export class VideoServiceImpl
     });
 
     if (video.isLeft()) {
-      await Promise.all(_.map(revertHooks, (hook) => hook()));
-      return video;
-    }
-
-    if (!request.storage) {
-      return video;
-    }
-
-    revertHooks.push(() => this.repository.deleteById(video.value.id));
-
-    const storage = await this.storageObjectRepository.saveOne({
-      ...request.storage,
-      userId,
-      file: file.value.id,
-      video: video.value.id,
-      type: GrpcStorageObjectType.VIDEO,
-    });
-
-    if (storage.isLeft()) {
-      await Promise.all(_.map(revertHooks, (hook) => hook()));
-      return left(storage.value);
+      await this.fileRepository.deleteById(file.value.id);
     }
 
     return video;
   }
 
   uploadOne(
-    request$: Observable<GrpcVideoUploadRequest>,
+    request$: Observable<GrpcUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcVideoUploadResponse>> {
     const sharedRequest$ = request$.pipe(share());
@@ -221,13 +191,13 @@ export class VideoServiceImpl
           throw new ForbiddenException(`User is required`);
         }
 
-        if (!message.video) {
+        if (!message.id) {
           throw new ConflictException('Video id should be provided before chunks');
         }
 
         const video = await this.persistenceService.isolatedRun(async () => {
           return this.repository.getOne<GrpcVideoPopulated>(
-            { id: message.video, userId },
+            { id: message.id, userId },
             { populate: ['file'] },
           );
         });
@@ -307,7 +277,7 @@ export class VideoServiceImpl
               }
 
               this.logger.log(`Video ${video.id} uploaded`);
-              return right({ video });
+              return right({ entity: video });
             }),
           );
 

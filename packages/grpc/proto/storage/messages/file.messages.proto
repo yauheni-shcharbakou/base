@@ -4,9 +4,7 @@ package storage.messages;
 
 import "google/protobuf/timestamp.proto";
 
-import "common/service.proto";
 import "storage/models/file.proto";
-import "storage/messages/storage-object.messages.proto";
 
 // query
 
@@ -37,36 +35,16 @@ message FileGetListResponse {
 // create
 
 message FileCreate {
-  string userId = 1;
-  string originalName = 2;
-  int32 size = 3;
-  string mimeType = 4;
-  optional string providerId = 5;
-}
-
-message FileMetadata {
   string originalName = 1;
   int32 size = 2;
   string mimeType = 3;
 }
 
-message FileCreateRequest {
-  FileMetadata file = 1;
-  optional StorageObjectMetadata storage = 2;
-}
-
 // upload
-
-message FileUploadRequest {
-  oneof payload {
-    string file = 1;
-    bytes chunk = 2;
-  }
-}
 
 message FileUploadResponse {
   oneof payload {
-    models.File file = 1;
+    models.File entity = 1;
     bool canSendChunks = 2;
   }
 }

@@ -11,11 +11,11 @@ import { GrpcProxyStreamMethod } from 'common/decorators/grpc-proxy-method.decor
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { GetListRequestDto } from 'common/dto/get-list-request.dto';
 import { IdFieldDto } from 'common/dto/id-field.dto';
-import { FileCreateRequestDto } from 'common/dto/services/storage/file.service.dto';
 import {
   ImageCreateRequestDto,
   ImageUpdateByIdRequestDto,
 } from 'common/dto/services/storage/image.service.dto';
+import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
 import {
   StorageObjectCreateDto,
   StorageObjectRequestDto,
@@ -36,7 +36,7 @@ import {
           getDownloadMap: BaseQueryDto,
           getById: IdFieldDto,
           getList: GetListRequestDto,
-          createOne: FileCreateRequestDto,
+          createOne: FileCreateDto,
           deleteById: IdFieldDto,
         }),
         custom: {

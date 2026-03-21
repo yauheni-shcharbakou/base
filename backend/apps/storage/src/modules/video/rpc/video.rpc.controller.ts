@@ -3,6 +3,7 @@ import {
   GrpcDownloadMap,
   GrpcGetListRequest,
   GrpcIdField,
+  GrpcUploadRequest,
   GrpcUrlMap,
   GrpcVideo,
   GrpcVideoCreateRequest,
@@ -11,7 +12,6 @@ import {
   GrpcVideoService,
   GrpcVideoServiceController,
   GrpcVideoUpdateByIdRequest,
-  GrpcVideoUploadRequest,
   GrpcVideoUploadResponse,
 } from '@backend/grpc';
 import { GrpcController, GrpcMetadataMapper, GrpcRxPipe } from '@backend/transport';
@@ -59,7 +59,7 @@ export class VideoRpcController implements GrpcVideoServiceController {
   }
 
   uploadOne(
-    request: Observable<GrpcVideoUploadRequest>,
+    request: Observable<GrpcUploadRequest>,
     metadata?: Metadata,
   ): Observable<GrpcVideoUploadResponse> {
     const userId = new GrpcMetadataMapper(metadata).get('user');

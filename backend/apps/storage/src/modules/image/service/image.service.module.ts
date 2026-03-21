@@ -1,18 +1,12 @@
 import { Module } from '@nestjs/common';
 import { FileRepositoryModule } from 'common/repositories/file/file.repository.module';
 import { ImageRepositoryModule } from 'common/repositories/image/image.repository.module';
-import { StorageObjectRepositoryModule } from 'common/repositories/storage-object/storage-object.repository.module';
 import { FileStorageServiceModule } from 'common/services/file-storage/file-storage.service.module';
 import { IMAGE_SERVICE } from 'modules/image/service/image.service';
 import { ImageServiceImpl } from 'modules/image/service/impl/image.service.impl';
 
 @Module({
-  imports: [
-    FileRepositoryModule,
-    FileStorageServiceModule,
-    ImageRepositoryModule,
-    StorageObjectRepositoryModule,
-  ],
+  imports: [FileRepositoryModule, FileStorageServiceModule, ImageRepositoryModule],
   providers: [
     {
       provide: IMAGE_SERVICE,

@@ -7,8 +7,8 @@ import {
   GrpcStorageObjectUpdateByIdRequest,
   GrpcStorageObjectUpdateRequest,
 } from '@backend/grpc';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, PickType } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TransformToBoolean } from 'common/decorators/transform.decorator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import {
@@ -17,10 +17,7 @@ import {
   UpdateDto,
   UpdateRequestDto,
 } from 'common/dto/grpc-types.dto';
-import {
-  StorageObjectDto,
-  StorageObjectMetadataDto,
-} from 'common/dto/services/storage/models/storage-object.dto';
+import { StorageObjectDto } from 'common/dto/services/storage/models/storage-object.dto';
 
 export class StorageObjectQueryDto extends BaseQueryDto implements GrpcStorageObjectQuery {
   @ApiProperty({ required: false, enum: GrpcStorageObjectType, enumName: 'GrpcStorageObjectType' })
@@ -55,9 +52,14 @@ export class StorageObjectRequestDto
   implements GrpcStorageObjectRequest {}
 
 export class StorageObjectCreateDto
-  extends StorageObjectMetadataDto
+  extends PickType(StorageObjectDto, ['type', 'name', 'isPublic'] as const)
   implements GrpcStorageObjectCreate
 {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  parent: string;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()

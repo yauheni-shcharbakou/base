@@ -10,5 +10,6 @@ export interface ImageRepository extends DatabaseRepository<
 > {}
 
 export interface ImageCreate extends GrpcImageCreate {
+  file: string;
   userId: string;
 }

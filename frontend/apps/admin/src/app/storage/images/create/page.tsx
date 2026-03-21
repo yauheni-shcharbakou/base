@@ -2,12 +2,14 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
+import { storageActionClient } from '@/features/file/clients';
 import { FileUploader, FolderSelect } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
+import { getImageDimensions } from '@/features/image/helpers';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcUser } from '@packages/grpc';
+import { GrpcImage, GrpcUser } from '@packages/grpc';
 import { HttpError, useGetIdentity } from '@refinedev/core';
 import React from 'react';
 import { Create } from '@refinedev/mui';
@@ -19,14 +21,14 @@ const schema = zod.object({
   name: zod.string().optional(),
   isPublic: zod.boolean(),
   file: zod.file(),
-  alt: zod.string().optional(),
+  alt: zod.string(),
 });
 
 type Params = z.infer<typeof schema>;
 
 export default function ImageCreate() {
   const { isUploading, progress, handleUpload } = useFileUpload({
-    resource: StorageDatabaseEntity.IMAGE,
+    resource: StorageDatabaseEntity.FILE,
   });
 
   const { data: user } = useGetIdentity<GrpcUser>();
@@ -47,29 +49,29 @@ export default function ImageCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const file = data.file;
+    const createdImage = await handleUpload<GrpcImage>(
+      data.file,
+      async (fileData) => {
+        const dimensions = await getImageDimensions(data.file);
 
-    if (!file) {
-      return;
+        return storageActionClient.createImage(
+          {
+            file: fileData,
+            image: { ...dimensions, alt: data.alt },
+          },
+          {
+            parent: data.parent,
+            name: data.name,
+            isPublic: data.isPublic,
+          },
+        );
+      },
+      'fileId',
+    );
+
+    if (createdImage) {
+      await onFinish(createdImage as any);
     }
-
-    const formData = new FormData();
-
-    formData.append('image.alt', data.alt || '');
-
-    if (data.parent) {
-      formData.append('storage.name', data.name || '');
-      formData.append('storage.isPublic', data.isPublic ? 'true' : 'false');
-      formData.append('storage.parent', data.parent);
-    }
-
-    const createdFile = await handleUpload<any>(file, formData);
-
-    if (!createdFile) {
-      return;
-    }
-
-    await onFinish(createdFile);
   };
 
   return (
@@ -110,6 +112,8 @@ export default function ImageCreate() {
                 formField="alt"
                 fieldError={errors?.alt}
                 label="Alt"
+                defaultValue={'Image'}
+                required
               />
             </CardContent>
           </Card>
@@ -123,7 +127,7 @@ export default function ImageCreate() {
             isUploading={isUploading}
             onChange={handleFileChange}
             required
-            maxSize={5 * ONE_MB_BYTES}
+            maxSize={100 * ONE_MB_BYTES}
             accept={{
               'image/jpeg': [],
               'image/png': [],

@@ -12,7 +12,7 @@ service FileService {
   rpc getDownloadMap (common.BaseQuery) returns (messages.DownloadMap) {}
   rpc getById (common.IdField) returns (models.File) {}
   rpc getList (common.GetListRequest) returns (messages.FileGetListResponse) {}
-  rpc createOne (messages.FileCreateRequest) returns (models.File) {}
-  rpc uploadOne (stream messages.FileUploadRequest) returns (stream messages.FileUploadResponse) {}
+  rpc createOne (messages.FileCreate) returns (models.File) {}
+  rpc uploadOne (stream messages.UploadRequest) returns (stream messages.FileUploadResponse) {}
   rpc deleteById (common.IdField) returns (models.File) {}
 }

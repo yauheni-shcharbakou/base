@@ -1,11 +1,11 @@
-import { GrpcVideoMetadata } from '@backend/grpc';
+import { GrpcVideoUpdateSet } from '@backend/grpc';
 
 export interface ProviderIdEvent {
   providerId: string;
 }
 
 export interface VideoUpdateOneEvent extends ProviderIdEvent {
-  update: Partial<GrpcVideoMetadata>;
+  update: GrpcVideoUpdateSet;
 }
 
 export interface StorageObjectUpdateIsPublicEvent {

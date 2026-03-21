@@ -14,3 +14,10 @@ message UrlMap {
 message DownloadMap {
   map<string, DownloadData> items = 1;
 }
+
+message UploadRequest {
+  oneof payload {
+    string id = 1;
+    bytes chunk = 2;
+  }
+}

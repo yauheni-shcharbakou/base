@@ -2,14 +2,14 @@ import {
   GrpcBaseQuery,
   GrpcDownloadMap,
   GrpcFile,
-  GrpcFileCreateRequest,
+  GrpcFileCreate,
   GrpcFileGetListResponse,
   GrpcFileService,
   GrpcFileServiceController,
-  GrpcFileUploadRequest,
   GrpcFileUploadResponse,
   GrpcGetListRequest,
   GrpcIdField,
+  GrpcUploadRequest,
   GrpcUrlMap,
 } from '@backend/grpc';
 import { GrpcController, GrpcMetadataMapper, GrpcRxPipe } from '@backend/transport';
@@ -41,13 +41,13 @@ export class FileRpcController implements GrpcFileServiceController {
     return from(this.fileService.getList(request));
   }
 
-  createOne(request: GrpcFileCreateRequest, metadata?: Metadata): Observable<GrpcFile> {
+  createOne(request: GrpcFileCreate, metadata?: Metadata): Observable<GrpcFile> {
     const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
     return from(this.fileService.createOne(request, userId)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   uploadOne(
-    request: Observable<GrpcFileUploadRequest>,
+    request: Observable<GrpcUploadRequest>,
     metadata?: Metadata,
   ): Observable<GrpcFileUploadResponse> {
     const userId = new GrpcMetadataMapper(metadata).get('user');

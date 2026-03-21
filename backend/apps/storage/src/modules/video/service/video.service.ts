@@ -1,13 +1,13 @@
 import {
   GrpcBaseQuery,
   GrpcDownloadMap,
+  GrpcUploadRequest,
   GrpcUrlMap,
   GrpcVideo,
   GrpcVideoCreate,
   GrpcVideoCreateRequest,
   GrpcVideoQuery,
   GrpcVideoUpdate,
-  GrpcVideoUploadRequest,
   GrpcVideoUploadResponse,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
@@ -27,7 +27,7 @@ export interface VideoService extends CrudService<
   getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap>;
   createOne(request: GrpcVideoCreateRequest, userId: string): Promise<Either<Error, GrpcVideo>>;
   uploadOne(
-    request$: Observable<GrpcVideoUploadRequest>,
+    request$: Observable<GrpcUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcVideoUploadResponse>>;
   onDeleteOne(data: ProviderIdEvent): Promise<void>;

@@ -2,12 +2,13 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
+import { storageActionClient } from '@/features/file/clients';
 import { FileUploader, FolderSelect } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcUser } from '@packages/grpc';
+import { GrpcFile, GrpcUser } from '@packages/grpc';
 import { HttpError, useGetIdentity } from '@refinedev/core';
 import { Create } from '@refinedev/mui';
 import { useForm } from '@refinedev/react-hook-form';
@@ -46,27 +47,17 @@ export default function FileCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const file = data.file;
+    const createdFile = await handleUpload<GrpcFile>(data.file, async (fileData) => {
+      return storageActionClient.createFile(fileData, {
+        parent: data.parent,
+        name: data.name,
+        isPublic: data.isPublic,
+      });
+    });
 
-    if (!file) {
-      return;
+    if (createdFile) {
+      await onFinish(createdFile as any);
     }
-
-    const formData = new FormData();
-
-    if (data.parent) {
-      formData.append('storage.name', data.name || '');
-      formData.append('storage.isPublic', data.isPublic ? 'true' : 'false');
-      formData.append('storage.parent', data.parent);
-    }
-
-    const createdFile = await handleUpload<any>(file, formData);
-
-    if (!createdFile) {
-      return;
-    }
-
-    await onFinish(createdFile);
   };
 
   return (

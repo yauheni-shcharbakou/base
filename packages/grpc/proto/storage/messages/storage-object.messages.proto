@@ -76,13 +76,6 @@ message StorageObjectCreate {
   optional string video = 7;
 }
 
-message StorageObjectMetadata {
-  string name = 1;
-  bool isPublic = 2;
-  string parent = 3;
-  models.StorageObjectType type = 4;
-}
-
 // update
 
 message StorageObjectUpdateSet {

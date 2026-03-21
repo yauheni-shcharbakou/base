@@ -1,4 +1,4 @@
-import { GrpcImage, GrpcImageMetadata } from '@backend/grpc';
+import { GrpcImage, GrpcImageCreate } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
@@ -33,6 +33,6 @@ export class ImageDto extends EntityWithTimestampsDto implements GrpcImage {
   fileId: string;
 }
 
-export class ImageMetadataDto
+export class ImageCreateDto
   extends PickType(ImageDto, ['width', 'height', 'alt'] as const)
-  implements GrpcImageMetadata {}
+  implements GrpcImageCreate {}

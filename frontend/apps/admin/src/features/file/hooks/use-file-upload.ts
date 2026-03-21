@@ -2,6 +2,7 @@
 
 import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
+import { GrpcFileCreate } from '@packages/grpc';
 import { BaseRecord, useNotification } from '@refinedev/core';
 import { useState } from 'react';
 
@@ -15,35 +16,38 @@ export const useFileUpload = ({ resource }: Params) => {
 
   const { open } = useNotification();
 
-  const handleUpload = async <UploadResponse extends BaseRecord = BaseRecord>(
+  const handleUpload = async <Record extends BaseRecord = BaseRecord>(
     file: File,
-    formData: FormData,
-  ): Promise<UploadResponse | undefined> => {
+    createCallback: (fileData: GrpcFileCreate) => Promise<Record>,
+    field: keyof Record = 'id',
+  ): Promise<Record | undefined> => {
     setIsUploading(() => true);
     setProgress(() => 0);
 
-    formData.append('file.size', file.size.toString());
-    formData.append('file', file);
-
     try {
-      const response = await internalHttpClient.post<UploadResponse>(
-        `${resource}/upload`,
-        formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            const total = progressEvent.total || file.size;
-            const current = progressEvent.loaded;
-            const percentCompleted = (current * 100) / total;
+      const entity = await createCallback({
+        originalName: file.name,
+        size: file.size,
+        mimeType: file.type,
+      });
 
-            setProgress(() => percentCompleted);
-          },
-          timeout: 0,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await internalHttpClient.post(`${resource}/${entity[field]}/upload`, formData, {
+        onUploadProgress: (progressEvent) => {
+          const total = progressEvent.total || file.size;
+          const current = progressEvent.loaded;
+          const percentCompleted = (current * 100) / total;
+
+          setProgress(() => percentCompleted);
         },
-      );
+        timeout: 0,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+      });
 
-      return response.data;
+      return entity;
     } catch (error) {
       open?.({
         type: 'error',

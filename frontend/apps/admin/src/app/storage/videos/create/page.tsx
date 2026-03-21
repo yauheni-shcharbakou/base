@@ -2,12 +2,13 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
+import { storageActionClient } from '@/features/file/clients';
 import { FileUploader, FolderSelect } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcUser } from '@packages/grpc';
+import { GrpcUser, GrpcVideo } from '@packages/grpc';
 import { HttpError, useGetIdentity } from '@refinedev/core';
 import React from 'react';
 import { Create } from '@refinedev/mui';
@@ -18,7 +19,7 @@ const schema = zod.object({
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
-  title: zod.string().optional(),
+  title: zod.string(),
   description: zod.string().optional(),
   file: zod.file(),
 });
@@ -51,30 +52,23 @@ export default function VideoCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const file = data.file;
+    const createdVideo = await handleUpload<GrpcVideo>(data.file, async (fileData) => {
+      return storageActionClient.createVideo(
+        {
+          file: fileData,
+          video: { title: data.title, description: data.description },
+        },
+        {
+          parent: data.parent,
+          name: data.name,
+          isPublic: data.isPublic,
+        },
+      );
+    });
 
-    if (!file) {
-      return;
+    if (createdVideo) {
+      await onFinish(createdVideo as any);
     }
-
-    const formData = new FormData();
-
-    formData.append('video.title', data.title || '');
-    formData.append('video.description', data.description || '');
-
-    if (data.parent) {
-      formData.append('storage.name', data.name || '');
-      formData.append('storage.isPublic', data.isPublic ? 'true' : 'false');
-      formData.append('storage.parent', data.parent);
-    }
-
-    const createdVideo = await handleUpload<any>(file, formData);
-
-    if (!createdVideo) {
-      return;
-    }
-
-    await onFinish(createdVideo);
   };
 
   return (
@@ -115,6 +109,7 @@ export default function VideoCreate() {
                 formField="title"
                 fieldError={errors?.title}
                 label="Title"
+                required
               />
               <ControlledTextField
                 control={control}

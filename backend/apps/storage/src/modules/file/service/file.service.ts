@@ -3,10 +3,9 @@ import {
   GrpcDownloadMap,
   GrpcFile,
   GrpcFileCreate,
-  GrpcFileCreateRequest,
   GrpcFileQuery,
-  GrpcFileUploadRequest,
   GrpcFileUploadResponse,
+  GrpcUploadRequest,
   GrpcUrlMap,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
@@ -19,9 +18,9 @@ export const FILE_SERVICE = Symbol('FileService');
 export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, GrpcFileCreate> {
   getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap>;
   getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap>;
-  createOne(request: GrpcFileCreateRequest, userId: string): Promise<Either<Error, GrpcFile>>;
+  createOne(request: GrpcFileCreate, userId: string): Promise<Either<Error, GrpcFile>>;
   uploadOne(
-    request$: Observable<GrpcFileUploadRequest>,
+    request$: Observable<GrpcUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>>;
   onDeleteOne(data: ProviderIdEvent): Promise<void>;

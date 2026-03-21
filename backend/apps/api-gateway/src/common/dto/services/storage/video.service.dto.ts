@@ -11,9 +11,8 @@ import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'clas
 import { TransformToArray } from 'common/decorators/transform.decorator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { UpdateByIdRequestDto, UpdateDto, UpdateRequestDto } from 'common/dto/grpc-types.dto';
-import { FileMetadataDto } from 'common/dto/services/storage/models/file.dto';
-import { StorageObjectMetadataDto } from 'common/dto/services/storage/models/storage-object.dto';
-import { VideoDto, VideoMetadataDto } from 'common/dto/services/storage/models/video.dto';
+import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
+import { VideoDto, VideoCreateDto } from 'common/dto/services/storage/models/video.dto';
 
 export class VideoQueryDto extends BaseQueryDto implements GrpcVideoQuery {
   @ApiProperty({ required: false })
@@ -39,26 +38,19 @@ export class VideoQueryDto extends BaseQueryDto implements GrpcVideoQuery {
 }
 
 export class VideoCreateRequestDto implements GrpcVideoCreateRequest {
-  @ApiProperty({ type: VideoMetadataDto })
+  @ApiProperty({ type: VideoCreateDto })
   @IsNotEmpty()
   @IsObject()
   @ValidateNested()
-  @Type(() => VideoMetadataDto)
-  video: VideoMetadataDto;
+  @Type(() => VideoCreateDto)
+  video: VideoCreateDto;
 
-  @ApiProperty({ type: FileMetadataDto })
+  @ApiProperty({ type: FileCreateDto })
   @IsNotEmpty()
   @IsObject()
   @ValidateNested()
-  @Type(() => FileMetadataDto)
-  file: FileMetadataDto;
-
-  @ApiProperty({ required: false, type: StorageObjectMetadataDto })
-  @IsOptional()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => StorageObjectMetadataDto)
-  storage: StorageObjectMetadataDto;
+  @Type(() => FileCreateDto)
+  file: FileCreateDto;
 }
 
 export class VideoUpdateDto extends UpdateDto(VideoDto) implements GrpcVideoUpdate {}
