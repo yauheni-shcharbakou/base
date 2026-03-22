@@ -10,15 +10,18 @@ export const STORAGE_OBJECT_REPOSITORY = Symbol('StorageObjectRepository');
 
 export interface StorageObjectRepository extends DatabaseRepository<
   GrpcStorageObject,
-  GrpcStorageObjectQuery,
+  StorageObjectQuery,
   StorageObjectCreate,
   StorageObjectUpdate
 > {}
 
-export interface StorageObjectCreate extends Omit<GrpcStorageObjectCreate, 'parent'> {
+export interface StorageObjectQuery extends GrpcStorageObjectQuery {
+  nameStratsWith?: string;
+}
+
+export interface StorageObjectCreate extends GrpcStorageObjectCreate {
   userId: string;
   folderPath?: string;
-  parent?: string;
 }
 
 export interface StorageObjectUpdate extends GrpcStorageObjectUpdate {

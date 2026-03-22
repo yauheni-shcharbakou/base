@@ -1,6 +1,8 @@
 import {
+  GrpcBooleanResult,
   GrpcStorageObject,
   GrpcStorageObjectCreate,
+  GrpcStorageObjectExistsFolderRequest,
   GrpcStorageObjectQuery,
   GrpcStorageObjectUpdate,
 } from '@backend/grpc';
@@ -22,4 +24,8 @@ export interface StorageObjectService extends CrudService<
   ): Promise<Either<Error, GrpcStorageObject>>;
   onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Promise<void>;
   createRootFolder(userId: string): Promise<void>;
+  isExistsFolder(
+    request: GrpcStorageObjectExistsFolderRequest,
+    userId: string,
+  ): Promise<GrpcBooleanResult>;
 }

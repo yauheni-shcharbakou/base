@@ -14,7 +14,7 @@ export class StorageObjectEntity extends PostgresEntity<'children'> implements G
   @Property({ index: true })
   userId: string;
 
-  @Property()
+  @Property({ index: true })
   name: string;
 
   @Property({ index: true, default: false })

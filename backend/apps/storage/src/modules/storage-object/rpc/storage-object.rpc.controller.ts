@@ -2,6 +2,7 @@ import { GrpcController, GrpcMetadataMapper, GrpcRxPipe } from '@backend/transpo
 import { Metadata } from '@grpc/grpc-js';
 import { Inject } from '@nestjs/common';
 import {
+  GrpcBooleanResult,
   GrpcGetListRequest,
   GrpcIdField,
   GrpcStorageObject,
@@ -13,6 +14,7 @@ import {
   GrpcStorageObjectService,
   GrpcStorageObjectServiceController,
   GrpcStorageObjectUpdateByIdRequest,
+  GrpcStorageObjectExistsFolderRequest,
 } from '@backend/grpc';
 import {
   STORAGE_OBJECT_SERVICE,
@@ -27,6 +29,14 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     @Inject(STORAGE_OBJECT_SERVICE)
     private readonly storageObjectService: StorageObjectService,
   ) {}
+
+  isExistsFolder(
+    request: GrpcStorageObjectExistsFolderRequest,
+    metadata?: Metadata,
+  ): Observable<GrpcBooleanResult> {
+    const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    return from(this.storageObjectService.isExistsFolder(request, userId));
+  }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcStorageObjectPopulated> {
     const stream$ = from(

@@ -6,10 +6,13 @@ import {
 } from '@/common/components/edit-fields/helpers';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { FormControlLabelProps } from '@mui/material/FormControlLabel/FormControlLabel';
-import React, { FC } from 'react';
-import { Controller, UseFormReturn } from 'react-hook-form';
+import React from 'react';
+import { Control, Controller, FieldValues, UseFormReturn } from 'react-hook-form';
 
-type ControlledBooleanFieldProps = Pick<UseFormReturn<any>, 'control'> & {
+type ControlledBooleanFieldProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
+  UseFormReturn<V, E, T>,
+  'control'
+> & {
   formField: string;
   fieldProps?: Omit<FormControlLabelProps, 'control' | 'value' | 'label' | 'required'>;
   label?: string;
@@ -18,7 +21,7 @@ type ControlledBooleanFieldProps = Pick<UseFormReturn<any>, 'control'> & {
   required?: boolean;
 };
 
-export const ControlledBooleanField: FC<ControlledBooleanFieldProps> = ({
+export const ControlledBooleanField = <V extends FieldValues, E = any, T = V>({
   control,
   formField,
   fieldProps,
@@ -26,10 +29,10 @@ export const ControlledBooleanField: FC<ControlledBooleanFieldProps> = ({
   defaultValue,
   controllerProps,
   required,
-}: ControlledBooleanFieldProps) => {
+}: ControlledBooleanFieldProps<V, E, T>) => {
   return (
     <Controller
-      control={control}
+      control={control as Control}
       name={formField}
       defaultValue={defaultValue || false}
       render={({ field }) => (

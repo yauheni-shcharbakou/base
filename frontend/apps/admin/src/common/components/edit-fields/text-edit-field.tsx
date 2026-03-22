@@ -9,10 +9,11 @@ import { TextFieldProps } from '@mui/material/TextField/TextField';
 import React, { FC, HTMLInputTypeAttribute } from 'react';
 import {
   Controller,
-  ControllerProps,
   FieldErrors,
   UseFormRegisterReturn,
   UseFormReturn,
+  Control,
+  FieldValues,
 } from 'react-hook-form';
 
 type FieldProps = Omit<TextFieldProps, 'type' | 'required' | 'label' | 'error' | 'helperText'>;
@@ -56,7 +57,10 @@ export const TextEditField: FC<TextEditFieldProps> = ({
   );
 };
 
-type ControlledTextFieldProps = Pick<UseFormReturn<any>, 'control'> & {
+type ControlledTextFieldProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
+  UseFormReturn<V, E, T>,
+  'control'
+> & {
   formField: string;
   fieldError?: FieldErrors[string];
   fieldProps?: FieldProps;
@@ -67,7 +71,7 @@ type ControlledTextFieldProps = Pick<UseFormReturn<any>, 'control'> & {
   required?: boolean;
 };
 
-export const ControlledTextField: FC<ControlledTextFieldProps> = ({
+export const ControlledTextField = <V extends FieldValues, E = any, T = V>({
   control,
   formField,
   fieldError,
@@ -77,10 +81,10 @@ export const ControlledTextField: FC<ControlledTextFieldProps> = ({
   defaultValue,
   controllerProps,
   required,
-}: ControlledTextFieldProps) => {
+}: ControlledTextFieldProps<V, E, T>) => {
   return (
     <Controller
-      control={control}
+      control={control as Control}
       name={formField}
       defaultValue={defaultValue || ''}
       render={({ field }) => (

@@ -18,6 +18,7 @@ import {
 import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
 import {
   StorageObjectCreateDto,
+  StorageObjectExistsFolderRequestDto,
   StorageObjectRequestDto,
   StorageObjectUpdateByIdRequestDto,
 } from 'common/dto/services/storage/storage-object.service.dto';
@@ -63,6 +64,7 @@ import {
           getById: IdFieldDto,
           getMany: StorageObjectRequestDto,
           getList: GetListRequestDto,
+          isExistsFolder: StorageObjectExistsFolderRequestDto,
           createOne: StorageObjectCreateDto,
           updateById: StorageObjectUpdateByIdRequestDto,
           deleteById: IdFieldDto,

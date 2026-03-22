@@ -5,15 +5,18 @@ import {
   EditFieldControllerProps,
 } from '@/common/components/edit-fields/helpers';
 import { MenuItem, TextField } from '@mui/material';
-import React, { FC, useMemo } from 'react';
-import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
+import React, { useMemo } from 'react';
+import { Control, Controller, FieldErrors, FieldValues, UseFormReturn } from 'react-hook-form';
 
 type SelectOptions = {
   label: string;
   value: string;
 };
 
-type ControlledSingleSelectProps = Pick<UseFormReturn<any>, 'control'> & {
+type ControlledSingleSelectProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
+  UseFormReturn<V, E, T>,
+  'control'
+> & {
   formField: string;
   fieldError?: FieldErrors[string];
   label?: string;
@@ -23,7 +26,7 @@ type ControlledSingleSelectProps = Pick<UseFormReturn<any>, 'control'> & {
   required?: boolean;
 };
 
-export const ControlledSingleSelect: FC<ControlledSingleSelectProps> = ({
+export const ControlledSingleSelect = <V extends FieldValues, E = any, T = V>({
   control,
   formField,
   fieldError,
@@ -32,7 +35,7 @@ export const ControlledSingleSelect: FC<ControlledSingleSelectProps> = ({
   controllerProps,
   options: optionsFromProps,
   required,
-}: ControlledSingleSelectProps) => {
+}: ControlledSingleSelectProps<V, E, T>) => {
   const options = useMemo(() => {
     const opts: SelectOptions[] = [];
 
@@ -50,7 +53,7 @@ export const ControlledSingleSelect: FC<ControlledSingleSelectProps> = ({
   return (
     <Controller
       name={formField}
-      control={control}
+      control={control as Control}
       defaultValue={defaultValue || ''}
       render={({ field }) => {
         return (

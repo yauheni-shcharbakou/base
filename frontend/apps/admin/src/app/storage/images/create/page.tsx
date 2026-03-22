@@ -2,36 +2,32 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
+import { useValidatedForm } from '@/common/hooks';
 import { storageActionClient } from '@/features/file/clients';
 import { FileUploader, FolderSelect } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
 import { getImageDimensions } from '@/features/image/helpers';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
-import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcImage, GrpcUser } from '@packages/grpc';
-import { HttpError, useGetIdentity } from '@refinedev/core';
+import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
+import { GrpcImage } from '@packages/grpc';
 import React from 'react';
 import { Create } from '@refinedev/mui';
-import { useForm } from '@refinedev/react-hook-form';
-import zod, { z } from 'zod';
+import zod from 'zod';
 
-const schema = zod.object({
+const schema = {
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
   file: zod.file(),
   alt: zod.string(),
-});
+};
 
-type Params = z.infer<typeof schema>;
+type Params = SchemaTypeOf<typeof schema>;
 
 export default function ImageCreate() {
   const { isUploading, progress, handleUpload } = useFileUpload({
     resource: StorageDatabaseEntity.FILE,
   });
-
-  const { data: user } = useGetIdentity<GrpcUser>();
 
   const {
     watch,
@@ -40,12 +36,15 @@ export default function ImageCreate() {
     setValue,
     refineCore: { onFinish, formLoading },
     handleSubmit,
-  } = useForm<Params, HttpError, Params>({
-    resolver: zodResolver(schema),
-  });
+  } = useValidatedForm(schema);
+
+  const parent = watch('parent');
+  const name = watch('name');
 
   const handleFileChange = (file?: File) => {
-    setValue('name', file?.name ?? '');
+    if (!name?.trim()) {
+      setValue('name', file?.name ?? '');
+    }
   };
 
   const handleSave = async (data: Params) => {
@@ -87,20 +86,18 @@ export default function ImageCreate() {
           <Card variant="outlined">
             <CardHeader title="Storage" />
             <CardContent>
-              <FolderSelect
-                label="Folder"
-                formField="parent"
-                errors={errors}
-                control={control}
-                userId={user?.id}
-              />
-              <ControlledTextField
-                control={control}
-                formField="name"
-                fieldError={errors?.name}
-                label="Name"
-              />
-              <ControlledBooleanField control={control} formField="isPublic" label="Public" />
+              <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
+              {parent && (
+                <>
+                  <ControlledTextField
+                    control={control}
+                    formField="name"
+                    fieldError={errors?.name}
+                    label="Name"
+                  />
+                  <ControlledBooleanField control={control} formField="isPublic" label="Public" />
+                </>
+              )}
             </CardContent>
           </Card>
 

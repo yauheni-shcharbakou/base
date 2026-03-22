@@ -24,6 +24,11 @@ export class AuthService {
     const accessToken = authData.tokens.accessToken.value;
     const accessExpireDate = authData.tokens.accessToken.expireDate;
 
+    cookieStore.set('userId', authData.user.id, {
+      ...this.cookieConfig,
+      expires: accessExpireDate,
+    });
+
     cookieStore.set('role', authData.user.role, {
       ...this.cookieConfig,
       expires: accessExpireDate,
@@ -39,10 +44,13 @@ export class AuthService {
       expires: authData.tokens.refreshToken.expireDate,
     });
 
-    return accessToken;
+    return {
+      accessToken,
+      userId: authData.user.id,
+    };
   }
 
-  async getAccessToken() {
+  private async getAccessToken() {
     const cookieStore = await cookies();
 
     const accessToken = cookieStore.get('access-token');
@@ -55,12 +63,44 @@ export class AuthService {
     return accessToken.value;
   }
 
-  async getAccessTokenSafe() {
+  private async getUserId() {
+    const cookieStore = await cookies();
+
+    const userId = cookieStore.get('userId');
+    const role = cookieStore.get('role');
+
+    if (!userId?.value || role?.value !== GrpcUserRole.ADMIN) {
+      throw new Error('Forbidden');
+    }
+
+    return userId.value;
+  }
+
+  private async getAccessTokenSafe() {
     try {
       return this.getAccessToken();
     } catch (error) {
       return null;
     }
+  }
+
+  private async getUserIdSafe() {
+    try {
+      return this.getUserId();
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async getRefreshToken() {
+    const cookieStore = await cookies();
+    const refreshToken = cookieStore.get('refresh-token');
+
+    if (!refreshToken?.value) {
+      throw new Error('Forbidden');
+    }
+
+    return refreshToken.value;
   }
 
   async hasAuth() {
@@ -70,17 +110,6 @@ export class AuthService {
     } catch (error) {
       return false;
     }
-  }
-
-  async getRefreshToken() {
-    const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refresh-token');
-
-    if (!refreshToken?.value) {
-      throw new Error('Forbidden');
-    }
-
-    return refreshToken.value;
   }
 
   async login(data: GrpcAuthLogin) {
@@ -103,10 +132,22 @@ export class AuthService {
     let accessToken = await this.getAccessTokenSafe();
 
     if (!accessToken) {
-      accessToken = await this.refreshAuthData();
+      const authData = await this.refreshAuthData();
+      accessToken = authData.accessToken;
     }
 
     return this.authRepository.me({ accessToken });
+  }
+
+  async getCurrentUserId() {
+    let userId = await this.getUserIdSafe();
+
+    if (!userId) {
+      const authData = await this.refreshAuthData();
+      userId = authData.userId;
+    }
+
+    return userId;
   }
 
   async clearCookies() {

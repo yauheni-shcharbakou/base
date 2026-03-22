@@ -1,29 +1,33 @@
 'use client';
 
 import { ControlledSingleSelect } from '@/common/components';
-import { getUserFolders } from '@/features/file/actions';
+import { storageActionClient } from '@/features/file/clients';
 import { GrpcStorageObjectPopulated } from '@packages/grpc';
-import React, { FC, useEffect, useState } from 'react';
-import { FieldErrors, UseFormReturn } from 'react-hook-form';
+import React, { useEffect, useState } from 'react';
+import { FieldErrors, FieldValues, UseFormReturn } from 'react-hook-form';
 
-type Props = Pick<UseFormReturn<any>, 'control'> & {
+type Props<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
+  UseFormReturn<V, E, T>,
+  'control'
+> & {
   errors?: FieldErrors<any>;
   label: string;
   formField: string;
-  userId?: string;
   required?: boolean;
 };
 
-export const FolderSelect: FC<Props> = ({ userId, errors, ...props }: Props) => {
+export const FolderSelect = <V extends FieldValues, E = any, T = V>({
+  errors,
+  ...props
+}: Props<V, E, T>) => {
   const [folders, setFolders] = useState<GrpcStorageObjectPopulated[]>([]);
 
   useEffect(() => {
-    if (userId) {
-      getUserFolders(userId)
-        .then((response) => setFolders(() => response))
-        .catch(console.error);
-    }
-  }, [userId]);
+    storageActionClient
+      .getUserFolders()
+      .then((response) => setFolders(() => response))
+      .catch(console.error);
+  }, []);
 
   return (
     <ControlledSingleSelect

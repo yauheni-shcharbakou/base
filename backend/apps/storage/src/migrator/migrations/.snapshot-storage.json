@@ -778,6 +778,16 @@
         },
         {
           "columnNames": [
+            "name"
+          ],
+          "composite": false,
+          "keyName": "storage-objects_name_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "is_public"
           ],
           "composite": false,

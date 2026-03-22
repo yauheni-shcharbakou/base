@@ -5,39 +5,57 @@ import {
   ControlledSingleSelect,
   ControlledTextField,
 } from '@/common/components';
+import { useValidatedForm } from '@/common/hooks';
+import { storageActionClient } from '@/features/file/clients';
 import { FolderSelect } from '@/features/file/components';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Box } from '@mui/material';
-import { GrpcStorageObjectType, GrpcUser } from '@packages/grpc';
-import { HttpError, useGetIdentity } from '@refinedev/core';
+import { SchemaTypeOf } from '@packages/common';
+import { GrpcStorageObjectType } from '@packages/grpc';
 import React from 'react';
 import { Create } from '@refinedev/mui';
-import { useForm } from '@refinedev/react-hook-form';
-import zod, { z } from 'zod';
+import zod from 'zod';
 
-const schema = zod.object({
+const schema = {
   parent: zod.string().nonempty(),
   name: zod.string().nonempty(),
   isPublic: zod.boolean(),
   type: zod.enum(Object.values(GrpcStorageObjectType)),
-});
+};
 
-type Params = z.infer<typeof schema>;
+type Params = SchemaTypeOf<typeof schema>;
 
 export default function StorageObjectCreate() {
-  const { data: user } = useGetIdentity<GrpcUser>();
-
   const {
     formState: { errors },
     control,
-    refineCore: { formLoading },
-    saveButtonProps,
-  } = useForm<Params, HttpError, Params>({
-    resolver: zodResolver(schema),
-  });
+    refineCore: { formLoading, onFinish },
+    setError,
+    clearErrors,
+    handleSubmit,
+  } = useValidatedForm(schema);
+
+  const handleSave = async (data: Params) => {
+    if (data.type === GrpcStorageObjectType.FOLDER) {
+      const hasFolderWithSameName = await storageActionClient.isExistsFolder({
+        parent: data.parent,
+        name: data.name,
+      });
+
+      if (hasFolderWithSameName) {
+        setError('name', { type: 'manual', message: 'Choose another name for folder' });
+        return;
+      }
+    }
+
+    clearErrors('name');
+    await onFinish(data);
+  };
 
   return (
-    <Create saveButtonProps={{ ...saveButtonProps, disabled: formLoading }} isLoading={formLoading}>
+    <Create
+      saveButtonProps={{ onClick: handleSubmit(handleSave), disabled: formLoading }}
+      isLoading={formLoading}
+    >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <FolderSelect
           label="Folder"
@@ -45,7 +63,6 @@ export default function StorageObjectCreate() {
           errors={errors}
           control={control}
           required
-          userId={user?.id}
         />
         <ControlledTextField
           control={control}
@@ -60,7 +77,7 @@ export default function StorageObjectCreate() {
           formField="type"
           defaultValue={GrpcStorageObjectType.FOLDER}
           label="Type"
-          options={Object.values(GrpcStorageObjectType)}
+          options={[GrpcStorageObjectType.FOLDER] /*Object.values(GrpcStorageObjectType) */}
           required
         />
       </Box>

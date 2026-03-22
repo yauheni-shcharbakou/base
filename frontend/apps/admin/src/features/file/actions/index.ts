@@ -19,13 +19,15 @@ import {
   GrpcImage,
   GrpcStorageObjectCreate,
   GrpcStorageObject,
+  GrpcStorageObjectExistsFolderRequest,
 } from '@frontend/grpc';
 
 type CreateActionResponse<T> = { entity: T } | { error: string };
 
-export async function getUserFolders(userId: string): Promise<GrpcStorageObjectPopulated[]> {
+export async function getUserFolders(): Promise<GrpcStorageObjectPopulated[]> {
   try {
     const metadata = await authService.getAuthMetadata();
+    const userId = await authService.getCurrentUserId();
 
     const list = await storageObjectGrpcRepository.getMany(
       { query: { userId, type: GrpcStorageObjectType.FOLDER, ids: [] } },
@@ -81,5 +83,17 @@ export async function createStorageObject(
     return { entity };
   } catch (error) {
     return { error: getErrorMessage(error) };
+  }
+}
+
+export async function isExistsFolder(
+  request: GrpcStorageObjectExistsFolderRequest,
+): Promise<boolean> {
+  try {
+    const metadata = await authService.getAuthMetadata();
+    const result = await storageObjectGrpcRepository.isExistsFolder(request, metadata);
+    return result.value;
+  } catch (error) {
+    return false;
   }
 }

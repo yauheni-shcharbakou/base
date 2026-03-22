@@ -1,4 +1,4 @@
-import { EnvironmentOf } from 'validation/types';
+import { SchemaTypeOf } from 'validation/types';
 import zod from 'zod';
 
 export const NodeValidationSchema = {
@@ -10,5 +10,5 @@ export const DatabaseValidationSchema = {
   DATABASE_URL: zod.string(),
 } as const;
 
-export type NodeEnvironment = EnvironmentOf<typeof NodeValidationSchema>;
-export type DatabaseEnvironment = EnvironmentOf<typeof DatabaseValidationSchema>;
+export type NodeEnvironment = SchemaTypeOf<typeof NodeValidationSchema>;
+export type DatabaseEnvironment = SchemaTypeOf<typeof DatabaseValidationSchema>;

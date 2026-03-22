@@ -1,17 +1,11 @@
 'use client';
 
 import { TextEditField } from '@/common/components';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useValidatedForm } from '@/common/hooks';
 import { Box } from '@mui/material';
-import { HttpError } from '@refinedev/core';
 import { Edit } from '@refinedev/mui';
-import { useForm } from '@refinedev/react-hook-form';
 import React from 'react';
-import zod, { z } from 'zod';
-
-const schema = zod.object({ alt: zod.string().optional() });
-
-type Params = z.infer<typeof schema>;
+import zod from 'zod';
 
 export default function ImageEdit() {
   const {
@@ -19,8 +13,8 @@ export default function ImageEdit() {
     formState: { errors },
     refineCore: { formLoading, query },
     register,
-  } = useForm<Params, HttpError, Params>({
-    resolver: zodResolver(schema),
+  } = useValidatedForm({
+    alt: zod.string().optional(),
   });
 
   const entity = query?.data?.data;

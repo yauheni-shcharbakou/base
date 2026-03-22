@@ -6,6 +6,7 @@ import {
   GrpcStorageObjectUpdate,
   GrpcStorageObjectUpdateByIdRequest,
   GrpcStorageObjectUpdateRequest,
+  GrpcStorageObjectExistsFolderRequest,
 } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
@@ -51,14 +52,24 @@ export class StorageObjectRequestDto
   extends RequestDto(StorageObjectQueryDto)
   implements GrpcStorageObjectRequest {}
 
-export class StorageObjectCreateDto
-  extends PickType(StorageObjectDto, ['type', 'name', 'isPublic'] as const)
-  implements GrpcStorageObjectCreate
+export class StorageObjectExistsFolderRequestDto
+  extends PickType(StorageObjectDto, ['name'] as const)
+  implements GrpcStorageObjectExistsFolderRequest
 {
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
   parent: string;
+}
+
+export class StorageObjectCreateDto
+  extends PickType(StorageObjectDto, ['type', 'name', 'isPublic'] as const)
+  implements GrpcStorageObjectCreate
+{
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  parent?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

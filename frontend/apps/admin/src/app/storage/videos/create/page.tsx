@@ -2,36 +2,32 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
+import { useValidatedForm } from '@/common/hooks';
 import { storageActionClient } from '@/features/file/clients';
 import { FileUploader, FolderSelect } from '@/features/file/components';
 import { useFileUpload } from '@/features/file/hooks';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
-import { StorageDatabaseEntity } from '@packages/common';
-import { GrpcUser, GrpcVideo } from '@packages/grpc';
-import { HttpError, useGetIdentity } from '@refinedev/core';
+import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
+import { GrpcVideo } from '@packages/grpc';
 import React from 'react';
 import { Create } from '@refinedev/mui';
-import { useForm } from '@refinedev/react-hook-form';
-import zod, { z } from 'zod';
+import zod from 'zod';
 
-const schema = zod.object({
+const schema = {
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
   title: zod.string(),
   description: zod.string().optional(),
   file: zod.file(),
-});
+};
 
-type Params = z.infer<typeof schema>;
+type Params = SchemaTypeOf<typeof schema>;
 
 export default function VideoCreate() {
   const { isUploading, progress, handleUpload } = useFileUpload({
     resource: StorageDatabaseEntity.VIDEO,
   });
-
-  const { data: user } = useGetIdentity<GrpcUser>();
 
   const {
     formState: { errors, isValid },
@@ -40,15 +36,20 @@ export default function VideoCreate() {
     refineCore: { onFinish, formLoading },
     handleSubmit,
     watch,
-  } = useForm<Params, HttpError, Params>({
-    resolver: zodResolver(schema),
-  });
+  } = useValidatedForm(schema);
+
+  const fields = watch();
 
   const handleFileChange = (file?: File) => {
     const fileName = file?.name ?? '';
 
-    setValue('name', fileName);
-    setValue('title', fileName.replace(/.\w+$/g, ''));
+    if (!fields.name?.trim()) {
+      setValue('name', fileName);
+    }
+
+    if (!fields.title?.trim()) {
+      setValue('title', fileName.replace(/.\w+$/g, ''));
+    }
   };
 
   const handleSave = async (data: Params) => {
@@ -84,20 +85,18 @@ export default function VideoCreate() {
           <Card variant="outlined">
             <CardHeader title="Storage" />
             <CardContent>
-              <FolderSelect
-                label="Folder"
-                formField="parent"
-                errors={errors}
-                control={control}
-                userId={user?.id}
-              />
-              <ControlledTextField
-                control={control}
-                formField="name"
-                fieldError={errors?.name}
-                label="Name"
-              />
-              <ControlledBooleanField control={control} formField="isPublic" label="Public" />
+              <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
+              {fields.parent && (
+                <>
+                  <ControlledTextField
+                    control={control}
+                    formField="name"
+                    fieldError={errors?.name}
+                    label="Name"
+                  />
+                  <ControlledBooleanField control={control} formField="isPublic" label="Public" />
+                </>
+              )}
             </CardContent>
           </Card>
 

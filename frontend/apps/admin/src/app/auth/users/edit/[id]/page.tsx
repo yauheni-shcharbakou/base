@@ -1,22 +1,12 @@
 'use client';
 
 import { ControlledSingleSelect, TextEditField } from '@/common/components';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useValidatedForm } from '@/common/hooks';
 import { Box } from '@mui/material';
-import { GrpcUser, GrpcUserRole } from '@packages/grpc';
-import { HttpError } from '@refinedev/core';
+import { GrpcUserRole } from '@packages/grpc';
 import { Edit } from '@refinedev/mui';
-import { useForm } from '@refinedev/react-hook-form';
 import React from 'react';
-import zod, { z } from 'zod';
-
-const schema = zod.object({
-  email: zod.email().optional(),
-  password: zod.string().min(8).optional(),
-  role: zod.enum(Object.values(GrpcUserRole)).optional(),
-});
-
-type Params = z.infer<typeof schema>;
+import zod from 'zod';
 
 export default function UserEdit() {
   const {
@@ -26,8 +16,10 @@ export default function UserEdit() {
     refineCore: { formLoading, query },
     control,
     watch,
-  } = useForm<GrpcUser, HttpError, Params>({
-    resolver: zodResolver(schema),
+  } = useValidatedForm({
+    email: zod.email().optional(),
+    password: zod.string().min(8).optional(),
+    role: zod.enum(Object.values(GrpcUserRole)).optional(),
   });
 
   const entity = query?.data?.data;

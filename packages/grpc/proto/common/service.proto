@@ -40,3 +40,7 @@ message GetListRequest {
   repeated CrudSorter sorters = 3;
   optional Pagination pagination = 4;
 }
+
+message BooleanResult {
+  bool value = 1;
+}

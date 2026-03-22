@@ -1,7 +1,9 @@
 import {
+  GrpcBooleanResult,
   GrpcFileUploadStatus,
   GrpcStorageObject,
   GrpcStorageObjectCreate,
+  GrpcStorageObjectExistsFolderRequest,
   GrpcStorageObjectPopulated,
   GrpcStorageObjectQuery,
   GrpcStorageObjectType,
@@ -18,6 +20,7 @@ import {
 } from 'common/repositories/storage-object/storage-object.repository';
 import _ from 'lodash';
 import { StorageObjectService } from 'modules/storage-object/service/storage-object.service';
+import path from 'node:path';
 import { firstValueFrom } from 'rxjs';
 
 export class StorageObjectServiceImpl
@@ -61,6 +64,65 @@ export class StorageObjectServiceImpl
     return right(null);
   }
 
+  private async checkObjectName(
+    data: Pick<GrpcStorageObjectCreate, 'name' | 'type' | 'parent'>,
+  ): Promise<Either<HttpException, string>> {
+    if (data.type === GrpcStorageObjectType.FOLDER) {
+      const isExistsFolderWithSameName = await this.repository.isExists({
+        parent: data.parent,
+        name: data.name,
+        type: GrpcStorageObjectType.FOLDER,
+      });
+
+      if (isExistsFolderWithSameName) {
+        return left(new BadRequestException('Folder name should be unique across the folder'));
+      }
+
+      return right(data.name);
+    }
+
+    const parsedName = path.parse(data.name);
+
+    const fileNames = await this.repository.distinct('name', {
+      parent: data.parent,
+      nameStratsWith: parsedName.name,
+    });
+
+    const escapeRegexp = /[.*+?^${}()|[\]\\]/g;
+    const escapedName = parsedName.name.replace(escapeRegexp, '\\$&');
+    const escapedExt = parsedName.ext.replace(escapeRegexp, '\\$&');
+    const re = new RegExp(`^${escapedName}(?: \\((?<num>\\d+)\\))?${escapedExt}$`);
+
+    let maxNum = -1;
+    let baseFileExists = false;
+
+    for (const fileName of fileNames) {
+      const match = fileName.match(re);
+
+      if (match) {
+        if (!match.groups.num) {
+          baseFileExists = true;
+
+          if (maxNum < 0) {
+            maxNum = 0;
+          }
+        } else {
+          const n = parseInt(match.groups.num, 10);
+
+          if (n > maxNum) {
+            maxNum = n;
+          }
+        }
+      }
+    }
+
+    if (!baseFileExists) {
+      return right(data.name);
+    }
+
+    return right(`${parsedName.name} (${maxNum + 1})${parsedName.ext}`);
+  }
+
   async createOne(
     request: GrpcStorageObjectCreate,
     userId: string,
@@ -69,30 +131,52 @@ export class StorageObjectServiceImpl
       return left(new BadRequestException('Parent is required'));
     }
 
-    const folderPath = await this.getFolderPath(request.parent, _.pick(request, ['name', 'type']));
+    const [name, folderPath] = await Promise.all([
+      this.checkObjectName(request),
+      this.getFolderPath(request.parent, _.pick(request, ['name', 'type'])),
+    ]);
+
+    if (name.isLeft()) {
+      return left(name.value);
+    }
 
     if (folderPath.isLeft()) {
       return left(folderPath.value);
     }
 
-    return this.repository.saveOne({ ...request, folderPath: folderPath.value, userId });
+    return this.repository.saveOne({
+      ...request,
+      folderPath: folderPath.value,
+      userId,
+      name: name.value,
+    });
   }
 
   async updateById(
     id: string,
     updateData: GrpcStorageObjectUpdate,
   ): Promise<Either<NotFoundException, GrpcStorageObject>> {
+    const storageObject = await this.repository.getById(id);
+
+    if (storageObject.isLeft()) {
+      return storageObject;
+    }
+
     const update: StorageObjectUpdate = {
-      set: _.pick(updateData.set ?? {}, ['name', 'isPublic']),
+      set: _.pick(updateData.set ?? {}, ['isPublic']),
     };
 
-    if (updateData.set?.parent) {
-      const storageObject = await this.repository.getById(id);
+    if (updateData.set?.name) {
+      const name = await this.checkObjectName(storageObject.value);
 
-      if (storageObject.isLeft()) {
-        return storageObject;
+      if (name.isLeft()) {
+        return left(name.value);
       }
 
+      update.set.name = name.value;
+    }
+
+    if (updateData.set?.parent) {
       if (storageObject.value.type === GrpcStorageObjectType.FOLDER) {
         return left(new BadRequestException('Replacement of folders is restricted'));
       }
@@ -216,5 +300,19 @@ export class StorageObjectServiceImpl
       isPublic: false,
       folderPath: '/',
     });
+  }
+
+  async isExistsFolder(
+    request: GrpcStorageObjectExistsFolderRequest,
+    userId: string,
+  ): Promise<GrpcBooleanResult> {
+    const hasFolder = await this.repository.isExists({
+      userId,
+      name: request.name,
+      parent: request.parent,
+      type: GrpcStorageObjectType.FOLDER,
+    });
+
+    return { value: hasFolder };
   }
 }

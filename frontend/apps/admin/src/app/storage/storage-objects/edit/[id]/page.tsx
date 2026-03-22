@@ -1,54 +1,62 @@
 'use client';
 
 import { ControlledBooleanField, TextEditField } from '@/common/components';
+import { useValidatedForm } from '@/common/hooks';
+import { storageActionClient } from '@/features/file/clients';
 import { FolderSelect } from '@/features/file/components';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Box } from '@mui/material';
+import { SchemaTypeOf } from '@packages/common';
 import { GrpcStorageObject, GrpcStorageObjectType } from '@packages/grpc';
-import { HttpError } from '@refinedev/core';
 import { Edit } from '@refinedev/mui';
-import { useForm } from '@refinedev/react-hook-form';
 import React from 'react';
-import zod, { z } from 'zod';
+import zod from 'zod';
 
-const schema = zod.object({
+const schema = {
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
-});
+};
 
-type Params = z.infer<typeof schema>;
+type Params = SchemaTypeOf<typeof schema>;
 
 export default function StorageObjectEdit() {
   const {
-    saveButtonProps,
     formState: { errors },
-    refineCore: { formLoading, query },
+    refineCore: { formLoading, query, onFinish },
     control,
     register,
-  } = useForm<GrpcStorageObject, HttpError, Params>({
-    resolver: zodResolver(schema),
-  });
+    handleSubmit,
+    clearErrors,
+    setError,
+  } = useValidatedForm<typeof schema, GrpcStorageObject>(schema);
 
   const entity = query?.data?.data;
+
+  const handleSave = async (data: Params) => {
+    if (entity?.type === GrpcStorageObjectType.FOLDER && entity?.parentId && data.name) {
+      const hasFolderWithSameName = await storageActionClient.isExistsFolder({
+        parent: entity?.parentId,
+        name: data.name,
+      });
+
+      if (hasFolderWithSameName) {
+        setError('name', { type: 'manual', message: 'Choose another name for folder' });
+        return;
+      }
+    }
+
+    clearErrors('name');
+    await onFinish(data);
+  };
 
   return (
     <Edit
       isLoading={formLoading && !!entity}
-      saveButtonProps={{
-        ...saveButtonProps,
-        disabled: formLoading,
-      }}
+      saveButtonProps={{ onClick: handleSubmit(handleSave), disabled: formLoading }}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }} autoComplete="off">
         {entity?.type !== GrpcStorageObjectType.FOLDER && (
-          <FolderSelect
-            label="Folder"
-            formField="parent"
-            errors={errors}
-            control={control}
-            userId={entity?.userId}
-          />
+          <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
         )}
         <TextEditField
           register={register('name', { setValueAs: (value) => value || undefined })}

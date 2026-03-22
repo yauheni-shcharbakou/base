@@ -1,6 +1,13 @@
 'use client';
 
-import { createFile, createImage, createStorageObject, createVideo } from '@/features/file/actions';
+import {
+  createFile,
+  createImage,
+  createStorageObject,
+  createVideo,
+  getUserFolders,
+  isExistsFolder,
+} from '@/features/file/actions';
 import {
   GrpcFile,
   GrpcFileCreate,
@@ -10,6 +17,8 @@ import {
   GrpcVideo,
   GrpcVideoCreateRequest,
   GrpcStorageObjectType,
+  GrpcStorageObjectExistsFolderRequest,
+  GrpcStorageObjectPopulated,
 } from '@packages/grpc';
 
 type StorageData = Partial<Pick<GrpcStorageObjectCreate, 'parent' | 'isPublic' | 'name'>>;
@@ -87,5 +96,13 @@ export class StorageActionClient {
     }
 
     return response.entity;
+  }
+
+  async isExistsFolder(request: GrpcStorageObjectExistsFolderRequest): Promise<boolean> {
+    return isExistsFolder(request);
+  }
+
+  async getUserFolders(): Promise<GrpcStorageObjectPopulated[]> {
+    return getUserFolders();
   }
 }

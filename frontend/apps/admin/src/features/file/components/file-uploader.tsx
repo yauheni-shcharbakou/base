@@ -2,12 +2,15 @@
 
 import { getFileSize } from '@/features/file/helpers';
 import { Box, Button, Card, LinearProgress, Stack, Typography } from '@mui/material';
-import React, { FC, useEffect, useState, useCallback, MouseEvent } from 'react';
-import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
+import React, { useEffect, useState, useCallback, MouseEvent } from 'react';
+import { Controller, FieldErrors, FieldValues, UseFormReturn, Path } from 'react-hook-form';
 import { Accept, useDropzone } from 'react-dropzone';
 
-type Props = Pick<UseFormReturn<any>, 'control' | 'watch'> & {
-  formField: string;
+type Props<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
+  UseFormReturn<V, E, T>,
+  'control' | 'watch'
+> & {
+  formField: Path<V>;
   errors: FieldErrors<any>;
   onChange?: (file?: File) => void;
   disabled?: boolean;
@@ -19,7 +22,7 @@ type Props = Pick<UseFormReturn<any>, 'control' | 'watch'> & {
   allowedTypes?: string[];
 };
 
-export const FileUploader: FC<Props> = ({
+export const FileUploader = <V extends FieldValues, E = any, T = V>({
   control,
   watch,
   formField,
@@ -32,8 +35,8 @@ export const FileUploader: FC<Props> = ({
   maxSize,
   allowedTypes,
   accept,
-}: Props) => {
-  const selectedFile = watch(formField) as File;
+}: Props<V, E, T>) => {
+  const selectedFile = watch(formField) as unknown as File;
   const [fileSize, setFileSize] = useState('');
 
   const maxFileSize = getFileSize(maxSize);

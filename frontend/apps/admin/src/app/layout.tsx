@@ -9,7 +9,7 @@ import { RefineSnackbarProvider, useNotificationProvider } from '@refinedev/mui'
 import routerProvider from '@refinedev/nextjs-router';
 import { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import React, { Suspense } from 'react';
+import React, { ReactNode, Suspense } from 'react';
 
 import { ColorModeContextProvider } from '@/common/contexts';
 
@@ -22,14 +22,13 @@ export const metadata: Metadata = {
 };
 
 // TODO: create custom list view
-// TODO: implement custom hook for useForm (zod validation)
 // TODO: uploadMany logic for files / images / videos
 // TODO: try migrate to 16 Next
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   const cookieStore = await cookies();
   const theme = cookieStore.get('theme');
