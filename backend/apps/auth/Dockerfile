@@ -35,4 +35,4 @@ USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
 WORKDIR /app/backend/apps/auth
-CMD ["node", "dist/migrator/main.js", "--", "postgres-migration", "&&", "node", "dist/main.js"]
+CMD ["sh", "-c", "node dist/migrator/main.js -- postgres-migration && node dist/main.js"]
