@@ -1,14 +1,38 @@
 import { Migrator } from '@mikro-orm/migrations';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs/typings';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { DatabaseValidationSchema, validateEnv } from '@packages/common';
+import { MigrationsOptions, PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { DatabaseValidationSchema, NodeValidationSchema, validateEnv } from '@packages/common';
 import { dotCase } from 'change-case-all';
 
-const env = validateEnv(DatabaseValidationSchema);
+const env = validateEnv({
+  ...NodeValidationSchema,
+  ...DatabaseValidationSchema,
+});
 
 export const postgresConfig = () =>
   ({
     postgres: (dbName: string): Omit<MikroOrmModuleOptions<PostgreSqlDriver>, 'contextName'> => {
+      const migrations: MigrationsOptions = {
+        path: 'dist/migrator/migrations',
+        glob: '!(*.d).{js,ts}',
+        transactional: true,
+        allOrNothing: true,
+        fileName: (timestamp, name) => {
+          const parts = [timestamp];
+
+          if (name) {
+            parts.push(name);
+          }
+
+          parts.push('migration');
+          return dotCase(parts.join('_'));
+        },
+      };
+
+      if (env.NODE_ENV !== 'production') {
+        migrations.pathTs = 'src/migrator/migrations';
+      }
+
       return {
         clientUrl: env.DATABASE_URL,
         autoLoadEntities: true,
@@ -19,23 +43,7 @@ export const postgresConfig = () =>
           disableForeignKeys: false,
           createForeignKeyConstraints: true,
         },
-        migrations: {
-          path: 'dist/migrator/migrations',
-          pathTs: 'src/migrator/migrations',
-          glob: '!(*.d).{js,ts}',
-          transactional: true,
-          allOrNothing: true,
-          fileName: (timestamp, name) => {
-            const parts = [timestamp];
-
-            if (name) {
-              parts.push(name);
-            }
-
-            parts.push('migration');
-            return dotCase(parts.join('_'));
-          },
-        },
+        migrations,
         extensions: [Migrator],
       };
     },
