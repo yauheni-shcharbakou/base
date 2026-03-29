@@ -15,8 +15,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       authMeta.set('ip', ip);
     }
 
-    console.log('download ip', ip);
-
     const response = await fileGrpcRepository.getDownloadMap({ id, ids: [] }, authMeta);
     const downloadData = response.items.get(id);
 
@@ -48,8 +46,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (contentLength) {
       headers.set('Content-Length', contentLength);
     }
-
-    console.log(fileResponse);
 
     return new NextResponse(fileResponse.body, { status: 200, headers });
   } catch (error) {
