@@ -31,7 +31,6 @@ RUN --mount=type=cache,id=s/0e139870-5149-4907-9454-d4228002c737-/usr/local/shar
 FROM base AS runner
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
-RUN mkdir -p /app/dist && chown -R nestjs:nodejs /app
 USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT

@@ -13,6 +13,7 @@ export const postgresConfig = () =>
   ({
     postgres: (dbName: string): Omit<MikroOrmModuleOptions<PostgreSqlDriver>, 'contextName'> => {
       const migrations: MigrationsOptions = {
+        tableName: 'mikro_orm_migrations',
         path: 'dist/migrator/migrations',
         glob: '!(*.d).{js,ts}',
         transactional: true,
@@ -34,6 +35,7 @@ export const postgresConfig = () =>
       }
 
       return {
+        schema: 'public',
         clientUrl: env.DATABASE_URL,
         autoLoadEntities: true,
         driver: PostgreSqlDriver,
