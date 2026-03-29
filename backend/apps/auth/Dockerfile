@@ -34,4 +34,4 @@ RUN adduser --system --uid 1001 nestjs
 USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
-CMD ["node", "backend/apps/auth/dist/main.js"]
+CMD ["node", "backend/apps/auth/dist/migrator/main.js", "--", "postgres-migration", "&&", "node", "backend/apps/auth/dist/main.js"]
