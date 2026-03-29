@@ -8,7 +8,9 @@ import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/c
 import { GrpcStorageObjectPopulated } from '@packages/grpc';
 import React, { useMemo } from 'react';
 
-export default function FileList() {
+export const dynamic = 'force-dynamic';
+
+export default function StorageObjectList() {
   const { dataGridProps, isMounted } = useResourceList<GrpcStorageObjectPopulated>();
 
   const columns = useMemo<GridColDef<GrpcStorageObjectPopulated>[]>(

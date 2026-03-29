@@ -16,6 +16,6 @@ export class UserMapper extends PostgresMapper<UserEntity, GrpcUser, GrpcUserQue
   }
 
   stringify(entity: UserEntity): GrpcUser {
-    return _.omit(wrap(entity).toJSON() as UserEntity, ['hash']);
+    return _.omit(wrap(entity).toJSON() as unknown as UserEntity, ['hash', 'tempTokens']);
   }
 }

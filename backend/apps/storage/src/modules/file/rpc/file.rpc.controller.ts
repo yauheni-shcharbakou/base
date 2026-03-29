@@ -2,7 +2,9 @@ import {
   GrpcBaseQuery,
   GrpcDownloadMap,
   GrpcFile,
-  GrpcFileCreate,
+  GrpcFileCreateManyRequest,
+  GrpcFileCreateManyResponse,
+  GrpcFileCreateRequest,
   GrpcFileGetListResponse,
   GrpcFileService,
   GrpcFileServiceController,
@@ -41,9 +43,18 @@ export class FileRpcController implements GrpcFileServiceController {
     return from(this.fileService.getList(request));
   }
 
-  createOne(request: GrpcFileCreate, metadata?: Metadata): Observable<GrpcFile> {
+  createOne(request: GrpcFileCreateRequest, metadata?: Metadata): Observable<GrpcFile> {
     const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
     return from(this.fileService.createOne(request, userId)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  createMany(
+    request: GrpcFileCreateManyRequest,
+    metadata?: Metadata,
+  ): Observable<GrpcFileCreateManyResponse> {
+    const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    const stream$ = from(this.fileService.createMany(request, userId));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   uploadOne(

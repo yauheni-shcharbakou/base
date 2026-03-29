@@ -7,6 +7,8 @@ import { type GridColDef } from '@mui/x-data-grid';
 import { GrpcUser } from '@packages/grpc';
 import React, { useMemo } from 'react';
 
+export const dynamic = 'force-dynamic';
+
 export default function UserList() {
   const { dataGridProps, isMounted } = useResourceList<GrpcUser>();
 

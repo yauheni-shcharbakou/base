@@ -5,6 +5,7 @@ package storage.messages;
 import "google/protobuf/timestamp.proto";
 
 import "storage/models/file.proto";
+import "storage/messages/storage-object.messages.proto";
 
 // query
 
@@ -38,6 +39,25 @@ message FileCreate {
   string originalName = 1;
   int32 size = 2;
   string mimeType = 3;
+}
+
+message FileCreateRequest {
+  FileCreate file = 1;
+  optional StorageObjectMetadata storage = 2;
+}
+
+message FileCreateManyItem {
+  FileCreate file = 1;
+  string uploadId = 2;
+}
+
+message FileCreateManyRequest {
+  optional StorageObjectManyMetadata storage = 1;
+  repeated FileCreateManyItem items = 2;
+}
+
+message FileCreateManyResponse {
+  repeated models.File items = 1;
 }
 
 // upload

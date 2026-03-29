@@ -1,14 +1,16 @@
 'use client';
 
-import { ResourceList } from '@/common/components';
+import { CreateManyButton, ResourceList } from '@/common/components';
 import { useResourceList } from '@/common/hooks';
 import { GridColumnsBuilder } from '@/common/utils';
-import { getFileSize } from '@/features/file/helpers';
+import { getFileSize } from '@/features/storage/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile } from '@packages/grpc';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
+
+export const dynamic = 'force-dynamic';
 
 export default function FileList() {
   const { dataGridProps, isMounted } = useResourceList<GrpcFile>();
@@ -41,5 +43,17 @@ export default function FileList() {
     [],
   );
 
-  return <ResourceList {...dataGridProps} isMounted={isMounted} columns={columns} />;
+  return (
+    <ResourceList
+      {...dataGridProps}
+      isMounted={isMounted}
+      columns={columns}
+      headerButtons={({ defaultButtons }) => (
+        <>
+          {defaultButtons}
+          <CreateManyButton database={Database.STORAGE} resource={StorageDatabaseEntity.FILE} />
+        </>
+      )}
+    />
+  );
 }

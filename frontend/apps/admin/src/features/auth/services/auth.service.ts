@@ -1,12 +1,12 @@
 import { ConfigService } from '@/common/services/config.service';
-import { GrpcAuthData, GrpcAuthLogin, GrpcAuthRepository, GrpcUserRole } from '@frontend/grpc';
+import { GrpcAuthData, GrpcAuthLogin, GrpcAuthProxyRepository, GrpcUserRole } from '@frontend/grpc';
 import { Metadata } from '@grpc/grpc-js';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies } from 'next/headers';
 
 export class AuthService {
   private readonly cookieConfig: Partial<ResponseCookie>;
-  private readonly authRepository: GrpcAuthRepository;
+  private readonly authRepository: GrpcAuthProxyRepository;
 
   constructor(private readonly configService: ConfigService) {
     this.cookieConfig = {
@@ -15,7 +15,7 @@ export class AuthService {
       secure: !configService.isDevelopment,
     };
 
-    this.authRepository = new GrpcAuthRepository(configService.getGrpcUrl());
+    this.authRepository = new GrpcAuthProxyRepository(configService.getGrpcUrl());
   }
 
   private async setAuthCookies(authData: GrpcAuthData) {
@@ -162,6 +162,14 @@ export class AuthService {
     const accessToken = await this.getAccessToken();
     const meta = new Metadata();
     meta.set('access-token', accessToken);
+    return meta;
+  }
+
+  async getStreamAuthMetadata() {
+    const accessToken = await this.getAccessToken();
+    const { code } = await this.authRepository.generateStreamCode({ accessToken });
+    const meta = new Metadata();
+    meta.set('stream-code', code);
     return meta;
   }
 }

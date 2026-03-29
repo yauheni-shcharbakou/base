@@ -40,6 +40,11 @@ export class FileDto extends EntityWithTimestampsDto implements GrpcFile {
   @IsOptional()
   @IsString()
   providerId?: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  uploadId: string;
 }
 
 export class FileCreateDto

@@ -10,6 +10,7 @@ service ImageService {
   rpc getById (common.IdField) returns (messages.ImagePopulated) {}
   rpc getList (common.GetListRequest) returns (messages.ImageGetListResponse) {}
   rpc createOne (messages.ImageCreateRequest) returns (models.Image) {}
+  rpc createMany (messages.ImageCreateManyRequest) returns (messages.ImageCreateManyResponse) {}
   rpc updateById (messages.ImageUpdateByIdRequest) returns (models.Image) {}
   rpc deleteById (common.IdField) returns (models.Image) {}
 }

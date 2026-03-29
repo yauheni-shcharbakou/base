@@ -6,7 +6,7 @@ export class MemoryCache<Value = any> {
 
   constructor(private readonly delay = 10_000) {}
 
-  set(key: string, value: Value) {
+  set(key: string, value: Value, delay = this.delay) {
     this.store.set(key, value);
 
     if (this.timers.has(key)) {
@@ -16,7 +16,7 @@ export class MemoryCache<Value = any> {
     const timeout = setTimeout(() => {
       this.store.delete(key);
       this.timers.delete(key);
-    }, this.delay);
+    }, delay);
 
     this.timers.set(key, timeout);
   }

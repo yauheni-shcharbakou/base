@@ -2,8 +2,8 @@
 
 import { RecordView, RefButtonContainer, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
-import { DownloadButton } from '@/features/file/components';
-import { getFileSize } from '@/features/file/helpers';
+import { DownloadButton } from '@/features/storage/components';
+import { getFileSize } from '@/features/storage/helpers';
 import { ImagePreview } from '@/features/image/components';
 import { OpenInBrowserOutlined, ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';

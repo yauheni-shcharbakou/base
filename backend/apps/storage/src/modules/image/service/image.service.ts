@@ -1,6 +1,8 @@
 import {
   GrpcImage,
   GrpcImageCreate,
+  GrpcImageCreateManyRequest,
+  GrpcImageCreateManyResponse,
   GrpcImageCreateRequest,
   GrpcImageQuery,
   GrpcImageUpdate,
@@ -17,4 +19,8 @@ export interface ImageService extends CrudService<
   GrpcImageUpdate
 > {
   createOne(request: GrpcImageCreateRequest, userId: string): Promise<Either<Error, GrpcImage>>;
+  createMany(
+    request: GrpcImageCreateManyRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcImageCreateManyResponse>>;
 }

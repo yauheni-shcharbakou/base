@@ -46,4 +46,7 @@ export class VideoEntity extends PostgresEntity<'duration' | 'views'> implements
 
   @Property({ nullable: true })
   description?: string;
+
+  @Property()
+  uploadId: string;
 }

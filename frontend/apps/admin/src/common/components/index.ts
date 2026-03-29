@@ -6,3 +6,4 @@ export * from './entity-fields';
 export * from './ref-button';
 export * from './id-field';
 export * from './edit-fields';
+export * from './create-many.button';

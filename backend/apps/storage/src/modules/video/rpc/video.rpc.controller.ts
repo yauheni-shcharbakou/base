@@ -6,6 +6,8 @@ import {
   GrpcUploadRequest,
   GrpcUrlMap,
   GrpcVideo,
+  GrpcVideoCreateManyRequest,
+  GrpcVideoCreateManyResponse,
   GrpcVideoCreateRequest,
   GrpcVideoGetListResponse,
   GrpcVideoPopulated,
@@ -48,6 +50,15 @@ export class VideoRpcController implements GrpcVideoServiceController {
   createOne(request: GrpcVideoCreateRequest, metadata?: Metadata): Observable<GrpcVideo> {
     const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
     return from(this.videoService.createOne(request, userId)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  createMany(
+    request: GrpcVideoCreateManyRequest,
+    metadata?: Metadata,
+  ): Observable<GrpcVideoCreateManyResponse> {
+    const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    const stream$ = from(this.videoService.createMany(request, user));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   updateById(

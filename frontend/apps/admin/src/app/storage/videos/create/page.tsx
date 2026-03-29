@@ -3,9 +3,10 @@
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { storageActionClient } from '@/features/file/clients';
-import { FileUploader, FolderSelect } from '@/features/file/components';
-import { useFileUpload } from '@/features/file/hooks';
+import { videoActionClient } from '@/features/storage/clients';
+import { SingleFileUploader, FolderSelect } from '@/features/storage/components';
+import { useSingleFileUpload } from '@/features/storage/hooks';
+import { getGenericVideTitle } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
 import { GrpcVideo } from '@packages/grpc';
@@ -25,7 +26,7 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function VideoCreate() {
-  const { isUploading, progress, handleUpload } = useFileUpload({
+  const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.VIDEO,
   });
 
@@ -48,16 +49,17 @@ export default function VideoCreate() {
     }
 
     if (!fields.title?.trim()) {
-      setValue('title', fileName.replace(/.\w+$/g, ''));
+      setValue('title', getGenericVideTitle(fileName));
     }
   };
 
   const handleSave = async (data: Params) => {
-    const createdVideo = await handleUpload<GrpcVideo>(data.file, async (fileData) => {
-      return storageActionClient.createVideo(
+    const createdVideo = await handleUpload<GrpcVideo>(data.file, async () => {
+      return videoActionClient.createOne(
         {
-          file: fileData,
-          video: { title: data.title, description: data.description },
+          file: data.file,
+          title: data.title,
+          description: data.description,
         },
         {
           parent: data.parent,
@@ -119,7 +121,7 @@ export default function VideoCreate() {
             </CardContent>
           </Card>
 
-          <FileUploader
+          <SingleFileUploader
             formField="file"
             errors={errors}
             control={control}

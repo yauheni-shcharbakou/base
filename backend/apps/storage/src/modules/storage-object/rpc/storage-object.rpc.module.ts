@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
+import { StorageObjectServiceModule } from 'common/services/storage-object/storage-object.service.module';
 import { StorageObjectRpcController } from 'modules/storage-object/rpc/storage-object.rpc.controller';
-import { StorageObjectServiceModule } from 'modules/storage-object/service/storage-object.service.module';
 
 @Module({
   imports: [StorageObjectServiceModule],

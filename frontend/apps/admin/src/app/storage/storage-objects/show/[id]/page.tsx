@@ -8,8 +8,8 @@ import {
   StringEntityField,
 } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
-import { DownloadButton } from '@/features/file/components';
-import { getFileSize, getFileUploadStatusColor } from '@/features/file/helpers';
+import { DownloadButton } from '@/features/storage/components';
+import { getFileSize, getFileUploadStatusColor } from '@/features/storage/helpers';
 import { ImagePreview } from '@/features/image/components';
 import { VideoPlayer } from '@/features/video/components';
 import { getVideoDuration } from '@/features/video/helpers';

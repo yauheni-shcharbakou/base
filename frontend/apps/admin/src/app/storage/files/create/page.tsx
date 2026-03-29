@@ -3,9 +3,9 @@
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { storageActionClient } from '@/features/file/clients';
-import { FileUploader, FolderSelect } from '@/features/file/components';
-import { useFileUpload } from '@/features/file/hooks';
+import { fileActionClient } from '@/features/storage/clients';
+import { SingleFileUploader, FolderSelect } from '@/features/storage/components';
+import { useSingleFileUpload } from '@/features/storage/hooks';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile } from '@packages/grpc';
@@ -23,7 +23,7 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function FileCreate() {
-  const { isUploading, progress, handleUpload } = useFileUpload({
+  const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
   });
 
@@ -46,8 +46,8 @@ export default function FileCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdFile = await handleUpload<GrpcFile>(data.file, async (fileData) => {
-      return storageActionClient.createFile(fileData, {
+    const createdFile = await handleUpload<GrpcFile>(data.file, async () => {
+      return fileActionClient.createOne(data.file, {
         parent: data.parent,
         name: data.name,
         isPublic: data.isPublic,
@@ -87,7 +87,7 @@ export default function FileCreate() {
             </CardContent>
           </Card>
 
-          <FileUploader
+          <SingleFileUploader
             formField="file"
             errors={errors}
             control={control}

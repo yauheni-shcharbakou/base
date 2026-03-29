@@ -3,9 +3,13 @@ import {
   GrpcDownloadMap,
   GrpcFile,
   GrpcFileCreate,
+  GrpcFileCreateManyRequest,
+  GrpcFileCreateManyResponse,
+  GrpcFileCreateRequest,
   GrpcFileQuery,
   GrpcFileUploadResponse,
   GrpcFileUploadStatus,
+  GrpcStorageObjectType,
   GrpcUploadRequest,
   GrpcUrlMap,
 } from '@backend/grpc';
@@ -23,11 +27,19 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
-import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
+import {
+  FILE_REPOSITORY,
+  FileCreate,
+  FileRepository,
+} from 'common/repositories/file/file.repository';
 import {
   FILE_STORAGE_SERVICE,
   FileStorageService,
 } from 'common/services/file-storage/file-storage.service';
+import {
+  STORAGE_OBJECT_SERVICE,
+  StorageObjectService,
+} from 'common/services/storage-object/storage-object.service';
 import _ from 'lodash';
 import { FileService } from 'modules/file/service/file.service';
 import moment from 'moment';
@@ -59,6 +71,8 @@ export class FileServiceImpl
   constructor(
     @Inject(FILE_REPOSITORY) protected readonly repository: FileRepository,
     @Inject(FILE_STORAGE_SERVICE) private readonly fileStorageService: FileStorageService,
+    @Inject(STORAGE_OBJECT_SERVICE)
+    private readonly storageObjectService: StorageObjectService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
     @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
@@ -122,14 +136,101 @@ export class FileServiceImpl
     return file;
   }
 
-  async createOne(request: GrpcFileCreate, userId: string): Promise<Either<Error, GrpcFile>> {
-    const providerId = await this.fileStorageService.createFile({ ...request, userId });
+  async createOne(
+    request: GrpcFileCreateRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcFile>> {
+    const providerId = await this.fileStorageService.createFile({ ...request.file, userId });
 
     if (providerId.isLeft()) {
       return left(providerId.value);
     }
 
-    return this.repository.saveOne({ ...request, userId, providerId: providerId.value });
+    const file = await this.repository.saveOne({
+      ...request.file,
+      userId,
+      providerId: providerId.value,
+      uploadId: providerId.value,
+    });
+
+    if (file.isLeft() || !request.storage) {
+      return file;
+    }
+
+    const storage = await this.storageObjectService.createOne(
+      {
+        ...request.storage,
+        type: GrpcStorageObjectType.FILE,
+        file: file.value.id,
+      },
+      userId,
+    );
+
+    if (storage.isLeft()) {
+      await this.repository.deleteById(file.value.id);
+      return left(storage.value);
+    }
+
+    return file;
+  }
+
+  async createMany(
+    request: GrpcFileCreateManyRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcFileCreateManyResponse>> {
+    const fileNames = new Set(_.map(request.items, 'file.originalName'));
+
+    if (fileNames.size !== request.items.length) {
+      return left(new BadRequestException('Names of created files should be unique'));
+    }
+
+    try {
+      const saveData: FileCreate[] = await Promise.all(
+        _.map(request.items, async (item) => {
+          const providerId = await this.fileStorageService.createFile({ ...item.file, userId });
+
+          if (providerId.isLeft()) {
+            throw providerId.value;
+          }
+
+          return {
+            ...item.file,
+            userId,
+            providerId: providerId.value,
+            uploadId: item.uploadId,
+          };
+        }),
+      );
+
+      const files = await this.repository.saveMany(saveData);
+
+      if (files.isLeft()) {
+        return left(files.value);
+      }
+
+      if (request.storage) {
+        const storage = await this.storageObjectService.createManyFiles({
+          ...request.storage,
+          userId,
+          files: _.map(files.value, (file) => {
+            return {
+              file: file.id,
+              name: file.originalName,
+              type: GrpcStorageObjectType.FILE,
+            };
+          }),
+        });
+
+        if (storage.isLeft()) {
+          await this.repository.deleteMany({ ids: _.map(files.value, 'id') });
+          return left(storage.value);
+        }
+      }
+
+      return right({ items: files.value });
+    } catch (error) {
+      return left(error);
+    }
   }
 
   uploadOne(

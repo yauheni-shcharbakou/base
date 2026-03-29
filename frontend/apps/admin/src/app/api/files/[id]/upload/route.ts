@@ -1,6 +1,6 @@
 import { getErrorMessage } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
-import { handleStreamFileUpload } from '@/features/file/route-handlers';
+import { handleStreamFileUpload } from '@/features/storage/route-handlers';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -16,7 +16,7 @@ export async function POST(
   }
 
   try {
-    const authMetadata = await authService.getAuthMetadata();
+    const authMetadata = await authService.getStreamAuthMetadata();
     const id = (await params).id;
 
     return handleStreamFileUpload(

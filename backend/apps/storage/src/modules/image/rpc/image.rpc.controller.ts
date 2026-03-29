@@ -11,6 +11,8 @@ import {
   GrpcImageUpdateByIdRequest,
   GrpcImageCreateRequest,
   GrpcImagePopulated,
+  GrpcImageCreateManyRequest,
+  GrpcImageCreateManyResponse,
 } from '@backend/grpc';
 import { IMAGE_SERVICE, ImageService } from 'modules/image/service/image.service';
 import { from, Observable } from 'rxjs';
@@ -35,6 +37,15 @@ export class ImageRpcController implements GrpcImageServiceController {
   createOne(request: GrpcImageCreateRequest, metadata?: Metadata): Observable<GrpcImage> {
     const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
     const stream$ = from(this.imageService.createOne(request, user));
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  createMany(
+    request: GrpcImageCreateManyRequest,
+    metadata?: Metadata,
+  ): Observable<GrpcImageCreateManyResponse> {
+    const user = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    const stream$ = from(this.imageService.createMany(request, user));
     return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 

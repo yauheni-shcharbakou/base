@@ -9,7 +9,7 @@
     "compile": "turbo run compile",
     "compile:grpc": "turbo run compile --filter=@packages/grpc",
     "compile:transport": "turbo run compile --filter=@backend/transport",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --filter=\"backend.*\" --filter=\"frontend.*\"",
     "dev:backend": "turbo run dev --filter=\"backend.*\"",
     "dev:backend.api-gateway": "turbo run dev --filter=backend.api-gateway",
     "dev:backend.auth": "turbo run dev --filter=backend.auth",
@@ -44,6 +44,7 @@
   "dependencies": {
     "lodash": "4.17.23",
     "moment": "2.30.1",
+    "ulid": "3.0.2",
     "zod": "4.3.5"
   },
   "devDependencies": {

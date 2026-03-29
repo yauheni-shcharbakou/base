@@ -2,10 +2,14 @@ import {
   GrpcBaseQuery,
   GrpcDownloadMap,
   GrpcFileUploadStatus,
+  GrpcStorageObjectType,
   GrpcUploadRequest,
   GrpcUrlMap,
   GrpcVideo,
   GrpcVideoCreate,
+  GrpcVideoCreateManyItem,
+  GrpcVideoCreateManyRequest,
+  GrpcVideoCreateManyResponse,
   GrpcVideoCreateRequest,
   GrpcVideoPopulated,
   GrpcVideoQuery,
@@ -36,8 +40,20 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { sendToWritable } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
-import { FILE_REPOSITORY, FileRepository } from 'common/repositories/file/file.repository';
-import { VIDEO_REPOSITORY, VideoRepository } from 'common/repositories/video/video.repository';
+import {
+  FILE_REPOSITORY,
+  FileCreate,
+  FileRepository,
+} from 'common/repositories/file/file.repository';
+import {
+  VIDEO_REPOSITORY,
+  VideoCreate,
+  VideoRepository,
+} from 'common/repositories/video/video.repository';
+import {
+  STORAGE_OBJECT_SERVICE,
+  StorageObjectService,
+} from 'common/services/storage-object/storage-object.service';
 import {
   VIDEO_STORAGE_SERVICE,
   VideoStorageService,
@@ -73,6 +89,8 @@ export class VideoServiceImpl
     @Inject(VIDEO_REPOSITORY) protected readonly repository: VideoRepository,
     @Inject(FILE_REPOSITORY) protected readonly fileRepository: FileRepository,
     @Inject(VIDEO_STORAGE_SERVICE) private readonly videoStorageService: VideoStorageService,
+    @Inject(STORAGE_OBJECT_SERVICE)
+    private readonly storageObjectService: StorageObjectService,
     @Inject(PERSISTENCE_SERVICE) private readonly persistenceService: PersistenceService,
     @InjectNatsClient() private readonly natsClient: NatsClient,
   ) {
@@ -142,31 +160,155 @@ export class VideoServiceImpl
     request: GrpcVideoCreateRequest,
     userId: string,
   ): Promise<Either<Error, GrpcVideo>> {
-    const file = await this.fileRepository.saveOne({ ...request.file, userId });
+    const revertHooks: (() => Promise<any>)[] = [];
+
+    const providerId = await this.videoStorageService.createVideo({ ...request.video, userId });
+
+    if (providerId.isLeft()) {
+      return left(providerId.value);
+    }
+
+    const file = await this.fileRepository.saveOne({
+      ...request.file,
+      userId,
+      uploadId: providerId.value,
+    });
 
     if (file.isLeft()) {
       return left(file.value);
     }
 
-    const providerId = await this.videoStorageService.createVideo({ ...request.video, userId });
-
-    if (providerId.isLeft()) {
-      await this.fileRepository.deleteById(file.value.id);
-      return left(providerId.value);
-    }
+    revertHooks.push(() => this.fileRepository.deleteById(file.value.id));
 
     const video = await this.repository.saveOne({
       ...request.video,
       userId,
       file: file.value.id,
       providerId: providerId.value,
+      uploadId: providerId.value,
     });
 
     if (video.isLeft()) {
-      await this.fileRepository.deleteById(file.value.id);
+      await Promise.all(_.map(revertHooks, (hook) => hook()));
+      return video;
+    }
+
+    if (!request.storage) {
+      return video;
+    }
+
+    revertHooks.push(() => this.repository.deleteById(video.value.id));
+
+    const storage = await this.storageObjectService.createOne(
+      {
+        ...request.storage,
+        type: GrpcStorageObjectType.VIDEO,
+        file: video.value.fileId,
+        video: video.value.id,
+      },
+      userId,
+    );
+
+    if (storage.isLeft()) {
+      await Promise.all(_.map(revertHooks, (hook) => hook()));
+      return left(storage.value);
     }
 
     return video;
+  }
+
+  async createMany(
+    request: GrpcVideoCreateManyRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcVideoCreateManyResponse>> {
+    const fileNames = new Set(_.map(request.items, 'file.originalName'));
+
+    if (fileNames.size !== request.items.length) {
+      return left(new BadRequestException('Names of created files should be unique'));
+    }
+
+    const revertHooks: (() => Promise<any>)[] = [];
+
+    try {
+      const dataByUploadId = new Map<string, GrpcVideoCreateManyItem>();
+      const providerIdByUploadId = new Map<string, string>();
+
+      const fileData: FileCreate[] = await Promise.all(
+        _.map(request.items, async (item) => {
+          dataByUploadId.set(item.uploadId, item);
+
+          const providerId = await this.videoStorageService.createVideo({
+            ...item.video,
+            userId,
+          });
+
+          if (providerId.isLeft()) {
+            throw providerId.value;
+          }
+
+          providerIdByUploadId.set(item.uploadId, providerId.value);
+
+          return { ...item.file, userId, uploadId: item.uploadId };
+        }),
+      );
+
+      const files = await this.fileRepository.saveMany(fileData);
+
+      if (files.isLeft()) {
+        return left(files.value);
+      }
+
+      revertHooks.push(() => this.fileRepository.deleteMany({ ids: _.map(files.value, 'id') }));
+
+      const videoData: VideoCreate[] = _.map(files.value, (file) => {
+        const data = dataByUploadId.get(file.uploadId);
+        const providerId = providerIdByUploadId.get(file.uploadId);
+
+        return {
+          ...data.video,
+          file: file.id,
+          userId,
+          providerId,
+          uploadId: file.uploadId,
+        };
+      });
+
+      const videos = await this.repository.saveMany(videoData);
+
+      if (videos.isLeft()) {
+        await Promise.all(_.map(revertHooks, (hook) => hook()));
+        return left(videos.value);
+      }
+
+      const videoByFileId = new Map(_.map(videos.value, (video) => [video.fileId, video]));
+
+      revertHooks.push(() => this.repository.deleteMany({ ids: _.map(videos.value, 'id') }));
+
+      if (request.storage) {
+        const storage = await this.storageObjectService.createManyFiles({
+          ...request.storage,
+          userId,
+          files: _.map(files.value, (file) => {
+            return {
+              file: file.id,
+              video: videoByFileId.get(file.id)?.id,
+              name: file.originalName,
+              type: GrpcStorageObjectType.VIDEO,
+            };
+          }),
+        });
+
+        if (storage.isLeft()) {
+          await Promise.all(_.map(revertHooks, (hook) => hook()));
+          return left(storage.value);
+        }
+      }
+
+      return right({ items: videos.value });
+    } catch (error) {
+      await Promise.all(_.map(revertHooks, (hook) => hook()));
+      return left(error);
+    }
   }
 
   uploadOne(

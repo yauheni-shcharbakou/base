@@ -21,6 +21,9 @@ export interface NatsStrategy {
     user: {
       createOne: GrpcIdField;
     };
+    tempCode: {
+      deactivateOne: GrpcIdField;
+    };
   };
   storage: {
     file: {

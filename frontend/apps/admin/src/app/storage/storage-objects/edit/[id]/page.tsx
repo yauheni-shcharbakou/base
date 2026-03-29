@@ -2,8 +2,8 @@
 
 import { ControlledBooleanField, TextEditField } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
-import { storageActionClient } from '@/features/file/clients';
-import { FolderSelect } from '@/features/file/components';
+import { folderActionClient } from '@/features/storage/clients';
+import { FolderSelect } from '@/features/storage/components';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { GrpcStorageObject, GrpcStorageObjectType } from '@packages/grpc';
@@ -34,7 +34,7 @@ export default function StorageObjectEdit() {
 
   const handleSave = async (data: Params) => {
     if (entity?.type === GrpcStorageObjectType.FOLDER && entity?.parentId && data.name) {
-      const hasFolderWithSameName = await storageActionClient.isExistsFolder({
+      const hasFolderWithSameName = await folderActionClient.isExistsFolder({
         parent: entity?.parentId,
         name: data.name,
       });

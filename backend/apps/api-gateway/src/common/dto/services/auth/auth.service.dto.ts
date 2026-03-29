@@ -3,11 +3,13 @@ import {
   GrpcAuthLogin,
   GrpcAuthMe,
   GrpcAuthRefresh,
+  GrpcAuthStreamCode,
   GrpcAuthToken,
   GrpcAuthTokens,
 } from '@backend/grpc';
 import { Type } from 'class-transformer';
 import { IsDate, IsNotEmpty, IsObject, IsString, ValidateNested } from 'class-validator';
+import { TransformToDate } from 'common/decorators/transform.decorator';
 
 export class AuthLoginDto implements GrpcAuthLogin {
   @ApiProperty()
@@ -62,4 +64,17 @@ export class AuthTokensDto implements GrpcAuthTokens {
   @ValidateNested()
   @Type(() => AuthTokenDto)
   refreshToken: AuthTokenDto;
+}
+
+export class AuthStreamCodeDto implements GrpcAuthStreamCode {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  code: string;
+
+  @ApiProperty({ type: Date })
+  @IsNotEmpty()
+  @IsDate()
+  @TransformToDate()
+  expireDate: Date;
 }

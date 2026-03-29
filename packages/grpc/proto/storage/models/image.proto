@@ -15,4 +15,5 @@ message Image {
 
   string userId = 7;
   string fileId = 8;
+  string uploadId = 9;
 }

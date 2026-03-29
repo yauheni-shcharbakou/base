@@ -4,6 +4,7 @@ import {
   GrpcFileRepository,
   GrpcImageRepository,
   GrpcStorageObjectRepository,
+  GrpcTempCodeRepository,
   GrpcUserRepository,
   GrpcVideoRepository,
 } from '@frontend/grpc';
@@ -17,6 +18,7 @@ export class GrpcDataService {
 
   private readonly repositories: Record<string, Partial<GrpcDataRepository<any>>> = {
     [AuthDatabaseEntity.USER]: new GrpcUserRepository(this.grpcUrl),
+    [AuthDatabaseEntity.TEMP_CODE]: new GrpcTempCodeRepository(this.grpcUrl),
     [StorageDatabaseEntity.FILE]: new GrpcFileRepository(this.grpcUrl),
     [StorageDatabaseEntity.IMAGE]: new GrpcImageRepository(this.grpcUrl),
     [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectRepository(this.grpcUrl),

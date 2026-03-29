@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "concurrency": "100",
+  "concurrency": "10",
   "envMode": "loose",
   "globalDependencies": ["**/.env"],
   "tasks": {
@@ -10,7 +10,7 @@
       "dependsOn": ["^build"]
     },
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^compile", "^build"]
     },
     "prod": {},
     "format": {},

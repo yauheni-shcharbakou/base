@@ -41,6 +41,11 @@ export class VideoDto extends EntityWithTimestampsDto implements GrpcVideo {
   @IsNotEmpty()
   @IsString()
   providerId: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  uploadId: string;
 }
 
 export class VideoCreateDto

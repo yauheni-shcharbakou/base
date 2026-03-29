@@ -1,7 +1,6 @@
 import { DevtoolsProvider } from '@/common/components';
 import { authProvider } from '@/features/auth/providers';
 import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
-import { httpDataProvider } from '@/features/http/providers';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { Refine } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
@@ -22,7 +21,6 @@ export const metadata: Metadata = {
 };
 
 // TODO: create custom list view
-// TODO: uploadMany logic for files / images / videos
 // TODO: try migrate to 16 Next
 
 export default async function RootLayout({
@@ -46,7 +44,6 @@ export default async function RootLayout({
                     routerProvider={routerProvider}
                     dataProvider={{
                       default: grpcDataProvider,
-                      http: httpDataProvider,
                       upload: grpcUploadDataProvider,
                     }}
                     notificationProvider={useNotificationProvider}
@@ -71,6 +68,15 @@ export default async function RootLayout({
                         create: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/create`,
                         edit: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/edit/:id`,
                         show: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/show/:id`,
+                        meta: {
+                          canDelete: true,
+                          parent: Database.AUTH,
+                        },
+                      },
+                      {
+                        name: AuthDatabaseEntity.TEMP_CODE,
+                        list: `/${Database.AUTH}/${AuthDatabaseEntity.TEMP_CODE}`,
+                        show: `/${Database.AUTH}/${AuthDatabaseEntity.TEMP_CODE}/show/:id`,
                         meta: {
                           canDelete: true,
                           parent: Database.AUTH,
@@ -121,29 +127,6 @@ export default async function RootLayout({
                           canDelete: true,
                           dataProviderName: 'upload',
                           parent: Database.STORAGE,
-                        },
-                      },
-
-                      {
-                        name: 'blog_posts',
-                        list: '/blog-posts',
-                        create: '/blog-posts/create',
-                        edit: '/blog-posts/edit/:id',
-                        show: '/blog-posts/show/:id',
-                        meta: {
-                          canDelete: true,
-                          dataProviderName: 'http',
-                        },
-                      },
-                      {
-                        name: 'categories',
-                        list: '/categories',
-                        create: '/categories/create',
-                        edit: '/categories/edit/:id',
-                        show: '/categories/show/:id',
-                        meta: {
-                          canDelete: true,
-                          dataProviderName: 'http',
                         },
                       },
                     ]}

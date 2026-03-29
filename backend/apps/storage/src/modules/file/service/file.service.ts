@@ -3,6 +3,9 @@ import {
   GrpcDownloadMap,
   GrpcFile,
   GrpcFileCreate,
+  GrpcFileCreateManyRequest,
+  GrpcFileCreateManyResponse,
+  GrpcFileCreateRequest,
   GrpcFileQuery,
   GrpcFileUploadResponse,
   GrpcUploadRequest,
@@ -18,7 +21,11 @@ export const FILE_SERVICE = Symbol('FileService');
 export interface FileService extends CrudService<GrpcFile, GrpcFileQuery, GrpcFileCreate> {
   getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap>;
   getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap>;
-  createOne(request: GrpcFileCreate, userId: string): Promise<Either<Error, GrpcFile>>;
+  createOne(request: GrpcFileCreateRequest, userId: string): Promise<Either<Error, GrpcFile>>;
+  createMany(
+    request: GrpcFileCreateManyRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcFileCreateManyResponse>>;
   uploadOne(
     request$: Observable<GrpcUploadRequest>,
     userId?: string,

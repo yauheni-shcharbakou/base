@@ -1,5 +1,10 @@
-import { GrpcStorageObject, GrpcStorageObjectType } from '@backend/grpc';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  GrpcStorageObject,
+  GrpcStorageObjectManyMetadata,
+  GrpcStorageObjectMetadata,
+  GrpcStorageObjectType,
+} from '@backend/grpc';
+import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TransformToBoolean } from 'common/decorators/transform.decorator';
 import { EntityWithTimestampsDto } from 'common/dto/entity-with-timestamps.dto';
@@ -51,3 +56,20 @@ export class StorageObjectDto extends EntityWithTimestampsDto implements GrpcSto
   @IsString()
   videoId?: string;
 }
+
+export class StorageObjectManyMetadataDto
+  extends PickType(StorageObjectDto, ['isPublic'] as const)
+  implements GrpcStorageObjectManyMetadata
+{
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  parent: string;
+}
+
+export class StorageObjectMetadataDto
+  extends IntersectionType(
+    StorageObjectManyMetadataDto,
+    PickType(StorageObjectDto, ['name'] as const),
+  )
+  implements GrpcStorageObjectMetadata {}

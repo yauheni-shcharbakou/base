@@ -13,7 +13,6 @@
     "refine": "refine"
   },
   "dependencies": {
-    "@emotion/cache": "11.14.0",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@frontend/grpc": "*",
@@ -22,7 +21,6 @@
     "@mui/icons-material": "6.5.0",
     "@mui/lab": "6.0.1-beta.36",
     "@mui/material": "6.5.0",
-    "@mui/material-nextjs": "^7.3.7",
     "@mui/x-data-grid": "7.29.12",
     "@packages/common": "*",
     "@packages/grpc": "*",
@@ -33,7 +31,6 @@
     "@refinedev/mui": "7.0.1",
     "@refinedev/nextjs-router": "7.0.4",
     "@refinedev/react-hook-form": "5.0.4",
-    "@refinedev/simple-rest": "6.0.1",
     "@sweet-monads/either": "3.3.1",
     "axios": "1.13.5",
     "busboy": "1.6.0",

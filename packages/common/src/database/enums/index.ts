@@ -10,6 +10,7 @@ export enum CommonDatabaseEntity {
 
 export enum AuthDatabaseEntity {
   USER = 'users',
+  TEMP_CODE = 'temp-codes',
 }
 
 export enum StorageDatabaseEntity {

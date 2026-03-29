@@ -110,6 +110,16 @@
           "nullable": true,
           "length": 255,
           "mappedType": "string"
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
         }
       },
       "name": "files",
@@ -242,6 +252,16 @@
         },
         "alt": {
           "name": "alt",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "upload_id": {
+          "name": "upload_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -548,6 +568,16 @@
           "autoincrement": false,
           "primary": false,
           "nullable": true,
+          "length": 255,
+          "mappedType": "string"
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
           "length": 255,
           "mappedType": "string"
         }

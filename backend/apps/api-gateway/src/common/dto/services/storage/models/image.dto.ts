@@ -31,6 +31,11 @@ export class ImageDto extends EntityWithTimestampsDto implements GrpcImage {
   @IsNotEmpty()
   @IsString()
   fileId: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  uploadId: string;
 }
 
 export class ImageCreateDto

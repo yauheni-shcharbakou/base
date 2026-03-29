@@ -1,4 +1,4 @@
-import { GrpcModule } from '@backend/transport';
+import { GrpcModule, NatsModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -28,6 +28,7 @@ import { StorageModule } from 'modules/storage/storage.module';
         auth: [GrpcAuthService.name],
       },
     }),
+    NatsModule.forRoot({ host: 'apiGateway', onlyEmitting: true }),
     GrpcAccessModule,
     AuthModule,
     StorageModule,

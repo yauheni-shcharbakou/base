@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const redirectUrl = new URL(url);
 
     if (query.size) {
-      query.entries().forEach(([key, value]) => {
+      query.forEach((value, key) => {
         redirectUrl.searchParams.set(key, value);
       });
     }

@@ -12,10 +12,14 @@ import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { GetListRequestDto } from 'common/dto/get-list-request.dto';
 import { IdFieldDto } from 'common/dto/id-field.dto';
 import {
+  FileCreateManyRequestDto,
+  FileCreateRequestDto,
+} from 'common/dto/services/storage/file.service.dto';
+import {
+  ImageCreateManyRequestDto,
   ImageCreateRequestDto,
   ImageUpdateByIdRequestDto,
 } from 'common/dto/services/storage/image.service.dto';
-import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
 import {
   StorageObjectCreateDto,
   StorageObjectExistsFolderRequestDto,
@@ -23,6 +27,7 @@ import {
   StorageObjectUpdateByIdRequestDto,
 } from 'common/dto/services/storage/storage-object.service.dto';
 import {
+  VideoCreateManyRequestDto,
   VideoCreateRequestDto,
   VideoUpdateByIdRequestDto,
 } from 'common/dto/services/storage/video.service.dto';
@@ -37,7 +42,8 @@ import {
           getDownloadMap: BaseQueryDto,
           getById: IdFieldDto,
           getList: GetListRequestDto,
-          createOne: FileCreateDto,
+          createOne: FileCreateRequestDto,
+          createMany: FileCreateManyRequestDto,
           deleteById: IdFieldDto,
         }),
         custom: {
@@ -51,6 +57,7 @@ import {
           getById: IdFieldDto,
           getList: GetListRequestDto,
           createOne: ImageCreateRequestDto,
+          createMany: ImageCreateManyRequestDto,
           updateById: ImageUpdateByIdRequestDto,
           deleteById: IdFieldDto,
         }),
@@ -81,6 +88,7 @@ import {
           getById: IdFieldDto,
           getList: GetListRequestDto,
           createOne: VideoCreateRequestDto,
+          createMany: VideoCreateManyRequestDto,
           updateById: VideoUpdateByIdRequestDto,
           deleteById: IdFieldDto,
         }),

@@ -40,4 +40,7 @@ export class ImageEntity extends PostgresEntity implements GrpcImage {
 
   @Property()
   alt: string;
+
+  @Property()
+  uploadId: string;
 }

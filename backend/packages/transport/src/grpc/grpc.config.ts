@@ -2,10 +2,12 @@ import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
 import {
+  GrpcAuthProxyService,
   GrpcAuthService,
   GrpcFileService,
   GrpcImageService,
   GrpcStorageObjectService,
+  GrpcTempCodeService,
   GrpcUserService,
   GrpcVideoService,
   PROTO_PATH,
@@ -58,7 +60,8 @@ export const grpcConfig = () => {
         url: env.API_GATEWAY_GRPC_URL,
       },
       services: {
-        [GrpcAuthService.name]: GrpcAuthService.definition,
+        [GrpcAuthProxyService.name]: GrpcAuthProxyService.definition,
+        [GrpcTempCodeService.name]: GrpcTempCodeService.definition,
         [GrpcUserService.name]: GrpcUserService.definition,
 
         [GrpcFileService.name]: GrpcFileService.definition,
@@ -75,6 +78,7 @@ export const grpcConfig = () => {
       },
       services: {
         [GrpcAuthService.name]: GrpcAuthService.definition,
+        [GrpcTempCodeService.name]: GrpcTempCodeService.definition,
         [GrpcUserService.name]: GrpcUserService.definition,
       },
     },

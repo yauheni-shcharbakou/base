@@ -10,3 +10,10 @@ service AuthService {
   rpc refreshToken (messages.AuthRefresh) returns (messages.AuthData) {}
   rpc me (messages.AuthMe) returns (models.User) {}
 }
+
+service AuthProxyService {
+  rpc login (messages.AuthLogin) returns (messages.AuthData) {}
+  rpc refreshToken (messages.AuthRefresh) returns (messages.AuthData) {}
+  rpc me (messages.AuthMe) returns (models.User) {}
+  rpc generateStreamCode (messages.AuthMe) returns (messages.AuthStreamCode) {}
+}

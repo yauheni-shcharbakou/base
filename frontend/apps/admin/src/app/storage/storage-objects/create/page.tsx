@@ -6,8 +6,8 @@ import {
   ControlledTextField,
 } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
-import { storageActionClient } from '@/features/file/clients';
-import { FolderSelect } from '@/features/file/components';
+import { folderActionClient } from '@/features/storage/clients';
+import { FolderSelect } from '@/features/storage/components';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { GrpcStorageObjectType } from '@packages/grpc';
@@ -36,7 +36,7 @@ export default function StorageObjectCreate() {
 
   const handleSave = async (data: Params) => {
     if (data.type === GrpcStorageObjectType.FOLDER) {
-      const hasFolderWithSameName = await storageActionClient.isExistsFolder({
+      const hasFolderWithSameName = await folderActionClient.isExistsFolder({
         parent: data.parent,
         name: data.name,
       });

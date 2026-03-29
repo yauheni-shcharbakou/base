@@ -3,6 +3,7 @@ syntax = 'proto3';
 package auth.messages;
 
 import "google/protobuf/timestamp.proto";
+
 import "auth/models/user.proto";
 
 message AuthLogin {
@@ -31,4 +32,9 @@ message AuthTokens {
 message AuthData {
   models.User user = 1;
   AuthTokens tokens = 2;
+}
+
+message AuthStreamCode {
+  string code = 1;
+  google.protobuf.Timestamp expireDate = 2;
 }

@@ -17,4 +17,5 @@ message Video {
 
   string userId = 9;
   string fileId = 10;
+  string uploadId = 11;
 }

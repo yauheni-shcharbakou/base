@@ -3,10 +3,9 @@
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { storageActionClient } from '@/features/file/clients';
-import { FileUploader, FolderSelect } from '@/features/file/components';
-import { useFileUpload } from '@/features/file/hooks';
-import { getImageDimensions } from '@/features/image/helpers';
+import { imageActionClient } from '@/features/storage/clients';
+import { SingleFileUploader, FolderSelect } from '@/features/storage/components';
+import { useSingleFileUpload } from '@/features/storage/hooks';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
 import { GrpcImage } from '@packages/grpc';
@@ -25,7 +24,7 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function ImageCreate() {
-  const { isUploading, progress, handleUpload } = useFileUpload({
+  const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
   });
 
@@ -50,13 +49,11 @@ export default function ImageCreate() {
   const handleSave = async (data: Params) => {
     const createdImage = await handleUpload<GrpcImage>(
       data.file,
-      async (fileData) => {
-        const dimensions = await getImageDimensions(data.file);
-
-        return storageActionClient.createImage(
+      async () => {
+        return imageActionClient.createOne(
           {
-            file: fileData,
-            image: { ...dimensions, alt: data.alt },
+            file: data.file,
+            alt: data.alt,
           },
           {
             parent: data.parent,
@@ -115,7 +112,7 @@ export default function ImageCreate() {
             </CardContent>
           </Card>
 
-          <FileUploader
+          <SingleFileUploader
             formField="file"
             errors={errors}
             control={control}

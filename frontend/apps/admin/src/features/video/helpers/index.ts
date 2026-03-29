@@ -11,3 +11,7 @@ export const getVideoDuration = (duration: number) => {
 
   return `${minutesPart}:${secondsPart}`;
 };
+
+export const getGenericVideTitle = (fileName: string) => {
+  return fileName.replace(/.\w+$/g, '');
+};

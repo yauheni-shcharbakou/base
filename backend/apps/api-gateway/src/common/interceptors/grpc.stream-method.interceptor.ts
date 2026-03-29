@@ -9,7 +9,7 @@ import {
   GrpcAccessService,
 } from 'common/services/grpc-access/grpc-access.service';
 import _ from 'lodash';
-import { catchError, isObservable, map, Observable, switchMap, throwError } from 'rxjs';
+import { catchError, isObservable, map, Observable, of, switchMap, throwError } from 'rxjs';
 
 @Injectable()
 export class GrpcStreamMethodInterceptor implements NestInterceptor {
@@ -43,7 +43,9 @@ export class GrpcStreamMethodInterceptor implements NestInterceptor {
 
     const metadata = rpc.getContext<Metadata>();
 
-    return this.accessService.checkAccess(metadata, allowedRoles ?? _.values(GrpcUserRole)).pipe(
+    return of(
+      this.accessService.checkStreamAccess(metadata, allowedRoles ?? _.values(GrpcUserRole)),
+    ).pipe(
       map((meta) => {
         if (meta.isLeft()) {
           throw meta.value;

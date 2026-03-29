@@ -19,7 +19,7 @@ import {
 import {
   STORAGE_OBJECT_SERVICE,
   StorageObjectService,
-} from 'modules/storage-object/service/storage-object.service';
+} from 'common/services/storage-object/storage-object.service';
 import { from, map, Observable } from 'rxjs';
 
 @GrpcController()

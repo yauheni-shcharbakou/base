@@ -1,4 +1,4 @@
-import { GrpcUserRole } from '@backend/grpc';
+import { GrpcAuthStreamCode, GrpcTempCode, GrpcUser, GrpcUserRole } from '@backend/grpc';
 import { Metadata } from '@grpc/grpc-js';
 import { Either } from '@sweet-monads/either';
 import { Observable } from 'rxjs';
@@ -10,4 +10,6 @@ export interface GrpcAccessService {
     metadata?: Metadata,
     allowedRoles?: GrpcUserRole[],
   ): Observable<Either<Error, Metadata>>;
+  checkStreamAccess(metadata?: Metadata, allowedRoles?: GrpcUserRole[]): Either<Error, Metadata>;
+  addStreamCode(data: GrpcTempCode, user: GrpcUser): GrpcAuthStreamCode;
 }

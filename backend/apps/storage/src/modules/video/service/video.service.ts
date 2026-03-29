@@ -5,6 +5,8 @@ import {
   GrpcUrlMap,
   GrpcVideo,
   GrpcVideoCreate,
+  GrpcVideoCreateManyRequest,
+  GrpcVideoCreateManyResponse,
   GrpcVideoCreateRequest,
   GrpcVideoQuery,
   GrpcVideoUpdate,
@@ -26,6 +28,10 @@ export interface VideoService extends CrudService<
   getUrlMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcUrlMap>;
   getDownloadMap(request: GrpcBaseQuery, ip?: string): Promise<GrpcDownloadMap>;
   createOne(request: GrpcVideoCreateRequest, userId: string): Promise<Either<Error, GrpcVideo>>;
+  createMany(
+    request: GrpcVideoCreateManyRequest,
+    userId: string,
+  ): Promise<Either<Error, GrpcVideoCreateManyResponse>>;
   uploadOne(
     request$: Observable<GrpcUploadRequest>,
     userId?: string,
