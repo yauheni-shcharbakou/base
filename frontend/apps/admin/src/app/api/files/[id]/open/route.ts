@@ -15,6 +15,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       authMeta.set('ip', ip);
     }
 
+    console.log('open ip', ip);
+
     const query = request.nextUrl.searchParams;
 
     const response = await fileGrpcRepository.getUrlMap({ id, ids: [] }, authMeta);
