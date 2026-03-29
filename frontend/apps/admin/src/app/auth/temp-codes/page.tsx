@@ -3,7 +3,7 @@
 import { ResourceList } from '@/common/components';
 import { useResourceList } from '@/common/hooks';
 import { GridColumnsBuilder } from '@/common/utils';
-import { GrpcTempCode } from '@backend/grpc';
+import { GrpcTempCode } from '@packages/grpc';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database } from '@packages/common';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
