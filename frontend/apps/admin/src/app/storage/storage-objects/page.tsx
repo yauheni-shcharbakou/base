@@ -29,6 +29,10 @@ export default function StorageObjectList() {
           database: Database.STORAGE,
           resource: StorageDatabaseEntity.IMAGE,
         })
+        .ref('video', {
+          database: Database.STORAGE,
+          resource: StorageDatabaseEntity.VIDEO,
+        })
         .string('name', { valueGetter: (value) => value || 'Root Folder' })
         .enum('type', { maxWidth: 100 })
         .boolean('isPublic', { maxWidth: 100 })

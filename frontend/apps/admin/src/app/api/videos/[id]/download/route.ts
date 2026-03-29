@@ -24,8 +24,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const videoResponse = await fetch(downloadData.url, { headers: request.headers });
 
-    console.log(videoResponse.status);
-
     if (!videoResponse.ok) {
       return NextResponse.json(
         { message: 'Error during download video' },

@@ -22,23 +22,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       throw new Error("Can't get download url for file");
     }
 
-    const videoResponse = await fetch(downloadData.url);
+    const fileResponse = await fetch(downloadData.url);
 
-    if (!videoResponse.ok) {
+    if (!fileResponse.ok) {
       return NextResponse.json(
         { message: 'Error during download file' },
-        { status: videoResponse.status },
+        { status: fileResponse.status },
       );
     }
 
-    if (!videoResponse.body) {
+    if (!fileResponse.body) {
       return NextResponse.json({ error: 'Empty file' }, { status: 400 });
     }
 
     const headers = new Headers();
 
-    const contentType = videoResponse.headers.get('content-type');
-    const contentLength = videoResponse.headers.get('content-length');
+    const contentType = fileResponse.headers.get('content-type');
+    const contentLength = fileResponse.headers.get('content-length');
 
     headers.set('Content-Disposition', `attachment; filename="${downloadData.fileName}"`);
     headers.set('Content-Type', contentType || 'application/octet-stream');
@@ -47,8 +47,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.set('Content-Length', contentLength);
     }
 
-    return new NextResponse(videoResponse.body, { status: 200, headers });
+    return new NextResponse(fileResponse.body, { status: 200, headers });
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
   }
 }
