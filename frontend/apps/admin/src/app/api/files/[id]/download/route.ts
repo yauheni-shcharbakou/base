@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       throw new Error("Can't get download url for file");
     }
 
-    const fileResponse = await fetch(downloadData.url);
+    const fileResponse = await fetch(downloadData.url, { headers: request.headers });
 
     if (!fileResponse.ok) {
       return NextResponse.json(
