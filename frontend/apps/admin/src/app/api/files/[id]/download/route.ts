@@ -18,11 +18,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const response = await fileGrpcRepository.getDownloadMap({ id, ids: [] }, authMeta);
     const downloadData = response.items.get(id);
 
+    console.log('downloadData', downloadData);
+
     if (!downloadData) {
       throw new Error("Can't get download url for file");
     }
 
     const fileResponse = await fetch(downloadData.url);
+
+    console.log(fileResponse);
 
     if (!fileResponse.ok) {
       return NextResponse.json(
@@ -47,9 +51,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers.set('Content-Length', contentLength);
     }
 
+    console.log(fileResponse);
+
     return new NextResponse(fileResponse.body, { status: 200, headers });
   } catch (error) {
-    console.error(error);
     return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
   }
 }
