@@ -1,10 +1,12 @@
-import { GrpcModule } from '@backend/transport';
+import { GrpcModule, NatsModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { GrpcAuthService } from '@backend/grpc';
+import { GrpcAccessModule } from 'common/services/grpc-access/grpc-access.module';
 import { config } from 'config';
 import { AuthModule } from 'modules/auth/auth.module';
+import { StorageModule } from 'modules/storage/storage.module';
 
 @Module({
   imports: [
@@ -26,7 +28,10 @@ import { AuthModule } from 'modules/auth/auth.module';
         auth: [GrpcAuthService.name],
       },
     }),
+    NatsModule.forRoot({ host: 'apiGateway', onlyEmitting: true }),
+    GrpcAccessModule,
     AuthModule,
+    StorageModule,
   ],
 })
 export class AppModule {}

@@ -4,12 +4,12 @@
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "dev": "yarn build -- --watch",
-    "build": "tsup src/index.ts --format cjs --dts",
+    "build": "tsdown src/index.ts --format cjs --dts",
     "reset": "rm -rf .turbo dist src node_modules"
   },
   "dependencies": {

@@ -30,12 +30,12 @@ export const RequestDto = <Query extends GrpcBaseQuery>(
   QueryDto: DtoType<Query>,
 ): DtoType<RequestType<Query>> => {
   class DynamicRequestDto implements RequestType<Query> {
-    @ApiProperty({ required: false, type: QueryDto })
-    @IsOptional()
+    @ApiProperty({ type: QueryDto })
+    @IsNotEmpty()
     @IsObject()
     @ValidateNested()
     @Type(() => QueryDto)
-    query?: Query;
+    query: Query;
   }
 
   return DynamicRequestDto;

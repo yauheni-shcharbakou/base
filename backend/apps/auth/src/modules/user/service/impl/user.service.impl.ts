@@ -5,39 +5,54 @@ import {
   GrpcUserRole,
   GrpcUserUpdate,
 } from '@backend/grpc';
-import { Inject, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { CrudServiceImpl } from '@backend/persistence';
+import { InjectNatsClient, NatsClient } from '@backend/transport';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
-import { CRYPTO_SERVICE, CryptoService } from 'common/modules/crypto/crypto.service';
 import {
   USER_REPOSITORY,
   UserRepository,
   UserUpdate,
 } from 'common/repositories/user/user.repository';
+import { CRYPTO_SERVICE, CryptoService } from 'common/services/crypto/crypto.service';
 import _ from 'lodash';
 import { UserService } from 'modules/user/service/user.service';
+import { firstValueFrom } from 'rxjs';
 
-export class UserServiceImpl implements UserService {
+export class UserServiceImpl
+  extends CrudServiceImpl<GrpcUser, GrpcUserQuery, GrpcUserCreate, GrpcUserUpdate, UserRepository>
+  implements UserService
+{
   constructor(
-    @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
+    @Inject(USER_REPOSITORY) protected readonly repository: UserRepository,
     @Inject(CRYPTO_SERVICE) private readonly cryptoService: CryptoService,
-  ) {}
+    @InjectNatsClient() private readonly natsClient: NatsClient,
+  ) {
+    super();
+  }
 
-  async create(data: GrpcUserCreate): Promise<Either<InternalServerErrorException, GrpcUser>> {
+  async saveOne(data: GrpcUserCreate): Promise<Either<Error, GrpcUser>> {
     const hashedPassword = await this.cryptoService.hash(data.password);
 
     if (hashedPassword.isLeft()) {
       return left(hashedPassword.value);
     }
 
-    return this.userRepository.saveOne({
+    const user = await this.repository.saveOne({
       ...data,
       hash: hashedPassword.value,
       role: data.role ?? GrpcUserRole.USER,
     });
+
+    if (user.isRight()) {
+      await firstValueFrom(this.natsClient.auth.user.createOne({ id: user.value.id }));
+    }
+
+    return user;
   }
 
-  async updateOne(
-    query: GrpcUserQuery,
+  async updateById(
+    id: string,
     updateData: GrpcUserUpdate,
   ): Promise<Either<NotFoundException, GrpcUser>> {
     const update: UserUpdate = {
@@ -53,6 +68,6 @@ export class UserServiceImpl implements UserService {
       }
     }
 
-    return this.userRepository.updateOne(query, update);
+    return this.repository.updateById(id, update);
   }
 }

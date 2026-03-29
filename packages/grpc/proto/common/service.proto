@@ -1,12 +1,17 @@
 syntax = 'proto3';
 
-package common.service;
+package common;
 
 import "google/protobuf/timestamp.proto";
+
 import "common/crud.proto";
 
 message IdField {
   string id = 1;
+}
+
+message IdsField {
+  repeated string ids = 1;
 }
 
 message EntityWithTimestamps {
@@ -20,14 +25,22 @@ message BaseQuery {
   repeated string ids = 2;
 }
 
+message BaseRequest {
+  BaseQuery query = 1;
+}
+
 message Pagination {
   optional int32 page = 1;
   optional int32 limit = 2;
 }
 
 message GetListRequest {
-  repeated crud.CrudLogicalFilter logicalFilters = 1;
-  repeated crud.CrudConditionalFilter conditionalFilters = 2;
-  repeated crud.CrudSorter sorters = 3;
+  repeated CrudLogicalFilter logicalFilters = 1;
+  repeated CrudConditionalFilter conditionalFilters = 2;
+  repeated CrudSorter sorters = 3;
   optional Pagination pagination = 4;
+}
+
+message BooleanResult {
+  bool value = 1;
 }

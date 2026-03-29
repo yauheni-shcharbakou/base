@@ -1,11 +1,11 @@
-import { MongoMapper } from '@backend/persistence';
+import { PostgresMapper } from '@backend/persistence';
 import { GrpcUser, GrpcUserQuery } from '@backend/grpc';
-import { UserEntity } from 'common/entities/user.entity';
+import { ObjectQuery, wrap } from '@mikro-orm/core';
+import { UserEntity } from 'common/repositories/user/entities/user.entity';
 import _ from 'lodash';
-import { QueryFilter } from 'mongoose';
 
-export class UserMapper extends MongoMapper<GrpcUser, UserEntity, GrpcUserQuery> {
-  transformQuery({ roles, ...rest }: Partial<GrpcUserQuery>): QueryFilter<UserEntity> {
+export class UserMapper extends PostgresMapper<UserEntity, GrpcUser, GrpcUserQuery> {
+  transformQuery({ roles, ...rest }: Partial<GrpcUserQuery>): ObjectQuery<UserEntity> {
     const result = super.transformQuery(rest);
 
     if (roles?.length) {
@@ -16,6 +16,6 @@ export class UserMapper extends MongoMapper<GrpcUser, UserEntity, GrpcUserQuery>
   }
 
   stringify(entity: UserEntity): GrpcUser {
-    return _.pick(super.stringify(entity), ['id', 'role', 'email', 'createdAt', 'updatedAt']);
+    return _.omit(wrap(entity).toJSON() as unknown as UserEntity, ['hash', 'tempTokens']);
   }
 }

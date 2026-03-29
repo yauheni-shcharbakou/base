@@ -1,28 +1,23 @@
-import { MongoModule } from '@backend/persistence';
-import { GrpcModule } from '@backend/transport';
+import { PostgresModule } from '@backend/persistence';
+import { GrpcModule, NatsModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { Database } from '@packages/common';
-import { UserEntity, UserSchema } from 'common/entities/user.entity';
-import { migrationTasks } from 'common/migrations';
-import { CryptoModule } from 'common/modules/crypto/crypto.module';
 import { config } from 'config';
 import { AuthModule } from 'modules/auth/auth.module';
+import { TempCodeModule } from 'modules/temp-code/temp-code.module';
 import { UserModule } from 'modules/user/user.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    MongoModule.forRoot({
-      database: Database.AUTH,
-      migration: {
-        imports: [ConfigModule, CryptoModule],
-        tasks: migrationTasks,
-        entities: [{ name: UserEntity.name, schema: UserSchema }],
-      },
-    }),
+    PostgresModule.forRoot({ database: Database.AUTH }),
     GrpcModule.forRoot({ host: 'auth' }),
+    NatsModule.forRoot({ host: 'auth' }),
     AuthModule,
+    TempCodeModule,
     UserModule,
   ],
 })

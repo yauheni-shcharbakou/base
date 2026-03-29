@@ -1,14 +1,17 @@
-import { GRPC_PACKAGE_ROOT } from 'compiler/constants';
+import { PUG_EXT_REG_EXP } from 'compiler/constants';
 import { ContextService } from 'compiler/services';
 import { TransformTaskClass } from 'compiler/tasks';
 import { CompilerContext, OnFilePayload, OnFolderPayload, ProtoContext } from 'compiler/types';
-import { mkdir, rm, cp, writeFile, readdir } from 'fs/promises';
+import Pug from 'pug';
+import { mkdir, rm, cp, writeFile, readdir, readFile } from 'node:fs/promises';
 import { Project, SourceFile } from 'ts-morph';
-import { join } from 'path';
+import { join } from 'node:path';
 
 export type AdapterParams = {
   name: string;
   targetRoot: string;
+  assetPath?: string;
+  templatePath?: string;
   transformTasks?: TransformTaskClass[];
   restrictedContexts?: CompilerContext[];
 };
@@ -18,6 +21,8 @@ export type AdapterClass = Function & {
     contextService: ContextService,
     name: string,
     targetRoot: string,
+    assetPath?: string,
+    templatePath?: string,
     transformTasks?: TransformTaskClass[],
     restrictedContexts?: CompilerContext[],
   ): BaseAdapter;
@@ -28,11 +33,14 @@ export type AdapterFactory = (contextService: ContextService) => BaseAdapter;
 export abstract class BaseAdapter {
   protected readonly project: Project;
   protected hasAssets = false;
+  protected readonly templateByName = new Map<string, Pug.compileTemplate>();
 
   protected constructor(
     protected readonly contextService: ContextService,
     protected readonly name: string,
     public readonly targetRoot: string,
+    protected readonly assetPath?: string,
+    protected readonly templatePath?: string,
     protected readonly transformTasks: TransformTaskClass[] = [],
     protected readonly restrictedContexts: CompilerContext[] = [],
   ) {
@@ -49,7 +57,13 @@ export abstract class BaseAdapter {
     filePath: string,
   ): Promise<void> {
     for (const Task of this.transformTasks) {
-      const transformer = new Task(sourceFile, protoContext, filePath, this.targetRoot);
+      const transformer = new Task(
+        sourceFile,
+        protoContext,
+        filePath,
+        this.targetRoot,
+        this.templateByName,
+      );
 
       if (await transformer.canTransform()) {
         await transformer.transform();
@@ -68,6 +82,48 @@ export abstract class BaseAdapter {
     return rows;
   }
 
+  protected async copyAssets() {
+    if (!this.assetPath) {
+      return;
+    }
+
+    try {
+      const assetFiles = await readdir(this.assetPath, { recursive: true });
+
+      if (assetFiles?.length) {
+        const assetDestPath = join(this.targetRoot, '__compiler__');
+        await cp(this.assetPath, assetDestPath, { force: true, recursive: true });
+        this.hasAssets = true;
+      }
+    } catch (e) {}
+  }
+
+  protected async compileTemplates() {
+    if (!this.templatePath) {
+      return;
+    }
+
+    try {
+      const templateFiles = await readdir(this.templatePath, { recursive: true });
+
+      await Promise.all(
+        templateFiles.map(async (templateFile) => {
+          if (!templateFile.endsWith('.pug')) {
+            return;
+          }
+
+          const pathToTemplate = join(this.templatePath!, templateFile);
+          const templateContent = await readFile(pathToTemplate, { encoding: 'utf-8' });
+
+          this.templateByName.set(
+            templateFile.replace(PUG_EXT_REG_EXP, ''),
+            Pug.compile(templateContent, { pretty: false }),
+          );
+        }),
+      );
+    } catch (error) {}
+  }
+
   protected addSideEffects(sourceFile: SourceFile): void | Promise<void> {}
 
   static createFactory<Adapter extends typeof BaseAdapter>(
@@ -81,6 +137,8 @@ export abstract class BaseAdapter {
         contextService,
         params.name,
         params.targetRoot,
+        params.assetPath,
+        params.templatePath,
         params.transformTasks,
         params.restrictedContexts,
       );
@@ -95,19 +153,8 @@ export abstract class BaseAdapter {
     await rm(this.targetRoot, { recursive: true, force: true });
     await mkdir(this.targetRoot, { recursive: true });
 
-    const assetsSrcPath = join(GRPC_PACKAGE_ROOT, 'compiler', 'adapters', this.name, 'assets');
-    const assetsDestPath = join(this.targetRoot, '__compiler__');
-
-    let assetsFiles: string[] | undefined;
-
-    try {
-      assetsFiles = await readdir(assetsSrcPath, { recursive: true });
-    } catch (error) {}
-
-    if (assetsFiles?.length) {
-      this.hasAssets = true;
-      await cp(assetsSrcPath, assetsDestPath, { force: true, recursive: true });
-    }
+    await this.copyAssets();
+    await this.compileTemplates();
 
     console.info(`[grpc.${this.name}] Initialization completed`);
   }
@@ -135,7 +182,7 @@ export abstract class BaseAdapter {
 
     await this.executeTransformTasks(sourceFile, protoContext, filePath);
 
-    sourceFile.formatText();
+    sourceFile.formatText({ indentSize: 2 });
     sourceFile.organizeImports();
 
     await this.addSideEffects(sourceFile);

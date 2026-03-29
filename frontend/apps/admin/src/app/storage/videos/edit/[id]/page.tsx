@@ -1,0 +1,47 @@
+'use client';
+
+import { TextEditField } from '@/common/components';
+import { useValidatedForm } from '@/common/hooks';
+import { Box } from '@mui/material';
+import { Edit } from '@refinedev/mui';
+import React from 'react';
+import zod from 'zod';
+
+export default function VideoEdit() {
+  const {
+    saveButtonProps,
+    formState: { errors },
+    refineCore: { formLoading, query },
+    register,
+  } = useValidatedForm({
+    title: zod.string().optional(),
+    description: zod.string().optional(),
+  });
+
+  const entity = query?.data?.data;
+
+  return (
+    <Edit
+      isLoading={formLoading && !!entity}
+      saveButtonProps={{
+        ...saveButtonProps,
+        disabled: formLoading,
+      }}
+    >
+      <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }} autoComplete="off">
+        <TextEditField
+          register={register('title', { setValueAs: (value) => value || undefined })}
+          label="Title"
+          value={entity?.title}
+          fieldError={errors?.title}
+        />
+        <TextEditField
+          register={register('description', { setValueAs: (value) => value || undefined })}
+          label="Description"
+          value={entity?.description}
+          fieldError={errors?.description}
+        />
+      </Box>
+    </Edit>
+  );
+}

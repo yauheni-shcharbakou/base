@@ -4,18 +4,22 @@
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "yarn build -- --watch",
-    "build": "tsup src/index.ts --format cjs --dts",
+    "build": "tsdown src/index.ts --format cjs --dts",
     "reset": "rm -rf .turbo dist node_modules"
   },
   "dependencies": {
     "@backend/common": "*",
     "@backend/grpc": "*",
+    "@mikro-orm/core": "6.6.7",
+    "@mikro-orm/migrations": "6.6.7",
+    "@mikro-orm/nestjs": "6.1.1",
+    "@mikro-orm/postgresql": "6.6.7",
     "@nestjs/common": "11.1.9",
     "@nestjs/config": "4.0.2",
     "@nestjs/core": "11.1.9",
@@ -23,6 +27,7 @@
     "@packages/common": "*",
     "@sweet-monads/either": "3.3.1",
     "mongoose": "9.0.2",
+    "nest-commander": "3.20.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },

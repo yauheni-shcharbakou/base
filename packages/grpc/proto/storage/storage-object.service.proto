@@ -1,0 +1,17 @@
+syntax = 'proto3';
+
+package storage;
+
+import "common/service.proto";
+import "storage/models/storage-object.proto";
+import "storage/messages/storage-object.messages.proto";
+
+service StorageObjectService {
+  rpc getById (common.IdField) returns (messages.StorageObjectPopulated) {}
+  rpc getMany (messages.StorageObjectRequest) returns (messages.StorageObjectList) {}
+  rpc getList (common.GetListRequest) returns (messages.StorageObjectGetListResponse) {}
+  rpc isExistsFolder (messages.StorageObjectExistsFolderRequest) returns (common.BooleanResult) {}
+  rpc createOne (messages.StorageObjectCreate) returns (models.StorageObject) {}
+  rpc updateById (messages.StorageObjectUpdateByIdRequest) returns (models.StorageObject) {}
+  rpc deleteById (common.IdField) returns (models.StorageObject) {}
+}

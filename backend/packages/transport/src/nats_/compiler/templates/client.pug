@@ -1,0 +1,57 @@
+each host in data.hosts
+    each service in host.services
+        - const serviceClientName = `Nats${pascalCase(host.name + '_' + service.name)}Client`
+        |
+        |interface #{serviceClientName} {
+        |
+        each method in service.methods
+            |   #{method.name}(data: !{method.type}): Observable<any>;
+            |
+        |}
+        |
+        |
+        |class #{serviceClientName}Impl implements #{serviceClientName} {
+        |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+        |
+        each method in service.methods
+            |   #{method.name}(data: !{method.type}): Observable<any> {
+            |       return this.client.emit('!{method.event}', data);
+            |   }
+            |
+        |}
+        |
+
+    - const hostClientName = `Nats${pascalCase(host.name)}Client`
+    |
+    |interface #{hostClientName} {
+    |
+    each service in host.services
+        |   readonly #{service.name}: Nats#{pascalCase(host.name + '_' + service.name)}Client;
+        |
+    |}
+    |
+    |class #{hostClientName}Impl implements #{hostClientName} {
+    |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+    |
+    each service in host.services
+        |   readonly #{service.name} = new Nats#{pascalCase(host.name + '_' + service.name)}ClientImpl(this.client);
+        |
+    |}
+    |
+
+|
+|export interface NatsClient {
+|
+each host in data.hosts
+    |   readonly #{host.name}: Nats#{pascalCase(host.name)}Client;
+    |
+|}
+|
+|export class GeneratedNatsClientImpl implements NatsClient {
+|   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+|
+each host in data.hosts
+    |   readonly #{host.name} = new Nats#{pascalCase(host.name)}ClientImpl(this.client);
+    |
+|}
+|

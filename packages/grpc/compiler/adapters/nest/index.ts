@@ -3,11 +3,13 @@ import { AddNestServiceSchemasTask } from 'compiler/adapters/nest/tasks/add-nest
 import { FixNestExportsTask } from 'compiler/adapters/nest/tasks/fix-nest-exports.task';
 import { BACKEND_PACKAGES_DIR_ROOT } from 'compiler/constants';
 import { CommonTask, RemoveOptionalityTask } from 'compiler/tasks';
-import { join } from 'path';
+import { join } from 'node:path';
 
 export const Nest = NestAdapter.createFactory({
   name: 'nest',
   targetRoot: join(BACKEND_PACKAGES_DIR_ROOT, 'grpc', 'src'),
+  assetPath: join(__dirname, 'assets'),
+  templatePath: join(__dirname, 'templates'),
   transformTasks: [
     CommonTask,
     RemoveOptionalityTask,

@@ -1,14 +1,5 @@
-import { AuthPage } from '@/components/auth-page';
-import { authService } from '@/services';
-import { AuthDatabaseCollection } from '@packages/common';
-import { redirect } from 'next/navigation';
+import { UnauthorizedLayout } from '@/features/auth/components';
 
-export default async function Register() {
-  const hasAuth = await authService.hasAuth();
-
-  if (hasAuth) {
-    redirect(`/${AuthDatabaseCollection.USER}`);
-  }
-
-  return <AuthPage type="register" />;
+export default async function RegisterPage() {
+  return <UnauthorizedLayout type="register" />;
 }

@@ -1,0 +1,19 @@
+syntax = 'proto3';
+
+package storage.models;
+
+import "google/protobuf/timestamp.proto";
+
+message Image {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  int32 width = 4;
+  int32 height = 5;
+  string alt = 6;
+
+  string userId = 7;
+  string fileId = 8;
+  string uploadId = 9;
+}

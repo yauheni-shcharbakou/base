@@ -1,6 +1,6 @@
 syntax = 'proto3';
 
-package common.enums;
+package common;
 
 enum EmployeeRole {
   BACKEND_DEVELOPER = 0;

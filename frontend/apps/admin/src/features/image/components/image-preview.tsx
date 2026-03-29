@@ -1,0 +1,30 @@
+'use client';
+
+import { imageLoader } from '@/common/helpers';
+import { Card, Skeleton } from '@mui/material';
+import { GrpcImage } from '@packages/grpc';
+import Image from 'next/image';
+import React, { FC } from 'react';
+
+type Props = {
+  image?: GrpcImage;
+};
+
+export const ImagePreview: FC<Props> = ({ image }: Props) => {
+  if (!image) {
+    return <Skeleton variant="rectangular" height={400} animation="wave" />;
+  }
+
+  return (
+    <Card variant="elevation" elevation={1} sx={{ position: 'relative', height: '400px' }}>
+      <Image
+        alt={image.alt}
+        src={`/api/files/${image.fileId}/open`}
+        loading="lazy"
+        style={{ objectFit: 'contain' }}
+        loader={imageLoader}
+        fill
+      />
+    </Card>
+  );
+};

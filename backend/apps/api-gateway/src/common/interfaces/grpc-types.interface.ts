@@ -5,7 +5,7 @@ export interface ItemsType<Item> {
 }
 
 export interface RequestType<Query> {
-  query?: Query;
+  query: Query;
 }
 
 export interface UpdateRequestType<Query, Update> {

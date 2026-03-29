@@ -1,29 +1,28 @@
-import { GrpcProxyModule } from '@backend/transport';
+import { GrpcModule, GrpcProxyModule } from '@backend/transport';
 import { Module } from '@nestjs/common';
-import { GrpcAuthService, GrpcUserService } from '@backend/grpc';
-import { AdminGrpcController, PublicGrpcController } from 'common/decorators/access.decorator';
+import { GrpcAuthService, GrpcTempCodeService, GrpcUserService } from '@backend/grpc';
+import { AdminGrpcController } from 'common/decorators/access.decorator';
 import { GetListRequestDto } from 'common/dto/get-list-request.dto';
 import { IdFieldDto } from 'common/dto/id-field.dto';
-import { AuthLoginDto, AuthMeDto, AuthRefreshDto } from 'common/dto/services/auth.service.dto';
 import {
   UserCreateDto,
   UserRequestDto,
   UserUpdateByIdRequestDto,
-  UserUpdateRequestDto,
-} from 'common/dto/services/user.service.dto';
+} from 'common/dto/services/auth/user.service.dto';
+import { AuthRpcController } from 'modules/auth/rpc/controllers/auth.rpc.controller';
 
 @Module({
   imports: [
     GrpcProxyModule.register(
       {
         host: 'auth',
-        controllerFactory: GrpcAuthService.proxyFactory({
-          me: AuthMeDto,
-          login: AuthLoginDto,
-          refreshToken: AuthRefreshDto,
+        controllerFactory: GrpcTempCodeService.proxyFactory({
+          getById: IdFieldDto,
+          getList: GetListRequestDto,
+          deleteById: IdFieldDto,
         }),
         custom: {
-          GrpcController: PublicGrpcController,
+          GrpcController: AdminGrpcController,
         },
       },
       {
@@ -34,8 +33,6 @@ import {
           getMany: UserRequestDto,
           getList: GetListRequestDto,
           createOne: UserCreateDto,
-          updateOne: UserUpdateRequestDto,
-          deleteOne: UserRequestDto,
           updateById: UserUpdateByIdRequestDto,
           deleteById: IdFieldDto,
         }),
@@ -44,6 +41,12 @@ import {
         },
       },
     ),
+    GrpcModule.forFeature({
+      strategy: {
+        auth: [GrpcAuthService.name, GrpcTempCodeService.name],
+      },
+    }),
   ],
+  controllers: [AuthRpcController],
 })
 export class AuthRpcModule {}

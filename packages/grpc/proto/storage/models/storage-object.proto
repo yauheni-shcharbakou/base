@@ -1,0 +1,32 @@
+syntax = 'proto3';
+
+package storage.models;
+
+import "google/protobuf/timestamp.proto";
+
+enum StorageObjectType {
+  FOLDER = 0;
+  FILE = 1;
+  IMAGE = 2;
+  VIDEO = 3;
+}
+
+message StorageObject {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string name = 4;
+  bool isPublic = 5;
+  StorageObjectType type = 6;
+
+  string userId = 7;
+  optional string fileId = 8;
+  optional string parentId = 9;
+
+  oneof metadata {
+    string folderPath = 10;
+    string imageId = 11;
+    string videoId = 12;
+  }
+}

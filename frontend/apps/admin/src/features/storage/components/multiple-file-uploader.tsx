@@ -1,0 +1,174 @@
+'use client';
+
+import { FileUploadStatusItem } from '@/features/storage/components/file-upload-status-item';
+import { getFileSize } from '@/features/storage/helpers';
+import { FileUploadItem, FileUploadMap } from '@/features/storage/hooks';
+import { Box, Button, Card, Stack, Typography, List as MuiList } from '@mui/material';
+import React, { useCallback, MouseEvent } from 'react';
+import { Controller, FieldErrors, FieldValues, UseFormReturn, Path } from 'react-hook-form';
+import { Accept, useDropzone } from 'react-dropzone';
+
+export type MultipleFileUploaderProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
+  UseFormReturn<V, E, T>,
+  'control' | 'watch'
+> & {
+  formField: Path<V>;
+  errors: FieldErrors<any>;
+  onChange?: (files?: File[]) => void;
+  disabled?: boolean;
+  required?: boolean;
+  maxSize?: number;
+  isUploading?: boolean;
+  accept?: Accept;
+  allowedTypes?: string[];
+  max?: number;
+  uploadMap: FileUploadMap;
+  onRetry?: (uploadItem: FileUploadItem) => Promise<void>;
+};
+
+type ListProps = Pick<MultipleFileUploaderProps, 'uploadMap' | 'onRetry' | 'isUploading'>;
+
+const UploadStatusList = React.memo(({ uploadMap, onRetry, isUploading }: ListProps) => {
+  const items = Object.values(uploadMap);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <MuiList sx={{ mt: 2, width: 1 }}>
+      {items.map((item) => (
+        <FileUploadStatusItem
+          key={item.id}
+          uploadItem={item}
+          onRetry={onRetry}
+          frozen={isUploading}
+        />
+      ))}
+    </MuiList>
+  );
+});
+
+export const MultipleFileUploader = <V extends FieldValues, E = any, T = V>({
+  control,
+  watch,
+  formField,
+  errors,
+  isUploading,
+  onChange,
+  disabled,
+  required,
+  maxSize,
+  allowedTypes,
+  accept,
+  max,
+  uploadMap,
+  onRetry,
+}: MultipleFileUploaderProps<V, E, T>) => {
+  const selectedFiles = watch(formField) as unknown as File[];
+  const maxFileSize = getFileSize(maxSize);
+
+  return (
+    <Controller
+      control={control}
+      name={formField}
+      rules={{ required: required ? 'Select files' : undefined }}
+      render={({ field }) => {
+        const onDrop = useCallback(
+          (acceptedFiles: File[]) => {
+            if (!acceptedFiles.length) {
+              return;
+            }
+
+            field.onChange(acceptedFiles);
+            onChange?.(acceptedFiles);
+          },
+          [field.onChange, onChange],
+        );
+
+        const { getRootProps, getInputProps, isDragActive } = useDropzone({
+          onDrop,
+          disabled: disabled || isUploading,
+          maxFiles: max,
+          accept,
+          noClick: !!selectedFiles,
+          maxSize,
+        });
+
+        const handleClear = (e: MouseEvent<HTMLButtonElement>) => {
+          e?.stopPropagation();
+          field.onChange([]);
+          onChange?.([]);
+        };
+
+        return (
+          <Card
+            {...getRootProps()}
+            variant={isDragActive ? 'elevation' : 'outlined'}
+            elevation={isDragActive ? 1 : 0}
+            sx={{
+              p: 2,
+              borderStyle: isDragActive ? 'dashed' : 'solid',
+              borderWidth: '1px',
+              transition: 'all 0.2s ease',
+              cursor: disabled || isUploading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <input {...getInputProps()} />{' '}
+            <Stack gap={2} alignItems="center">
+              <Typography
+                fontWeight="bold"
+                color={disabled ? 'textDisabled' : 'info'}
+                align="center"
+              >
+                {selectedFiles?.length
+                  ? `Files selected: ${selectedFiles.length}`
+                  : 'Drag & drop or click to select files'}
+                {required ? '*' : ''}
+              </Typography>
+              <Stack width={1}>
+                {maxSize && (
+                  <Typography variant="caption" color="textSecondary" align="center">
+                    Max size: {maxFileSize}
+                  </Typography>
+                )}
+                {allowedTypes?.length && (
+                  <Typography variant="caption" color="textSecondary" align="center">
+                    Allowed types: {allowedTypes.join(' / ')}
+                  </Typography>
+                )}
+                {!disabled && errors[formField] && (
+                  <Typography variant="caption" color="error" align="center">
+                    {errors[formField].message?.toString() || 'Problem with files'}
+                  </Typography>
+                )}
+              </Stack>
+              <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: 2 }}>
+                {!selectedFiles?.length ? (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    disabled={disabled || isUploading || !!selectedFiles?.length}
+                  >
+                    Select files
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    onClick={handleClear}
+                    disabled={disabled || isUploading || !selectedFiles?.length}
+                  >
+                    Remove files
+                  </Button>
+                )}
+              </Box>
+
+              <UploadStatusList uploadMap={uploadMap} onRetry={onRetry} isUploading={isUploading} />
+            </Stack>
+          </Card>
+        );
+      }}
+    />
+  );
+};

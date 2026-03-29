@@ -1,10 +1,10 @@
 import { PROTO_EXT_REG_EXP, TS_EXT_REG_EXP } from 'compiler/constants';
 import { OnFilePayload, OnFolderPayload } from 'compiler/types';
-import { EventEmitter } from 'events';
-import { stat } from 'fs/promises';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { dirname, join, relative } from 'path';
+import { EventEmitter } from 'node:events';
+import { stat } from 'node:fs/promises';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import { dirname, join, relative } from 'node:path';
 
 export const parseProtoTree = async (
   root: string,

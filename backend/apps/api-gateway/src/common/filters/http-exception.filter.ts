@@ -1,4 +1,4 @@
-import { getHttpExceptionResponseMessage } from '@backend/common';
+import { HttpExceptionMapper } from '@backend/common';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { Response, Request } from 'express';
 
@@ -12,7 +12,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     return response.status(statusCode).json({
       statusCode,
-      message: getHttpExceptionResponseMessage(exception),
+      message: HttpExceptionMapper.getMessage(exception),
       timestamp: new Date().toISOString(),
       path: request.url,
     });

@@ -1,0 +1,60 @@
+each service in data.services
+    - const methodParamsInterface = `Grpc${pascalCase(service.id)}ProxyMethodParams`
+    - const controller = `Grpc${pascalCase(service.id)}ProxyController`
+    - const serviceName = pascalCase(service.name)
+    - const methodsDecorator = `${pascalCase(service.name)}ControllerMethods`
+
+    |
+    |interface #{methodParamsInterface} {
+    each unaryMethod in service.unaryMethods
+        |   #{unaryMethod.name}?: GrpcProxyMethodParams<!{unaryMethod.requestType}>;
+        |
+    each streamMethod in service.streamMethods
+        |   #{streamMethod.name}?: GrpcProxyStreamMethodParams;
+        |
+    |}
+    |
+    |export const Grpc#{pascalCase(service.id)}Service = {
+    |   name: "#{serviceName}",
+    |   definition: {
+    |       package: !{data.package},
+    |       protoPath: join(PROTO_PATH, '#{data.protoPath}'),
+    |   },
+    |   proxyFactory: (methodParams: #{methodParamsInterface} = {}): GrpcProxyControllerFactory => {
+    |       return (controllerParams: GrpcProxyControllerFactoryParams): GrpcProxyControllerFactoryResult => {
+    |           const { GrpcController, GrpcMethod, GrpcStreamMethod, InjectGrpcService, proxyPipes } = controllerParams;
+    |
+    |           @GrpcController()
+    |           @#{methodsDecorator}()
+    |           class #{controller} {
+    |               constructor(
+    |                   @InjectGrpcService(#{constantCase(service.name)}_NAME)
+    |                   private readonly client: Grpc#{pascalCase(service.name)}Client,
+    |               ) {}
+    |
+    each unaryMethod in service.unaryMethods
+        |
+        |           @GrpcMethod(methodParams.#{unaryMethod.name})
+        |           #{unaryMethod.name}(request: !{unaryMethod.requestType}, metadata?: Metadata): !{unaryMethod.responseType} {
+        |               //@ts-ignore
+        |               return this.client.#{unaryMethod.name}(request, metadata?.clone()).pipe(...proxyPipes);
+        |           }
+        |
+    each streamMethod in service.streamMethods
+        |
+        |           @GrpcStreamMethod(methodParams.#{streamMethod.name})
+        |           #{streamMethod.name}(request: !{streamMethod.requestType}, metadata?: Metadata): !{streamMethod.responseType} {
+        |               return this.client.#{streamMethod.name}(request, metadata?.clone());
+        |           }
+        |
+    |           }
+    |
+    |           return {
+    |               Controller: #{controller},
+    |               service: "#{serviceName}",
+    |           };
+    |       };
+    |   },
+    |   ControllerMethods: (): ClassDecorator => #{methodsDecorator}(),
+    |} as const;
+    |

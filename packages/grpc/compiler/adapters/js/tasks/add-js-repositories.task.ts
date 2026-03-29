@@ -3,110 +3,87 @@ import { TransformTask } from 'compiler/tasks';
 import { ProtoContextService } from 'compiler/types';
 import { MethodSignature, Node } from 'ts-morph';
 
+type MethodData = {
+  name: string;
+  requestType: string;
+  responseType: string;
+};
+
+type TemplateData = {
+  id: string;
+  unaryMethods: MethodData[];
+};
+
 export class AddJsRepositoriesTask extends TransformTask {
   private declareImports() {
-    this.addOrUpdateImport('@grpc/grpc-js', ['CallOptions', 'Metadata']);
-
-    this.addOrUpdateImport(this.importFromCompilerPath, ['GrpcRepository']);
+    this.addOrUpdateImport('@grpc/grpc-js', [
+      'CallOptions',
+      'ClientOptions',
+      'ChannelCredentials',
+      'Metadata',
+    ]);
   }
 
-  private declareRepository(service: ProtoContextService) {
-    const clientInterfaceName = pascalCase(`grpc.${service.name}.client`);
-    const clientInterface = this.sourceFile.getInterface(clientInterfaceName);
+  private declareRepositories(services: ProtoContextService[]) {
+    const templateData: TemplateData[] = services.reduce((acc: TemplateData[], service) => {
+      const clientInterfaceName = pascalCase(`grpc.${service.name}.client`);
+      const clientInterface = this.sourceFile.getInterface(clientInterfaceName);
 
-    if (!clientInterface) {
-      return;
-    }
-
-    const clientMethods = new Map<string, MethodSignature>();
-
-    for (const method of clientInterface.getMethods()) {
-      const name = method.getName();
-
-      if (!clientMethods.has(name)) {
-        clientMethods.set(name, method);
+      if (!clientInterface) {
+        return acc;
       }
-    }
 
-    const repositoryClass = this.sourceFile.addClass({
-      name: pascalCase(`grpc.${service.id}.repository`),
-      isExported: true,
-      extends: `GrpcRepository<${clientInterfaceName}>`,
-    });
+      const clientMethods = new Map<string, MethodSignature>();
 
-    repositoryClass.addConstructor({
-      parameters: [
-        {
-          name: 'address',
-          type: 'string',
+      for (const method of clientInterface.getMethods()) {
+        const name = method.getName();
+
+        if (!clientMethods.has(name)) {
+          clientMethods.set(name, method);
+        }
+      }
+
+      const unaryMethods: MethodData[] = Array.from(clientMethods.entries()).reduce(
+        (methods: MethodData[], [name, method]) => {
+          const requestType = method.getParameter('request')?.getType()?.getText();
+          const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
+
+          if (!requestType || !Node.isFunctionTypeNode(callbackTypeNode)) {
+            return methods;
+          }
+
+          const responseType = callbackTypeNode.getParameter('response')?.getType()?.getText();
+
+          if (!responseType) {
+            return methods;
+          }
+
+          methods.push({ name, requestType, responseType });
+          return methods;
         },
-        {
-          name: 'credentials',
-          type: 'ChannelCredentials',
-          initializer: 'ChannelCredentials.createInsecure()',
-        },
-        {
-          name: 'options',
-          type: 'Partial<ClientOptions>',
-          hasQuestionToken: true,
-        },
-      ],
-      statements: (writer) => {
-        writer.writeLine(`super(new ${clientInterfaceName}(address, credentials, options));`);
+        [],
+      );
+
+      acc.push({ id: service.id, unaryMethods });
+      return acc;
+    }, []);
+
+    const repositoryDeclaration = this.renderTemplate('js.repository', {
+      data: {
+        services: templateData,
       },
+      pascalCase,
     });
 
-    Array.from(clientMethods.entries()).forEach(([name, method]) => {
-      const requestType = method.getParameter('request')?.getType()?.getText();
-      const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
-
-      if (!requestType || !Node.isFunctionTypeNode(callbackTypeNode)) {
-        return;
-      }
-
-      const responseType = callbackTypeNode.getParameter('response')?.getType()?.getText();
-
-      if (!responseType) {
-        return;
-      }
-
-      repositoryClass.addMethod({
-        name,
-        parameters: [
-          {
-            name: 'request',
-            type: requestType,
-          },
-          {
-            name: 'metadata',
-            type: 'Metadata',
-            initializer: 'new Metadata()',
-          },
-          {
-            name: 'options',
-            type: 'Partial<CallOptions>',
-            initializer: '{}',
-          },
-        ],
-        returnType: `Promise<${responseType}>`,
-        statements: (writer) => {
-          writer.writeLine(
-            `return this.exec<${requestType}, ${responseType}>("${name}", request, metadata, options);`,
-          );
-        },
-      });
-    });
-
-    return repositoryClass;
+    this.sourceFile.addStatements(repositoryDeclaration);
   }
 
   canTransform(): boolean | Promise<boolean> {
     return !(!this.protoContext.services.length || !this.protoContext.packageId);
   }
 
-  transform(): void | Promise<void> {
+  transform(): void {
     this.declareImports();
-
-    this.protoContext.services.forEach((service) => this.declareRepository(service));
+    this.declareRepositories(this.protoContext.services);
   }
 }
