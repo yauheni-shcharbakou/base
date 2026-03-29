@@ -1,20 +1,6 @@
 name: base
 
 services:
-#  mongo:
-#    image: mongo:latest
-#    restart: unless-stopped
-#    container_name: base-mongo
-#    networks:
-#      - private_network
-#    ports:
-#      - '27017:27017'
-#    volumes:
-#      - mongo_data:/data/db
-#    profiles:
-#      - local
-#      - all
-
   postgres:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -134,7 +120,5 @@ networks:
     driver: bridge
 
 volumes:
-  mongo_data:
   postgres_data:
   nats_data:
-#  redis_data:
