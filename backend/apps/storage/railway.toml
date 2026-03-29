@@ -1,7 +1,7 @@
 [build]
-watchPatterns = ["backend/apps/auth/**", "backend/packages/**", "packages/**"]
+watchPatterns = ["backend/apps/storage/**", "backend/packages/**", "packages/**"]
 builder = "DOCKERFILE"
-dockerfilePath = "backend/apps/auth/Dockerfile"
+dockerfilePath = "backend/apps/storage/Dockerfile"
 
 [deploy]
 restartPolicyType = "ON_FAILURE"
