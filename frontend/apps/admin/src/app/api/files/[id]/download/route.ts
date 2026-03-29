@@ -1,4 +1,4 @@
-import { getErrorMessage, getRequestIp } from '@/common/helpers';
+import { getErrorMessage, getServerPublicIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
-    const ip = getRequestIp(request);
+    const ip = await getServerPublicIp();
 
     if (ip) {
       authMeta.set('ip', ip);
