@@ -11,7 +11,7 @@ WORKDIR /app
 FROM base AS prepare
 RUN yarn global add turbo@latest
 COPY . .
-RUN turbo prune backend.auth --docker
+RUN turbo prune backend.storage --docker
 
 FROM base AS builder
 RUN apk add --no-cache protobuf protobuf-dev
@@ -20,12 +20,12 @@ ENV PROTO_PATH=protoc
 ENV GRPC_COMPILER_CONTEXT=backend
 ENV YARN_CACHE_FOLDER=/usr/local/share/.cache/yarn
 COPY --from=prepare /app/out/json/ .
-RUN --mount=type=cache,id=s/0e139870-5149-4907-9454-d4228002c737-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
+RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
     yarn install --ignore-scripts --production=false
 COPY --from=prepare /app/out/full/ .
-RUN --mount=type=cache,id=s/0e139870-5149-4907-9454-d4228002c737-/app/.turbo,target=/app/.turbo \
+RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/app/.turbo,target=/app/.turbo \
     yarn build:docker
-RUN --mount=type=cache,id=s/0e139870-5149-4907-9454-d4228002c737-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
+RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
     yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
@@ -34,4 +34,5 @@ RUN adduser --system --uid 1001 nestjs
 USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
-CMD ["node", "backend/apps/auth/dist/main.js"]
+WORKDIR /app/backend/apps/storage
+CMD ["sh", "-c", "node dist/migrator/main.js -- postgres-migration && node dist/main.js"]
