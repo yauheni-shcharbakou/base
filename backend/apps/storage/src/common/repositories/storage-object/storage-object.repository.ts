@@ -22,6 +22,7 @@ export interface StorageObjectQuery extends GrpcStorageObjectQuery {
 export interface StorageObjectCreate extends GrpcStorageObjectCreate {
   userId: string;
   folderPath?: string;
+  isFolder: boolean;
 }
 
 export interface StorageObjectUpdate extends GrpcStorageObjectUpdate {

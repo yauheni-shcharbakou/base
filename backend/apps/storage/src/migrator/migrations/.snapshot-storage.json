@@ -716,6 +716,16 @@
           "default": "false",
           "mappedType": "boolean"
         },
+        "is_folder": {
+          "name": "is_folder",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "default": "false",
+          "mappedType": "boolean"
+        },
         "type": {
           "name": "type",
           "type": "varchar",
@@ -822,6 +832,16 @@
           ],
           "composite": false,
           "keyName": "storage-objects_is_public_index",
+          "constraint": false,
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
+            "is_folder"
+          ],
+          "composite": false,
+          "keyName": "storage-objects_is_folder_index",
           "constraint": false,
           "primary": false,
           "unique": false

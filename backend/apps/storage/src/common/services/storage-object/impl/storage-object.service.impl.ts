@@ -52,6 +52,10 @@ export class StorageObjectServiceImpl
       return left(new BadRequestException('Invalid parent'));
     }
 
+    if (storageObject.type !== GrpcStorageObjectType.FOLDER) {
+      return right(null);
+    }
+
     const parentFolder = await this.repository.getOne({
       id: parent,
       type: GrpcStorageObjectType.FOLDER,
@@ -61,11 +65,7 @@ export class StorageObjectServiceImpl
       return left(new NotFoundException('Parent folder not found'));
     }
 
-    if (storageObject.type === GrpcStorageObjectType.FOLDER) {
-      return right(parentFolder.value.folderPath + storageObject.name + '/');
-    }
-
-    return right(null);
+    return right(parentFolder.value.folderPath + storageObject.name + '/');
   }
 
   private async checkObjectName(
@@ -153,6 +153,7 @@ export class StorageObjectServiceImpl
       folderPath: folderPath.value,
       userId,
       name: name.value,
+      isFolder: request.type === GrpcStorageObjectType.FOLDER,
     });
   }
 
@@ -178,6 +179,7 @@ export class StorageObjectServiceImpl
             name: name.value,
             isPublic: createData.isPublic,
             parent: createData.parent,
+            isFolder: file.type === GrpcStorageObjectType.FOLDER,
           };
         }),
       );
@@ -335,6 +337,7 @@ export class StorageObjectServiceImpl
       name: '',
       isPublic: false,
       folderPath: '/',
+      isFolder: true,
     });
   }
 

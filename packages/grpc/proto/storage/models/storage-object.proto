@@ -18,15 +18,16 @@ message StorageObject {
 
   string name = 4;
   bool isPublic = 5;
-  StorageObjectType type = 6;
+  bool isFolder = 6;
+  StorageObjectType type = 7;
 
-  string userId = 7;
-  optional string fileId = 8;
-  optional string parentId = 9;
+  string userId = 8;
+  optional string fileId = 9;
+  optional string parentId = 10;
 
   oneof metadata {
-    string folderPath = 10;
-    string imageId = 11;
-    string videoId = 12;
+    string folderPath = 11;
+    string imageId = 12;
+    string videoId = 13;
   }
 }

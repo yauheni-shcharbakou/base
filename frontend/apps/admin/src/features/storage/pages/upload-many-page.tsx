@@ -36,12 +36,20 @@ type Props<Entity extends GrpcIdField & { uploadId: string }> = {
 export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }>(
   props: Props<Entity>,
 ) => {
-  const { isUploading, uploadMap, handleUpload, retryUpload, addFiles } = useMultipleFileUpload({
+  const {
+    isUploading,
+    uploadedCount,
+    itemsCount,
+    failedItems,
+    handleUpload,
+    handleDelete,
+    addFiles,
+  } = useMultipleFileUpload({
     resource: props.fileResource,
     batchSize: props.batchSize,
   });
 
-  const onRetry = useCallback(retryUpload, []);
+  const onDelete = useCallback(handleDelete, []);
 
   const {
     watch,
@@ -97,9 +105,11 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
             watch={watch}
             isUploading={isUploading}
             required
-            uploadMap={uploadMap}
-            onRetry={onRetry}
+            onDelete={onDelete}
             onChange={addFiles}
+            uploadedCount={uploadedCount}
+            itemsCount={itemsCount}
+            failedItems={failedItems}
             {...(props.uploaderProps ?? {})}
           />
         </Stack>

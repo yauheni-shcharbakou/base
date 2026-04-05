@@ -19,22 +19,23 @@ message StorageObjectPopulated {
 
   string name = 4;
   bool isPublic = 5;
-  models.StorageObjectType type = 6;
+  bool isFolder = 6;
+  models.StorageObjectType type = 7;
 
-  string userId = 7;
-  optional string fileId = 8;
-  optional string parentId = 9;
-  optional models.File file = 10;
+  string userId = 8;
+  optional string fileId = 9;
+  optional string parentId = 10;
+  optional models.File file = 11;
 
   oneof metadata {
-    string folderPath = 11;
-    string imageId = 12;
-    string videoId = 13;
+    string folderPath = 12;
+    string imageId = 13;
+    string videoId = 14;
   }
 
   oneof populatedMetadata {
-    models.Image image = 14;
-    models.Video video = 15;
+    models.Image image = 15;
+    models.Video video = 16;
   }
 }
 

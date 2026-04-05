@@ -1,9 +1,19 @@
 'use client';
 
-import { FileUploadStatusItem } from '@/features/storage/components/file-upload-status-item';
 import { getFileSize } from '@/features/storage/helpers';
-import { FileUploadItem, FileUploadMap } from '@/features/storage/hooks';
-import { Box, Button, Card, Stack, Typography, List as MuiList } from '@mui/material';
+import { FileUploadItem } from '@/features/storage/hooks';
+import { Delete } from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Card,
+  Stack,
+  Typography,
+  List as MuiList,
+  ListItem,
+  IconButton,
+  LinearProgress,
+} from '@mui/material';
 import React, { useCallback, MouseEvent } from 'react';
 import { Controller, FieldErrors, FieldValues, UseFormReturn, Path } from 'react-hook-form';
 import { Accept, useDropzone } from 'react-dropzone';
@@ -22,28 +32,59 @@ export type MultipleFileUploaderProps<V extends FieldValues = FieldValues, E = a
   accept?: Accept;
   allowedTypes?: string[];
   max?: number;
-  uploadMap: FileUploadMap;
-  onRetry?: (uploadItem: FileUploadItem) => Promise<void>;
+  onDelete?: (id: string) => void;
+  failedItems: FileUploadItem[];
+  uploadedCount: number;
+  itemsCount: number;
 };
 
-type ListProps = Pick<MultipleFileUploaderProps, 'uploadMap' | 'onRetry' | 'isUploading'>;
+type ListProps = Pick<MultipleFileUploaderProps, 'failedItems' | 'onDelete' | 'isUploading'>;
 
-const UploadStatusList = React.memo(({ uploadMap, onRetry, isUploading }: ListProps) => {
-  const items = Object.values(uploadMap);
+type FailedItemProps = {
+  uploadItem: FileUploadItem;
+  onDelete?: (id: string) => void;
+  frozen?: boolean;
+};
 
-  if (items.length === 0) {
+const FailedItem = React.memo(({ uploadItem, onDelete, frozen }: FailedItemProps) => {
+  return (
+    <ListItem
+      sx={{
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+        mb: 1,
+        flexDirection: 'column',
+        alignItems: 'stretch',
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <Typography variant="body2" color="warning" sx={{ flexGrow: 1 }}>
+          {uploadItem.file.name} ({getFileSize(uploadItem.file.size)})
+        </Typography>
+
+        <IconButton
+          size="small"
+          onClick={() => onDelete?.(uploadItem.id)}
+          color="error"
+          disabled={frozen}
+        >
+          <Delete fontSize="small" />
+        </IconButton>
+      </Stack>
+    </ListItem>
+  );
+});
+
+const FailedItemsList = React.memo(({ failedItems, onDelete, isUploading }: ListProps) => {
+  if (failedItems.length === 0) {
     return null;
   }
 
   return (
     <MuiList sx={{ mt: 2, width: 1 }}>
-      {items.map((item) => (
-        <FileUploadStatusItem
-          key={item.id}
-          uploadItem={item}
-          onRetry={onRetry}
-          frozen={isUploading}
-        />
+      {failedItems.map((item) => (
+        <FailedItem key={item.id} uploadItem={item} onDelete={onDelete} frozen={isUploading} />
       ))}
     </MuiList>
   );
@@ -62,8 +103,10 @@ export const MultipleFileUploader = <V extends FieldValues, E = any, T = V>({
   allowedTypes,
   accept,
   max,
-  uploadMap,
-  onRetry,
+  failedItems,
+  onDelete,
+  itemsCount,
+  uploadedCount,
 }: MultipleFileUploaderProps<V, E, T>) => {
   const selectedFiles = watch(formField) as unknown as File[];
   const maxFileSize = getFileSize(maxSize);
@@ -164,7 +207,20 @@ export const MultipleFileUploader = <V extends FieldValues, E = any, T = V>({
                 )}
               </Box>
 
-              <UploadStatusList uploadMap={uploadMap} onRetry={onRetry} isUploading={isUploading} />
+              {isUploading && (
+                <Box width={1}>
+                  <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
+                    {uploadedCount} / {itemsCount}
+                  </Typography>
+                  <LinearProgress variant="determinate" value={uploadedCount / itemsCount} />
+                </Box>
+              )}
+
+              <FailedItemsList
+                failedItems={failedItems}
+                onDelete={onDelete}
+                isUploading={isUploading}
+              />
             </Stack>
           </Card>
         );

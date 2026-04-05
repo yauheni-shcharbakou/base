@@ -33,6 +33,12 @@ export class StorageObjectDto extends EntityWithTimestampsDto implements GrpcSto
 
   @ApiProperty()
   @IsNotEmpty()
+  @IsBoolean()
+  @TransformToBoolean()
+  isFolder: boolean;
+
+  @ApiProperty()
+  @IsNotEmpty()
   @IsString()
   name: string;
 
