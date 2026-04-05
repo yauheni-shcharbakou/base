@@ -10,7 +10,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS prepare
-RUN yarn global add turbo@latest
+RUN yarn global add turbo@2.9.3
 COPY . .
 RUN turbo prune frontend.admin --docker
 
