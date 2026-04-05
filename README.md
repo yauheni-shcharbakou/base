@@ -26,6 +26,7 @@ My personal website
 > - Nest.js
 > - Mongoose
 > - Microservices
+> - Nats JetStream
 
 ### Project structure
 
