@@ -10,7 +10,7 @@ import { Control, Controller, FieldErrors, FieldValues, UseFormReturn } from 're
 
 type SelectOptions = {
   label: string;
-  value: string;
+  value: string | number;
 };
 
 type ControlledSingleSelectProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
@@ -20,9 +20,9 @@ type ControlledSingleSelectProps<V extends FieldValues = FieldValues, E = any, T
   formField: string;
   fieldError?: FieldErrors[string];
   label?: string;
-  defaultValue?: string;
+  defaultValue?: string | number;
   controllerProps?: EditFieldControllerProps;
-  options: string[] | SelectOptions[];
+  options: string[] | number[] | SelectOptions[];
   required?: boolean;
 };
 
@@ -44,7 +44,11 @@ export const ControlledSingleSelect = <V extends FieldValues, E = any, T = V>({
     }
 
     optionsFromProps.forEach((option) => {
-      opts.push(typeof option === 'string' ? { label: option, value: option } : option);
+      opts.push(
+        typeof option === 'string' || typeof option === 'number'
+          ? { label: option.toString(), value: option }
+          : option,
+      );
     });
 
     return opts;

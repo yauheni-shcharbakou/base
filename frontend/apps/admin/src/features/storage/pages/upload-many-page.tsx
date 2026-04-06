@@ -1,6 +1,6 @@
 'use client';
 
-import { ControlledBooleanField } from '@/common/components';
+import { ControlledBooleanField, ControlledSingleSelect } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
 import {
   FolderSelect,
@@ -13,13 +13,14 @@ import { SchemaTypeOf } from '@packages/common';
 import { GrpcIdField } from '@packages/grpc';
 import { useInvalidate, useNavigation } from '@refinedev/core';
 import { Create } from '@refinedev/mui';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
   parent: zod.string().optional(),
   isPublic: zod.boolean().optional(),
   files: zod.array(zod.file()),
+  batchSize: zod.number().min(1).max(100),
 };
 
 type Params = SchemaTypeOf<typeof schema>;
@@ -44,12 +45,10 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
     handleUpload,
     handleDelete,
     addFiles,
-  } = useMultipleFileUpload({
-    resource: props.fileResource,
-    batchSize: props.batchSize,
-  });
+  } = useMultipleFileUpload({ resource: props.fileResource });
 
   const onDelete = useCallback(handleDelete, []);
+  const batchSizeOptions = useMemo(() => [1, 5, 10, 20, 100], []);
 
   const {
     watch,
@@ -69,6 +68,7 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
     const isSuccess = await handleUpload<Entity>(
       async (batch) => props.createFactory(batch, data),
       props.fileRefField as keyof Entity,
+      data.batchSize,
     );
 
     if (isSuccess) {
@@ -97,6 +97,18 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
               )}
             </CardContent>
           </Card>
+
+          {itemsCount && (
+            <ControlledSingleSelect
+              control={control}
+              formField="batchSize"
+              fieldError={errors?.batchSize}
+              options={batchSizeOptions}
+              defaultValue={props.batchSize}
+              label="Batch size"
+              required
+            />
+          )}
 
           <MultipleFileUploader
             formField="files"

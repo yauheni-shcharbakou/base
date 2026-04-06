@@ -9,7 +9,6 @@ import { GrpcIdField } from '@packages/grpc';
 
 type Params = {
   resource: string;
-  batchSize: number;
 };
 
 type Entity = GrpcIdField & { uploadId: string };
@@ -24,7 +23,7 @@ export type FileUploadMap = {
   [id: string]: FileUploadItem;
 };
 
-export const useMultipleFileUpload = ({ resource, batchSize }: Params) => {
+export const useMultipleFileUpload = ({ resource }: Params) => {
   const [uploadMap, setUploadMap] = useState<FileUploadMap>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
@@ -83,6 +82,7 @@ export const useMultipleFileUpload = ({ resource, batchSize }: Params) => {
   const handleUpload = async <Record extends Entity = Entity>(
     createCallback: (items: FileUploadItem[]) => Promise<Record[]>,
     field: keyof Record = 'id',
+    batchSize = 10,
   ): Promise<boolean> => {
     setIsUploading(() => true);
     let isSuccess = true;
