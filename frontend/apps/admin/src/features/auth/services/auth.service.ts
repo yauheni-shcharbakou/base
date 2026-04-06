@@ -103,9 +103,20 @@ export class AuthService {
     return refreshToken.value;
   }
 
+  private async getAccessTokenWithRefresh() {
+    let accessToken = await this.getAccessTokenSafe();
+
+    if (!accessToken) {
+      const authData = await this.refreshAuthData();
+      accessToken = authData.accessToken;
+    }
+
+    return accessToken;
+  }
+
   async hasAuth() {
     try {
-      const accessToken = await this.getAccessToken();
+      const accessToken = await this.getAccessTokenWithRefresh();
       return !!accessToken;
     } catch (error) {
       return false;
@@ -129,13 +140,7 @@ export class AuthService {
   }
 
   async getCurrentUser() {
-    let accessToken = await this.getAccessTokenSafe();
-
-    if (!accessToken) {
-      const authData = await this.refreshAuthData();
-      accessToken = authData.accessToken;
-    }
-
+    const accessToken = await this.getAccessTokenWithRefresh();
     return this.authRepository.me({ accessToken });
   }
 
@@ -159,14 +164,14 @@ export class AuthService {
   }
 
   async getAuthMetadata() {
-    const accessToken = await this.getAccessToken();
+    const accessToken = await this.getAccessTokenWithRefresh();
     const meta = new Metadata();
     meta.set('access-token', accessToken);
     return meta;
   }
 
   async getStreamAuthMetadata() {
-    const accessToken = await this.getAccessToken();
+    const accessToken = await this.getAccessTokenWithRefresh();
     const { code } = await this.authRepository.generateStreamCode({ accessToken });
     const meta = new Metadata();
     meta.set('stream-code', code);

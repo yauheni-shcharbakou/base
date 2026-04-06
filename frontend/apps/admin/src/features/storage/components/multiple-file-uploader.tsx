@@ -212,7 +212,10 @@ export const MultipleFileUploader = <V extends FieldValues, E = any, T = V>({
                   <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
                     {uploadedCount} / {itemsCount}
                   </Typography>
-                  <LinearProgress variant="determinate" value={uploadedCount / itemsCount} />
+                  <LinearProgress
+                    variant="determinate"
+                    value={(uploadedCount / itemsCount) * 100}
+                  />
                 </Box>
               )}
 
