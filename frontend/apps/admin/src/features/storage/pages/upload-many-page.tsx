@@ -48,7 +48,16 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
   } = useMultipleFileUpload({ resource: props.fileResource });
 
   const onDelete = useCallback(handleDelete, []);
-  const batchSizeOptions = useMemo(() => [1, 5, 10, 20, 100], []);
+
+  const batchSizeOptions = useMemo(() => {
+    const options = [1, 5, 10, 20, 100];
+
+    if (!itemsCount) {
+      return options;
+    }
+
+    return options.filter((option) => option <= itemsCount);
+  }, [itemsCount]);
 
   const {
     watch,
@@ -98,17 +107,15 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
             </CardContent>
           </Card>
 
-          {itemsCount && (
-            <ControlledSingleSelect
-              control={control}
-              formField="batchSize"
-              fieldError={errors?.batchSize}
-              options={batchSizeOptions}
-              defaultValue={props.batchSize}
-              label="Batch size"
-              required
-            />
-          )}
+          <ControlledSingleSelect
+            control={control}
+            formField="batchSize"
+            fieldError={errors?.batchSize}
+            options={batchSizeOptions}
+            defaultValue={props.batchSize}
+            label="Batch size"
+            required
+          />
 
           <MultipleFileUploader
             formField="files"
