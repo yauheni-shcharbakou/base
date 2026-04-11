@@ -121,6 +121,12 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
         resolve(false);
       });
 
+      upload$.on('error', (err) => {
+        if (!req.destroyed) {
+          req.destroy(err);
+        }
+      });
+
       upload$.pipe(req);
     });
   }

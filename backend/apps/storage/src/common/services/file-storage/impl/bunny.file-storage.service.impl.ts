@@ -88,6 +88,12 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
         resolve(false);
       });
 
+      upload$.on('error', (err) => {
+        if (!req.destroyed) {
+          req.destroy(err);
+        }
+      });
+
       upload$.pipe(req);
     });
   }
