@@ -7,10 +7,10 @@ import _ from 'lodash';
 
 export async function checkAccess(): Promise<CheckResponse> {
   try {
-    const hasAuth = await authService.hasAuth();
+    const hasAuth = await authService.hasAuthWithRefresh();
 
     if (!hasAuth) {
-      await authService.refreshAuthData();
+      throw new Error('Unauthorized');
     }
 
     return { authenticated: true };

@@ -66,5 +66,6 @@ message FileUploadResponse {
   oneof payload {
     models.File entity = 1;
     bool canSendChunks = 2;
+    bool ack = 3;
   }
 }

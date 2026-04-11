@@ -9,6 +9,8 @@ import { AuthModule } from 'modules/auth/auth.module';
 import { TempCodeModule } from 'modules/temp-code/temp-code.module';
 import { UserModule } from 'modules/user/user.module';
 
+// TODO: add user.avatarUrl
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),

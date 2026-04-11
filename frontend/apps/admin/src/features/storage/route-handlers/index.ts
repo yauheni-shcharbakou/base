@@ -1,3 +1,4 @@
+import { configService } from '@/common/services';
 import { GrpcUploadRequest } from '@frontend/grpc';
 import { ClientDuplexStream } from '@grpc/grpc-js';
 import Busboy from 'busboy';
@@ -8,6 +9,7 @@ import { ReadableStream } from 'node:stream/web';
 type UploadResponse = {
   canSendChunks?: boolean;
   entity?: any;
+  ack?: boolean;
 };
 
 export const handleStreamFileUpload = <UploadRes extends UploadResponse>(
@@ -18,14 +20,19 @@ export const handleStreamFileUpload = <UploadRes extends UploadResponse>(
 ) => {
   const headers = Object.fromEntries(req.headers.entries());
   const reqBody$ = Readable.fromWeb(req.body as ReadableStream);
+  const chunkSize = configService.getChunkSize();
+
   let request$: ClientDuplexStream<GrpcUploadRequest, UploadRes>;
 
   return new Promise<NextResponse>((resolve) => {
     const busboy$ = Busboy({ headers });
 
     let fileProcessed = false;
-    let fileStreamingStarted = false;
     let isResolved = false;
+
+    let buffer: Buffer = Buffer.alloc(0);
+    let isWaitingForAck = false;
+    let isFileEnded = false;
 
     const safeResolve = (response: NextResponse) => {
       if (isResolved) {
@@ -55,7 +62,29 @@ export const handleStreamFileUpload = <UploadRes extends UploadResponse>(
       safeResolve(NextResponse.json({ message: 'Stream error' }, { status: 500 })),
     );
 
-    busboy$.on('file', (_name, file$) => {
+    const sendAggregatedChunk = (fileStream: Readable) => {
+      if (!buffer.length && isFileEnded) {
+        request$.end();
+        return;
+      }
+
+      if (!buffer.length) {
+        return;
+      }
+
+      const sizeToSend = isFileEnded ? buffer.length : chunkSize;
+      const chunkToSend = buffer.subarray(0, sizeToSend);
+      buffer = buffer.subarray(sizeToSend);
+
+      isWaitingForAck = true;
+
+      fileStream.pause();
+      reqBody$.pause();
+
+      request$.write({ chunk: new Uint8Array(chunkToSend) });
+    };
+
+    busboy$.on('file', (_, file$) => {
       if (fileProcessed) {
         file$.resume();
         return;
@@ -73,33 +102,15 @@ export const handleStreamFileUpload = <UploadRes extends UploadResponse>(
           return safeResolve(NextResponse.json(response.entity));
         }
 
-        if (response.canSendChunks && !fileStreamingStarted) {
-          fileStreamingStarted = true;
+        if (response.canSendChunks || response.ack) {
+          isWaitingForAck = false;
 
-          file$.on('data', (chunk: Buffer) => {
-            const result = request$.write({ chunk });
-
-            if (!result) {
-              reqBody$.pause();
-              file$.pause();
-
-              request$.once('drain', () => {
-                file$.resume();
-                reqBody$.resume();
-              });
-            }
-          });
-
-          file$.on('end', () => {
-            request$.end();
-          });
-
-          file$.on('error', (err) => {
-            safeResolve(NextResponse.json({ message: 'File stream error' }, { status: 500 }));
-          });
-
-          file$.resume();
-          reqBody$.resume();
+          if (buffer.length >= chunkSize || isFileEnded) {
+            sendAggregatedChunk(file$);
+          } else {
+            file$.resume();
+            reqBody$.resume();
+          }
         }
       });
 
@@ -112,10 +123,36 @@ export const handleStreamFileUpload = <UploadRes extends UploadResponse>(
         );
       });
 
+      file$.on('data', (data: Buffer) => {
+        buffer = Buffer.concat([buffer, data]);
+
+        if (buffer.length >= chunkSize) {
+          if (!isWaitingForAck) {
+            sendAggregatedChunk(file$);
+          } else {
+            file$.pause();
+            reqBody$.pause();
+          }
+        }
+      });
+
+      file$.on('end', () => {
+        isFileEnded = true;
+
+        if (!isWaitingForAck) {
+          sendAggregatedChunk(file$);
+        }
+      });
+
+      file$.on('error', () => {
+        safeResolve(NextResponse.json({ message: 'File stream error' }, { status: 500 }));
+      });
+
       request$.write({ id });
+      isWaitingForAck = true;
     });
 
-    busboy$.on('error', (err) => {
+    busboy$.on('error', () => {
       safeResolve(NextResponse.json({ message: 'Parse error' }, { status: 500 }));
     });
 

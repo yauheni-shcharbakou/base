@@ -146,21 +146,10 @@ export const SingleFileUploader = <V extends FieldValues, E = any, T = V>({
               </Box>
               {isUploading && (
                 <Box width={1}>
-                  {progress && progress >= 100 ? (
-                    <>
-                      <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
-                        Saving...
-                      </Typography>
-                      <LinearProgress variant="indeterminate" />
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
-                        {progress?.toFixed(2)} %
-                      </Typography>
-                      <LinearProgress variant="determinate" value={progress} />
-                    </>
-                  )}
+                  <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
+                    {(progress || 0).toFixed(2)} %
+                  </Typography>
+                  <LinearProgress variant="determinate" value={progress} />
                 </Box>
               )}
             </Stack>

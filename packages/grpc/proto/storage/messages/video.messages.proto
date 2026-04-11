@@ -81,6 +81,7 @@ message VideoUploadResponse {
   oneof payload {
     models.Video entity = 1;
     bool canSendChunks = 2;
+    bool ack = 3;
   }
 }
 

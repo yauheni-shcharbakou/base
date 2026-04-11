@@ -12,15 +12,41 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    command: >
-      sh -c "docker-entrypoint.sh postgres &
-      sleep 5;
-      psql -U admin -d postgres -c 'CREATE DATABASE auth;';
-      psql -U admin -d postgres -c 'CREATE DATABASE storage;';
-      wait"
     networks:
       - private_network
       - public_network
+    profiles:
+      - local
+      - all
+
+  postgres-init:
+    image: postgres:15-alpine
+    restart: on-failure
+    container_name: base-postgres-init
+    environment:
+      POSTGRES_USER: admin
+      PGPASSWORD: password123
+    command: >
+      bash -c "
+        until pg_isready -h postgres -p 5432 -U $$POSTGRES_USER; do 
+          sleep 2; 
+        done;
+      
+        for db in auth storage; do
+          chk=$$(psql -h postgres -U $$POSTGRES_USER -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='$$db'\")
+      
+          if [ \"$$chk\" != \"1\" ]; then
+            echo \"Create database $$db...\"
+            psql -h postgres -U $$POSTGRES_USER -d postgres -c \"CREATE DATABASE $$db;\"
+          else
+            echo \"Database $$db already exists, skipping...\"
+          fi
+        done
+      "
+    depends_on:
+      - postgres
+    networks:
+      - private_network
     profiles:
       - local
       - all
@@ -40,79 +66,121 @@ services:
     ]
     volumes:
       - nats_data:/data
+    networks:
+      - private_network
+      - public_network
     profiles:
       - local
       - all
 
-#  backend.auth:
-#    build:
-#      context: .
-#      dockerfile: ./backend/apps/auth/Dockerfile
-#    restart: unless-stopped
-#    container_name: base-backend-auth
-#    ports:
-#      - '8001:8001'
-#    environment:
-#      PORT: 8001
-#      NODE_ENV: production
-#      DATABASE_URL: postgresql://admin:password123@postgres:5432
-#      AUTH_GRPC_URL: 0.0.0.0:8001
-#      ACCESS_JWT_SECRET: string123
-#      REFRESH_JWT_SECRET: string123
-#      ADMIN_EMAIL: admin@gmail.com
-#      ADMIN_PASSWORD: string123
-#    networks:
-#      - private_network
-#    depends_on:
-#      - mongo
-#    profiles:
-#      - all
-#
-#  backend.api-gateway:
-#    build:
-#      context: .
-#      dockerfile: ./backend/apps/api-gateway/Dockerfile
-#    restart: unless-stopped
-#    container_name: base-backend-api-gateway
-#    ports:
-#      - '${BACKEND_PORT:-5555}:5555'
-#    environment:
-#      PORT: 5555
-#      NODE_ENV: production
-#      API_GATEWAY_GRPC_URL: 0.0.0.0:8000
-#      AUTH_GRPC_URL: backend.auth:8001
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - backend.auth
-#    profiles:
-#      - all
-#
-#  frontend.admin:
-#    build:
-#      context: .
-#      dockerfile: ./frontend/apps/admin/Dockerfile
-#    restart: unless-stopped
-#    container_name: base-frontend-admin
-#    ports:
-#      - '${ADMIN_PORT:-3336}:3336'
-#    environment:
-#      PORT: 3336
-#      HOSTNAME: 0.0.0.0
-#      NODE_ENV: production
-#      BACKEND_GRPC_URL: backend.api-gateway:8000
-#      DEFAULT_EMAIL: admin@gmail.com
-#      DEFAULT_PASSWORD: string123
-#      CHUNK_SIZE_MB: 1
-#    networks:
-#      - private_network
-#      - public_network
-#    depends_on:
-#      - mongo
-#      - backend.api-gateway
-#    profiles:
-#      - all
+  backend.auth:
+    build:
+      context: .
+      dockerfile: ./backend/apps/auth/Dockerfile
+    restart: unless-stopped
+    container_name: base-backend-auth
+    ports:
+      - '8001:8001'
+    environment:
+      PORT: 8001
+      NODE_ENV: production
+      DATABASE_URL: postgresql://admin:password123@postgres:5432
+      AUTH_GRPC_URL: 0.0.0.0:8001
+      ACCESS_JWT_SECRET: string123
+      REFRESH_JWT_SECRET: string123
+      ADMIN_EMAIL: admin@gmail.com
+      ADMIN_PASSWORD: string123
+      NATS_URL: nats://nats:4222
+      TEMP_TOKEN_EXPIRES_IN_MINUTES: 1
+    networks:
+      - private_network
+    depends_on:
+      - postgres
+      - nats
+    profiles:
+      - all
+
+  backend.storage:
+    build:
+      context: .
+      dockerfile: ./backend/apps/storage/Dockerfile
+    restart: unless-stopped
+    container_name: base-backend-storage
+    ports:
+      - '8002:8002'
+    environment:
+      PORT: 8002
+      NODE_ENV: production
+      DATABASE_URL: postgresql://admin:password123@postgres:5432
+      AUTH_GRPC_URL: backend.auth:8001
+      STORAGE_GRPC_URL: 0.0.0.0:8002
+      NATS_URL: nats://nats:4222
+      BUNNY_STORAGE_API_KEY: ${BUNNY_STORAGE_API_KEY}
+      BUNNY_STORAGE_CDN_ZONE: ${BUNNY_STORAGE_CDN_ZONE}
+      BUNNY_STORAGE_CDN_PRIVATE_KEY: ${BUNNY_STORAGE_CDN_PRIVATE_KEY}
+      BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES: 10
+      BUNNY_STREAM_API_KEY: ${BUNNY_STREAM_API_KEY}
+      BUNNY_STREAM_LIBRARY_ID: ${BUNNY_STREAM_LIBRARY_ID}
+      BUNNY_STREAM_CDN_ZONE: ${BUNNY_STREAM_CDN_ZONE}
+      BUNNY_STREAM_CDN_PRIVATE_KEY: ${BUNNY_STREAM_CDN_PRIVATE_KEY}
+      BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES: 60
+    networks:
+      - private_network
+    depends_on:
+      - postgres
+      - nats
+      - backend.auth
+    profiles:
+      - all
+
+  backend.api-gateway:
+    build:
+      context: .
+      dockerfile: ./backend/apps/api-gateway/Dockerfile
+    restart: unless-stopped
+    container_name: base-backend-api-gateway
+    ports:
+      - '${BACKEND_PORT:-5555}:5555'
+    environment:
+      PORT: 5555
+      NODE_ENV: production
+      API_GATEWAY_GRPC_URL: 0.0.0.0:8000
+      AUTH_GRPC_URL: backend.auth:8001
+      STORAGE_GRPC_URL: backend.storage:8002
+      NATS_URL: nats://nats:4222
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - nats
+      - backend.auth
+      - backend.storage
+    profiles:
+      - all
+
+  frontend.admin:
+    build:
+      context: .
+      dockerfile: ./frontend/apps/admin/Dockerfile
+    restart: unless-stopped
+    container_name: base-frontend-admin
+    ports:
+      - '${ADMIN_PORT:-3336}:3336'
+    environment:
+      PORT: 3336
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+      BACKEND_GRPC_URL: backend.api-gateway:8000
+      DEFAULT_EMAIL: admin@gmail.com
+      DEFAULT_PASSWORD: string123
+      CHUNK_SIZE_MB: 1
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - backend.api-gateway
+    profiles:
+      - all
 
 networks:
   private_network:

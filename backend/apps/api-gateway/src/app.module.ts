@@ -8,6 +8,8 @@ import { config } from 'config';
 import { AuthModule } from 'modules/auth/auth.module';
 import { StorageModule } from 'modules/storage/storage.module';
 
+// TODO: add anti-sql injection decorators & limits for arrays by length to DTOs
+
 @Module({
   imports: [
     ThrottlerModule.forRoot({
