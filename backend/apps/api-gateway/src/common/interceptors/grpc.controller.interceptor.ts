@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
-import { Observable, tap } from 'rxjs';
+import { isObservable, Observable, tap } from 'rxjs';
 
 @Injectable()
 export class GrpcControllerInterceptor implements NestInterceptor {
@@ -7,6 +7,12 @@ export class GrpcControllerInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     if (context.getType() !== 'rpc') {
+      return next.handle();
+    }
+
+    const data = context.switchToRpc().getData();
+
+    if (isObservable(data)) {
       return next.handle();
     }
 

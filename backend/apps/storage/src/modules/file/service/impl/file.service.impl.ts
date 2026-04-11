@@ -48,15 +48,10 @@ import {
   catchError,
   concat,
   concatMap,
+  defer,
   finalize,
   firstValueFrom,
-  from,
-  ignoreElements,
   Observable,
-  of,
-  share,
-  switchMap,
-  take,
   takeWhile,
   tap,
   timeout,
@@ -237,144 +232,147 @@ export class FileServiceImpl
     request$: Observable<GrpcUploadRequest>,
     userId?: string,
   ): Observable<Either<Error, GrpcFileUploadResponse>> {
-    const sharedRequest$ = request$.pipe(share());
-
-    type Params = {
-      file: GrpcFile;
-      upload$: PassThrough;
-      uploadPromise: Promise<boolean>;
+    type UploadContext = {
+      file?: GrpcFile;
+      upload$?: PassThrough;
+      uploadPromise?: Promise<boolean>;
+      processedBytes: number;
+      totalBytes: number;
+      isInitialized: boolean;
     };
 
-    let uploadedFile: GrpcFile;
+    const context: UploadContext = {
+      processedBytes: 0,
+      totalBytes: 0,
+      isInitialized: false,
+    };
 
-    return sharedRequest$.pipe(
-      take(1),
-      timeout(5_000),
-      switchMap(async (message): Promise<Params> => {
-        if (!userId) {
-          throw new ForbiddenException(`User is required`);
-        }
+    const clearUpload = (upload$: PassThrough) => {
+      if (upload$ && !upload$.destroyed) {
+        upload$.end();
+      }
+    };
 
-        if (!message.id) {
-          throw new ConflictException('File id should be provided before chunks');
-        }
-
-        const file = await this.persistenceService.isolatedRun(async () => {
-          return this.repository.getOne({ id: message.id, userId });
-        });
-
-        if (file.isLeft()) {
-          throw file.value;
-        }
-
-        if (!file.value.providerId) {
-          throw new BadRequestException('File should have providerId');
-        }
-
-        if (file.value.uploadStatus === GrpcFileUploadStatus.READY) {
-          throw new BadRequestException('File should have pending or failed upload status');
-        }
-
-        const upload$ = new PassThrough();
-
-        uploadedFile = file.value;
-
-        const uploadPromise = this.fileStorageService.uploadFile(
-          uploadedFile.providerId,
-          uploadedFile.size,
-          upload$,
-        );
-
-        uploadPromise.catch(() => {});
-
-        return { file: uploadedFile, upload$, uploadPromise };
+    const acks$ = request$.pipe(
+      timeout(10_000),
+      tap({
+        complete: () => clearUpload(context.upload$),
       }),
-      switchMap(
-        ({ file, upload$, uploadPromise }): Observable<Either<Error, GrpcFileUploadResponse>> => {
-          let totalBytes = 0;
+      concatMap(async (message): Promise<Either<Error, GrpcFileUploadResponse>> => {
+        if (!context.isInitialized) {
+          // initialization phase, find entity and start uploading to storage provider
 
-          const initialResponse = of(right({ canSendChunks: true }));
+          if (!userId) {
+            throw new ForbiddenException(`User is required`);
+          }
 
-          const chunkProcessor$ = sharedRequest$.pipe(
-            timeout(10_000),
-            concatMap(async (message): Promise<number> => {
-              if (!message.chunk) {
-                throw new ConflictException('Only chunks should be provided after file id');
-              }
+          if (!message.id) {
+            throw new ConflictException('File id should be provided before chunks');
+          }
 
-              await sendToWritable(upload$, Buffer.from(message.chunk));
-              totalBytes += message.chunk.length;
-              return (totalBytes / file.size) * 100;
-            }),
-            takeWhile((percent) => percent < 100, true),
-            tap({
-              complete: () => {
-                upload$.end();
-              },
-            }),
-            ignoreElements(),
-            catchError((err) => {
-              upload$.destroy();
-              throw err;
-            }),
+          const file = await this.persistenceService.isolatedRun(async () => {
+            return this.repository.getOne({ id: message.id, userId });
+          });
+
+          if (file.isLeft()) {
+            throw file.value;
+          }
+
+          context.file = file.value;
+
+          if (!context.file.providerId) {
+            throw new BadRequestException('File should have providerId');
+          }
+
+          if (context.file.uploadStatus === GrpcFileUploadStatus.READY) {
+            throw new BadRequestException('File should have pending or failed upload status');
+          }
+
+          context.upload$ = new PassThrough({ highWaterMark: 0 });
+          context.totalBytes = context.file.size;
+
+          context.uploadPromise = this.fileStorageService.uploadFile(
+            context.file.providerId,
+            context.totalBytes,
+            context.upload$,
           );
 
-          const finalResponse = from(uploadPromise).pipe(
-            concatMap(async (isUploaded) => {
-              if (!isUploaded) {
-                throw new InternalServerErrorException('File upload failed');
-              }
+          context.uploadPromise.catch(() => {});
+          context.isInitialized = true;
+          return right({ canSendChunks: true }); // client signal for starting file streaming
+        }
 
-              if (totalBytes < file.size) {
-                throw new InternalServerErrorException('File upload interrupted: size mismatch');
-              }
+        // chunks processing phase
 
-              const updatedFile = await this.persistenceService.isolatedRun(async () => {
-                return this.updateById(file.id, {
-                  set: {
-                    uploadStatus: GrpcFileUploadStatus.READY,
-                  },
-                });
-              });
+        if (!message.chunk) {
+          throw new ConflictException('Only chunks should be provided after file id');
+        }
 
-              if (updatedFile.isLeft()) {
-                throw updatedFile.value;
-              }
+        const chunk = Buffer.from(message.chunk);
+        delete message.chunk;
 
-              this.logger.log(`File ${file.id} uploaded`);
-              return right({ entity: updatedFile.value });
-            }),
-          );
+        await sendToWritable(context.upload$, chunk);
+        context.processedBytes += chunk.length;
+        return right({ ack: true }); // client signal for sending next chunk
+      }),
+      takeWhile(() => !context.isInitialized || context.processedBytes < context.totalBytes, true),
+    );
 
-          return concat(initialResponse, chunkProcessor$, finalResponse).pipe(
-            finalize(() => {
-              if (!upload$.destroyed) {
-                upload$.destroy();
-              }
-            }),
-          );
-        },
-      ),
-      catchError(async (err) => {
-        this.logger.error('File upload error:', err.message, err.stack);
+    const finalize$ = defer(async (): Promise<Either<Error, GrpcFileUploadResponse>> => {
+      if (!context.isInitialized) {
+        throw new BadRequestException('Stream closed before initialization');
+      }
 
-        if (uploadedFile?.id) {
+      // Wait for upload completion
+      const isUploaded = await context.uploadPromise;
+
+      if (!isUploaded) {
+        throw new InternalServerErrorException('File upload failed');
+      }
+
+      if (context.processedBytes < context.totalBytes) {
+        throw new InternalServerErrorException('File upload interrupted: size mismatch');
+      }
+
+      const updatedFile = await this.persistenceService.isolatedRun(async () => {
+        return this.updateById(context.file.id, {
+          set: {
+            uploadStatus: GrpcFileUploadStatus.READY,
+          },
+        });
+      });
+
+      if (updatedFile.isLeft()) {
+        throw updatedFile.value;
+      }
+
+      this.logger.log(`File ${context.file.id} uploaded`);
+      return right({ entity: updatedFile.value });
+    });
+
+    return concat(acks$, finalize$).pipe(
+      catchError(async (error) => {
+        this.logger.error('File upload error:', error.message, error.stack);
+        clearUpload(context.upload$);
+
+        const file = context.file;
+
+        if (file?.id) {
           await Promise.allSettled([
             this.persistenceService.isolatedRun(async () => {
-              await this.updateById(uploadedFile.id, {
+              await this.updateById(file.id, {
                 set: {
                   uploadStatus: GrpcFileUploadStatus.FAILED,
                 },
               });
             }),
-            firstValueFrom(
-              this.natsClient.storage.file.deleteOne({ providerId: uploadedFile.providerId }),
-            ),
+            firstValueFrom(this.natsClient.storage.file.deleteOne({ providerId: file.providerId })),
           ]);
         }
 
-        return left(err);
+        return left(error);
       }),
+      finalize(() => clearUpload(context.upload$)),
     );
   }
 

@@ -206,7 +206,6 @@ export const MultipleFileUploader = <V extends FieldValues, E = any, T = V>({
                   </Button>
                 )}
               </Box>
-
               {isUploading && (
                 <Box width={1}>
                   <Typography variant="body2" color="info" align="center" sx={{ mb: 1, mt: 1 }}>
@@ -218,7 +217,6 @@ export const MultipleFileUploader = <V extends FieldValues, E = any, T = V>({
                   />
                 </Box>
               )}
-
               <FailedItemsList
                 failedItems={failedItems}
                 onDelete={onDelete}

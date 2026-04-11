@@ -14,7 +14,8 @@ import _ from 'lodash';
 import moment from 'moment';
 import { createHash } from 'node:crypto';
 import { PassThrough } from 'node:stream';
-import { firstValueFrom, lastValueFrom, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import https from 'https';
 
 type UpdateBody = {
   title?: string;
@@ -94,19 +95,40 @@ export class BunnyVideoStorageServiceImpl implements VideoStorageService {
   }
 
   uploadVideo(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
-    return lastValueFrom(
-      this.httpService
-        .put(`videos/${providerId}`, upload$, {
-          timeout: 0,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
+    const { apiUrl, apiKey } = this.streamConfig;
+    const url = new URL(`${apiUrl}/videos/${providerId}`);
+
+    return new Promise<boolean>((resolve) => {
+      const req = https.request(
+        {
+          hostname: url.hostname,
+          path: url.pathname,
+          method: 'PUT',
           headers: {
+            AccessKey: apiKey,
             'Content-Type': 'application/octet-stream',
             'Content-Length': fileSize.toString(),
           },
-        })
-        .pipe(map(() => true)),
-    );
+        },
+        (res) => {
+          res.on('data', () => {});
+          res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
+        },
+      );
+
+      req.on('error', (err) => {
+        this.logger.error('Upload error', err.message, err.stack);
+        resolve(false);
+      });
+
+      upload$.on('error', (err) => {
+        if (!req.destroyed) {
+          req.destroy(err);
+        }
+      });
+
+      upload$.pipe(req);
+    });
   }
 
   async deleteVideo(providerId: string): Promise<Either<InternalServerErrorException, boolean>> {

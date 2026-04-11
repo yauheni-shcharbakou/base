@@ -52,12 +52,14 @@ turbo/
 Environment variables should be placed in service-specific `.env` files:
 
 ```handlebars
-backend/
-  apps/{{backend service name}}/
-    .env 
-frontend/
-  apps/{{frontend service name}}/
-    .env
+/
+  .env (env file for docker-compose.yml)
+  backend/
+    apps/{{backend service name}}/
+      .env
+  frontend/
+    apps/{{frontend service name}}/
+      .env
 ```
 
 You can check examples of env variables in service-specific `.env.example` files

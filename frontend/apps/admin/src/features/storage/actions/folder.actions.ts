@@ -10,8 +10,8 @@ import {
 
 export async function getUserFolders(): Promise<GrpcStorageObjectPopulated[]> {
   try {
-    const metadata = await authService.getAuthMetadata();
     const userId = await authService.getCurrentUserId();
+    const metadata = await authService.getAuthMetadata();
 
     const list = await storageObjectGrpcRepository.getMany(
       { query: { userId, type: GrpcStorageObjectType.FOLDER, ids: [] } },

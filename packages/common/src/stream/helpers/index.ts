@@ -1,14 +1,34 @@
 import { ClientWritableStream } from '@grpc/grpc-js';
-import { Writable } from 'node:stream';
+import type { Writable } from 'node:stream';
 
-export const sendToWritable = async <Data = any>(stream$: Writable, data: Data) => {
-  const pushResult = stream$.write(data);
+export const sendToWritable = <Data = any>(stream$: Writable, data: Data) => {
+  return new Promise<void>((resolve, reject) => {
+    const canWrite = stream$.write(data);
 
-  if (!pushResult) {
-    await new Promise((resolve) => stream$.once('drain', resolve));
-  }
+    if (canWrite) {
+      return resolve();
+    }
+
+    const cleanup = () => {
+      stream$.removeListener('drain', onDrain);
+      stream$.removeListener('error', onError);
+    };
+
+    function onDrain() {
+      cleanup();
+      resolve();
+    }
+
+    function onError(err: Error) {
+      cleanup();
+      reject(err);
+    }
+
+    stream$.once('drain', onDrain);
+    stream$.once('error', onError);
+  });
 };
 
-export const sendToGrpcStream = async <Data>(stream$: ClientWritableStream<Data>, data: Data) => {
-  await sendToWritable<Data>(stream$, data);
+export const sendToGrpcStream = <Data>(stream$: ClientWritableStream<Data>, data: Data) => {
+  return sendToWritable<Data>(stream$, data);
 };

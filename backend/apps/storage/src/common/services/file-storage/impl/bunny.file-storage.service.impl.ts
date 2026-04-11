@@ -8,11 +8,12 @@ import {
   FileStorageService,
 } from 'common/services/file-storage/file-storage.service';
 import { Config } from 'config';
+import https from 'https';
 import moment from 'moment';
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { PassThrough } from 'node:stream';
-import { firstValueFrom, lastValueFrom, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class BunnyFileStorageServiceImpl implements FileStorageService {
@@ -61,19 +62,40 @@ export class BunnyFileStorageServiceImpl implements FileStorageService {
   }
 
   uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
-    return lastValueFrom(
-      this.httpService
-        .put(providerId, upload$, {
+    const { apiUrl, apiKey } = this.storageConfig;
+    const url = new URL(`${apiUrl}/${providerId}`);
+
+    return new Promise<boolean>((resolve) => {
+      const req = https.request(
+        {
+          hostname: url.hostname,
+          path: url.pathname,
+          method: 'PUT',
           headers: {
+            AccessKey: apiKey,
             'Content-Type': 'application/octet-stream',
             'Content-Length': fileSize.toString(),
           },
-          timeout: 0,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
-        })
-        .pipe(map(() => true)),
-    );
+        },
+        (res) => {
+          res.on('data', () => {});
+          res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
+        },
+      );
+
+      req.on('error', (err) => {
+        this.logger.error('Upload error', err.message, err.stack);
+        resolve(false);
+      });
+
+      upload$.on('error', (err) => {
+        if (!req.destroyed) {
+          req.destroy(err);
+        }
+      });
+
+      upload$.pipe(req);
+    });
   }
 
   getFileSignedUrl(providerId: string, ip?: string): Either<Error, string> {
