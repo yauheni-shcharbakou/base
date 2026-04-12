@@ -8,7 +8,7 @@ import {
   GrpcUserUpdateByIdRequest,
   GrpcUserUpdateRequest,
 } from '@backend/grpc';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ArrayMaxSize, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import {
   RequestDto,
@@ -27,6 +27,7 @@ export class UserQueryDto extends BaseQueryDto implements GrpcUserQuery {
   @ApiProperty({ required: false, enum: GrpcUserRole, enumName: 'UserRole', isArray: true })
   @IsOptional()
   @IsEnum(GrpcUserRole, { each: true })
+  @ArrayMaxSize(Object.keys(GrpcUserRole).length)
   roles: GrpcUserRole[] = [];
 }
 

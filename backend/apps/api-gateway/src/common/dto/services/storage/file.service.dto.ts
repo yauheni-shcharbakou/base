@@ -5,10 +5,12 @@ import {
   GrpcFileQuery,
   GrpcFileRequest,
   GrpcFileUploadStatus,
+  GrpcUserRole,
 } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsEnum,
   IsNotEmpty,
   IsObject,
@@ -35,6 +37,7 @@ export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
   @IsOptional()
   @IsString({ each: true })
   @TransformToArray()
+  @ArrayMaxSize(100)
   mimeTypes: string[] = [];
 
   @ApiProperty({ required: false })
@@ -46,6 +49,7 @@ export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
   @IsOptional()
   @IsString({ each: true })
   @TransformToArray()
+  @ArrayMaxSize(100)
   userIds: string[] = [];
 
   @ApiProperty({ required: false, enum: GrpcFileUploadStatus, enumName: 'GrpcFileUploadStatus' })
@@ -62,6 +66,7 @@ export class FileQueryDto extends BaseQueryDto implements GrpcFileQuery {
   @IsOptional()
   @IsEnum(GrpcFileUploadStatus, { each: true })
   @TransformToArray()
+  @ArrayMaxSize(Object.keys(GrpcFileUploadStatus).length)
   uploadStatuses: GrpcFileUploadStatus[] = [];
 
   @ApiProperty({ required: false })
@@ -104,6 +109,7 @@ export class FileCreateManyRequestDto implements GrpcFileCreateManyRequest {
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => FileCreateManyItemDto)
+  @ArrayMaxSize(100)
   items: FileCreateManyItemDto[];
 
   @ApiProperty({ type: StorageObjectManyMetadataDto, required: false })

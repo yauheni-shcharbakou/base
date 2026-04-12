@@ -3,8 +3,7 @@
   "tasks": {
     "build": {
       "inputs": ["src/**/*.ts", "package.json", "ts-config*.json"],
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build", "@packages/grpc#compile"]
+      "outputs": ["dist/**"]
     }
   }
 }

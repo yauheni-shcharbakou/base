@@ -1,14 +1,15 @@
 import {
-  GrpcBooleanResult,
   GrpcStorageObjectCreate,
   GrpcStorageObjectExistsFolderRequest,
   GrpcStorageObjectQuery,
   GrpcStorageObjectUpdate,
   GrpcStorageObject,
   GrpcStorageObjectManyMetadata,
+  GrpcStorageObjectGetFoldersRequest,
+  GrpcStorageObjectGetFoldersItem,
 } from '@backend/grpc';
 import { CrudService } from '@backend/persistence';
-import { StorageObjectUpdateIsPublicEvent } from '@backend/transport';
+import { StorageObjectUpdateParentEvent } from '@backend/transport';
 import { Either } from '@sweet-monads/either';
 
 export const STORAGE_OBJECT_SERVICE = Symbol('StorageObjectService');
@@ -26,12 +27,13 @@ export interface StorageObjectService extends CrudService<
   createManyFiles(
     createData: StorageObjectCreateManyFiles,
   ): Promise<Either<Error, GrpcStorageObject[]>>;
-  onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Promise<void>;
+  onUpdateParent(event: StorageObjectUpdateParentEvent): Promise<void>;
   createRootFolder(userId: string): Promise<void>;
-  isExistsFolder(
-    request: GrpcStorageObjectExistsFolderRequest,
+  isExistsFolder(request: GrpcStorageObjectExistsFolderRequest, userId: string): Promise<boolean>;
+  getFolders(
+    request: GrpcStorageObjectGetFoldersRequest,
     userId: string,
-  ): Promise<GrpcBooleanResult>;
+  ): Promise<GrpcStorageObjectGetFoldersItem[]>;
 }
 
 export interface StorageObjectCreateManyFiles extends GrpcStorageObjectManyMetadata {

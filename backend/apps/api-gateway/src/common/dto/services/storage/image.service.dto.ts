@@ -9,7 +9,14 @@ import {
 } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { UpdateByIdRequestDto, UpdateDto, UpdateRequestDto } from 'common/dto/grpc-types.dto';
 import { FileCreateDto } from 'common/dto/services/storage/models/file.dto';
@@ -70,6 +77,7 @@ export class ImageCreateManyRequestDto implements GrpcImageCreateManyRequest {
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => ImageCreateManyItemDto)
+  @ArrayMaxSize(100)
   items: ImageCreateManyItemDto[];
 
   @ApiProperty({ type: StorageObjectManyMetadataDto, required: false })

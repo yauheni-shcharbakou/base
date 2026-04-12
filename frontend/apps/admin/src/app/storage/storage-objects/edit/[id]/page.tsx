@@ -6,9 +6,9 @@ import { folderActionClient } from '@/features/storage/clients';
 import { FolderSelect } from '@/features/storage/components';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { GrpcStorageObject, GrpcStorageObjectType } from '@packages/grpc';
+import { GrpcStorageObject } from '@packages/grpc';
 import { Edit } from '@refinedev/mui';
-import React from 'react';
+import React, { useEffect } from 'react';
 import zod from 'zod';
 
 const schema = {
@@ -28,15 +28,38 @@ export default function StorageObjectEdit() {
     handleSubmit,
     clearErrors,
     setError,
+    setValue,
   } = useValidatedForm<typeof schema, GrpcStorageObject>(schema);
+
+  useEffect(() => {
+    if (formLoading) {
+      setValue('parent', '');
+    }
+  }, [formLoading]);
 
   const entity = query?.data?.data;
 
   const handleSave = async (data: Params) => {
-    if (entity?.type === GrpcStorageObjectType.FOLDER && entity?.parentId && data.name) {
+    const updateData: Params = {
+      isPublic: data.isPublic,
+    };
+
+    const isNameChanged = !!data.name && data.name !== entity?.name;
+    const isParentChanged = !!data.parent && data.parent !== entity?.parentId;
+    const parent = data.parent || entity?.parentId;
+
+    if (isNameChanged) {
+      updateData.name = data.name;
+    }
+
+    if (isParentChanged) {
+      updateData.parent = data.parent;
+    }
+
+    if (entity?.isFolder && isNameChanged && parent) {
       const hasFolderWithSameName = await folderActionClient.isExistsFolder({
-        parent: entity?.parentId,
-        name: data.name,
+        parent,
+        name: data.name!,
       });
 
       if (hasFolderWithSameName) {
@@ -46,7 +69,7 @@ export default function StorageObjectEdit() {
     }
 
     clearErrors('name');
-    await onFinish(data);
+    await onFinish(updateData);
   };
 
   return (
@@ -55,8 +78,15 @@ export default function StorageObjectEdit() {
       saveButtonProps={{ onClick: handleSubmit(handleSave), disabled: formLoading }}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }} autoComplete="off">
-        {entity?.type !== GrpcStorageObjectType.FOLDER && (
-          <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
+        {!formLoading && (
+          <FolderSelect
+            label="Folder"
+            formField="parent"
+            errors={errors}
+            control={control}
+            onOptionsLoaded={() => setValue('parent', entity?.parentId)}
+            id={entity?.id}
+          />
         )}
         <TextEditField
           register={register('name', { setValueAs: (value) => value || undefined })}

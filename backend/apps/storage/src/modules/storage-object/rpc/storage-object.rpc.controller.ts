@@ -15,6 +15,8 @@ import {
   GrpcStorageObjectServiceController,
   GrpcStorageObjectUpdateByIdRequest,
   GrpcStorageObjectExistsFolderRequest,
+  GrpcStorageObjectGetFoldersRequest,
+  GrpcStorageObjectGetFoldersResponse,
 } from '@backend/grpc';
 import {
   STORAGE_OBJECT_SERVICE,
@@ -30,12 +32,22 @@ export class StorageObjectRpcController implements GrpcStorageObjectServiceContr
     private readonly storageObjectService: StorageObjectService,
   ) {}
 
+  getFolders(
+    request: GrpcStorageObjectGetFoldersRequest,
+    metadata?: Metadata,
+  ): Observable<GrpcStorageObjectGetFoldersResponse> {
+    const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
+    const stream$ = from(this.storageObjectService.getFolders(request, userId));
+    return stream$.pipe(map((items) => ({ items })));
+  }
+
   isExistsFolder(
     request: GrpcStorageObjectExistsFolderRequest,
     metadata?: Metadata,
   ): Observable<GrpcBooleanResult> {
     const userId = new GrpcMetadataMapper(metadata).getOrThrow('user');
-    return from(this.storageObjectService.isExistsFolder(request, userId));
+    const stream$ = from(this.storageObjectService.isExistsFolder(request, userId));
+    return stream$.pipe(map((value) => ({ value })));
   }
 
   getById(request: GrpcIdField, metadata?: Metadata): Observable<GrpcStorageObjectPopulated> {

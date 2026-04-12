@@ -20,6 +20,7 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@packages/configs": "*"
+    "@packages/configs": "*",
+    "@packages/grpc": "*"
   }
 }

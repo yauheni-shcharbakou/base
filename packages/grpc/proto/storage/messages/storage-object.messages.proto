@@ -70,6 +70,19 @@ message StorageObjectExistsFolderRequest {
   string name = 2;
 }
 
+message StorageObjectGetFoldersRequest {
+  optional string id = 1;
+}
+
+message StorageObjectGetFoldersItem {
+  string id = 1;
+  string folderPath = 2;
+}
+
+message StorageObjectGetFoldersResponse {
+  repeated StorageObjectGetFoldersItem items = 1;
+}
+
 // create
 
 message StorageObjectCreate {

@@ -5,7 +5,7 @@ import {
   NatsStorageObjectTransport,
   NatsUserCreateOneEventHandler,
   NatsUserTransport,
-  StorageObjectUpdateIsPublicEvent,
+  StorageObjectUpdateParentEvent,
 } from '@backend/transport';
 import { Inject } from '@nestjs/common';
 import {
@@ -22,8 +22,8 @@ export class StorageObjectEventController
     @Inject(STORAGE_OBJECT_SERVICE) private readonly storageObjectService: StorageObjectService,
   ) {}
 
-  onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Observable<void> {
-    return from(this.storageObjectService.onUpdateIsPublic(event));
+  onUpdateParent(event: StorageObjectUpdateParentEvent): Observable<void> {
+    return from(this.storageObjectService.onUpdateParent(event));
   }
 
   @NatsEvent(NatsUserTransport.CREATE_ONE)

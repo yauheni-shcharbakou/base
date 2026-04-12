@@ -16,7 +16,10 @@ import {
   FieldValues,
 } from 'react-hook-form';
 
-type FieldProps = Omit<TextFieldProps, 'type' | 'required' | 'label' | 'error' | 'helperText'>;
+type FieldProps = Omit<
+  TextFieldProps,
+  'type' | 'required' | 'label' | 'error' | 'helperText' | 'defaultValue'
+>;
 
 type TextEditFieldProps = {
   fieldError?: FieldErrors[string];

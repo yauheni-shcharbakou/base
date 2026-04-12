@@ -17,6 +17,7 @@ import {
 import {
   StorageObjectCreateDto,
   StorageObjectExistsFolderRequestDto,
+  StorageObjectGetFoldersRequestDto,
   StorageObjectRequestDto,
   StorageObjectUpdateByIdRequestDto,
 } from 'common/dto/services/storage/storage-object.service.dto';
@@ -46,6 +47,7 @@ import { VideoRpcController } from 'modules/storage/rpc/controllers/video.rpc.co
           getById: IdFieldDto,
           getMany: StorageObjectRequestDto,
           getList: GetListRequestDto,
+          getFolders: StorageObjectGetFoldersRequestDto,
           isExistsFolder: StorageObjectExistsFolderRequestDto,
           createOne: StorageObjectCreateDto,
           updateById: StorageObjectUpdateByIdRequestDto,

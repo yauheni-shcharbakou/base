@@ -18,6 +18,7 @@
     "server-only": "0.0.1"
   },
   "devDependencies": {
-    "@packages/configs": "*"
+    "@packages/configs": "*",
+    "@packages/grpc": "*"
   }
 }

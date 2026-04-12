@@ -9,7 +9,14 @@ import {
 } from '@backend/grpc';
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { TransformToArray } from 'common/decorators/transform.decorator';
 import { BaseQueryDto } from 'common/dto/base-query.dto';
 import { UpdateByIdRequestDto, UpdateDto, UpdateRequestDto } from 'common/dto/grpc-types.dto';
@@ -40,6 +47,7 @@ export class VideoQueryDto extends BaseQueryDto implements GrpcVideoQuery {
   @IsOptional()
   @IsString({ each: true })
   @TransformToArray()
+  @ArrayMaxSize(100)
   providerIds: string[] = [];
 }
 
@@ -82,6 +90,7 @@ export class VideoCreateManyRequestDto implements GrpcVideoCreateManyRequest {
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => VideoCreateManyItemDto)
+  @ArrayMaxSize(100)
   items: VideoCreateManyItemDto[];
 
   @ApiProperty({ type: StorageObjectManyMetadataDto, required: false })

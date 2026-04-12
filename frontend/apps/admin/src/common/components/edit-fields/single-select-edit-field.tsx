@@ -8,7 +8,7 @@ import { MenuItem, TextField } from '@mui/material';
 import React, { useMemo } from 'react';
 import { Control, Controller, FieldErrors, FieldValues, UseFormReturn } from 'react-hook-form';
 
-type SelectOptions = {
+export type SelectOption = {
   label: string;
   value: string | number;
 };
@@ -22,7 +22,7 @@ type ControlledSingleSelectProps<V extends FieldValues = FieldValues, E = any, T
   label?: string;
   defaultValue?: string | number;
   controllerProps?: EditFieldControllerProps;
-  options: string[] | number[] | SelectOptions[];
+  options: string[] | number[] | SelectOption[];
   required?: boolean;
 };
 
@@ -37,7 +37,7 @@ export const ControlledSingleSelect = <V extends FieldValues, E = any, T = V>({
   required,
 }: ControlledSingleSelectProps<V, E, T>) => {
   const options = useMemo(() => {
-    const opts: SelectOptions[] = [];
+    const opts: SelectOption[] = [];
 
     if (!required) {
       opts.push({ label: 'None', value: '' });

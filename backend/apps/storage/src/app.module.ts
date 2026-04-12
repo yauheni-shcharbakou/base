@@ -10,8 +10,6 @@ import { ImageModule } from 'modules/image/image.module';
 import { StorageObjectModule } from 'modules/storage-object/storage-object.module';
 import { VideoModule } from 'modules/video/video.module';
 
-// TODO: add storageObject.folderPath recursive update for folders
-
 @Module({
   imports: [
     ScheduleModule.forRoot(),

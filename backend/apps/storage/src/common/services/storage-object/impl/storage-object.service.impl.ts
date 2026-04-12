@@ -1,21 +1,23 @@
 import {
-  GrpcBooleanResult,
   GrpcFileUploadStatus,
   GrpcStorageObject,
   GrpcStorageObjectCreate,
   GrpcStorageObjectExistsFolderRequest,
+  GrpcStorageObjectGetFoldersItem,
+  GrpcStorageObjectGetFoldersRequest,
   GrpcStorageObjectPopulated,
   GrpcStorageObjectQuery,
   GrpcStorageObjectType,
   GrpcStorageObjectUpdate,
 } from '@backend/grpc';
-import { CrudServiceImpl } from '@backend/persistence';
-import { InjectNatsClient, NatsClient, StorageObjectUpdateIsPublicEvent } from '@backend/transport';
+import { BulkUpdate, CrudServiceImpl } from '@backend/persistence';
+import { InjectNatsClient, NatsClient, StorageObjectUpdateParentEvent } from '@backend/transport';
 import { BadRequestException, HttpException, Inject, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import {
   STORAGE_OBJECT_REPOSITORY,
   StorageObjectCreate,
+  StorageObjectQuery,
   StorageObjectRepository,
   StorageObjectUpdate,
 } from 'common/repositories/storage-object/storage-object.repository';
@@ -26,6 +28,11 @@ import {
 import _ from 'lodash';
 import path from 'node:path';
 import { firstValueFrom } from 'rxjs';
+
+type PlaceData = {
+  folderPath: string | null;
+  isPublic: boolean;
+};
 
 export class StorageObjectServiceImpl
   extends CrudServiceImpl<
@@ -44,16 +51,12 @@ export class StorageObjectServiceImpl
     super();
   }
 
-  private async getFolderPath(
+  private async getPlaceData(
     parent: string,
     storageObject: Pick<GrpcStorageObject, 'type' | 'name'> & { id?: string },
-  ): Promise<Either<HttpException, string | null>> {
+  ): Promise<Either<HttpException, PlaceData>> {
     if (storageObject.id && parent === storageObject.id) {
       return left(new BadRequestException('Invalid parent'));
-    }
-
-    if (storageObject.type !== GrpcStorageObjectType.FOLDER) {
-      return right(null);
     }
 
     const parentFolder = await this.repository.getOne({
@@ -65,7 +68,14 @@ export class StorageObjectServiceImpl
       return left(new NotFoundException('Parent folder not found'));
     }
 
-    return right(parentFolder.value.folderPath + storageObject.name + '/');
+    if (storageObject.type !== GrpcStorageObjectType.FOLDER) {
+      return right({ isPublic: parentFolder.value.isPublic, folderPath: null });
+    }
+
+    return right({
+      isPublic: parentFolder.value.isPublic,
+      folderPath: parentFolder.value.folderPath + storageObject.name + '/',
+    });
   }
 
   private async checkObjectName(
@@ -135,22 +145,23 @@ export class StorageObjectServiceImpl
       return left(new BadRequestException('Parent is required'));
     }
 
-    const [name, folderPath] = await Promise.all([
+    const [name, placeData] = await Promise.all([
       this.checkObjectName(request),
-      this.getFolderPath(request.parent, _.pick(request, ['name', 'type'])),
+      this.getPlaceData(request.parent, _.pick(request, ['name', 'type'])),
     ]);
 
     if (name.isLeft()) {
       return left(name.value);
     }
 
-    if (folderPath.isLeft()) {
-      return left(folderPath.value);
+    if (placeData.isLeft()) {
+      return left(placeData.value);
     }
 
     return this.repository.saveOne({
       ...request,
-      folderPath: folderPath.value,
+      folderPath: placeData.value.folderPath,
+      isPublic: placeData.value.isPublic,
       userId,
       name: name.value,
       isFolder: request.type === GrpcStorageObjectType.FOLDER,
@@ -215,36 +226,52 @@ export class StorageObjectServiceImpl
     }
 
     if (updateData.set?.parent) {
-      if (storageObject.value.type === GrpcStorageObjectType.FOLDER) {
-        return left(new BadRequestException('Replacement of folders is restricted'));
+      if (storageObject.value.isFolder) {
+        const childrenIds = await this.repository.getAllChildrenIds(storageObject.value.id);
+
+        if (childrenIds.has(updateData.set.parent)) {
+          return left(new BadRequestException('Invalid parent'));
+        }
       }
 
-      const folderPath = await this.getFolderPath(
+      const placeData = await this.getPlaceData(
         updateData.set.parent,
         _.pick(storageObject.value, ['id', 'type', 'name']),
       );
 
-      if (folderPath.isLeft()) {
-        return left(folderPath.value);
+      if (placeData.isLeft()) {
+        return left(placeData.value);
       }
 
       update.set.parent = updateData.set.parent;
-      update.set.folderPath = folderPath.value;
+      update.set.folderPath = placeData.value.folderPath;
+      update.set.isPublic = placeData.value.isPublic;
     }
 
-    const entity = await this.repository.updateById(id, updateData);
+    const entity = await this.repository.updateById(id, update);
 
-    if (
-      entity.isRight() &&
-      _.isBoolean(updateData.set?.isPublic) &&
-      entity.value.type === GrpcStorageObjectType.FOLDER
-    ) {
-      await firstValueFrom(
-        this.natsClient.storage.storageObject.updateIsPublic({
-          parent: entity.value.id,
-          isPublic: updateData.set.isPublic,
-        }),
-      );
+    if (entity.isRight() && entity.value.isFolder) {
+      const sideEffectUpdate: StorageObjectUpdateParentEvent['update'] = {};
+
+      const isPublicChanged = storageObject.value.isPublic !== entity.value.isPublic;
+      const isFolderPathChanged = storageObject.value.folderPath !== entity.value.folderPath;
+
+      if (isPublicChanged) {
+        sideEffectUpdate.isPublic = entity.value.isPublic;
+      }
+
+      if (isFolderPathChanged) {
+        sideEffectUpdate.folderPath = entity.value.folderPath;
+      }
+
+      if (!_.isEmpty(sideEffectUpdate)) {
+        await firstValueFrom(
+          this.natsClient.storage.storageObject.updateParent({
+            parent: entity.value.id,
+            update: sideEffectUpdate,
+          }),
+        );
+      }
     }
 
     return entity;
@@ -298,23 +325,76 @@ export class StorageObjectServiceImpl
     return deletedEntity;
   }
 
-  async onUpdateIsPublic(event: StorageObjectUpdateIsPublicEvent): Promise<void> {
-    const folderIds = await this.repository.distinct('id', {
-      parent: event.parent,
-      type: GrpcStorageObjectType.FOLDER,
-    });
+  async onUpdateParent(event: StorageObjectUpdateParentEvent): Promise<void> {
+    if (_.isEmpty(event.update)) {
+      return;
+    }
 
-    await this.repository.updateMany(
-      { parent: event.parent, isPublic: !event.isPublic },
-      { set: { isPublic: event.isPublic } },
-    );
+    let page = 1;
+    let hasNext = true;
+
+    const limit = 100;
+    const folderData: Pick<GrpcStorageObject, 'id' | 'folderPath'>[] = [];
+
+    do {
+      const { items, total } = await this.repository.getList({
+        query: { parent: event.parent },
+        pagination: { page, limit },
+      });
+
+      await this.repository.bulkUpdate(
+        _.reduce(
+          items,
+          (acc: BulkUpdate<GrpcStorageObject>[], item) => {
+            const updateSet: BulkUpdate<GrpcStorageObject>['update']['set'] = {};
+            const folderDataItem: Pick<GrpcStorageObject, 'id' | 'folderPath'> = { id: item.id };
+
+            if (event.update.isPublic && item.isPublic !== event.update.isPublic) {
+              updateSet.isPublic = event.update.isPublic;
+            }
+
+            if (item.isFolder) {
+              if (event.update.folderPath) {
+                const newFolderPath = event.update.folderPath + item.name + '/';
+
+                updateSet.folderPath = newFolderPath;
+                folderDataItem.folderPath = newFolderPath;
+              }
+
+              folderData.push(folderDataItem);
+            }
+
+            if (!_.isEmpty(updateSet)) {
+              acc.push({
+                filter: {
+                  key: 'id',
+                  value: item.id,
+                },
+                update: {
+                  set: updateSet,
+                },
+              });
+            }
+
+            return acc;
+          },
+          [],
+        ),
+      );
+
+      hasNext = page * limit < total;
+      page += 1;
+    } while (hasNext);
 
     await Promise.all(
-      _.map(Array.from(folderIds), async (folderId) => {
+      _.map(folderData, async ({ id, folderPath }) => {
         await firstValueFrom(
-          this.natsClient.storage.storageObject.updateIsPublic({
-            parent: folderId,
-            isPublic: event.isPublic,
+          this.natsClient.storage.storageObject.updateParent({
+            parent: id,
+            update: {
+              isPublic: event.update.isPublic,
+              folderPath,
+            },
           }),
         );
       }),
@@ -344,14 +424,31 @@ export class StorageObjectServiceImpl
   async isExistsFolder(
     request: GrpcStorageObjectExistsFolderRequest,
     userId: string,
-  ): Promise<GrpcBooleanResult> {
-    const hasFolder = await this.repository.isExists({
+  ): Promise<boolean> {
+    return await this.repository.isExists({
       userId,
       name: request.name,
       parent: request.parent,
       type: GrpcStorageObjectType.FOLDER,
     });
+  }
 
-    return { value: hasFolder };
+  async getFolders(
+    request: GrpcStorageObjectGetFoldersRequest,
+    userId: string,
+  ): Promise<GrpcStorageObjectGetFoldersItem[]> {
+    const query: StorageObjectQuery = {
+      userId,
+      isFolder: true,
+    };
+
+    if (request.id) {
+      const childrenIds = await this.repository.getAllChildrenIds(request.id);
+      childrenIds.add(request.id);
+      query.excludeIds = Array.from(childrenIds);
+    }
+
+    const entities = await this.repository.getMany(query);
+    return _.map(entities, (entity) => ({ id: entity.id, folderPath: entity.folderPath }));
   }
 }

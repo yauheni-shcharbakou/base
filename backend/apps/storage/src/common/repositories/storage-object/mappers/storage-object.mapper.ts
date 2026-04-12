@@ -12,7 +12,9 @@ export class StorageObjectMapper extends PostgresMapper<
 > {
   transformQuery({
     isPublic,
+    isFolder,
     nameStratsWith,
+    excludeIds,
     ...rest
   }: Partial<StorageObjectQuery>): ObjectQuery<StorageObjectEntity> {
     const result = super.transformQuery(rest);
@@ -21,8 +23,16 @@ export class StorageObjectMapper extends PostgresMapper<
       result.isPublic = isPublic;
     }
 
+    if (_.isBoolean(isFolder)) {
+      result.isFolder = isFolder;
+    }
+
     if (nameStratsWith) {
       result.name = { $like: `${nameStratsWith}%` };
+    }
+
+    if (excludeIds?.length) {
+      result.id = { $nin: excludeIds };
     }
 
     return result;

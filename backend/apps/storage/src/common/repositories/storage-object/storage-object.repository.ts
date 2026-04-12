@@ -13,10 +13,14 @@ export interface StorageObjectRepository extends DatabaseRepository<
   StorageObjectQuery,
   StorageObjectCreate,
   StorageObjectUpdate
-> {}
+> {
+  getAllChildrenIds(parent: string): Promise<Set<string>>;
+}
 
-export interface StorageObjectQuery extends GrpcStorageObjectQuery {
+export interface StorageObjectQuery extends Partial<GrpcStorageObjectQuery> {
   nameStratsWith?: string;
+  isFolder?: boolean;
+  excludeIds?: string[];
 }
 
 export interface StorageObjectCreate extends GrpcStorageObjectCreate {

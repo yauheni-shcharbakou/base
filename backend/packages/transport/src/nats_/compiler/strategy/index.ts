@@ -1,7 +1,7 @@
 import { GrpcIdField } from '@backend/grpc';
 import {
   ProviderIdEvent,
-  StorageObjectUpdateIsPublicEvent,
+  StorageObjectUpdateParentEvent,
   VideoUpdateOneEvent,
 } from 'nats_/compiler/strategy/events';
 
@@ -30,7 +30,7 @@ export interface NatsStrategy {
       deleteOne: ProviderIdEvent;
     };
     storageObject: {
-      updateIsPublic: StorageObjectUpdateIsPublicEvent;
+      updateParent: StorageObjectUpdateParentEvent;
     };
     video: {
       deleteOne: ProviderIdEvent;

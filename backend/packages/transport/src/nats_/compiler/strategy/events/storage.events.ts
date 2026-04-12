@@ -1,4 +1,4 @@
-import { GrpcVideoUpdateSet } from '@backend/grpc';
+import { GrpcStorageObject, GrpcVideoUpdateSet } from '@backend/grpc';
 
 export interface ProviderIdEvent {
   providerId: string;
@@ -8,7 +8,7 @@ export interface VideoUpdateOneEvent extends ProviderIdEvent {
   update: GrpcVideoUpdateSet;
 }
 
-export interface StorageObjectUpdateIsPublicEvent {
+export interface StorageObjectUpdateParentEvent {
   parent: string;
-  isPublic: boolean;
+  update: Partial<Pick<GrpcStorageObject, 'folderPath' | 'isPublic'>>;
 }

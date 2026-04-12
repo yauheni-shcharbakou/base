@@ -11,6 +11,7 @@ import {
 } from '@backend/grpc';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -66,6 +67,7 @@ class CrudConditionalFilterDto implements GrpcCrudConditionalFilter {
   @IsObject()
   @ValidateNested()
   @Type(() => CrudLogicalFilterDto)
+  @ArrayMaxSize(100)
   value: CrudLogicalFilterDto[] = [];
 }
 
@@ -101,6 +103,7 @@ export class GetListRequestDto implements GrpcGetListRequest {
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => CrudConditionalFilterDto)
+  @ArrayMaxSize(100)
   conditionalFilters: CrudConditionalFilterDto[] = [];
 
   @ApiProperty({ required: false, type: [CrudLogicalFilterDto] })
@@ -108,6 +111,7 @@ export class GetListRequestDto implements GrpcGetListRequest {
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => CrudLogicalFilterDto)
+  @ArrayMaxSize(100)
   logicalFilters: CrudLogicalFilterDto[] = [];
 
   @ApiProperty({ type: PaginationDto })
@@ -122,5 +126,6 @@ export class GetListRequestDto implements GrpcGetListRequest {
   @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => CrudSorterDto)
+  @ArrayMaxSize(10)
   sorters: CrudSorterDto[] = [];
 }
