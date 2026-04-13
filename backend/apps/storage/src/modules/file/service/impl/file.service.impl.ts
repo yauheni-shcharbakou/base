@@ -334,8 +334,14 @@ export class FileServiceImpl
         throw new InternalServerErrorException('File upload interrupted: size mismatch');
       }
 
+      const file = context.file;
+
+      if (!file) {
+        throw new InternalServerErrorException('File entity dropped');
+      }
+
       const updatedFile = await this.persistenceService.isolatedRun(async () => {
-        return this.updateById(context.file.id, {
+        return this.updateById(file.id, {
           set: {
             uploadStatus: GrpcFileUploadStatus.READY,
           },
@@ -346,7 +352,7 @@ export class FileServiceImpl
         throw updatedFile.value;
       }
 
-      this.logger.log(`File ${context.file.id} uploaded`);
+      this.logger.log(`File ${file.id} uploaded`);
       return right({ entity: updatedFile.value });
     });
 

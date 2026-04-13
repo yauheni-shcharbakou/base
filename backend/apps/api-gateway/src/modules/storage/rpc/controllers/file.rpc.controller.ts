@@ -85,16 +85,16 @@ export class FileRpcController implements GrpcFileServiceController {
     const sanitizedRequest$ = request.pipe(
       tap({
         next: (message) => {
-          setTimeout(() => {
-            delete message.chunk;
-          }, 0);
+          if (message.chunk) {
+            setTimeout(() => {
+              delete message.chunk;
+            }, 0);
+          }
         },
       }),
     );
 
-    return this.fileServiceClient
-      .uploadOne(sanitizedRequest$, metadata?.clone())
-      .pipe(GrpcRxPipe.rpcException);
+    return this.fileServiceClient.uploadOne(sanitizedRequest$, metadata?.clone());
   }
 
   @ValidateGrpcPayload(IdFieldDto)

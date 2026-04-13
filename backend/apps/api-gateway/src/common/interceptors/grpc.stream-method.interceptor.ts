@@ -1,5 +1,5 @@
 import { GrpcUserRole } from '@backend/grpc';
-import { GrpcExceptionMapper, GrpcRxPipe } from '@backend/transport';
+import { GrpcExceptionMapper } from '@backend/transport';
 import { Metadata } from '@grpc/grpc-js';
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -56,6 +56,6 @@ export class GrpcStreamMethodInterceptor implements NestInterceptor {
       return throwError(() => GrpcExceptionMapper.toRpcException(meta.value));
     }
 
-    return next.handle().pipe(GrpcRxPipe.rpcException);
+    return next.handle();
   }
 }

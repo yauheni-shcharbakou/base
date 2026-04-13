@@ -411,8 +411,14 @@ export class VideoServiceImpl
         throw new InternalServerErrorException('Video upload interrupted: size mismatch');
       }
 
+      const video = context.video;
+
+      if (!video) {
+        throw new InternalServerErrorException('Video entity dropped');
+      }
+
       const updatedFile = await this.persistenceService.isolatedRun(async () => {
-        return this.fileRepository.updateById(context.video.file.id, {
+        return this.fileRepository.updateById(video.file.id, {
           set: {
             uploadStatus: GrpcFileUploadStatus.READY,
           },
@@ -423,8 +429,8 @@ export class VideoServiceImpl
         throw updatedFile.value;
       }
 
-      this.logger.log(`Video ${context.video.id} uploaded`);
-      return right({ entity: _.omit(context.video, ['file']) });
+      this.logger.log(`Video ${video.id} uploaded`);
+      return right({ entity: _.omit(video, ['file']) });
     });
 
     return concat(acks$, finalize$).pipe(
