@@ -9,7 +9,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS prepare
-RUN yarn global add turbo@2.9.3
+RUN yarn global add turbo@2.9.6
 COPY . .
 RUN turbo prune backend.storage --docker
 

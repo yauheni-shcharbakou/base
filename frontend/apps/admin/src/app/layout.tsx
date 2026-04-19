@@ -1,14 +1,22 @@
 import { DevtoolsProvider } from '@/common/components';
+import { pathProvider } from '@/common/providers';
 import { authProvider } from '@/features/auth/providers';
 import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { Refine } from '@refinedev/core';
+import { Refine, ResourceProps } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
 import { RefineSnackbarProvider, useNotificationProvider } from '@refinedev/mui';
 import routerProvider from '@refinedev/nextjs-router';
+import { pascalCase } from 'change-case-all';
 import { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import React, { ReactNode, Suspense } from 'react';
+import PlayCircleOutlineOutlinedIcon from '@mui/icons-material/PlayCircleOutlineOutlined';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
 
 import { ColorModeContextProvider } from '@/common/contexts';
 
@@ -22,7 +30,86 @@ export const metadata: Metadata = {
 
 // TODO: create custom list view
 // TODO: try migrate to 16 Next
-// TODO: check auth flow
+
+const resources: ResourceProps[] = [
+  {
+    name: Database.AUTH,
+    meta: {
+      label: pascalCase(Database.AUTH),
+      icon: <PersonOutlineOutlinedIcon />,
+    },
+  },
+  {
+    name: Database.STORAGE,
+    meta: {
+      label: pascalCase(Database.STORAGE),
+      icon: <FolderOutlinedIcon />,
+    },
+  },
+
+  {
+    ...pathProvider.getResourcePages(Database.AUTH, AuthDatabaseEntity.USER),
+    name: AuthDatabaseEntity.USER,
+    meta: {
+      canDelete: true,
+      parent: Database.AUTH,
+      icon: <PersonOutlineOutlinedIcon color="primary" />,
+    },
+  },
+  {
+    ...pathProvider.getResourcePages(Database.AUTH, AuthDatabaseEntity.TEMP_CODE, ['list', 'show']),
+    name: AuthDatabaseEntity.TEMP_CODE,
+    meta: {
+      canDelete: true,
+      parent: Database.AUTH,
+      icon: <KeyOutlinedIcon color="primary" />,
+    },
+  },
+
+  {
+    ...pathProvider.getResourcePages(Database.STORAGE, StorageDatabaseEntity.FILE, [
+      'list',
+      'show',
+      'create',
+    ]),
+    name: StorageDatabaseEntity.FILE,
+    meta: {
+      canDelete: true,
+      dataProviderName: 'upload',
+      parent: Database.STORAGE,
+      icon: <InsertDriveFileOutlinedIcon color="primary" />,
+    },
+  },
+  {
+    ...pathProvider.getResourcePages(Database.STORAGE, StorageDatabaseEntity.IMAGE),
+    name: StorageDatabaseEntity.IMAGE,
+    meta: {
+      canDelete: true,
+      dataProviderName: 'upload',
+      parent: Database.STORAGE,
+      icon: <ImageOutlinedIcon color="primary" />,
+    },
+  },
+  {
+    ...pathProvider.getResourcePages(Database.STORAGE, StorageDatabaseEntity.STORAGE_OBJECT),
+    name: StorageDatabaseEntity.STORAGE_OBJECT,
+    meta: {
+      canDelete: true,
+      parent: Database.STORAGE,
+      icon: <FolderOutlinedIcon color="primary" />,
+    },
+  },
+  {
+    ...pathProvider.getResourcePages(Database.STORAGE, StorageDatabaseEntity.VIDEO),
+    name: StorageDatabaseEntity.VIDEO,
+    meta: {
+      canDelete: true,
+      dataProviderName: 'upload',
+      parent: Database.STORAGE,
+      icon: <PlayCircleOutlineOutlinedIcon color="primary" />,
+    },
+  },
+];
 
 export default async function RootLayout({
   children,
@@ -49,88 +136,7 @@ export default async function RootLayout({
                     }}
                     notificationProvider={useNotificationProvider}
                     authProvider={authProvider}
-                    resources={[
-                      {
-                        name: Database.AUTH,
-                        meta: {
-                          label: Database.AUTH,
-                        },
-                      },
-                      {
-                        name: Database.STORAGE,
-                        meta: {
-                          label: Database.STORAGE,
-                        },
-                      },
-
-                      {
-                        name: AuthDatabaseEntity.USER,
-                        list: `/${Database.AUTH}/${AuthDatabaseEntity.USER}`,
-                        create: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/create`,
-                        edit: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/edit/:id`,
-                        show: `/${Database.AUTH}/${AuthDatabaseEntity.USER}/show/:id`,
-                        meta: {
-                          canDelete: true,
-                          parent: Database.AUTH,
-                        },
-                      },
-                      {
-                        name: AuthDatabaseEntity.TEMP_CODE,
-                        list: `/${Database.AUTH}/${AuthDatabaseEntity.TEMP_CODE}`,
-                        show: `/${Database.AUTH}/${AuthDatabaseEntity.TEMP_CODE}/show/:id`,
-                        meta: {
-                          canDelete: true,
-                          parent: Database.AUTH,
-                        },
-                      },
-
-                      {
-                        name: StorageDatabaseEntity.FILE,
-                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}`,
-                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}/create`,
-                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.FILE}/show/:id`,
-                        meta: {
-                          canDelete: true,
-                          dataProviderName: 'upload',
-                          parent: Database.STORAGE,
-                        },
-                      },
-                      {
-                        name: StorageDatabaseEntity.IMAGE,
-                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}`,
-                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/create`,
-                        edit: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/edit/:id`,
-                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.IMAGE}/show/:id`,
-                        meta: {
-                          canDelete: true,
-                          dataProviderName: 'upload',
-                          parent: Database.STORAGE,
-                        },
-                      },
-                      {
-                        name: StorageDatabaseEntity.STORAGE_OBJECT,
-                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}`,
-                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/create`,
-                        edit: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/edit/:id`,
-                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.STORAGE_OBJECT}/show/:id`,
-                        meta: {
-                          canDelete: true,
-                          parent: Database.STORAGE,
-                        },
-                      },
-                      {
-                        name: StorageDatabaseEntity.VIDEO,
-                        list: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}`,
-                        create: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/create`,
-                        edit: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/edit/:id`,
-                        show: `/${Database.STORAGE}/${StorageDatabaseEntity.VIDEO}/show/:id`,
-                        meta: {
-                          canDelete: true,
-                          dataProviderName: 'upload',
-                          parent: Database.STORAGE,
-                        },
-                      },
-                    ]}
+                    resources={resources}
                     options={{
                       syncWithLocation: true,
                       warnWhenUnsavedChanges: true,

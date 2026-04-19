@@ -1,35 +1,34 @@
 'use client';
 
-import {
-  combineControllerRules,
-  EditFieldControllerProps,
-} from '@/common/components/edit-fields/helpers';
+import { FieldErr } from '@/common/types';
 import { MenuItem, TextField } from '@mui/material';
 import React, { useMemo } from 'react';
-import { Control, Controller, FieldErrors, FieldValues, UseFormReturn } from 'react-hook-form';
+import { Control, FieldValues } from 'react-hook-form';
+import {
+  EditFieldControllerProps,
+  TypedController,
+} from '@/common/components/edit-fields/wrappers/typed-controller';
 
 export type SelectOption = {
   label: string;
   value: string | number;
 };
 
-type ControlledSingleSelectProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
-  UseFormReturn<V, E, T>,
-  'control'
-> & {
-  formField: string;
-  fieldError?: FieldErrors[string];
+export type ControlledSingleSelectProps<V extends FieldValues = FieldValues, E = any, T = V> = {
+  control?: Control<V, E, T>;
+  fieldName: keyof V & string;
+  fieldErr?: FieldErr;
   label?: string;
-  defaultValue?: string | number;
+  defaultValue?: string | number | SelectOption;
   controllerProps?: EditFieldControllerProps;
   options: string[] | number[] | SelectOption[];
   required?: boolean;
 };
 
-export const ControlledSingleSelect = <V extends FieldValues, E = any, T = V>({
+export const ControlledSingleSelect = <V extends FieldValues = FieldValues, E = any, T = V>({
   control,
-  formField,
-  fieldError,
+  fieldName,
+  fieldErr,
   defaultValue,
   label,
   controllerProps,
@@ -55,17 +54,18 @@ export const ControlledSingleSelect = <V extends FieldValues, E = any, T = V>({
   }, [optionsFromProps, required]);
 
   return (
-    <Controller
-      name={formField}
-      control={control as Control}
+    <TypedController
+      control={control}
+      fieldName={fieldName}
       defaultValue={defaultValue || ''}
+      required={required}
       render={({ field }) => {
         return (
           <TextField
             {...field}
             value={field?.value || ''}
-            error={!!fieldError}
-            helperText={fieldError?.message?.toString()}
+            error={!!fieldErr}
+            helperText={fieldErr?.message?.toString()}
             select
             label={label}
             fullWidth
@@ -88,7 +88,7 @@ export const ControlledSingleSelect = <V extends FieldValues, E = any, T = V>({
           </TextField>
         );
       }}
-      {...combineControllerRules(controllerProps, required)}
+      {...(controllerProps ?? {})}
     />
   );
 };

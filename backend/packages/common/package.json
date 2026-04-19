@@ -15,9 +15,9 @@
   },
   "dependencies": {
     "@backend/grpc": "*",
-    "@nestjs/common": "11.1.18",
+    "@nestjs/common": "11.1.19",
     "@nestjs/config": "4.0.3",
-    "@nestjs/microservices": "11.1.18",
+    "@nestjs/microservices": "11.1.19",
     "@packages/common": "*",
     "@sweet-monads/either": "3.3.1",
     "reflect-metadata": "0.2.2",

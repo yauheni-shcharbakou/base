@@ -10,7 +10,7 @@ import {
 } from '@refinedev/core';
 
 export const grpcDataProvider: DataProvider = {
-  getApiUrl: (): string => '',
+  getApiUrl: (): string => '/api',
   getOne: async (params: GetOneParams) => {
     return getOne<any>({ resource: params.resource, id: params.id.toString() });
   },

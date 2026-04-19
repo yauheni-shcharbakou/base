@@ -1,4 +1,5 @@
 import { IdField } from '@/common/components';
+import { pathProvider } from '@/common/providers';
 import { Checkbox, IconButton } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import { Database } from '@packages/common';
@@ -129,14 +130,14 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
       flex: 0,
       renderCell: function render({ value }) {
         if (!value) {
-          return <span></span>;
+          return <></>;
         }
 
         const id = typeof value === 'string' ? value : value.id;
 
         return (
           <IconButton
-            href={`/${database}/${resource}/show/${id}`}
+            href={pathProvider.getShowPath(database, resource, id)}
             children={<ExternalIcon />}
             color="primary"
           />

@@ -1,4 +1,4 @@
-import { ClientWritableStream } from '@grpc/grpc-js';
+import type { ClientWritableStream } from '@grpc/grpc-js';
 import type { Writable } from 'node:stream';
 
 export const sendToWritable = <Data = any>(stream$: Writable, data: Data) => {

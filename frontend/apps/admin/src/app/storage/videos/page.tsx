@@ -1,7 +1,6 @@
 'use client';
 
-import { CreateManyButton, ResourceList } from '@/common/components';
-import { useResourceList } from '@/common/hooks';
+import { CreateManyButton, ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { getVideoDuration } from '@/features/video/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
@@ -9,11 +8,7 @@ import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/c
 import { GrpcVideoPopulated } from '@packages/grpc';
 import React, { useMemo } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 export default function VideoList() {
-  const { dataGridProps, isMounted } = useResourceList<GrpcVideoPopulated>();
-
   const columns = useMemo<GridColDef<GrpcVideoPopulated>[]>(
     () =>
       new GridColumnsBuilder<GrpcVideoPopulated>()
@@ -31,16 +26,14 @@ export default function VideoList() {
         .string('duration', { maxWidth: 100, valueGetter: (value) => getVideoDuration(value) })
         .number('views', { maxWidth: 100 })
         .date('createdAt')
-        .date('updatedAt')
         .actions()
         .build(),
     [],
   );
 
   return (
-    <ResourceList
-      {...dataGridProps}
-      isMounted={isMounted}
+    <ResourceListPage
+      resource={StorageDatabaseEntity.VIDEO}
       columns={columns}
       headerButtons={({ defaultButtons }) => (
         <>

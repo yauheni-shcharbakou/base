@@ -7,6 +7,14 @@ import { useForm, UseFormProps, UseFormReturnType } from '@refinedev/react-hook-
 import { FieldValues } from 'react-hook-form';
 import zod, { ZodRawShape } from 'zod';
 
+type ReturnedType<
+  ValidationSchema extends ZodRawShape,
+  Input extends FieldValues = SchemaTypeOf<ValidationSchema>,
+  Output extends FieldValues = SchemaTypeOf<ValidationSchema>,
+> = UseFormReturnType<Input, HttpError, Output> & {
+  providerData?: Input;
+};
+
 export const useValidatedForm = <
   ValidationSchema extends ZodRawShape,
   Input extends FieldValues = SchemaTypeOf<ValidationSchema>,
@@ -14,9 +22,12 @@ export const useValidatedForm = <
 >(
   schema: ValidationSchema,
   props: Omit<UseFormProps<Input, HttpError, Output>, 'resolver'> = {},
-): UseFormReturnType<Input, HttpError, Output> => {
-  return useForm<Input, HttpError, Output>({
+): ReturnedType<ValidationSchema, Input, Output> => {
+  const result = useForm<Input, HttpError, Output>({
     ...props,
     resolver: zodResolver(zod.object(schema)) as any,
   });
+
+  const providerData = result.refineCore.query?.data?.data;
+  return { ...result, providerData };
 };

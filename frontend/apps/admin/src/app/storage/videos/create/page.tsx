@@ -1,17 +1,20 @@
 'use client';
 
-import { ControlledBooleanField, ControlledTextField } from '@/common/components';
+import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { videoActionClient } from '@/features/storage/clients';
-import { SingleFileUploader, FolderSelect } from '@/features/storage/components';
+import { videoActionProvider } from '@/features/storage/providers';
+import {
+  SingleUploadProgressBar,
+  StorageObjectMetaFormSection,
+  StorageUploader,
+} from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
 import { getGenericVideTitle } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
 import { GrpcVideo } from '@packages/grpc';
 import React from 'react';
-import { Create } from '@refinedev/mui';
 import zod from 'zod';
 
 const schema = {
@@ -55,7 +58,7 @@ export default function VideoCreate() {
 
   const handleSave = async (data: Params) => {
     const createdVideo = await handleUpload<GrpcVideo>(data.file, async () => {
-      return videoActionClient.createOne(
+      return videoActionProvider.createOne(
         {
           file: data.file,
           title: data.title,
@@ -75,7 +78,7 @@ export default function VideoCreate() {
   };
 
   return (
-    <Create
+    <AppCreate
       saveButtonProps={{
         onClick: handleSubmit(handleSave),
         disabled: formLoading || !isValid || isUploading,
@@ -84,62 +87,51 @@ export default function VideoCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <Card variant="outlined">
-            <CardHeader title="Storage" />
-            <CardContent>
-              <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
-              {fields.parent && (
-                <>
-                  <ControlledTextField
-                    control={control}
-                    formField="name"
-                    fieldError={errors?.name}
-                    label="Name"
-                  />
-                  <ControlledBooleanField control={control} formField="isPublic" label="Public" />
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
 
           <Card variant="outlined">
             <CardHeader title="Video metadata" />
             <CardContent>
               <ControlledTextField
                 control={control}
-                formField="title"
-                fieldError={errors?.title}
+                fieldName="title"
+                fieldErr={errors?.title}
                 label="Title"
                 required
               />
               <ControlledTextField
                 control={control}
-                formField="description"
-                fieldError={errors?.description}
+                fieldName="description"
+                fieldErr={errors?.description}
                 label="Description"
               />
             </CardContent>
           </Card>
 
-          <SingleFileUploader
-            formField="file"
-            errors={errors}
+          <StorageUploader
             control={control}
-            watch={watch}
-            progress={progress}
+            fieldName="file"
+            dropzoneProps={{
+              maxSize: 2 * ONE_GB_BYTES,
+              accept: {
+                'video/mp4': [],
+                'video/quicktime': [],
+                'video/webm': [],
+              },
+            }}
+            fieldErr={errors?.file}
+            selected={fields.file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required
-            maxSize={2 * ONE_GB_BYTES}
-            accept={{
-              'video/mp4': [],
-              'video/quicktime': [],
-              'video/webm': [],
-            }}
+            multi={false}
+            maxFiles={1}
             allowedTypes={['mp4', 'quicktime', 'webm']}
-          />
+          >
+            <SingleUploadProgressBar isUploading={isUploading} progress={progress} />
+          </StorageUploader>
         </Stack>
       </Box>
-    </Create>
+    </AppCreate>
   );
 }

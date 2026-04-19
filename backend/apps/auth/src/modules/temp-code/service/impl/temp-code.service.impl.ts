@@ -12,7 +12,7 @@ import { Config } from 'config';
 import _ from 'lodash';
 import { TempCodeService } from 'modules/temp-code/service/temp-code.service';
 import moment from 'moment';
-import { monotonicFactory } from 'ulid';
+import { randomUUID } from 'node:crypto';
 
 export class TempCodeServiceImpl
   extends CrudServiceImpl<
@@ -41,7 +41,7 @@ export class TempCodeServiceImpl
       ...createData,
       isActive: true,
       expiredAt: moment().add(expiresInMinutes, 'minutes').toDate(),
-      code: monotonicFactory()(),
+      code: randomUUID(),
     });
   }
 

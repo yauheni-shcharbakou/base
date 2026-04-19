@@ -286,6 +286,14 @@ export class StorageObjectServiceImpl
       return entity;
     }
 
+    if (entity.value.isFolder) {
+      const hasFiles = await this.repository.isExists({ parent: id });
+
+      if (hasFiles) {
+        return left(new BadRequestException("You can't delete folder with files"));
+      }
+    }
+
     const isFileReady = entity.value.file?.uploadStatus === GrpcFileUploadStatus.READY;
 
     const deletedEntity = await super.deleteById(id);
@@ -293,7 +301,7 @@ export class StorageObjectServiceImpl
     if (deletedEntity.isRight() && isFileReady) {
       switch (entity.value.type) {
         case GrpcStorageObjectType.VIDEO:
-          if (!entity.value.video) {
+          if (!entity.value.video?.providerId) {
             break;
           }
 
@@ -306,7 +314,7 @@ export class StorageObjectServiceImpl
           break;
         case GrpcStorageObjectType.FILE:
         case GrpcStorageObjectType.IMAGE:
-          if (!entity.value.file) {
+          if (!entity.value.file?.providerId) {
             break;
           }
 

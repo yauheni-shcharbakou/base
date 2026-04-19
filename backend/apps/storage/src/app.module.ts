@@ -10,6 +10,8 @@ import { ImageModule } from 'modules/image/image.module';
 import { StorageObjectModule } from 'modules/storage-object/storage-object.module';
 import { VideoModule } from 'modules/video/video.module';
 
+// TODO: implement deletion for folders with files
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),

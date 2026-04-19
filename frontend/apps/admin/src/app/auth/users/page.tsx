@@ -1,28 +1,23 @@
 'use client';
 
-import { ResourceList } from '@/common/components';
-import { useResourceList } from '@/common/hooks';
+import { ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { type GridColDef } from '@mui/x-data-grid';
+import { AuthDatabaseEntity } from '@packages/common';
 import { GrpcUser } from '@packages/grpc';
 import React, { useMemo } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 export default function UserList() {
-  const { dataGridProps, isMounted } = useResourceList<GrpcUser>();
-
   const columns = useMemo<GridColDef<GrpcUser>[]>(
     () =>
       new GridColumnsBuilder<GrpcUser>()
         .string('email')
         .enum('role')
         .date('createdAt')
-        .date('updatedAt')
         .actions()
         .build(),
     [],
   );
 
-  return <ResourceList {...dataGridProps} isMounted={isMounted} columns={columns} />;
+  return <ResourceListPage resource={AuthDatabaseEntity.USER} columns={columns} />;
 }

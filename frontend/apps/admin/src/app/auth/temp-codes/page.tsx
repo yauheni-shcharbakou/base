@@ -1,7 +1,6 @@
 'use client';
 
-import { ResourceList } from '@/common/components';
-import { useResourceList } from '@/common/hooks';
+import { ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { GrpcTempCode } from '@packages/grpc';
 import { type GridColDef } from '@mui/x-data-grid';
@@ -9,11 +8,7 @@ import { AuthDatabaseEntity, Database } from '@packages/common';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 export default function TempTokenList() {
-  const { dataGridProps, isMounted } = useResourceList<GrpcTempCode>();
-
   const columns = useMemo<GridColDef<GrpcTempCode>[]>(
     () =>
       new GridColumnsBuilder<GrpcTempCode>()
@@ -25,7 +20,6 @@ export default function TempTokenList() {
         .string('code')
         .date('expiredAt')
         .date('createdAt')
-        .date('updatedAt')
         .actions({
           renderCell: function render({ row }) {
             return (
@@ -41,9 +35,8 @@ export default function TempTokenList() {
   );
 
   return (
-    <ResourceList
-      {...dataGridProps}
-      isMounted={isMounted}
+    <ResourceListPage
+      resource={AuthDatabaseEntity.TEMP_CODE}
       columns={columns}
       headerButtons={() => <></>}
     />

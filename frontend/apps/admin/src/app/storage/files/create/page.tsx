@@ -1,15 +1,18 @@
 'use client';
 
-import { ControlledBooleanField, ControlledTextField } from '@/common/components';
+import { AppCreate } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { fileActionClient } from '@/features/storage/clients';
-import { SingleFileUploader, FolderSelect } from '@/features/storage/components';
+import { fileActionProvider } from '@/features/storage/providers';
+import {
+  SingleUploadProgressBar,
+  StorageObjectMetaFormSection,
+  StorageUploader,
+} from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
-import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile } from '@packages/grpc';
-import { Create } from '@refinedev/mui';
 import React from 'react';
 import zod from 'zod';
 
@@ -36,18 +39,17 @@ export default function FileCreate() {
     handleSubmit,
   } = useValidatedForm(schema);
 
-  const parent = watch('parent');
-  const name = watch('name');
+  const fields = watch();
 
   const handleFileChange = (file?: File) => {
-    if (!name?.trim()) {
+    if (!fields.name?.trim()) {
       setValue('name', file?.name ?? '');
     }
   };
 
   const handleSave = async (data: Params) => {
     const createdFile = await handleUpload<GrpcFile>(data.file, async () => {
-      return fileActionClient.createOne(data.file, {
+      return fileActionProvider.createOne(data.file, {
         parent: data.parent,
         name: data.name,
         isPublic: data.isPublic,
@@ -60,7 +62,7 @@ export default function FileCreate() {
   };
 
   return (
-    <Create
+    <AppCreate
       saveButtonProps={{
         onClick: handleSubmit(handleSave),
         disabled: formLoading || !isValid || isUploading,
@@ -69,41 +71,30 @@ export default function FileCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <Card variant="outlined">
-            <CardHeader title="Storage" />
-            <CardContent>
-              <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
-              {parent && (
-                <>
-                  <ControlledTextField
-                    control={control}
-                    formField="name"
-                    fieldError={errors?.name}
-                    label="Name"
-                  />
-                  <ControlledBooleanField control={control} formField="isPublic" label="Public" />
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
 
-          <SingleFileUploader
-            formField="file"
-            errors={errors}
+          <StorageUploader
             control={control}
-            watch={watch}
-            progress={progress}
+            fieldName="file"
+            dropzoneProps={{
+              maxSize: 100 * ONE_MB_BYTES,
+              accept: {
+                'application/pdf': [],
+              },
+            }}
+            fieldErr={errors?.file}
+            selected={fields.file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required
-            maxSize={100 * ONE_MB_BYTES}
-            accept={{
-              'application/pdf': [],
-            }}
+            multi={false}
+            maxFiles={1}
             allowedTypes={['pdf']}
-          />
+          >
+            <SingleUploadProgressBar isUploading={isUploading} progress={progress} />
+          </StorageUploader>
         </Stack>
       </Box>
-    </Create>
+    </AppCreate>
   );
 }

@@ -1,7 +1,6 @@
 'use client';
 
-import { CreateManyButton, ResourceList } from '@/common/components';
-import { useResourceList } from '@/common/hooks';
+import { CreateManyButton, ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { getFileSize } from '@/features/storage/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
@@ -10,11 +9,7 @@ import { GrpcFile } from '@packages/grpc';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 export default function FileList() {
-  const { dataGridProps, isMounted } = useResourceList<GrpcFile>();
-
   const columns = useMemo<GridColDef<GrpcFile>[]>(
     () =>
       new GridColumnsBuilder<GrpcFile>()
@@ -24,11 +19,10 @@ export default function FileList() {
           resource: AuthDatabaseEntity.USER,
         })
         .string('originalName', { headerName: 'Name' })
-        .string('extension', { maxWidth: 100 })
+        .string('extension', { maxWidth: 100, align: 'center' })
         .string('size', { maxWidth: 100, valueGetter: (value) => getFileSize(value) })
         .enum('uploadStatus')
         .date('createdAt')
-        .date('updatedAt')
         .actions({
           renderCell: function render({ row }) {
             return (
@@ -44,9 +38,8 @@ export default function FileList() {
   );
 
   return (
-    <ResourceList
-      {...dataGridProps}
-      isMounted={isMounted}
+    <ResourceListPage
+      resource={StorageDatabaseEntity.FILE}
       columns={columns}
       headerButtons={({ defaultButtons }) => (
         <>

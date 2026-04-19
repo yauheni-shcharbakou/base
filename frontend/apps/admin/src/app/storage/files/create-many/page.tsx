@@ -1,8 +1,8 @@
 'use client';
 
 import { ONE_MB_BYTES } from '@/common/constants';
-import { fileActionClient } from '@/features/storage/clients';
-import { UploadManyPage } from '@/features/storage/pages';
+import { fileActionProvider } from '@/features/storage/providers';
+import { UploadManyPage } from '@/features/storage/components';
 import { StorageDatabaseEntity } from '@packages/common';
 import React from 'react';
 
@@ -13,23 +13,20 @@ export default function FileCreateMany() {
       fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
       createFactory={async (filesBatch, form) => {
-        return fileActionClient.createMany(
-          filesBatch.map((item) => {
-            return { file: item.file, uploadId: item.id };
-          }),
-          {
-            parent: form.parent,
-            isPublic: form.isPublic,
-          },
-        );
+        return fileActionProvider.createMany(filesBatch, {
+          parent: form.parent,
+          isPublic: form.isPublic,
+        });
       }}
       uploaderProps={{
-        maxSize: 100 * ONE_MB_BYTES,
-        accept: {
-          'application/pdf': [],
+        dropzoneProps: {
+          maxSize: 100 * ONE_MB_BYTES,
+          accept: {
+            'application/pdf': [],
+          },
         },
+        maxFiles: 100,
         allowedTypes: ['pdf'],
-        max: 100,
       }}
     />
   );

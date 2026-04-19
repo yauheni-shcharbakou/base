@@ -1,19 +1,14 @@
 'use client';
 
-import {
-  combineControllerRules,
-  EditFieldControllerProps,
-} from '@/common/components/edit-fields/helpers';
+import { EditFieldControllerProps, TypedController } from '@/common/components';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { FormControlLabelProps } from '@mui/material/FormControlLabel/FormControlLabel';
 import React from 'react';
-import { Control, Controller, FieldValues, UseFormReturn } from 'react-hook-form';
+import { Control, FieldValues } from 'react-hook-form';
 
-type ControlledBooleanFieldProps<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
-  UseFormReturn<V, E, T>,
-  'control'
-> & {
-  formField: string;
+type ControlledBooleanFieldProps<V extends FieldValues = FieldValues, E = any, T = V> = {
+  control?: Control<V, E, T>;
+  fieldName: keyof V & string;
   fieldProps?: Omit<FormControlLabelProps, 'control' | 'value' | 'label' | 'required'>;
   label?: string;
   defaultValue?: boolean;
@@ -21,9 +16,9 @@ type ControlledBooleanFieldProps<V extends FieldValues = FieldValues, E = any, T
   required?: boolean;
 };
 
-export const ControlledBooleanField = <V extends FieldValues, E = any, T = V>({
+export const ControlledBooleanField = <V extends FieldValues = FieldValues, E = any, T = V>({
   control,
-  formField,
+  fieldName,
   fieldProps,
   label,
   defaultValue,
@@ -31,10 +26,11 @@ export const ControlledBooleanField = <V extends FieldValues, E = any, T = V>({
   required,
 }: ControlledBooleanFieldProps<V, E, T>) => {
   return (
-    <Controller
-      control={control as Control}
-      name={formField}
+    <TypedController
+      control={control}
+      fieldName={fieldName}
       defaultValue={defaultValue || false}
+      required={required}
       render={({ field }) => (
         <FormControlLabel
           {...field}
@@ -42,10 +38,10 @@ export const ControlledBooleanField = <V extends FieldValues, E = any, T = V>({
           control={<Checkbox checked={field?.value ?? false} required={required} />}
           label={label}
           required={required}
-          {...fieldProps}
+          {...(fieldProps ?? {})}
         />
       )}
-      {...combineControllerRules(controllerProps, required)}
+      {...(controllerProps ?? {})}
     />
   );
 };

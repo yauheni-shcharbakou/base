@@ -1,18 +1,13 @@
 'use client';
 
-import { ResourceList } from '@/common/components';
-import { useResourceList } from '@/common/hooks';
+import { ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { GrpcStorageObjectPopulated } from '@packages/grpc';
 import React, { useMemo } from 'react';
 
-export const dynamic = 'force-dynamic';
-
 export default function StorageObjectList() {
-  const { dataGridProps, isMounted } = useResourceList<GrpcStorageObjectPopulated>();
-
   const columns = useMemo<GridColDef<GrpcStorageObjectPopulated>[]>(
     () =>
       new GridColumnsBuilder<GrpcStorageObjectPopulated>()
@@ -37,11 +32,10 @@ export default function StorageObjectList() {
         .enum('type', { maxWidth: 100 })
         .boolean('isPublic', { maxWidth: 100 })
         .date('createdAt')
-        .date('updatedAt')
         .actions()
         .build(),
     [],
   );
 
-  return <ResourceList {...dataGridProps} isMounted={isMounted} columns={columns} />;
+  return <ResourceListPage resource={StorageDatabaseEntity.STORAGE_OBJECT} columns={columns} />;
 }

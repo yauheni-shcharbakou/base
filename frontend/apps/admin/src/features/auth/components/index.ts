@@ -1,3 +1,2 @@
-export * from './auth-page';
-export * from './authorized-layout';
-export * from './unauthorized-layout';
+export * from './pages';
+export * from './layouts';

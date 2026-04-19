@@ -159,7 +159,7 @@ export class AuthService {
   async clearCookies() {
     const cookieStore = await cookies();
 
-    ['userId', 'role', 'accessToken', 'refreshToken'].forEach((name) => {
+    ['userId', 'role', 'access-token', 'refresh-token'].forEach((name) => {
       cookieStore.delete({ name, path: this.cookieConfig.path });
     });
   }

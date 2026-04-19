@@ -2,10 +2,11 @@
 
 import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
+import { StorageUploadItem } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
 import { useState } from 'react';
-import { monotonicFactory } from 'ulid';
 import { GrpcIdField } from '@packages/grpc';
+import { monotonicFactory } from 'ulid';
 
 type Params = {
   resource: string;
@@ -13,22 +14,16 @@ type Params = {
 
 type Entity = GrpcIdField & { uploadId: string };
 
-export type FileUploadItem = {
-  file: File;
-  id: string;
-  entityId?: string;
-};
-
-export type FileUploadMap = {
-  [id: string]: FileUploadItem;
+type StorageUploadMap = {
+  [id: string]: StorageUploadItem;
 };
 
 export const useMultipleFileUpload = ({ resource }: Params) => {
-  const [uploadMap, setUploadMap] = useState<FileUploadMap>({});
+  const [uploadMap, setUploadMap] = useState<StorageUploadMap>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
   const [itemsCount, setItemsCount] = useState(0);
-  const [failedItems, setFailedItems] = useState<FileUploadItem[]>([]);
+  const [failedItems, setFailedItems] = useState<StorageUploadItem[]>([]);
 
   const { open } = useNotification();
 
@@ -42,9 +37,9 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
 
     setUploadMap((prev) => {
       return files.reduce(
-        (acc: FileUploadMap, file) => {
-          const id = monotonicFactory()();
-          acc[id] = { file, id };
+        (acc: StorageUploadMap, file) => {
+          const uploadId = monotonicFactory()();
+          acc[uploadId] = { file, uploadId };
           return acc;
         },
         { ...prev },
@@ -65,22 +60,22 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
     setUploadedCount((prev) => prev + 1);
   };
 
-  const handleError = (id: string) => {
-    setFailedItems((prev) => [...prev, uploadMap[id]]);
+  const handleError = (uploadId: string) => {
+    setFailedItems((prev) => [...prev, uploadMap[uploadId]]);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (uploadId: string) => {
     setUploadMap((prev) => {
       const newMap = { ...prev };
-      delete newMap[id];
+      delete newMap[uploadId];
       return newMap;
     });
 
-    setFailedItems((prev) => prev.filter((e) => e.id !== id));
+    setFailedItems((prev) => prev.filter((e) => e.uploadId !== uploadId));
   };
 
   const handleUpload = async <Record extends Entity = Entity>(
-    createCallback: (items: FileUploadItem[]) => Promise<Record[]>,
+    createCallback: (items: StorageUploadItem[]) => Promise<Record[]>,
     field: keyof Record = 'id',
     batchSize = 10,
   ): Promise<boolean> => {
@@ -90,6 +85,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
     try {
       const ids = Object.keys(uploadMap);
 
+      setUploadedCount(() => 0);
       setItemsCount(() => ids.length);
       setFailedItems(() => []);
 
@@ -100,7 +96,10 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
         const batchIds = ids.slice(startIndex, endIndex);
 
         const parsedData = batchIds.reduce(
-          (acc: { batch: FileUploadItem[]; createItems: FileUploadItem[] }, uploadId: string) => {
+          (
+            acc: { batch: StorageUploadItem[]; createItems: StorageUploadItem[] },
+            uploadId: string,
+          ) => {
             const uploadItem = uploadMap[uploadId];
 
             acc.batch.push(uploadItem);
@@ -121,7 +120,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
 
           setUploadMap((prev) => {
             const newValues = entities.reduce(
-              (acc: FileUploadMap, entity) => {
+              (acc: StorageUploadMap, entity) => {
                 acc[entity.uploadId] = {
                   ...prev[entity.uploadId],
                   entityId: entity[field]?.toString(),
@@ -145,7 +144,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
 
         for (const uploadItem of parsedData.batch) {
           const file = uploadItem.file;
-          const entityId = uploadItem.entityId ?? entityIdByUploadId.get(uploadItem.id);
+          const entityId = uploadItem.entityId ?? entityIdByUploadId.get(uploadItem.uploadId);
 
           if (!entityId) {
             throw new Error(`File ${file.name} not found`);
@@ -161,9 +160,16 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
               maxContentLength: Infinity,
             });
 
-            handleFinish(uploadItem.id);
+            handleFinish(uploadItem.uploadId);
           } catch (err) {
-            handleError(uploadItem.id);
+            open?.({
+              type: 'error',
+              message: `Upload error: ${uploadItem.file.name}`,
+              description: getErrorMessage(err),
+              key: `${resource}-upload-error-${Date.now()}`,
+            });
+
+            handleError(uploadItem.uploadId);
             isSuccess = false;
           }
         }

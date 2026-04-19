@@ -8,7 +8,7 @@
     },
     "compile": {
       "inputs": ["src/**/*.ts", "src/**/*.pug", "package.json", "ts-config*.json"],
-      "outputs": ["dist/**"],
+      "outputs": ["src/nats_/compiler/generated/**"],
       "dependsOn": ["^build"]
     }
   }

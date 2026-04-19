@@ -1,25 +1,24 @@
 'use client';
 
-import { ControlledSingleSelect, SelectOption } from '@/common/components';
-import { folderActionClient } from '@/features/storage/clients';
+import {
+  ControlledSingleSelect,
+  ControlledSingleSelectProps,
+  SelectOption,
+} from '@/common/components';
+import { folderActionProvider } from '@/features/storage/providers';
 import React, { useEffect, useState } from 'react';
-import { FieldErrors, FieldValues, UseFormReturn } from 'react-hook-form';
+import { FieldValues } from 'react-hook-form';
 
-type Props<V extends FieldValues = FieldValues, E = any, T = V> = Pick<
-  UseFormReturn<V, E, T>,
-  'control'
+type Props<V extends FieldValues = FieldValues, E = any, T = V> = Omit<
+  ControlledSingleSelectProps<V, E, T>,
+  'defaultValue' | 'options'
 > & {
-  errors?: FieldErrors<any>;
-  label: string;
-  formField: string;
-  required?: boolean;
   defaultValue?: string;
   onOptionsLoaded?: (options?: SelectOption[]) => void;
   id?: string;
 };
 
-export const FolderSelect = <V extends FieldValues, E = any, T = V>({
-  errors,
+export const FolderSelect = <V extends FieldValues = FieldValues, E = any, T = V>({
   onOptionsLoaded,
   id,
   ...props
@@ -27,7 +26,7 @@ export const FolderSelect = <V extends FieldValues, E = any, T = V>({
   const [options, setOptions] = useState<SelectOption[]>([]);
 
   useEffect(() => {
-    folderActionClient
+    folderActionProvider
       .getUserFolders(id)
       .then((response) => {
         setOptions(() => {
@@ -45,7 +44,5 @@ export const FolderSelect = <V extends FieldValues, E = any, T = V>({
     }, [options]);
   }
 
-  return (
-    <ControlledSingleSelect {...props} fieldError={errors?.[props.formField]} options={options} />
-  );
+  return <ControlledSingleSelect {...props} options={options} />;
 };

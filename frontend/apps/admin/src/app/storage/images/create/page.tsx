@@ -1,16 +1,19 @@
 'use client';
 
-import { ControlledBooleanField, ControlledTextField } from '@/common/components';
+import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { imageActionClient } from '@/features/storage/clients';
-import { SingleFileUploader, FolderSelect } from '@/features/storage/components';
+import { imageActionProvider } from '@/features/storage/providers';
+import {
+  StorageUploader,
+  SingleUploadProgressBar,
+  StorageObjectMetaFormSection,
+} from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
 import { GrpcImage } from '@packages/grpc';
 import React from 'react';
-import { Create } from '@refinedev/mui';
 import zod from 'zod';
 
 const schema = {
@@ -37,11 +40,10 @@ export default function ImageCreate() {
     handleSubmit,
   } = useValidatedForm(schema);
 
-  const parent = watch('parent');
-  const name = watch('name');
+  const fields = watch();
 
   const handleFileChange = (file?: File) => {
-    if (!name?.trim()) {
+    if (!fields.name?.trim()) {
       setValue('name', file?.name ?? '');
     }
   };
@@ -50,7 +52,7 @@ export default function ImageCreate() {
     const createdImage = await handleUpload<GrpcImage>(
       data.file,
       async () => {
-        return imageActionClient.createOne(
+        return imageActionProvider.createOne(
           {
             file: data.file,
             alt: data.alt,
@@ -71,7 +73,7 @@ export default function ImageCreate() {
   };
 
   return (
-    <Create
+    <AppCreate
       saveButtonProps={{
         onClick: handleSubmit(handleSave),
         disabled: formLoading || !isValid || isUploading,
@@ -80,31 +82,15 @@ export default function ImageCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <Card variant="outlined">
-            <CardHeader title="Storage" />
-            <CardContent>
-              <FolderSelect label="Folder" formField="parent" errors={errors} control={control} />
-              {parent && (
-                <>
-                  <ControlledTextField
-                    control={control}
-                    formField="name"
-                    fieldError={errors?.name}
-                    label="Name"
-                  />
-                  <ControlledBooleanField control={control} formField="isPublic" label="Public" />
-                </>
-              )}
-            </CardContent>
-          </Card>
+          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
 
           <Card variant="outlined">
             <CardHeader title="Image metadata" />
             <CardContent>
               <ControlledTextField
                 control={control}
-                formField="alt"
-                fieldError={errors?.alt}
+                fieldName="alt"
+                fieldErr={errors?.alt}
                 label="Alt"
                 defaultValue={'Image'}
                 required
@@ -112,27 +98,32 @@ export default function ImageCreate() {
             </CardContent>
           </Card>
 
-          <SingleFileUploader
-            formField="file"
-            errors={errors}
+          <StorageUploader
             control={control}
-            watch={watch}
-            progress={progress}
+            fieldName="file"
+            dropzoneProps={{
+              maxSize: 100 * ONE_MB_BYTES,
+              accept: {
+                'image/jpeg': [],
+                'image/png': [],
+                'image/webp': [],
+                'image/gif': [],
+                'image/svg+xml': [],
+              },
+            }}
+            fieldErr={errors?.file}
+            selected={fields.file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required
-            maxSize={100 * ONE_MB_BYTES}
-            accept={{
-              'image/jpeg': [],
-              'image/png': [],
-              'image/webp': [],
-              'image/gif': [],
-              'image/svg+xml': [],
-            }}
+            multi={false}
+            maxFiles={1}
             allowedTypes={['jpeg', 'png', 'jpg', 'webp', 'gif', 'svg']}
-          />
+          >
+            <SingleUploadProgressBar isUploading={isUploading} progress={progress} />
+          </StorageUploader>
         </Stack>
       </Box>
-    </Create>
+    </AppCreate>
   );
 }

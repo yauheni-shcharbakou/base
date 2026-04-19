@@ -13,7 +13,7 @@ import { Either, left, right } from '@sweet-monads/either';
 import { GrpcAccessService } from 'common/services/grpc-access/grpc-access.service';
 import _ from 'lodash';
 import moment from 'moment';
-import { map, Observable, of } from 'rxjs';
+import { firstValueFrom, map, Observable, of } from 'rxjs';
 
 type CachedUser = Pick<GrpcUser, 'id' | 'role'>;
 
@@ -88,7 +88,11 @@ export class GrpcAccessServiceImpl implements GrpcAccessService, OnModuleDestroy
       return left(new ForbiddenException('Invalid role'));
     }
 
-    this.natsClient.auth.tempCode.deactivateOne({ id: cachedStreamCode.codeId }).subscribe();
+    firstValueFrom(this.natsClient.auth.tempCode.deactivateOne({ id: cachedStreamCode.codeId }))
+      .then()
+      .catch();
+
+    // this.natsClient.auth.tempCode.deactivateOne({ id: cachedStreamCode.codeId }).subscribe();
 
     metadata.set('user', cachedStreamCode.id);
     return right(metadata.clone());

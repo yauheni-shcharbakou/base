@@ -1,18 +1,18 @@
 'use client';
 
 import {
+  AppCreate,
   ControlledBooleanField,
   ControlledSingleSelect,
   ControlledTextField,
 } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
-import { folderActionClient } from '@/features/storage/clients';
+import { folderActionProvider } from '@/features/storage/providers';
 import { FolderSelect } from '@/features/storage/components';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { GrpcStorageObjectType } from '@packages/grpc';
 import React from 'react';
-import { Create } from '@refinedev/mui';
 import zod from 'zod';
 
 const schema = {
@@ -36,7 +36,7 @@ export default function StorageObjectCreate() {
 
   const handleSave = async (data: Params) => {
     if (data.type === GrpcStorageObjectType.FOLDER) {
-      const hasFolderWithSameName = await folderActionClient.isExistsFolder({
+      const hasFolderWithSameName = await folderActionProvider.isExistsFolder({
         parent: data.parent,
         name: data.name,
       });
@@ -52,35 +52,35 @@ export default function StorageObjectCreate() {
   };
 
   return (
-    <Create
+    <AppCreate
       saveButtonProps={{ onClick: handleSubmit(handleSave), disabled: formLoading }}
       isLoading={formLoading}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <FolderSelect
           label="Folder"
-          formField="parent"
-          errors={errors}
+          fieldName="parent"
+          fieldErr={errors?.parent}
           control={control}
           required
         />
         <ControlledTextField
           control={control}
-          formField="name"
-          fieldError={errors?.name}
+          fieldName="name"
+          fieldErr={errors?.name}
           label="Name"
           required
         />
-        <ControlledBooleanField control={control} formField="isPublic" label="Public" />
+        <ControlledBooleanField control={control} fieldName="isPublic" label="Public" />
         <ControlledSingleSelect
           control={control}
-          formField="type"
+          fieldName="type"
           defaultValue={GrpcStorageObjectType.FOLDER}
           label="Type"
           options={[GrpcStorageObjectType.FOLDER] /*Object.values(GrpcStorageObjectType) */}
           required
         />
       </Box>
-    </Create>
+    </AppCreate>
   );
 }
