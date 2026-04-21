@@ -1,8 +1,10 @@
 import { PostgresEntity, PostgresProp, PostgresSchema } from '@backend/persistence';
-import { Collection, OneToMany, Property } from '@mikro-orm/core';
+import { Collection } from '@mikro-orm/core';
+import { OneToMany, Property } from '@mikro-orm/decorators/legacy';
 import { AuthDatabaseEntity } from '@packages/common';
 import { GrpcTempCode, GrpcUserRole } from '@backend/grpc';
 import { User } from 'common/interfaces/user.interface';
+import { TempCodeEntity } from 'common/repositories/temp-code/entities/temp-code.entity';
 
 @PostgresSchema({ tableName: AuthDatabaseEntity.USER })
 export class UserEntity extends PostgresEntity<'tempTokens'> implements User {
@@ -20,7 +22,7 @@ export class UserEntity extends PostgresEntity<'tempTokens'> implements User {
   hash: string;
 
   @OneToMany({
-    entity: 'TempCodeEntity',
+    entity: () => TempCodeEntity,
     mappedBy: 'user',
   })
   tempTokens = new Collection<GrpcTempCode>(this);

@@ -6,7 +6,7 @@ import { Database } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
 import { DateField, DeleteButton, EditButton, ShowButton } from '@refinedev/mui';
 import { capitalCase } from 'change-case-all';
-import { ExternalIcon } from 'next/dist/client/components/react-dev-overlay/ui/icons/external';
+import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import React from 'react';
 
 type RefParams<Entity extends BaseRecord> = Partial<GridColDef<Entity>> & {
@@ -138,7 +138,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
         return (
           <IconButton
             href={pathProvider.getShowPath(database, resource, id)}
-            children={<ExternalIcon />}
+            children={<OpenInNewOutlinedIcon />}
             color="primary"
           />
         );

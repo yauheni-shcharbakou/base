@@ -6,8 +6,12 @@ import {
   GrpcVideo,
 } from '@backend/grpc';
 import { PostgresEntity, PostgresProp, PostgresSchema } from '@backend/persistence';
-import { Cascade, OneToOne, Property, Ref } from '@mikro-orm/core';
+import { Cascade, Ref } from '@mikro-orm/core';
+import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
 import { StorageDatabaseEntity } from '@packages/common';
+import { ImageEntity } from 'common/repositories/image/entities/image.entity';
+import { StorageObjectEntity } from 'common/repositories/storage-object/entities/storage-object.entity';
+import { VideoEntity } from 'common/repositories/video/entities/video.entity';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.FILE })
 export class FileEntity extends PostgresEntity implements GrpcFile {
@@ -40,7 +44,7 @@ export class FileEntity extends PostgresEntity implements GrpcFile {
   uploadId: string;
 
   @OneToOne({
-    entity: 'ImageEntity',
+    entity: () => ImageEntity,
     mappedBy: 'file',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,
@@ -50,7 +54,7 @@ export class FileEntity extends PostgresEntity implements GrpcFile {
   image?: Ref<GrpcImage>;
 
   @OneToOne({
-    entity: 'VideoEntity',
+    entity: () => VideoEntity,
     mappedBy: 'file',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,
@@ -60,7 +64,7 @@ export class FileEntity extends PostgresEntity implements GrpcFile {
   video?: Ref<GrpcVideo>;
 
   @OneToOne({
-    entity: 'StorageObjectEntity',
+    entity: () => StorageObjectEntity,
     mappedBy: 'file',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,

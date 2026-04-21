@@ -61,6 +61,8 @@
     "yarn": "1.22.22"
   },
   "resolutions": {
+    "axios": "1.15.1",
+    "lodash": "4.18.1",
     "protobufjs": "7.5.5"
   },
   "engines": {

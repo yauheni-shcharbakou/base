@@ -1,12 +1,14 @@
 import { PostgresEntity, PostgresProp, PostgresSchema } from '@backend/persistence';
-import { ManyToOne, Property, Ref } from '@mikro-orm/core';
+import { Ref } from '@mikro-orm/core';
+import { ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 import { AuthDatabaseEntity } from '@packages/common';
 import { GrpcTempCode, GrpcUser } from '@backend/grpc';
+import { UserEntity } from 'common/repositories/user/entities/user.entity';
 
 @PostgresSchema({ tableName: AuthDatabaseEntity.TEMP_CODE })
 export class TempCodeEntity extends PostgresEntity implements GrpcTempCode {
   @ManyToOne({
-    entity: 'UserEntity',
+    entity: () => UserEntity,
     ref: true,
     index: true,
     deleteRule: 'cascade',

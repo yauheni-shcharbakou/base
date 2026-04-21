@@ -1,7 +1,10 @@
 import { PostgresEntity, PostgresSchema } from '@backend/persistence';
-import { Cascade, OneToOne, Property, Ref } from '@mikro-orm/core';
+import { Cascade, Ref } from '@mikro-orm/core';
+import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
 import { StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile, GrpcImage, GrpcStorageObject } from '@backend/grpc';
+import { FileEntity } from 'common/repositories/file/entities/file.entity';
+import { StorageObjectEntity } from 'common/repositories/storage-object/entities/storage-object.entity';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.IMAGE })
 export class ImageEntity extends PostgresEntity implements GrpcImage {
@@ -9,7 +12,7 @@ export class ImageEntity extends PostgresEntity implements GrpcImage {
   userId: string;
 
   @OneToOne({
-    entity: 'FileEntity',
+    entity: () => FileEntity,
     mappedBy: 'image',
     owner: true,
     deleteRule: 'cascade',
@@ -23,7 +26,7 @@ export class ImageEntity extends PostgresEntity implements GrpcImage {
   }
 
   @OneToOne({
-    entity: 'StorageObjectEntity',
+    entity: () => StorageObjectEntity,
     mappedBy: 'image',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,

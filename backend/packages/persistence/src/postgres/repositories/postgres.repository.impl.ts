@@ -30,7 +30,7 @@ export abstract class PostgresRepositoryImpl<
     protected readonly repository: EntityRepository<Doc>,
     protected readonly mapper: PostgresMapper<Doc, Entity, Query> = new PostgresMapper(),
   ) {
-    this.em = repository.getEntityManager();
+    this.em = repository.getEntityManager() as EntityManager;
   }
 
   protected convertUpdate(entity: Doc, updateData: Update): Doc {

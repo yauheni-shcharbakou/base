@@ -6,8 +6,12 @@ import {
   GrpcVideo,
 } from '@backend/grpc';
 import { PostgresEntity, PostgresProp, PostgresSchema } from '@backend/persistence';
-import { Collection, ManyToOne, OneToMany, OneToOne, Property, Ref } from '@mikro-orm/core';
+import { Collection, Ref } from '@mikro-orm/core';
+import { ManyToOne, OneToMany, OneToOne, Property } from '@mikro-orm/decorators/legacy';
 import { StorageDatabaseEntity } from '@packages/common';
+import { FileEntity } from 'common/repositories/file/entities/file.entity';
+import { ImageEntity } from 'common/repositories/image/entities/image.entity';
+import { VideoEntity } from 'common/repositories/video/entities/video.entity';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.STORAGE_OBJECT })
 export class StorageObjectEntity extends PostgresEntity<'children'> implements GrpcStorageObject {
@@ -26,7 +30,11 @@ export class StorageObjectEntity extends PostgresEntity<'children'> implements G
   @PostgresProp.Enum({ enum: GrpcStorageObjectType, index: true })
   type: GrpcStorageObjectType;
 
-  @ManyToOne(() => StorageObjectEntity, { nullable: true, ref: true })
+  @ManyToOne({
+    entity: () => StorageObjectEntity,
+    nullable: true,
+    ref: true,
+  })
   parent?: Ref<StorageObjectEntity>;
 
   @Property({ persist: false })
@@ -34,11 +42,14 @@ export class StorageObjectEntity extends PostgresEntity<'children'> implements G
     return this.parent?.id;
   }
 
-  @OneToMany(() => StorageObjectEntity, (child) => child.parent)
+  @OneToMany({
+    entity: () => StorageObjectEntity,
+    mappedBy: 'parent',
+  })
   children = new Collection<StorageObjectEntity>(this);
 
   @OneToOne({
-    entity: 'FileEntity',
+    entity: () => FileEntity,
     mappedBy: 'storageObject',
     owner: true,
     nullable: true,
@@ -56,7 +67,7 @@ export class StorageObjectEntity extends PostgresEntity<'children'> implements G
   folderPath?: string;
 
   @OneToOne({
-    entity: 'ImageEntity',
+    entity: () => ImageEntity,
     mappedBy: 'storageObject',
     owner: true,
     nullable: true,
@@ -71,7 +82,7 @@ export class StorageObjectEntity extends PostgresEntity<'children'> implements G
   }
 
   @OneToOne({
-    entity: 'VideoEntity',
+    entity: () => VideoEntity,
     mappedBy: 'storageObject',
     owner: true,
     nullable: true,

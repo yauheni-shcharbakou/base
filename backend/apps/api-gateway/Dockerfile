@@ -34,4 +34,5 @@ RUN adduser --system --uid 1001 nestjs
 USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
-CMD ["node", "backend/apps/api-gateway/dist/main.js"]
+WORKDIR /app/backend/apps/api-gateway
+CMD ["node", "dist/main.js"]

@@ -1,7 +1,10 @@
 import { PostgresEntity, PostgresSchema } from '@backend/persistence';
-import { Cascade, OneToOne, Property, Ref } from '@mikro-orm/core';
+import { Cascade, Ref } from '@mikro-orm/core';
 import { StorageDatabaseEntity } from '@packages/common';
 import { GrpcFile, GrpcStorageObject, GrpcVideo } from '@backend/grpc';
+import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
+import { FileEntity } from 'common/repositories/file/entities/file.entity';
+import { StorageObjectEntity } from 'common/repositories/storage-object/entities/storage-object.entity';
 
 @PostgresSchema({ tableName: StorageDatabaseEntity.VIDEO })
 export class VideoEntity extends PostgresEntity<'duration' | 'views'> implements GrpcVideo {
@@ -9,7 +12,7 @@ export class VideoEntity extends PostgresEntity<'duration' | 'views'> implements
   userId: string;
 
   @OneToOne({
-    entity: 'FileEntity',
+    entity: () => FileEntity,
     mappedBy: 'video',
     owner: true,
     deleteRule: 'cascade',
@@ -23,7 +26,7 @@ export class VideoEntity extends PostgresEntity<'duration' | 'views'> implements
   }
 
   @OneToOne({
-    entity: 'StorageObjectEntity',
+    entity: () => StorageObjectEntity,
     mappedBy: 'video',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,

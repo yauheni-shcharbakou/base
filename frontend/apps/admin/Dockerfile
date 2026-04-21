@@ -27,8 +27,6 @@ COPY --from=prepare /app/out/full/ .
 COPY --from=prepare /app/.prettierrc ./.prettierrc
 RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/app/.turbo,target=/app/.turbo \
     yarn build:docker
-RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/usr/local/share/.cache/yarn,target=/usr/local/share/.cache/yarn \
-    yarn install --ignore-scripts --production --frozen-lockfile --offline
 
 FROM base AS runner
 ENV HOSTNAME=0.0.0.0
@@ -39,4 +37,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/frontend/apps/admin/.next/standal
 COPY --from=builder --chown=nextjs:nodejs /app/frontend/apps/admin/.next/static ./frontend/apps/admin/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/frontend/apps/admin/public ./frontend/apps/admin/public
 EXPOSE $PORT
-CMD ["node", "frontend/apps/admin/server.js"]
+WORKDIR /app/frontend/apps/admin
+CMD ["node", "server.js"]

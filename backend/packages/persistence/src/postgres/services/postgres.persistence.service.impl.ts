@@ -8,15 +8,6 @@ export class PostgresPersistenceServiceImpl implements PersistenceService {
   constructor(@Inject(MikroORM) private readonly orm: MikroORM) {}
 
   isolatedRun<Res>(callback: () => Promise<Res>): Promise<Res> {
-    return new Promise<Res>((resolve, reject) => {
-      RequestContext.create(this.orm.em, async () => {
-        try {
-          const res = await callback();
-          resolve(res);
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
+    return RequestContext.create(this.orm.em, () => callback());
   }
 }

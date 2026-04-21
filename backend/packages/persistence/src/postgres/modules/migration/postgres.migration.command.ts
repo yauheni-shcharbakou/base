@@ -35,14 +35,14 @@ export class PostgresMigrationCommand extends CommandRunner {
       }
 
       if (options.initial) {
-        const res = await migrator.createInitialMigration();
+        const res = await migrator.createInitial();
         this.logger.log(`Sql initial migration created: ${res.fileName}`);
         return;
       }
 
       if (options.new) {
         const name = _.isString(options.new) ? options.new : undefined;
-        const res = await migrator.createMigration(undefined, false, false, name);
+        const res = await migrator.create(undefined, false, false, name);
         this.logger.log(`Sql migration created: ${res.fileName}`);
         return;
       }

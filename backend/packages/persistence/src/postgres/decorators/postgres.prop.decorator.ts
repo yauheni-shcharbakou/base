@@ -1,9 +1,10 @@
-import { Dictionary, Enum, EnumOptions, Property, PropertyOptions } from '@mikro-orm/core';
+import { Dictionary, EnumOptions, PropertyOptions } from '@mikro-orm/core';
+import { Enum, Property } from '@mikro-orm/decorators/legacy';
 
 type EnumOpts = EnumOptions<Dictionary> & { enum: Dictionary };
 
 export class PostgresProp {
-  static Date(options: PropertyOptions<Date> = {}) {
+  static Date<T extends object>(options: PropertyOptions<T> = {}) {
     return Property({ columnType: 'timestamptz', length: 3, ...options });
   }
 

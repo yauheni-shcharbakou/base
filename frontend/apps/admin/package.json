@@ -24,7 +24,6 @@
     "@mui/x-data-grid": "7.29.12",
     "@packages/common": "*",
     "@packages/grpc": "*",
-    "@refinedev/cli": "2.16.52",
     "@refinedev/core": "5.0.12",
     "@refinedev/devtools": "2.0.5",
     "@refinedev/kbar": "2.0.1",
@@ -32,20 +31,21 @@
     "@refinedev/nextjs-router": "7.0.5",
     "@refinedev/react-hook-form": "5.0.4",
     "@sweet-monads/either": "3.3.1",
-    "axios": "1.13.5",
+    "axios": "1.15.1",
     "busboy": "1.6.0",
-    "js-cookie": "^3.0.5",
-    "next": "15.2.9",
+    "js-cookie": "3.0.5",
+    "next": "15.5.15",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-dropzone": "15.0.0"
   },
   "devDependencies": {
     "@packages/configs": "*",
+    "@refinedev/cli": "2.16.52",
     "@types/busboy": "1.5.4",
-    "@types/js-cookie": "^3.0.6",
+    "@types/js-cookie": "3.0.6",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.2",
-    "cross-env": "^7.0.3"
+    "cross-env": "10.1.0"
   }
 }

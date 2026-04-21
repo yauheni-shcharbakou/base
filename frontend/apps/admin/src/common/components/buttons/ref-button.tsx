@@ -5,7 +5,7 @@ import { Box, Stack } from '@mui/material';
 import Button from '@mui/material/Button';
 import { ButtonOwnProps } from '@mui/material/Button/Button';
 import { Database } from '@packages/common';
-import { ExternalIcon } from 'next/dist/client/components/react-dev-overlay/ui/icons/external';
+import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
 import { FC } from 'react';
 
 type ButtonProps = Omit<ButtonOwnProps, 'href'> & {
@@ -26,7 +26,7 @@ export const RefButton: FC<ButtonProps> = ({
       <Button
         href={id ? pathProvider.getShowPath(database, resource, id) : undefined}
         variant="outlined"
-        startIcon={<ExternalIcon />}
+        startIcon={<OpenInNewOutlinedIcon />}
         {...props}
       >
         {children}

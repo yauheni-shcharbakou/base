@@ -1,4 +1,4 @@
-import { Property } from '@mikro-orm/core';
+import { Property } from '@mikro-orm/decorators/legacy';
 import { CommonDatabaseEntity } from '@packages/common';
 import { MigrationStatus } from 'common';
 import { PostgresProp, PostgresSchema } from 'postgres/decorators';

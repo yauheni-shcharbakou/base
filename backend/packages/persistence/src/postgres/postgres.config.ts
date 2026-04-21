@@ -1,5 +1,6 @@
+import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { Migrator } from '@mikro-orm/migrations';
-import { MikroOrmModuleOptions } from '@mikro-orm/nestjs/typings';
+import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { MigrationsOptions, PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DatabaseValidationSchema, NodeValidationSchema, validateEnv } from '@packages/common';
 import { dotCase } from 'change-case-all';
@@ -47,6 +48,7 @@ export const postgresConfig = () =>
         },
         migrations,
         extensions: [Migrator],
+        metadataProvider: ReflectMetadataProvider,
       };
     },
   }) as const;
