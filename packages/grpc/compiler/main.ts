@@ -108,6 +108,8 @@ const startCompiler = async (adapterFactories: AdapterFactory[]) => {
     }
 
     for (const adapter of adapters) {
+      await adapter.beforeCompilation();
+
       await Promise.all(
         contextService.getExecutionContext().files.map(async (relativePath: string) => {
           await adapter.onSourceFile(relativePath);

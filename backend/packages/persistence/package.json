@@ -9,13 +9,14 @@
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
-    "dev": "yarn build -- --watch",
+    "dev": "pnpm build --watch",
     "build": "tsdown src/index.ts --format cjs --dts",
-    "reset": "rm -rf .turbo dist node_modules"
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
-    "@backend/common": "*",
-    "@backend/grpc": "*",
+    "@backend/common": "workspace:*",
+    "@backend/grpc": "workspace:*",
     "@mikro-orm/core": "7.0.11",
     "@mikro-orm/decorators": "7.0.11",
     "@mikro-orm/migrations": "7.0.11",
@@ -25,7 +26,7 @@
     "@nestjs/config": "4.0.3",
     "@nestjs/core": "11.1.19",
     "@nestjs/mongoose": "11.0.4",
-    "@packages/common": "*",
+    "@packages/common": "workspace:*",
     "@sweet-monads/either": "3.3.1",
     "mongoose": "9.0.2",
     "nest-commander": "3.20.1",
@@ -33,6 +34,6 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@packages/configs": "*"
+    "@packages/configs": "workspace:*"
   }
 }

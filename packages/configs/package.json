@@ -4,6 +4,10 @@
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
   "version": "0.0.0",
+  "scripts": {
+    "reset": "rm -rf node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",
     "@eslint/js": "9.39.2",

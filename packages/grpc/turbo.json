@@ -2,9 +2,9 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": ["src/**/*.ts", "package.json", "ts-config*.json", "proto/**"],
+      "inputs": ["src/**", "package.json", "ts-config*.json", "proto/**"],
       "outputs": ["dist/**"],
-      "dependsOn": ["^build", "compile"]
+      "dependsOn": ["compile", "^build"]
     },
     "compile": {
       "inputs": ["package.json", "ts-config*.json", "proto/**", "compiler/**"],

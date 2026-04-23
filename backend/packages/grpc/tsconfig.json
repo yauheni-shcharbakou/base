@@ -2,7 +2,8 @@
   "extends": "@packages/configs/tsconfig/package/nest.tsconfig.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "baseUrl": "./src"
+    "baseUrl": "./src",
+    "isolatedModules": false
   },
   "exclude": ["node_modules", "dist"]
 }

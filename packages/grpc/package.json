@@ -9,14 +9,16 @@
   "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../.prettierrc",
-    "dev": "yarn build -- --watch",
+    "dev": "pnpm build --watch",
     "build": "tsdown src/index.ts --format cjs,esm --dts",
+    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts",
     "reset": "rm -rf .turbo dist src node_modules",
-    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts"
+    "reset:modules": "rm -rf node_modules"
   },
   "devDependencies": {
     "@grpc/grpc-js": "1.14.3",
-    "@packages/configs": "*",
+    "@packages/configs": "workspace:*",
+    "@nestjs/common": "11.1.19",
     "@types/pug": "2.0.10",
     "protobufjs": "7.5.5",
     "pug": "3.0.3",

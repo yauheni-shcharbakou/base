@@ -66,13 +66,13 @@ export class AddNestServiceSchemasTask extends TransformTask {
         (methods: MethodTypes, method) => {
           const name = method.getName();
           const firstArgument = method.getParameter('request');
-          const responseType = method.getReturnType()?.getText();
+          const responseType = method.getReturnType()?.getText(this.sourceFile);
 
           if (!firstArgument || !responseType) {
             return methods;
           }
 
-          const requestType = firstArgument.getType().getText();
+          const requestType = firstArgument.getType().getText(this.sourceFile);
           const typeNode = firstArgument.getTypeNode();
 
           if (typeNode && typeNode.isKind(SyntaxKind.TypeReference)) {

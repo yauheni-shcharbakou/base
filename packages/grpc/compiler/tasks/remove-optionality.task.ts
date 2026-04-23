@@ -14,7 +14,7 @@ export class RemoveOptionalityTask extends TransformTask {
         if (type && type.getKind() === SyntaxKind.UnionType) {
           const extType = type.getType();
           const updatedType = extType.getNonNullableType();
-          typedNode.setType(updatedType.getText());
+          typedNode.setType(updatedType.getText(this.sourceFile));
         }
       }
     });
