@@ -192,7 +192,9 @@ export abstract class BaseAdapter {
     await this.executeTransformTasks(sourceFile, protoContext, filePath);
 
     sourceFile.formatText({ indentSize: 2 });
-    sourceFile.organizeImports();
+    sourceFile.fixUnusedIdentifiers();
+    sourceFile.fixMissingImports({}, { preferTypeOnlyAutoImports: true });
+    sourceFile.organizeImports({}, { preferTypeOnlyAutoImports: true });
 
     await this.addSideEffects(sourceFile);
     await sourceFile.save();

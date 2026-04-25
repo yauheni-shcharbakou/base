@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "dotenv -- cross-env NODE_OPTIONS=--max_old_space_size=4096 refine dev",
     "build": "refine build",
-    "prod": "NODE_NEV=production node build/frontend/apps/admin/server.js",
     "start": "refine start",
     "lint": "next lint",
     "refine": "refine",

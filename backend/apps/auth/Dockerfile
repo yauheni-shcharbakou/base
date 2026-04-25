@@ -8,7 +8,7 @@ ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-RUN corepack prepare pnpm@10.33.0 --activate
+RUN corepack prepare pnpm@10.33.2 --activate
 RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app

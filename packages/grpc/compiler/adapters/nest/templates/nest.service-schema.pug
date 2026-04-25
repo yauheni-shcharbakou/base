@@ -18,7 +18,7 @@ each service in data.services
     |   name: "#{serviceName}",
     |   definition: {
     |       package: !{data.package},
-    |       protoPath: join(PROTO_PATH, '#{data.protoPath}'),
+    |       protoPath: '#{data.protoPath}',
     |   },
     |   proxyFactory: (methodParams: #{methodParamsInterface} = {}): GrpcProxyControllerFactory => {
     |       return (controllerParams: GrpcProxyControllerFactoryParams): GrpcProxyControllerFactoryResult => {

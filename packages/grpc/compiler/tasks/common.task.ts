@@ -12,10 +12,10 @@ export class CommonTask extends TransformTask {
         node.getKind() === SyntaxKind.PropertyDeclaration
       ) {
         const typedNode = node as unknown as TypedNode;
-        const type = typedNode.getTypeNode();
+        const typeNode = typedNode.getTypeNode();
 
-        if (type) {
-          const extType = type.getType();
+        if (typeNode) {
+          const extType = typeNode.getType();
           const updatedType = extType.getNonNullableType();
           typedNode.setType(updatedType.getText(this.sourceFile));
         }

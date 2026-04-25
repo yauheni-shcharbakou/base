@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "1.14.3",
+    "@nestjs/common": "11.1.19",
     "@nestjs/microservices": "11.1.19",
     "protobufjs": "7.5.5",
     "reflect-metadata": "0.2.2",

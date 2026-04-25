@@ -4,12 +4,14 @@
     "build": {
       "inputs": ["src/**/*.ts", "package.json", "ts-config*.json"],
       "outputs": ["dist/**"],
-      "dependsOn": ["^build", "compile"]
+      "dependsOn": ["^compile", "^build", "compile", "format"]
+    },
+    "format": {
+      "dependsOn": ["^compile", "^build", "compile"]
     },
     "compile": {
       "inputs": ["src/**/*.ts", "src/**/*.pug", "package.json", "ts-config*.json"],
-      "outputs": ["src/nats_/compiler/generated/**"],
-      "dependsOn": ["^build"]
+      "outputs": ["src/nats_/compiler/generated/**"]
     }
   }
 }

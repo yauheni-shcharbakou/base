@@ -28,8 +28,6 @@
     "prod:backend.api-gateway": "turbo run prod --filter=backend.api-gateway",
     "prod:backend.auth": "turbo run prod --filter=backend.auth",
     "prod:backend.storage": "turbo run prod --filter=backend.storage",
-    "prod:frontend": "turbo run prod --filter=\"frontend.*\"",
-    "prod:frontend.admin": "turbo run prod --filter=frontend.admin",
     "format": "turbo run format",
     "lint": "turbo run lint",
     "gen:package": "turbo gen package && yarn",
@@ -44,18 +42,19 @@
     "lodash": "4.18.1",
     "moment": "2.30.1",
     "ulid": "3.0.2",
-    "zod": "4.3.5"
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@turbo/gen": "2.9.6",
     "@types/lodash": "4.17.23",
-    "@types/node": "22.19.3",
+    "@types/node": "22.19.17",
     "change-case-all": "2.1.0",
     "dotenv-cli": "11.0.0",
-    "minimatch": "10.2.4",
-    "pnpm": "10.33.0",
-    "prettier": "3.7.4",
-    "tsdown": "0.21.9",
+    "eslint": "9.39.2",
+    "minimatch": "10.2.5",
+    "pnpm": "10.33.2",
+    "prettier": "3.8.3",
+    "tsdown": "0.21.10",
     "turbo": "2.9.6",
     "typescript": "5.9.3"
   },
@@ -81,5 +80,5 @@
   "engines": {
     "node": ">=22.22.0"
   },
-  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+  "packageManager": "pnpm@10.33.2+sha512.a90faf6feeab71ad6c6e57f94e0fe1a12f5dcc22cd754db40ae9593eb6a3e0b6b12e3540218bb37ae083404b1f2ce6db2a4121e979829b4aff94b99f49da1cf8"
 }

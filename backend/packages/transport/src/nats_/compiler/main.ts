@@ -47,7 +47,7 @@ const parseTemplates = async () => {
   return templateByName;
 };
 
-export const declareImports = (outputFile: SourceFile) => {
+const declareImports = (outputFile: SourceFile) => {
   outputFile.addImportDeclaration({
     moduleSpecifier: '@nestjs/common',
     namedImports: ['applyDecorators', 'Controller', 'UseInterceptors'],

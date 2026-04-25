@@ -9,6 +9,8 @@ import { parseProtoTree } from 'compiler/utils';
 import { EventEmitter } from 'node:events';
 import { readdir } from 'node:fs/promises';
 
+//
+
 const getAdapters = (contextService: ContextService, adapterFactories: AdapterFactory[]) => {
   return adapterFactories.reduce((acc: BaseAdapter[], adapterFactory) => {
     const instance = adapterFactory(contextService);

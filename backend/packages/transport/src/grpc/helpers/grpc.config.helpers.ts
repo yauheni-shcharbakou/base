@@ -1,6 +1,8 @@
+import { PROTO_PATH } from 'grpc/constants';
 import { GrpcConfig, GrpcConfigHost } from 'grpc/grpc.config';
 import { GrpcServiceDefinition } from 'grpc/grpc.types';
 import _ from 'lodash';
+import { join } from 'node:path';
 
 export const getServiceDefinitions = (
   hostConfig: GrpcConfig[GrpcConfigHost],
@@ -16,7 +18,7 @@ export const getServiceDefinitions = (
       }
 
       acc.package.add(definition.package);
-      acc.protoPath.add(definition.protoPath);
+      acc.protoPath.add(join(PROTO_PATH, definition.protoPath));
       return acc;
     },
     {

@@ -1,7 +1,7 @@
 import { constantCase, pascalCase } from 'change-case-all';
 import { TransformTask } from 'compiler/tasks';
 import { ProtoContextService } from 'compiler/types';
-import { SyntaxKind } from 'ts-morph';
+import { ImportDeclaration, SyntaxKind } from 'ts-morph';
 
 type MethodDefinition = {
   name: string;
@@ -27,22 +27,44 @@ export class AddNestServiceSchemasTask extends TransformTask {
   private packageName: string | undefined;
 
   private declareImports() {
-    this.addOrUpdateImport('path', ['join']);
-    this.addOrUpdateImport('@grpc/grpc-js', ['Metadata']);
-    this.addOrUpdateImport('@nestjs/common', ['Type']);
-    this.addOrUpdateImport('@nestjs/microservices', ['ClientGrpc']);
+    this.addOrUpdateImport('@grpc/grpc-js', [{ name: 'Metadata', isTypeOnly: true }]);
 
     this.addOrUpdateImport(this.importFromCompilerPath, [
-      'GrpcProxyControllerFactoryParams',
-      'GrpcProxyControllerFactoryResult',
-      'GrpcProxyControllerFactory',
-      'GrpcProxyMethodParams',
-      'GrpcProxyStreamMethodParams',
-      'PROTO_PATH',
+      { name: 'GrpcProxyControllerFactoryParams', isTypeOnly: true },
+      { name: 'GrpcProxyControllerFactoryResult', isTypeOnly: true },
+      { name: 'GrpcProxyControllerFactory', isTypeOnly: true },
+      { name: 'GrpcProxyMethodParams', isTypeOnly: true },
+      { name: 'GrpcProxyStreamMethodParams', isTypeOnly: true },
     ]);
   }
 
+  private updateImports(typeMap: Map<string, Set<string>>) {
+    Array.from(typeMap.entries()).forEach(([specifier, namedImports]) => {
+      this.addOrUpdateImport(
+        specifier,
+        Array.from(namedImports).map((namedImport) => {
+          return {
+            name: namedImport,
+            isTypeOnly: true,
+          };
+        }),
+      );
+    });
+  }
+
   private declareSchemas(services: ProtoContextService[]) {
+    const typeMap = new Map<string, Set<string>>();
+
+    const importDataByName = this.sourceFile
+      .getImportDeclarations()
+      .reduce((acc: Map<string, ImportDeclaration>, importDeclaration) => {
+        importDeclaration.getNamedImports().forEach((namedImport) => {
+          acc.set(namedImport.getName(), importDeclaration);
+        });
+
+        return acc;
+      }, new Map<string, ImportDeclaration>());
+
     const serviceTemplateData = services.reduce((acc: TemplateData[], service) => {
       const controllerName = pascalCase(`grpc.${service.name}.controller`);
       const clientName = pascalCase(`grpc.${service.name}.client`);
@@ -90,6 +112,15 @@ export class AddNestServiceSchemasTask extends TransformTask {
             }
           }
 
+          const importData = importDataByName.get(requestType);
+
+          if (importData && !importData.isTypeOnly()) {
+            const importSpecifier = importData.getModuleSpecifierValue();
+            const prevValue = typeMap.get(importSpecifier) ?? new Set<string>();
+            prevValue.add(requestType);
+            typeMap.set(importSpecifier, prevValue);
+          }
+
           methods.unaryMethods.push({ name, requestType, responseType });
           return methods;
         },
@@ -104,6 +135,8 @@ export class AddNestServiceSchemasTask extends TransformTask {
 
       return acc;
     }, []);
+
+    this.updateImports(typeMap);
 
     const schemaDeclaration = this.renderTemplate('nest.service-schema', {
       data: {

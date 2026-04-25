@@ -4,7 +4,10 @@
     "build": {
       "inputs": ["src/**", "package.json", "ts-config*.json", "proto/**"],
       "outputs": ["dist/**"],
-      "dependsOn": ["compile", "^build"]
+      "dependsOn": ["^compile", "^build", "compile", "format"]
+    },
+    "format": {
+      "dependsOn": ["compile"]
     },
     "compile": {
       "inputs": ["package.json", "ts-config*.json", "proto/**", "compiler/**"],

@@ -10,8 +10,8 @@ import {
   GrpcTempCodeService,
   GrpcUserService,
   GrpcVideoService,
-  PROTO_PATH,
 } from '@backend/grpc';
+import { PROTO_PATH } from 'grpc/constants';
 import { wrappers } from 'protobufjs';
 import zod from 'zod';
 

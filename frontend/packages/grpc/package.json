@@ -15,7 +15,7 @@
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "2.11.0",
+    "@bufbuild/protobuf": "2.12.0",
     "@grpc/grpc-js": "1.14.3",
     "server-only": "0.0.1"
   },
