@@ -5,10 +5,13 @@
 // source: storage/messages/video.messages.proto
 
 /* eslint-disable */
-import type { GrpcFile } from "../models/file";
-import type { GrpcVideo } from "../models/video";
-import type { GrpcFileCreate } from "./file.messages";
-import type { GrpcStorageObjectManyMetadata, GrpcStorageObjectMetadata } from "./storage-object.messages";
+import type { GrpcFile } from '../models/file';
+import type { GrpcVideo } from '../models/video';
+import type { GrpcFileCreate } from './file.messages';
+import type {
+  GrpcStorageObjectManyMetadata,
+  GrpcStorageObjectMetadata,
+} from './storage-object.messages';
 
 export interface GrpcVideoPopulated {
   id: string;

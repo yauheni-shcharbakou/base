@@ -5,4 +5,4 @@
 // source: storage/file.service.proto
 
 /* eslint-disable */
-export { };
+export {};

@@ -5,4 +5,4 @@
 // source: storage/video.service.proto
 
 /* eslint-disable */
-export { };
+export {};
