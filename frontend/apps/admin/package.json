@@ -7,23 +7,24 @@
   "scripts": {
     "dev": "dotenv -- cross-env NODE_OPTIONS=--max_old_space_size=4096 refine dev",
     "build": "refine build",
-    "prod": "NODE_NEV=production node build/frontend/apps/admin/server.js",
     "start": "refine start",
     "lint": "next lint",
-    "refine": "refine"
+    "refine": "refine",
+    "reset": "rm -rf .next .turbo node_modules",
+    "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
-    "@frontend/grpc": "*",
+    "@frontend/grpc": "workspace:*",
     "@grpc/grpc-js": "1.14.3",
     "@hookform/resolvers": "5.2.2",
     "@mui/icons-material": "6.5.0",
     "@mui/lab": "6.0.1-beta.36",
     "@mui/material": "6.5.0",
     "@mui/x-data-grid": "7.29.12",
-    "@packages/common": "*",
-    "@packages/grpc": "*",
+    "@packages/common": "workspace:*",
+    "@packages/grpc": "workspace:*",
     "@refinedev/core": "5.0.12",
     "@refinedev/devtools": "2.0.5",
     "@refinedev/kbar": "2.0.1",
@@ -37,10 +38,11 @@
     "next": "15.5.15",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-dropzone": "15.0.0"
+    "react-dropzone": "15.0.0",
+    "react-hook-form": "7.57.0"
   },
   "devDependencies": {
-    "@packages/configs": "*",
+    "@packages/configs": "workspace:*",
     "@refinedev/cli": "2.16.52",
     "@types/busboy": "1.5.4",
     "@types/js-cookie": "3.0.6",

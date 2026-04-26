@@ -45,14 +45,17 @@ export class AddJsRepositoriesTask extends TransformTask {
 
       const unaryMethods: MethodData[] = Array.from(clientMethods.entries()).reduce(
         (methods: MethodData[], [name, method]) => {
-          const requestType = method.getParameter('request')?.getType()?.getText();
+          const requestType = method.getParameter('request')?.getType()?.getText(this.sourceFile);
           const callbackTypeNode = method.getParameter('callback')?.getTypeNode();
 
           if (!requestType || !Node.isFunctionTypeNode(callbackTypeNode)) {
             return methods;
           }
 
-          const responseType = callbackTypeNode.getParameter('response')?.getType()?.getText();
+          const responseType = callbackTypeNode
+            .getParameter('response')
+            ?.getType()
+            ?.getText(this.sourceFile);
 
           if (!responseType) {
             return methods;

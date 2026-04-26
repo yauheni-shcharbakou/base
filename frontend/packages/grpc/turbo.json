@@ -3,7 +3,14 @@
   "tasks": {
     "build": {
       "inputs": ["src/**/*.ts", "package.json", "ts-config*.json"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "dependsOn": ["^compile", "^build", "format"]
+    },
+    "format": {
+      "dependsOn": ["^compile", "^build"]
+    },
+    "reset:modules": {
+      "inputs": ["package.json"]
     }
   }
 }

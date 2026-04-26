@@ -9,6 +9,8 @@ import { parseProtoTree } from 'compiler/utils';
 import { EventEmitter } from 'node:events';
 import { readdir } from 'node:fs/promises';
 
+//
+
 const getAdapters = (contextService: ContextService, adapterFactories: AdapterFactory[]) => {
   return adapterFactories.reduce((acc: BaseAdapter[], adapterFactory) => {
     const instance = adapterFactory(contextService);
@@ -108,6 +110,8 @@ const startCompiler = async (adapterFactories: AdapterFactory[]) => {
     }
 
     for (const adapter of adapters) {
+      await adapter.beforeCompilation();
+
       await Promise.all(
         contextService.getExecutionContext().files.map(async (relativePath: string) => {
           await adapter.onSourceFile(relativePath);

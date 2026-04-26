@@ -3,8 +3,8 @@ My personal website
 
 ### Requirements
 
-- Node.js 22+
-- Yarn 1.22.22
+- Node.js 22.22.0+
+- pnpm 10.33.0
 - Installed `protobuf` compiler (for development and gRPC compiler only)
 - Installed `docker` and `docker compose` (optional)
 
@@ -25,6 +25,7 @@ My personal website
 >
 > - Nest.js
 > - Mongoose
+> - MikroORM
 > - Microservices
 > - Nats JetStream
 
@@ -69,62 +70,75 @@ You can check examples of env variables in service-specific `.env.example` files
 ```shell
 git clone git@github.com:yauheni-shcharbakou/base.git
 cd base
-yarn install # npx yarn
+pnpm install
 ```
 
 ##### Commands for run in development mode
 
 ```shell
-yarn dev
-yarn dev:backend # only backend stuff
-yarn dev:frontend # only frontend stuff
+pnpm dev
+pnpm dev:backend # only backend stuff
+pnpm dev:frontend # only frontend stuff
 ```
 
 ##### Commands for packages compilation
 
 ```shell
-yarn compile
-yarn compile:grpc # run gRPC compiler
+pnpm compile
+pnpm compile:grpc # run gRPC compiler
+pnpm compile:transport # run nats compiler
 ```
 
 ##### Commands for build
 
 ```shell
-yarn build
-yarn build:backend # only backend stuff
-yarn build:frontend # only frontend stuff
-yarn build:grpc # only gRPC compiler packages
+pnpm build
+pnpm build:backend # only backend stuff
+pnpm build:frontend # only frontend stuff
+pnpm build:grpc # only gRPC compiler packages
 ```
 
 ##### Commands for run in production mode
 
 ```shell
-yarn prod
-yarn prod:backend # only backend stuff
+pnpm prod
+pnpm prod:backend # only backend stuff
 ```
 
 ##### Commands for run in docker
 
 ```shell
-yarn docker # start all services (production mode)
-yarn docker:local # start only transport services (local development mode)
+pnpm docker # start all services (production mode)
+pnpm docker:local # start only transport services (local development mode)
 ```
 
 ##### Commands for reset build caches:
 ```shell
-yarn reset
-yarn reset:backend # only backend services
-yarn reset:frontend # only frontend services
+pnpm reset
+pnpm reset:backend # only backend services
+pnpm reset:frontend # only frontend services
+```
+
+##### Commands for reset node_modules:
+```shell
+pnpm reset:modules
 ```
 
 ##### For format project with prettier run:
 ```shell
-yarn format
+pnpm format
 ```
 
 ### Code generation
 
 For generate new package run:
 ```shell
-yarn gen:package
+pnpm gen:package
+```
+
+### Security audit
+
+For check deps vulnerabilities run:
+```shell
+pnpm audit
 ```

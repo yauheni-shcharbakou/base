@@ -9,16 +9,18 @@
   "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
-    "dev": "yarn build -- --watch",
+    "dev": "pnpm build --watch",
     "build": "tsdown src/index.ts --format cjs,esm --dts --no-treeshake",
-    "reset": "rm -rf .turbo dist src node_modules"
+    "reset": "rm -rf .turbo dist src node_modules",
+    "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "2.12.0",
     "@grpc/grpc-js": "1.14.3",
     "server-only": "0.0.1"
   },
   "devDependencies": {
-    "@packages/configs": "*",
-    "@packages/grpc": "*"
+    "@packages/configs": "workspace:*",
+    "@packages/grpc": "workspace:*"
   }
 }

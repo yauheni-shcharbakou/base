@@ -10,12 +10,17 @@
       "dependsOn": ["^build"]
     },
     "build": {
+      "dependsOn": ["^compile", "^build", "compile"]
+    },
+    "compile": {
       "dependsOn": ["^compile", "^build"]
     },
     "prod": {},
     "format": {},
     "lint": {},
-    "reset": {},
-    "compile": {}
+    "reset": {
+      "cache": false
+    },
+    "reset:modules": {}
   }
 }

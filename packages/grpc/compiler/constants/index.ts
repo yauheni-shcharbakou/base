@@ -2,7 +2,7 @@ import { join } from 'path';
 
 export const GRPC_PACKAGE_ROOT = join(__dirname, '..', '..');
 export const REPOSITORY_ROOT = join(GRPC_PACKAGE_ROOT, '..', '..');
-export const NODE_MODULES_ROOT = join(REPOSITORY_ROOT, 'node_modules');
+export const NODE_MODULES_ROOT = join(GRPC_PACKAGE_ROOT, 'node_modules');
 export const PROTO_SRC_ROOT = join(GRPC_PACKAGE_ROOT, 'proto');
 
 export const BACKEND_PACKAGES_DIR_ROOT = join(REPOSITORY_ROOT, 'backend', 'packages');

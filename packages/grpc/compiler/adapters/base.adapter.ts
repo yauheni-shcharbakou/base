@@ -175,15 +175,26 @@ export abstract class BaseAdapter {
     await writeFile(filePath, content, { encoding: 'utf-8' });
   }
 
+  async beforeCompilation() {
+    this.project.addSourceFilesAtPaths(`${this.targetRoot}/**/*.ts`);
+  }
+
   async onSourceFile(relativePath: string): Promise<void> {
     const filePath = join(this.targetRoot, relativePath);
-    const sourceFile = this.project.addSourceFileAtPath(filePath);
+    const sourceFile = this.project.getSourceFile(filePath);
+
+    if (!sourceFile) {
+      throw new Error(`Source file ${filePath} not found`);
+    }
+
     const protoContext = this.contextService.getProtoContext(relativePath);
 
     await this.executeTransformTasks(sourceFile, protoContext, filePath);
 
     sourceFile.formatText({ indentSize: 2 });
-    sourceFile.organizeImports();
+    sourceFile.fixUnusedIdentifiers();
+    sourceFile.fixMissingImports({}, { preferTypeOnlyAutoImports: true });
+    sourceFile.organizeImports({}, { preferTypeOnlyAutoImports: true });
 
     await this.addSideEffects(sourceFile);
     await sourceFile.save();

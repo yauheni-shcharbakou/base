@@ -3,8 +3,8 @@
   "tasks": {
     "build": {
       "inputs": [
-        "src/**/*",
-        "public/**/*",
+        "src/**",
+        "public/**",
         ".eslintrc.json",
         "Dockerfile",
         "next.config.mjs",
@@ -12,6 +12,9 @@
         "tsconfig*.json"
       ],
       "outputs": [".next/**"]
+    },
+    "reset:modules": {
+      "inputs": ["package.json"]
     }
   }
 }
