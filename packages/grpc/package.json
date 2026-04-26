@@ -11,7 +11,7 @@
     "format": "prettier src --write --config ../../.prettierrc",
     "dev": "pnpm build --watch",
     "build": "tsdown src/index.ts --format cjs,esm --dts",
-    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts",
+    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts && pnpm format",
     "reset": "rm -rf .turbo dist src node_modules",
     "reset:modules": "rm -rf node_modules"
   },

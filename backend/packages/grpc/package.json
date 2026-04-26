@@ -9,7 +9,7 @@
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "dev": "pnpm build --watch",
-    "build": "tsdown src/index.ts --format cjs --dts",
+    "build": "pnpm format && tsdown src/index.ts --format cjs --dts",
     "reset": "rm -rf .turbo dist src node_modules",
     "reset:modules": "rm -rf node_modules"
   },
