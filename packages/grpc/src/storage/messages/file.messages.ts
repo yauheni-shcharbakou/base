@@ -5,11 +5,8 @@
 // source: storage/messages/file.messages.proto
 
 /* eslint-disable */
-import type { GrpcFile, GrpcFileUploadStatus } from '../models/file';
-import type {
-  GrpcStorageObjectManyMetadata,
-  GrpcStorageObjectMetadata,
-} from './storage-object.messages';
+import type { GrpcFile, GrpcFileUploadStatus } from "../models/file";
+import type { GrpcStorageObjectManyMetadata, GrpcStorageObjectMetadata } from "./storage-object.messages";
 
 export interface GrpcFileQuery {
   id?: string;

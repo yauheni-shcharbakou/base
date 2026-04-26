@@ -5,4 +5,4 @@
 // source: storage/image.service.proto
 
 /* eslint-disable */
-export {};
+export { };

@@ -5,4 +5,4 @@
 // source: auth/temp-code.service.proto
 
 /* eslint-disable */
-export {};
+export { };

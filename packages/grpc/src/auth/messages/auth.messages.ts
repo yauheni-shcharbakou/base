@@ -5,7 +5,7 @@
 // source: auth/messages/auth.messages.proto
 
 /* eslint-disable */
-import type { GrpcUser } from '../models/user';
+import type { GrpcUser } from "../models/user";
 
 export interface GrpcAuthLogin {
   login: string;

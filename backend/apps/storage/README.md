@@ -41,7 +41,7 @@
 - [x] `Embed view token authentication`
 - [x] `CDN token authentication`
 
-`Allowed domains`: set list
+`Allowed domains`: set list with `player.mediadelivery.net` and your hosts
 
 `Token authentication key` => env `BUNNY_STREAM_CDN_PRIVATE_KEY`
 

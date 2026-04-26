@@ -36,7 +36,7 @@ export const config = () => {
       stream: {
         apiUrl: `https://video.bunnycdn.com/library/${env.BUNNY_STREAM_LIBRARY_ID}`,
         apiKey: env.BUNNY_STREAM_API_KEY,
-        playerUrl: `https://iframe.mediadelivery.net/embed/${env.BUNNY_STREAM_LIBRARY_ID}`,
+        playerUrl: `https://player.mediadelivery.net/embed/${env.BUNNY_STREAM_LIBRARY_ID}`,
         cdn: {
           url: `https://${env.BUNNY_STREAM_CDN_ZONE}.b-cdn.net`,
           privateKey: env.BUNNY_STREAM_CDN_PRIVATE_KEY,

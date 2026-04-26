@@ -1,9 +1,17 @@
 {
   "js/ts.tsdk.path": "./node_modules/typescript/lib",
-  "prettier.configPath": "./.prettierrc",
+  "prettier.configPath": ".prettierrc",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "files.autoSave": "onFocusChange",
   "editor.tabSize": 2,
-  "editor.formatOnPaste": true
+  "editor.formatOnPaste": true,
+  "js/ts.preferences.preferTypeOnlyAutoImports": true,
+  "js/ts.preferences.quoteStyle": "single",
+  "editor.fontSize": 14,
+  "editor.formatOnType": true,
+  "prettier.prettierPath": "./node_modules/prettier",
+  "prettier.requireConfig": true,
+  "prettier.singleQuote": true,
+  "prettier.useEditorConfig": false
 }
