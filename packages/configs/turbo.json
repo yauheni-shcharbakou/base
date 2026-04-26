@@ -1,0 +1,8 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "reset:modules": {
+      "inputs": ["node_modules/**"]
+    }
+  }
+}

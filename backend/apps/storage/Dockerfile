@@ -30,9 +30,11 @@ RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/pnpm/store,tar
     --frozen-lockfile \
     --prod=false
 COPY --from=prepare /app/out/full/ .
+COPY --from=prepare /app/.prettierrc ./.prettierrc
 RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/app/.turbo,target=/app/.turbo \
     pnpm build
-RUN pnpm reset:modules
+RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/app/.turbo,target=/app/.turbo \
+    pnpm reset:modules
 RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/pnpm/store,target=/pnpm/store \
     pnpm install \
     --store-dir=/pnpm/store \

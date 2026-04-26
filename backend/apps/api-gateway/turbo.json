@@ -1,7 +1,5 @@
 {
-  "extends": [
-    "//"
-  ],
+  "extends": ["//"],
   "tasks": {
     "build": {
       "inputs": [
@@ -12,9 +10,10 @@
         "package.json",
         "tsconfig*.json"
       ],
-      "outputs": [
-        "dist/**"
-      ]
+      "outputs": ["dist/**"]
+    },
+    "reset:modules": {
+      "inputs": ["node_modules/**"]
     }
   }
 }
