@@ -1,4 +1,5 @@
 # base
+
 My personal website
 
 ### Requirements
@@ -38,7 +39,7 @@ backend/ # directory for backend stuff
   packages/
     ...backend packages (@backend/*)
 frontend/ # directory for frontend stuff
-  apps/ 
+  apps/
     ...frontend services (frontend.*)
   packages/
     ...frontend packages (@frontend/*)
@@ -53,14 +54,8 @@ turbo/
 Environment variables should be placed in service-specific `.env` files:
 
 ```handlebars
-/
-  .env (env file for docker-compose.yml)
-  backend/
-    apps/{{backend service name}}/
-      .env
-  frontend/
-    apps/{{frontend service name}}/
-      .env
+/ .env (env file for docker-compose.yml) backend/ apps/{{backend service name}}/ .env frontend/
+apps/{{frontend service name}}/ .env
 ```
 
 You can check examples of env variables in service-specific `.env.example` files
@@ -113,6 +108,7 @@ pnpm docker:local # start only transport services (local development mode)
 ```
 
 ##### Commands for reset build caches:
+
 ```shell
 pnpm reset
 pnpm reset:backend # only backend services
@@ -120,11 +116,13 @@ pnpm reset:frontend # only frontend services
 ```
 
 ##### Commands for reset node_modules:
+
 ```shell
 pnpm reset:modules
 ```
 
 ##### For format project with prettier run:
+
 ```shell
 pnpm format
 ```
@@ -132,6 +130,7 @@ pnpm format
 ### Code generation
 
 For generate new package run:
+
 ```shell
 pnpm gen:package
 ```
@@ -139,6 +138,7 @@ pnpm gen:package
 ### Security audit
 
 For check deps vulnerabilities run:
+
 ```shell
 pnpm audit
 ```
