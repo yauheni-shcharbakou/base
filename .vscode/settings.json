@@ -1,4 +1,9 @@
 {
   "js/ts.tsdk.path": "./node_modules/typescript/lib",
-  "prettier.configPath": "./.prettierrc"
+  "prettier.configPath": "./.prettierrc",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "files.autoSave": "onFocusChange",
+  "editor.tabSize": 2,
+  "editor.formatOnPaste": true
 }
