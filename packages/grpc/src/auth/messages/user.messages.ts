@@ -5,7 +5,7 @@
 // source: auth/messages/user.messages.proto
 
 /* eslint-disable */
-import type { GrpcUser, GrpcUserRole } from "../models/user";
+import type { GrpcUser, GrpcUserRole } from '../models/user';
 
 export interface GrpcUserQuery {
   id?: string;

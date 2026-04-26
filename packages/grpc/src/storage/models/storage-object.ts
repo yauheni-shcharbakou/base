@@ -7,10 +7,10 @@
 /* eslint-disable */
 
 export enum GrpcStorageObjectType {
-  FOLDER = "FOLDER",
-  FILE = "FILE",
-  IMAGE = "IMAGE",
-  VIDEO = "VIDEO",
+  FOLDER = 'FOLDER',
+  FILE = 'FILE',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
 }
 
 export interface GrpcStorageObject {

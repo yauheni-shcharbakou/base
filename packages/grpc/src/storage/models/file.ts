@@ -7,9 +7,9 @@
 /* eslint-disable */
 
 export enum GrpcFileUploadStatus {
-  PENDING = "PENDING",
-  FAILED = "FAILED",
-  READY = "READY",
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+  READY = 'READY',
 }
 
 export interface GrpcFile {

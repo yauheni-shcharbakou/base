@@ -5,4 +5,4 @@
 // source: auth/auth.service.proto
 
 /* eslint-disable */
-export { };
+export {};

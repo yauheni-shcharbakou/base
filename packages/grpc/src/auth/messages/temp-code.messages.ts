@@ -5,7 +5,7 @@
 // source: auth/messages/temp-code.messages.proto
 
 /* eslint-disable */
-import type { GrpcTempCode } from "../models/temp-code";
+import type { GrpcTempCode } from '../models/temp-code';
 
 export interface GrpcTempCodeGetListResponse {
   items: GrpcTempCode[];

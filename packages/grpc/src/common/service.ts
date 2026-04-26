@@ -5,7 +5,7 @@
 // source: common/service.proto
 
 /* eslint-disable */
-import type { GrpcCrudConditionalFilter, GrpcCrudLogicalFilter, GrpcCrudSorter } from "./crud";
+import type { GrpcCrudConditionalFilter, GrpcCrudLogicalFilter, GrpcCrudSorter } from './crud';
 
 export interface GrpcIdField {
   id: string;

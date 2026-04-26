@@ -5,11 +5,11 @@
 // source: storage/messages/storage-object.messages.proto
 
 /* eslint-disable */
-import type { GrpcBaseQuery } from "../../common/service";
-import type { GrpcFile } from "../models/file";
-import type { GrpcImage } from "../models/image";
-import type { GrpcStorageObjectType } from "../models/storage-object";
-import type { GrpcVideo } from "../models/video";
+import type { GrpcBaseQuery } from '../../common/service';
+import type { GrpcFile } from '../models/file';
+import type { GrpcImage } from '../models/image';
+import type { GrpcStorageObjectType } from '../models/storage-object';
+import type { GrpcVideo } from '../models/video';
 
 export interface GrpcStorageObjectPopulated {
   id: string;

@@ -7,8 +7,8 @@
 /* eslint-disable */
 
 export enum GrpcUserRole {
-  ADMIN = "ADMIN",
-  USER = "USER",
+  ADMIN = 'ADMIN',
+  USER = 'USER',
 }
 
 export interface GrpcUser {
