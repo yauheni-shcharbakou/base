@@ -6,7 +6,7 @@
       "outputs": ["dist/**"]
     },
     "reset:modules": {
-      "inputs": ["node_modules/**"]
+      "inputs": ["package.json"]
     }
   }
 }

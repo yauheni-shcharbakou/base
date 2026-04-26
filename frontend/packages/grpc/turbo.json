@@ -10,7 +10,7 @@
       "dependsOn": ["^compile", "^build"]
     },
     "reset:modules": {
-      "inputs": ["node_modules/**"]
+      "inputs": ["package.json"]
     }
   }
 }
