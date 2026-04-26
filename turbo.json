@@ -18,7 +18,9 @@
     "prod": {},
     "format": {},
     "lint": {},
-    "reset": {},
+    "reset": {
+      "cache": false
+    },
     "reset:modules": {}
   }
 }

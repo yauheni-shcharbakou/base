@@ -4,6 +4,9 @@
     "build": {
       "inputs": ["src/**/*.ts", "src/**/*.tsx", "package.json", "ts-config*.json"],
       "outputs": ["dist/**"]
+    },
+    "reset:modules": {
+      "inputs": ["package.json"]
     }
   }
 }

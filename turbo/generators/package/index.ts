@@ -38,13 +38,14 @@ export const packageGenerator = (plop: PlopTypes.NodePlopAPI) => {
         default: types[0],
       },
     ],
-    actions: (answers: { type: string }) => {
-      const typeTemplatesRoot = join(__dirname, 'templates', answers.type);
+    actions: (answers?: PlopTypes.Answers) => {
+      const chosenType: string = answers?.['type'] || 'default';
+      const typeTemplatesRoot = join(__dirname, 'templates', chosenType);
 
       return [
         {
           type: 'addMany',
-          destination: packageRootByType.get(answers.type),
+          destination: packageRootByType.get(chosenType)!,
           base: typeTemplatesRoot,
           templateFiles: [typeTemplatesRoot, join(typeTemplatesRoot, '.*')],
         },

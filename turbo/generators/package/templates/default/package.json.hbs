@@ -9,11 +9,12 @@
   "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../.prettierrc",
-    "dev": "yarn build -- --watch",
+    "dev": "pnpm build --watch",
     "build": "tsdown src/index.ts --format cjs,esm --dts",
-    "reset": "rm -rf .turbo dist node_modules"
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
   },
   "devDependencies": {
-    "@packages/configs": "*"
+    "@packages/configs": "workspace:*"
   }
 }
