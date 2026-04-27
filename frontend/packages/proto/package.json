@@ -1,0 +1,25 @@
+{
+  "name": "@frontend/proto",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "dev": "pnpm build --watch",
+    "build": "pnpm format && tsdown src/index.ts --format cjs,esm --dts",
+    "reset": "rm -rf .turbo dist src node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "2.12.0",
+    "@grpc/grpc-js": "1.14.3"
+  },
+  "devDependencies": {
+    "@packages/configs": "workspace:*",
+    "@packages/proto": "workspace:*"
+  }
+}

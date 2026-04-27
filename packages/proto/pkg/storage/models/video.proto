@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package storage.models;
+
+import "google/protobuf/timestamp.proto";
+
+message Video {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string title = 4;
+  int32 duration = 5;
+  int32 views = 6;
+  optional string description = 7;
+  string providerId = 8;
+
+  string userId = 9;
+  string fileId = 10;
+  string uploadId = 11;
+}

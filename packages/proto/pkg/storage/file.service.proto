@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package storage;
+
+import "common/service.proto";
+import "storage/models/file.proto";
+import "storage/messages/common.messages.proto";
+import "storage/messages/file.messages.proto";
+
+service FileService {
+  rpc getUrlMap (common.BaseQuery) returns (messages.UrlMap) {}
+  rpc getDownloadMap (common.BaseQuery) returns (messages.DownloadMap) {}
+  rpc getById (common.IdField) returns (models.File) {}
+  rpc getList (common.GetListRequest) returns (messages.FileGetListResponse) {}
+  rpc createOne (messages.FileCreateRequest) returns (models.File) {}
+  rpc createMany (messages.FileCreateManyRequest) returns (messages.FileCreateManyResponse) {}
+  rpc uploadOne (stream messages.UploadRequest) returns (stream messages.FileUploadResponse) {}
+  rpc deleteById (common.IdField) returns (models.File) {}
+}

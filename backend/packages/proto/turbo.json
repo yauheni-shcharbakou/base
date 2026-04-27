@@ -1,0 +1,16 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": ["src/**/*.ts", "package.json", "ts-config*.json"],
+      "outputs": ["dist/**"]
+    },
+    "format": {
+      "inputs": ["src/**/*.ts"],
+      "outputs": ["src/**/*.ts"]
+    },
+    "reset:modules": {
+      "inputs": ["package.json"]
+    }
+  }
+}

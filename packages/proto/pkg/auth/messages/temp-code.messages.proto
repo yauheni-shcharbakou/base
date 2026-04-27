@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package auth.messages;
+
+import "auth/models/temp-code.proto";
+
+// get
+
+message TempCodeGetListResponse {
+  repeated models.TempCode items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message TempCodeCreate {
+  string user = 1;
+}

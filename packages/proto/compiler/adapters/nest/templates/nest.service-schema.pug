@@ -1,0 +1,14 @@
+each service in data.services
+    - const serviceName = pascalCase(service.name)
+    - const methodsDecorator = `${serviceName}ControllerMethods`
+
+    |
+    |export const Grpc#{pascalCase(service.id)}Transport = {
+    |   service: '#{serviceName}',
+    |   definition: {
+    |       package: !{data.package},
+    |       protoPath: '#{data.protoPath}',
+    |   },
+    |   ControllerMethods: (): ClassDecorator => #{methodsDecorator}(),
+    |} as const;
+    |
