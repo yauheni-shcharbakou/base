@@ -9,10 +9,6 @@
       "inputs": ["package.json", "ts-config*.json", "pkg/**", "compiler/**"],
       "outputs": ["src/**"]
     },
-    "format": {
-      "inputs": ["src/**/*.ts"],
-      "outputs": ["src/**/*.ts"]
-    },
     "reset:modules": {
       "inputs": ["package.json"]
     }

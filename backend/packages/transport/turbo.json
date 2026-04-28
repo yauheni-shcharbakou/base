@@ -9,10 +9,6 @@
       "inputs": ["src/**/*.ts", "src/**/*.pug", "package.json", "ts-config*.json"],
       "outputs": ["src/nats_/compiler/generated/**"]
     },
-    "format": {
-      "inputs": ["src/**/*.ts"],
-      "outputs": ["src/**/*.ts"]
-    },
     "reset:modules": {
       "inputs": ["package.json"]
     }

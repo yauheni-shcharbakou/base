@@ -6,41 +6,45 @@
 // source: storage/models/file.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Timestamp } from "../../google/protobuf/timestamp";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { Timestamp } from '../../google/protobuf/timestamp';
 
 export enum FileUploadStatus {
-  PENDING = "PENDING",
-  FAILED = "FAILED",
-  READY = "READY",
+  PENDING = 'PENDING',
+  FAILED = 'FAILED',
+  READY = 'READY',
 }
 
 export function fileUploadStatusFromJSON(object: any): FileUploadStatus {
   switch (object) {
     case 0:
-    case "PENDING":
+    case 'PENDING':
       return FileUploadStatus.PENDING;
     case 1:
-    case "FAILED":
+    case 'FAILED':
       return FileUploadStatus.FAILED;
     case 2:
-    case "READY":
+    case 'READY':
       return FileUploadStatus.READY;
     default:
-      throw new globalThis.Error("Unrecognized enum value " + object + " for enum FileUploadStatus");
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum FileUploadStatus',
+      );
   }
 }
 
 export function fileUploadStatusToJSON(object: FileUploadStatus): string {
   switch (object) {
     case FileUploadStatus.PENDING:
-      return "PENDING";
+      return 'PENDING';
     case FileUploadStatus.FAILED:
-      return "FAILED";
+      return 'FAILED';
     case FileUploadStatus.READY:
-      return "READY";
+      return 'READY';
     default:
-      throw new globalThis.Error("Unrecognized enum value " + object + " for enum FileUploadStatus");
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum FileUploadStatus',
+      );
   }
 }
 
@@ -53,7 +57,9 @@ export function fileUploadStatusToNumber(object: FileUploadStatus): number {
     case FileUploadStatus.READY:
       return 2;
     default:
-      throw new globalThis.Error("Unrecognized enum value " + object + " for enum FileUploadStatus");
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum FileUploadStatus',
+      );
   }
 }
 
@@ -73,23 +79,23 @@ export interface File {
 
 function createBaseFile(): File {
   return {
-    id: "",
+    id: '',
     createdAt: undefined,
     updatedAt: undefined,
-    originalName: "",
+    originalName: '',
     size: 0,
-    mimeType: "",
-    extension: "",
+    mimeType: '',
+    extension: '',
     uploadStatus: FileUploadStatus.PENDING,
     providerId: undefined,
-    userId: "",
-    uploadId: "",
+    userId: '',
+    uploadId: '',
   };
 }
 
 export const File: MessageFns<File> = {
   encode(message: File, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== '') {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -98,16 +104,16 @@ export const File: MessageFns<File> = {
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(26).fork()).join();
     }
-    if (message.originalName !== "") {
+    if (message.originalName !== '') {
       writer.uint32(34).string(message.originalName);
     }
     if (message.size !== 0) {
       writer.uint32(40).int32(message.size);
     }
-    if (message.mimeType !== "") {
+    if (message.mimeType !== '') {
       writer.uint32(50).string(message.mimeType);
     }
-    if (message.extension !== "") {
+    if (message.extension !== '') {
       writer.uint32(58).string(message.extension);
     }
     if (message.uploadStatus !== FileUploadStatus.PENDING) {
@@ -116,10 +122,10 @@ export const File: MessageFns<File> = {
     if (message.providerId !== undefined) {
       writer.uint32(74).string(message.providerId);
     }
-    if (message.userId !== "") {
+    if (message.userId !== '') {
       writer.uint32(82).string(message.userId);
     }
-    if (message.uploadId !== "") {
+    if (message.uploadId !== '') {
       writer.uint32(90).string(message.uploadId);
     }
     return writer;
@@ -231,25 +237,25 @@ export const File: MessageFns<File> = {
 
   fromJSON(object: any): File {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
-      originalName: isSet(object.originalName) ? globalThis.String(object.originalName) : "",
+      originalName: isSet(object.originalName) ? globalThis.String(object.originalName) : '',
       size: isSet(object.size) ? globalThis.Number(object.size) : 0,
-      mimeType: isSet(object.mimeType) ? globalThis.String(object.mimeType) : "",
-      extension: isSet(object.extension) ? globalThis.String(object.extension) : "",
+      mimeType: isSet(object.mimeType) ? globalThis.String(object.mimeType) : '',
+      extension: isSet(object.extension) ? globalThis.String(object.extension) : '',
       uploadStatus: isSet(object.uploadStatus)
         ? fileUploadStatusFromJSON(object.uploadStatus)
         : FileUploadStatus.PENDING,
       providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : undefined,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
   toJSON(message: File): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== '') {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -258,16 +264,16 @@ export const File: MessageFns<File> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
-    if (message.originalName !== "") {
+    if (message.originalName !== '') {
       obj.originalName = message.originalName;
     }
     if (message.size !== 0) {
       obj.size = Math.round(message.size);
     }
-    if (message.mimeType !== "") {
+    if (message.mimeType !== '') {
       obj.mimeType = message.mimeType;
     }
-    if (message.extension !== "") {
+    if (message.extension !== '') {
       obj.extension = message.extension;
     }
     if (message.uploadStatus !== FileUploadStatus.PENDING) {
@@ -276,10 +282,10 @@ export const File: MessageFns<File> = {
     if (message.providerId !== undefined) {
       obj.providerId = message.providerId;
     }
-    if (message.userId !== "") {
+    if (message.userId !== '') {
       obj.userId = message.userId;
     }
-    if (message.uploadId !== "") {
+    if (message.uploadId !== '') {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -290,31 +296,36 @@ export const File: MessageFns<File> = {
   },
   fromPartial<I extends Exact<DeepPartial<File>, I>>(object: I): File {
     const message = createBaseFile();
-    message.id = object.id ?? "";
+    message.id = object.id ?? '';
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
-    message.originalName = object.originalName ?? "";
+    message.originalName = object.originalName ?? '';
     message.size = object.size ?? 0;
-    message.mimeType = object.mimeType ?? "";
-    message.extension = object.extension ?? "";
+    message.mimeType = object.mimeType ?? '';
+    message.extension = object.extension ?? '';
     message.uploadStatus = object.uploadStatus ?? FileUploadStatus.PENDING;
     message.providerId = object.providerId ?? undefined;
-    message.userId = object.userId ?? "";
-    message.uploadId = object.uploadId ?? "";
+    message.userId = object.userId ?? '';
+    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin ? P
+type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -332,7 +343,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === "string") {
+  } else if (typeof o === 'string') {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

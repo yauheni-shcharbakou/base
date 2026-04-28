@@ -6,7 +6,7 @@
 // source: google/protobuf/timestamp.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
 
 /**
  * A Timestamp represents a point in time independent of any time zone or local
@@ -194,23 +194,28 @@ export const Timestamp: MessageFns<Timestamp> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin ? P
+type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function longToNumber(int64: { toString(): string }): number {
   const num = globalThis.Number(int64.toString());
   if (num > globalThis.Number.MAX_SAFE_INTEGER) {
-    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+    throw new globalThis.Error('Value is larger than Number.MAX_SAFE_INTEGER');
   }
   if (num < globalThis.Number.MIN_SAFE_INTEGER) {
-    throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
+    throw new globalThis.Error('Value is smaller than Number.MIN_SAFE_INTEGER');
   }
   return num;
 }

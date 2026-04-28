@@ -7,10 +7,10 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
   "scripts": {
-    "format": "prettier src --write --config ../../../.prettierrc --log-level error",
+    "format": "prettier src --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
-    "compile": "ts-node-dev --transpile-only src/nats_/compiler/main.ts && pnpm format",
+    "compile": "ts-node-dev --transpile-only src/nats_/compiler/main.ts && pnpm format --log-level error",
     "build": "tsdown src/index.ts --format cjs --dts",
     "reset": "rm -rf .turbo dist node_modules src/nats_/compiler/generated",
     "reset:modules": "rm -rf node_modules"

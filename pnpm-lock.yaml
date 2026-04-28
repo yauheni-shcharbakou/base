@@ -561,6 +561,9 @@ importers:
       '@nestjs/microservices':
         specifier: 11.1.19
         version: 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(nats@2.29.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@packages/proto':
+        specifier: workspace:*
+        version: link:../../../packages/proto
       protobufjs:
         specifier: 7.5.5
         version: 7.5.5
@@ -574,9 +577,6 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
-      '@packages/proto':
-        specifier: workspace:*
-        version: link:../../../packages/proto
 
   backend/packages/transport:
     dependencies:
@@ -772,13 +772,13 @@ importers:
       '@grpc/grpc-js':
         specifier: 1.14.3
         version: 1.14.3
+      '@packages/proto':
+        specifier: workspace:*
+        version: link:../../../packages/proto
     devDependencies:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
-      '@packages/proto':
-        specifier: workspace:*
-        version: link:../../../packages/proto
 
   packages/common:
     dependencies:

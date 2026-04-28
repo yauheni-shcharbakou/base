@@ -6,12 +6,12 @@
 // source: storage/messages/image.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Timestamp } from "../../google/protobuf/timestamp";
-import { File } from "../models/file";
-import { Image } from "../models/image";
-import { FileCreate } from "./file.messages";
-import { StorageObjectManyMetadata, StorageObjectMetadata } from "./storage-object.messages";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { Timestamp } from '../../google/protobuf/timestamp';
+import { File } from '../models/file';
+import { Image } from '../models/image';
+import { FileCreate } from './file.messages';
+import { StorageObjectManyMetadata, StorageObjectMetadata } from './storage-object.messages';
 
 export interface ImagePopulated {
   id: string;
@@ -85,22 +85,22 @@ export interface ImageUpdateByIdRequest {
 
 function createBaseImagePopulated(): ImagePopulated {
   return {
-    id: "",
+    id: '',
     createdAt: undefined,
     updatedAt: undefined,
     width: 0,
     height: 0,
-    alt: "",
-    userId: "",
-    fileId: "",
+    alt: '',
+    userId: '',
+    fileId: '',
     file: undefined,
-    uploadId: "",
+    uploadId: '',
   };
 }
 
 export const ImagePopulated: MessageFns<ImagePopulated> = {
   encode(message: ImagePopulated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== '') {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -115,19 +115,19 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     if (message.height !== 0) {
       writer.uint32(40).int32(message.height);
     }
-    if (message.alt !== "") {
+    if (message.alt !== '') {
       writer.uint32(50).string(message.alt);
     }
-    if (message.userId !== "") {
+    if (message.userId !== '') {
       writer.uint32(58).string(message.userId);
     }
-    if (message.fileId !== "") {
+    if (message.fileId !== '') {
       writer.uint32(66).string(message.fileId);
     }
     if (message.file !== undefined) {
       File.encode(message.file, writer.uint32(74).fork()).join();
     }
-    if (message.uploadId !== "") {
+    if (message.uploadId !== '') {
       writer.uint32(82).string(message.uploadId);
     }
     return writer;
@@ -231,22 +231,22 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
 
   fromJSON(object: any): ImagePopulated {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
       width: isSet(object.width) ? globalThis.Number(object.width) : 0,
       height: isSet(object.height) ? globalThis.Number(object.height) : 0,
-      alt: isSet(object.alt) ? globalThis.String(object.alt) : "",
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
-      fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : "",
+      alt: isSet(object.alt) ? globalThis.String(object.alt) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
       file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
   toJSON(message: ImagePopulated): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== '') {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -261,19 +261,19 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     if (message.height !== 0) {
       obj.height = Math.round(message.height);
     }
-    if (message.alt !== "") {
+    if (message.alt !== '') {
       obj.alt = message.alt;
     }
-    if (message.userId !== "") {
+    if (message.userId !== '') {
       obj.userId = message.userId;
     }
-    if (message.fileId !== "") {
+    if (message.fileId !== '') {
       obj.fileId = message.fileId;
     }
     if (message.file !== undefined) {
       obj.file = File.toJSON(message.file);
     }
-    if (message.uploadId !== "") {
+    if (message.uploadId !== '') {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -284,16 +284,17 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
   },
   fromPartial<I extends Exact<DeepPartial<ImagePopulated>, I>>(object: I): ImagePopulated {
     const message = createBaseImagePopulated();
-    message.id = object.id ?? "";
+    message.id = object.id ?? '';
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
     message.width = object.width ?? 0;
     message.height = object.height ?? 0;
-    message.alt = object.alt ?? "";
-    message.userId = object.userId ?? "";
-    message.fileId = object.fileId ?? "";
-    message.file = (object.file !== undefined && object.file !== null) ? File.fromPartial(object.file) : undefined;
-    message.uploadId = object.uploadId ?? "";
+    message.alt = object.alt ?? '';
+    message.userId = object.userId ?? '';
+    message.fileId = object.fileId ?? '';
+    message.file =
+      object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
+    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };
@@ -370,7 +371,9 @@ export const ImageQuery: MessageFns<ImageQuery> = {
   fromJSON(object: any): ImageQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
       file: isSet(object.file) ? globalThis.String(object.file) : undefined,
       userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
     };
@@ -455,7 +458,9 @@ export const ImageGetListResponse: MessageFns<ImageGetListResponse> = {
 
   fromJSON(object: any): ImageGetListResponse {
     return {
-      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => ImagePopulated.fromJSON(e)) : [],
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => ImagePopulated.fromJSON(e))
+        : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
   },
@@ -474,7 +479,9 @@ export const ImageGetListResponse: MessageFns<ImageGetListResponse> = {
   create<I extends Exact<DeepPartial<ImageGetListResponse>, I>>(base?: I): ImageGetListResponse {
     return ImageGetListResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ImageGetListResponse>, I>>(object: I): ImageGetListResponse {
+  fromPartial<I extends Exact<DeepPartial<ImageGetListResponse>, I>>(
+    object: I,
+  ): ImageGetListResponse {
     const message = createBaseImageGetListResponse();
     message.items = object.items?.map((e) => ImagePopulated.fromPartial(e)) || [];
     message.total = object.total ?? 0;
@@ -483,7 +490,7 @@ export const ImageGetListResponse: MessageFns<ImageGetListResponse> = {
 };
 
 function createBaseImageCreate(): ImageCreate {
-  return { width: 0, height: 0, alt: "" };
+  return { width: 0, height: 0, alt: '' };
 }
 
 export const ImageCreate: MessageFns<ImageCreate> = {
@@ -494,7 +501,7 @@ export const ImageCreate: MessageFns<ImageCreate> = {
     if (message.height !== 0) {
       writer.uint32(16).int32(message.height);
     }
-    if (message.alt !== "") {
+    if (message.alt !== '') {
       writer.uint32(26).string(message.alt);
     }
     return writer;
@@ -544,7 +551,7 @@ export const ImageCreate: MessageFns<ImageCreate> = {
     return {
       width: isSet(object.width) ? globalThis.Number(object.width) : 0,
       height: isSet(object.height) ? globalThis.Number(object.height) : 0,
-      alt: isSet(object.alt) ? globalThis.String(object.alt) : "",
+      alt: isSet(object.alt) ? globalThis.String(object.alt) : '',
     };
   },
 
@@ -556,7 +563,7 @@ export const ImageCreate: MessageFns<ImageCreate> = {
     if (message.height !== 0) {
       obj.height = Math.round(message.height);
     }
-    if (message.alt !== "") {
+    if (message.alt !== '') {
       obj.alt = message.alt;
     }
     return obj;
@@ -569,7 +576,7 @@ export const ImageCreate: MessageFns<ImageCreate> = {
     const message = createBaseImageCreate();
     message.width = object.width ?? 0;
     message.height = object.height ?? 0;
-    message.alt = object.alt ?? "";
+    message.alt = object.alt ?? '';
     return message;
   },
 };
@@ -659,21 +666,24 @@ export const ImageCreateRequest: MessageFns<ImageCreateRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<ImageCreateRequest>, I>>(object: I): ImageCreateRequest {
     const message = createBaseImageCreateRequest();
-    message.image = (object.image !== undefined && object.image !== null)
-      ? ImageCreate.fromPartial(object.image)
-      : undefined;
-    message.file = (object.file !== undefined && object.file !== null)
-      ? FileCreate.fromPartial(object.file)
-      : undefined;
-    message.storage = (object.storage !== undefined && object.storage !== null)
-      ? StorageObjectMetadata.fromPartial(object.storage)
-      : undefined;
+    message.image =
+      object.image !== undefined && object.image !== null
+        ? ImageCreate.fromPartial(object.image)
+        : undefined;
+    message.file =
+      object.file !== undefined && object.file !== null
+        ? FileCreate.fromPartial(object.file)
+        : undefined;
+    message.storage =
+      object.storage !== undefined && object.storage !== null
+        ? StorageObjectMetadata.fromPartial(object.storage)
+        : undefined;
     return message;
   },
 };
 
 function createBaseImageCreateManyItem(): ImageCreateManyItem {
-  return { image: undefined, file: undefined, uploadId: "" };
+  return { image: undefined, file: undefined, uploadId: '' };
 }
 
 export const ImageCreateManyItem: MessageFns<ImageCreateManyItem> = {
@@ -684,7 +694,7 @@ export const ImageCreateManyItem: MessageFns<ImageCreateManyItem> = {
     if (message.file !== undefined) {
       FileCreate.encode(message.file, writer.uint32(18).fork()).join();
     }
-    if (message.uploadId !== "") {
+    if (message.uploadId !== '') {
       writer.uint32(26).string(message.uploadId);
     }
     return writer;
@@ -734,7 +744,7 @@ export const ImageCreateManyItem: MessageFns<ImageCreateManyItem> = {
     return {
       image: isSet(object.image) ? ImageCreate.fromJSON(object.image) : undefined,
       file: isSet(object.file) ? FileCreate.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
@@ -746,7 +756,7 @@ export const ImageCreateManyItem: MessageFns<ImageCreateManyItem> = {
     if (message.file !== undefined) {
       obj.file = FileCreate.toJSON(message.file);
     }
-    if (message.uploadId !== "") {
+    if (message.uploadId !== '') {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -755,15 +765,19 @@ export const ImageCreateManyItem: MessageFns<ImageCreateManyItem> = {
   create<I extends Exact<DeepPartial<ImageCreateManyItem>, I>>(base?: I): ImageCreateManyItem {
     return ImageCreateManyItem.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ImageCreateManyItem>, I>>(object: I): ImageCreateManyItem {
+  fromPartial<I extends Exact<DeepPartial<ImageCreateManyItem>, I>>(
+    object: I,
+  ): ImageCreateManyItem {
     const message = createBaseImageCreateManyItem();
-    message.image = (object.image !== undefined && object.image !== null)
-      ? ImageCreate.fromPartial(object.image)
-      : undefined;
-    message.file = (object.file !== undefined && object.file !== null)
-      ? FileCreate.fromPartial(object.file)
-      : undefined;
-    message.uploadId = object.uploadId ?? "";
+    message.image =
+      object.image !== undefined && object.image !== null
+        ? ImageCreate.fromPartial(object.image)
+        : undefined;
+    message.file =
+      object.file !== undefined && object.file !== null
+        ? FileCreate.fromPartial(object.file)
+        : undefined;
+    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };
@@ -817,7 +831,9 @@ export const ImageCreateManyRequest: MessageFns<ImageCreateManyRequest> = {
 
   fromJSON(object: any): ImageCreateManyRequest {
     return {
-      storage: isSet(object.storage) ? StorageObjectManyMetadata.fromJSON(object.storage) : undefined,
+      storage: isSet(object.storage)
+        ? StorageObjectManyMetadata.fromJSON(object.storage)
+        : undefined,
       items: globalThis.Array.isArray(object?.items)
         ? object.items.map((e: any) => ImageCreateManyItem.fromJSON(e))
         : [],
@@ -835,14 +851,19 @@ export const ImageCreateManyRequest: MessageFns<ImageCreateManyRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ImageCreateManyRequest>, I>>(base?: I): ImageCreateManyRequest {
+  create<I extends Exact<DeepPartial<ImageCreateManyRequest>, I>>(
+    base?: I,
+  ): ImageCreateManyRequest {
     return ImageCreateManyRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ImageCreateManyRequest>, I>>(object: I): ImageCreateManyRequest {
+  fromPartial<I extends Exact<DeepPartial<ImageCreateManyRequest>, I>>(
+    object: I,
+  ): ImageCreateManyRequest {
     const message = createBaseImageCreateManyRequest();
-    message.storage = (object.storage !== undefined && object.storage !== null)
-      ? StorageObjectManyMetadata.fromPartial(object.storage)
-      : undefined;
+    message.storage =
+      object.storage !== undefined && object.storage !== null
+        ? StorageObjectManyMetadata.fromPartial(object.storage)
+        : undefined;
     message.items = object.items?.map((e) => ImageCreateManyItem.fromPartial(e)) || [];
     return message;
   },
@@ -853,7 +874,10 @@ function createBaseImageCreateManyResponse(): ImageCreateManyResponse {
 }
 
 export const ImageCreateManyResponse: MessageFns<ImageCreateManyResponse> = {
-  encode(message: ImageCreateManyResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: ImageCreateManyResponse,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
     for (const v of message.items) {
       Image.encode(v!, writer.uint32(10).fork()).join();
     }
@@ -885,7 +909,11 @@ export const ImageCreateManyResponse: MessageFns<ImageCreateManyResponse> = {
   },
 
   fromJSON(object: any): ImageCreateManyResponse {
-    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => Image.fromJSON(e)) : [] };
+    return {
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => Image.fromJSON(e))
+        : [],
+    };
   },
 
   toJSON(message: ImageCreateManyResponse): unknown {
@@ -896,10 +924,14 @@ export const ImageCreateManyResponse: MessageFns<ImageCreateManyResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ImageCreateManyResponse>, I>>(base?: I): ImageCreateManyResponse {
+  create<I extends Exact<DeepPartial<ImageCreateManyResponse>, I>>(
+    base?: I,
+  ): ImageCreateManyResponse {
     return ImageCreateManyResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ImageCreateManyResponse>, I>>(object: I): ImageCreateManyResponse {
+  fromPartial<I extends Exact<DeepPartial<ImageCreateManyResponse>, I>>(
+    object: I,
+  ): ImageCreateManyResponse {
     const message = createBaseImageCreateManyResponse();
     message.items = object.items?.map((e) => Image.fromPartial(e)) || [];
     return message;
@@ -1017,9 +1049,10 @@ export const ImageUpdate: MessageFns<ImageUpdate> = {
   },
   fromPartial<I extends Exact<DeepPartial<ImageUpdate>, I>>(object: I): ImageUpdate {
     const message = createBaseImageUpdate();
-    message.set = (object.set !== undefined && object.set !== null)
-      ? ImageUpdateSet.fromPartial(object.set)
-      : undefined;
+    message.set =
+      object.set !== undefined && object.set !== null
+        ? ImageUpdateSet.fromPartial(object.set)
+        : undefined;
     return message;
   },
 };
@@ -1094,23 +1127,25 @@ export const ImageUpdateRequest: MessageFns<ImageUpdateRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<ImageUpdateRequest>, I>>(object: I): ImageUpdateRequest {
     const message = createBaseImageUpdateRequest();
-    message.query = (object.query !== undefined && object.query !== null)
-      ? ImageQuery.fromPartial(object.query)
-      : undefined;
-    message.update = (object.update !== undefined && object.update !== null)
-      ? ImageUpdate.fromPartial(object.update)
-      : undefined;
+    message.query =
+      object.query !== undefined && object.query !== null
+        ? ImageQuery.fromPartial(object.query)
+        : undefined;
+    message.update =
+      object.update !== undefined && object.update !== null
+        ? ImageUpdate.fromPartial(object.update)
+        : undefined;
     return message;
   },
 };
 
 function createBaseImageUpdateByIdRequest(): ImageUpdateByIdRequest {
-  return { id: "", update: undefined };
+  return { id: '', update: undefined };
 }
 
 export const ImageUpdateByIdRequest: MessageFns<ImageUpdateByIdRequest> = {
   encode(message: ImageUpdateByIdRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== '') {
       writer.uint32(10).string(message.id);
     }
     if (message.update !== undefined) {
@@ -1153,14 +1188,14 @@ export const ImageUpdateByIdRequest: MessageFns<ImageUpdateByIdRequest> = {
 
   fromJSON(object: any): ImageUpdateByIdRequest {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
       update: isSet(object.update) ? ImageUpdate.fromJSON(object.update) : undefined,
     };
   },
 
   toJSON(message: ImageUpdateByIdRequest): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== '') {
       obj.id = message.id;
     }
     if (message.update !== undefined) {
@@ -1169,29 +1204,39 @@ export const ImageUpdateByIdRequest: MessageFns<ImageUpdateByIdRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<ImageUpdateByIdRequest>, I>>(base?: I): ImageUpdateByIdRequest {
+  create<I extends Exact<DeepPartial<ImageUpdateByIdRequest>, I>>(
+    base?: I,
+  ): ImageUpdateByIdRequest {
     return ImageUpdateByIdRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<ImageUpdateByIdRequest>, I>>(object: I): ImageUpdateByIdRequest {
+  fromPartial<I extends Exact<DeepPartial<ImageUpdateByIdRequest>, I>>(
+    object: I,
+  ): ImageUpdateByIdRequest {
     const message = createBaseImageUpdateByIdRequest();
-    message.id = object.id ?? "";
-    message.update = (object.update !== undefined && object.update !== null)
-      ? ImageUpdate.fromPartial(object.update)
-      : undefined;
+    message.id = object.id ?? '';
+    message.update =
+      object.update !== undefined && object.update !== null
+        ? ImageUpdate.fromPartial(object.update)
+        : undefined;
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin ? P
+type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -1209,7 +1254,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === "string") {
+  } else if (typeof o === 'string') {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

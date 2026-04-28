@@ -6,47 +6,51 @@
 // source: storage/models/storage-object.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { Timestamp } from "../../google/protobuf/timestamp";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { Timestamp } from '../../google/protobuf/timestamp';
 
 export enum StorageObjectType {
-  FOLDER = "FOLDER",
-  FILE = "FILE",
-  IMAGE = "IMAGE",
-  VIDEO = "VIDEO",
+  FOLDER = 'FOLDER',
+  FILE = 'FILE',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
 }
 
 export function storageObjectTypeFromJSON(object: any): StorageObjectType {
   switch (object) {
     case 0:
-    case "FOLDER":
+    case 'FOLDER':
       return StorageObjectType.FOLDER;
     case 1:
-    case "FILE":
+    case 'FILE':
       return StorageObjectType.FILE;
     case 2:
-    case "IMAGE":
+    case 'IMAGE':
       return StorageObjectType.IMAGE;
     case 3:
-    case "VIDEO":
+    case 'VIDEO':
       return StorageObjectType.VIDEO;
     default:
-      throw new globalThis.Error("Unrecognized enum value " + object + " for enum StorageObjectType");
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum StorageObjectType',
+      );
   }
 }
 
 export function storageObjectTypeToJSON(object: StorageObjectType): string {
   switch (object) {
     case StorageObjectType.FOLDER:
-      return "FOLDER";
+      return 'FOLDER';
     case StorageObjectType.FILE:
-      return "FILE";
+      return 'FILE';
     case StorageObjectType.IMAGE:
-      return "IMAGE";
+      return 'IMAGE';
     case StorageObjectType.VIDEO:
-      return "VIDEO";
+      return 'VIDEO';
     default:
-      throw new globalThis.Error("Unrecognized enum value " + object + " for enum StorageObjectType");
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum StorageObjectType',
+      );
   }
 }
 
@@ -61,7 +65,9 @@ export function storageObjectTypeToNumber(object: StorageObjectType): number {
     case StorageObjectType.VIDEO:
       return 3;
     default:
-      throw new globalThis.Error("Unrecognized enum value " + object + " for enum StorageObjectType");
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum StorageObjectType',
+      );
   }
 }
 
@@ -83,14 +89,14 @@ export interface StorageObject {
 
 function createBaseStorageObject(): StorageObject {
   return {
-    id: "",
+    id: '',
     createdAt: undefined,
     updatedAt: undefined,
-    name: "",
+    name: '',
     isPublic: false,
     isFolder: false,
     type: StorageObjectType.FOLDER,
-    userId: "",
+    userId: '',
     fileId: undefined,
     parentId: undefined,
     folderPath: undefined,
@@ -101,7 +107,7 @@ function createBaseStorageObject(): StorageObject {
 
 export const StorageObject: MessageFns<StorageObject> = {
   encode(message: StorageObject, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== "") {
+    if (message.id !== '') {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -110,7 +116,7 @@ export const StorageObject: MessageFns<StorageObject> = {
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(26).fork()).join();
     }
-    if (message.name !== "") {
+    if (message.name !== '') {
       writer.uint32(34).string(message.name);
     }
     if (message.isPublic !== false) {
@@ -122,7 +128,7 @@ export const StorageObject: MessageFns<StorageObject> = {
     if (message.type !== StorageObjectType.FOLDER) {
       writer.uint32(56).int32(storageObjectTypeToNumber(message.type));
     }
-    if (message.userId !== "") {
+    if (message.userId !== '') {
       writer.uint32(66).string(message.userId);
     }
     if (message.fileId !== undefined) {
@@ -265,14 +271,14 @@ export const StorageObject: MessageFns<StorageObject> = {
 
   fromJSON(object: any): StorageObject {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : "",
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
-      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      name: isSet(object.name) ? globalThis.String(object.name) : '',
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
       isFolder: isSet(object.isFolder) ? globalThis.Boolean(object.isFolder) : false,
       type: isSet(object.type) ? storageObjectTypeFromJSON(object.type) : StorageObjectType.FOLDER,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : undefined,
       parentId: isSet(object.parentId) ? globalThis.String(object.parentId) : undefined,
       folderPath: isSet(object.folderPath) ? globalThis.String(object.folderPath) : undefined,
@@ -283,7 +289,7 @@ export const StorageObject: MessageFns<StorageObject> = {
 
   toJSON(message: StorageObject): unknown {
     const obj: any = {};
-    if (message.id !== "") {
+    if (message.id !== '') {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -292,7 +298,7 @@ export const StorageObject: MessageFns<StorageObject> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
-    if (message.name !== "") {
+    if (message.name !== '') {
       obj.name = message.name;
     }
     if (message.isPublic !== false) {
@@ -304,7 +310,7 @@ export const StorageObject: MessageFns<StorageObject> = {
     if (message.type !== StorageObjectType.FOLDER) {
       obj.type = storageObjectTypeToJSON(message.type);
     }
-    if (message.userId !== "") {
+    if (message.userId !== '') {
       obj.userId = message.userId;
     }
     if (message.fileId !== undefined) {
@@ -330,14 +336,14 @@ export const StorageObject: MessageFns<StorageObject> = {
   },
   fromPartial<I extends Exact<DeepPartial<StorageObject>, I>>(object: I): StorageObject {
     const message = createBaseStorageObject();
-    message.id = object.id ?? "";
+    message.id = object.id ?? '';
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
-    message.name = object.name ?? "";
+    message.name = object.name ?? '';
     message.isPublic = object.isPublic ?? false;
     message.isFolder = object.isFolder ?? false;
     message.type = object.type ?? StorageObjectType.FOLDER;
-    message.userId = object.userId ?? "";
+    message.userId = object.userId ?? '';
     message.fileId = object.fileId ?? undefined;
     message.parentId = object.parentId ?? undefined;
     message.folderPath = object.folderPath ?? undefined;
@@ -349,14 +355,19 @@ export const StorageObject: MessageFns<StorageObject> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin ? P
+type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -374,7 +385,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === "string") {
+  } else if (typeof o === 'string') {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

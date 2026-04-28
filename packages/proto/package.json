@@ -8,10 +8,10 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.cts",
   "scripts": {
-    "format": "prettier src --write --config ../../.prettierrc --log-level error",
+    "format": "prettier src --write --config ../../.prettierrc",
     "dev": "pnpm build --watch",
     "build": "tsdown src/index.ts --format cjs,esm --dts",
-    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts && pnpm format",
+    "compile": "NODE_PATH=. ts-node-dev --project tsconfig.compiler.json --transpile-only compiler/main.ts && pnpm format --log-level error",
     "reset": "rm -rf .turbo dist src node_modules",
     "reset:modules": "rm -rf node_modules"
   },
