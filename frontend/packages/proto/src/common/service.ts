@@ -6,9 +6,9 @@
 // source: common/service.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../google/protobuf/timestamp';
-import { CrudConditionalFilter, CrudLogicalFilter, CrudSorter } from './crud';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../google/protobuf/timestamp";
+import { CrudConditionalFilter, CrudLogicalFilter, CrudSorter } from "./crud";
 
 export interface IdField {
   id: string;
@@ -50,12 +50,12 @@ export interface BooleanResult {
 }
 
 function createBaseIdField(): IdField {
-  return { id: '' };
+  return { id: "" };
 }
 
 export const IdField: MessageFns<IdField> = {
   encode(message: IdField, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     return writer;
@@ -86,12 +86,12 @@ export const IdField: MessageFns<IdField> = {
   },
 
   fromJSON(object: any): IdField {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : '' };
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
   },
 
   toJSON(message: IdField): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     return obj;
@@ -102,7 +102,7 @@ export const IdField: MessageFns<IdField> = {
   },
   fromPartial<I extends Exact<DeepPartial<IdField>, I>>(object: I): IdField {
     const message = createBaseIdField();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     return message;
   },
 };
@@ -144,11 +144,7 @@ export const IdsField: MessageFns<IdsField> = {
   },
 
   fromJSON(object: any): IdsField {
-    return {
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
-    };
+    return { ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [] };
   },
 
   toJSON(message: IdsField): unknown {
@@ -170,12 +166,12 @@ export const IdsField: MessageFns<IdsField> = {
 };
 
 function createBaseEntityWithTimestamps(): EntityWithTimestamps {
-  return { id: '', createdAt: undefined, updatedAt: undefined };
+  return { id: "", createdAt: undefined, updatedAt: undefined };
 }
 
 export const EntityWithTimestamps: MessageFns<EntityWithTimestamps> = {
   encode(message: EntityWithTimestamps, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -229,7 +225,7 @@ export const EntityWithTimestamps: MessageFns<EntityWithTimestamps> = {
 
   fromJSON(object: any): EntityWithTimestamps {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
     };
@@ -237,7 +233,7 @@ export const EntityWithTimestamps: MessageFns<EntityWithTimestamps> = {
 
   toJSON(message: EntityWithTimestamps): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -252,11 +248,9 @@ export const EntityWithTimestamps: MessageFns<EntityWithTimestamps> = {
   create<I extends Exact<DeepPartial<EntityWithTimestamps>, I>>(base?: I): EntityWithTimestamps {
     return EntityWithTimestamps.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<EntityWithTimestamps>, I>>(
-    object: I,
-  ): EntityWithTimestamps {
+  fromPartial<I extends Exact<DeepPartial<EntityWithTimestamps>, I>>(object: I): EntityWithTimestamps {
     const message = createBaseEntityWithTimestamps();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
     return message;
@@ -313,9 +307,7 @@ export const BaseQuery: MessageFns<BaseQuery> = {
   fromJSON(object: any): BaseQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
     };
   },
 
@@ -394,10 +386,9 @@ export const BaseRequest: MessageFns<BaseRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<BaseRequest>, I>>(object: I): BaseRequest {
     const message = createBaseBaseRequest();
-    message.query =
-      object.query !== undefined && object.query !== null
-        ? BaseQuery.fromPartial(object.query)
-        : undefined;
+    message.query = (object.query !== undefined && object.query !== null)
+      ? BaseQuery.fromPartial(object.query)
+      : undefined;
     return message;
   },
 };
@@ -555,9 +546,7 @@ export const GetListRequest: MessageFns<GetListRequest> = {
       conditionalFilters: globalThis.Array.isArray(object?.conditionalFilters)
         ? object.conditionalFilters.map((e: any) => CrudConditionalFilter.fromJSON(e))
         : [],
-      sorters: globalThis.Array.isArray(object?.sorters)
-        ? object.sorters.map((e: any) => CrudSorter.fromJSON(e))
-        : [],
+      sorters: globalThis.Array.isArray(object?.sorters) ? object.sorters.map((e: any) => CrudSorter.fromJSON(e)) : [],
       pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined,
     };
   },
@@ -568,9 +557,7 @@ export const GetListRequest: MessageFns<GetListRequest> = {
       obj.logicalFilters = message.logicalFilters.map((e) => CrudLogicalFilter.toJSON(e));
     }
     if (message.conditionalFilters?.length) {
-      obj.conditionalFilters = message.conditionalFilters.map((e) =>
-        CrudConditionalFilter.toJSON(e),
-      );
+      obj.conditionalFilters = message.conditionalFilters.map((e) => CrudConditionalFilter.toJSON(e));
     }
     if (message.sorters?.length) {
       obj.sorters = message.sorters.map((e) => CrudSorter.toJSON(e));
@@ -586,15 +573,12 @@ export const GetListRequest: MessageFns<GetListRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<GetListRequest>, I>>(object: I): GetListRequest {
     const message = createBaseGetListRequest();
-    message.logicalFilters =
-      object.logicalFilters?.map((e) => CrudLogicalFilter.fromPartial(e)) || [];
-    message.conditionalFilters =
-      object.conditionalFilters?.map((e) => CrudConditionalFilter.fromPartial(e)) || [];
+    message.logicalFilters = object.logicalFilters?.map((e) => CrudLogicalFilter.fromPartial(e)) || [];
+    message.conditionalFilters = object.conditionalFilters?.map((e) => CrudConditionalFilter.fromPartial(e)) || [];
     message.sorters = object.sorters?.map((e) => CrudSorter.fromPartial(e)) || [];
-    message.pagination =
-      object.pagination !== undefined && object.pagination !== null
-        ? Pagination.fromPartial(object.pagination)
-        : undefined;
+    message.pagination = (object.pagination !== undefined && object.pagination !== null)
+      ? Pagination.fromPartial(object.pagination)
+      : undefined;
     return message;
   },
 };
@@ -659,19 +643,14 @@ export const BooleanResult: MessageFns<BooleanResult> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -689,7 +668,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

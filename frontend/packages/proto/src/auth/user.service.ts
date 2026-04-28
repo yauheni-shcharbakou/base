@@ -6,30 +6,21 @@
 // source: auth/user.service.proto
 
 /* eslint-disable */
+import { CallOptions, ChannelCredentials, Client, ClientOptions, ClientUnaryCall, makeGenericClientConstructor, Metadata, ServiceError } from "@grpc/grpc-js";
+import { GetListRequest, IdField } from "../common/service";
 import {
-  CallOptions,
-  ChannelCredentials,
-  Client,
-  ClientOptions,
-  ClientUnaryCall,
-  makeGenericClientConstructor,
-  Metadata,
-  ServiceError,
-} from '@grpc/grpc-js';
-import { GetListRequest, IdField } from '../common/service';
-import {
-  UserCreate,
-  UserGetListResponse,
-  UserList,
-  UserRequest,
-  UserUpdateByIdRequest,
-} from './messages/user.messages';
-import { User } from './models/user';
+    UserCreate,
+    UserGetListResponse,
+    UserList,
+    UserRequest,
+    UserUpdateByIdRequest,
+} from "./messages/user.messages";
+import { User } from "./models/user";
 
 type UserServiceService = typeof UserServiceService;
 const UserServiceService = {
   getById: {
-    path: '/auth.UserService/getById' as const,
+    path: "/auth.UserService/getById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -38,38 +29,34 @@ const UserServiceService = {
     responseDeserialize: (value: Buffer): User => User.decode(value),
   },
   getOne: {
-    path: '/auth.UserService/getOne' as const,
+    path: "/auth.UserService/getOne" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: UserRequest): Buffer =>
-      Buffer.from(UserRequest.encode(value).finish()),
+    requestSerialize: (value: UserRequest): Buffer => Buffer.from(UserRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): UserRequest => UserRequest.decode(value),
     responseSerialize: (value: User): Buffer => Buffer.from(User.encode(value).finish()),
     responseDeserialize: (value: Buffer): User => User.decode(value),
   },
   getMany: {
-    path: '/auth.UserService/getMany' as const,
+    path: "/auth.UserService/getMany" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: UserRequest): Buffer =>
-      Buffer.from(UserRequest.encode(value).finish()),
+    requestSerialize: (value: UserRequest): Buffer => Buffer.from(UserRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): UserRequest => UserRequest.decode(value),
     responseSerialize: (value: UserList): Buffer => Buffer.from(UserList.encode(value).finish()),
     responseDeserialize: (value: Buffer): UserList => UserList.decode(value),
   },
   getList: {
-    path: '/auth.UserService/getList' as const,
+    path: "/auth.UserService/getList" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetListRequest): Buffer =>
-      Buffer.from(GetListRequest.encode(value).finish()),
+    requestSerialize: (value: GetListRequest): Buffer => Buffer.from(GetListRequest.encode(value).finish()),
     requestDeserialize: (value: Buffer): GetListRequest => GetListRequest.decode(value),
-    responseSerialize: (value: UserGetListResponse): Buffer =>
-      Buffer.from(UserGetListResponse.encode(value).finish()),
+    responseSerialize: (value: UserGetListResponse): Buffer => Buffer.from(UserGetListResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): UserGetListResponse => UserGetListResponse.decode(value),
   },
   createOne: {
-    path: '/auth.UserService/createOne' as const,
+    path: "/auth.UserService/createOne" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: UserCreate): Buffer => Buffer.from(UserCreate.encode(value).finish()),
@@ -78,18 +65,17 @@ const UserServiceService = {
     responseDeserialize: (value: Buffer): User => User.decode(value),
   },
   updateById: {
-    path: '/auth.UserService/updateById' as const,
+    path: "/auth.UserService/updateById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: UserUpdateByIdRequest): Buffer =>
       Buffer.from(UserUpdateByIdRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UserUpdateByIdRequest =>
-      UserUpdateByIdRequest.decode(value),
+    requestDeserialize: (value: Buffer): UserUpdateByIdRequest => UserUpdateByIdRequest.decode(value),
     responseSerialize: (value: User): Buffer => Buffer.from(User.encode(value).finish()),
     responseDeserialize: (value: Buffer): User => User.decode(value),
   },
   deleteById: {
-    path: '/auth.UserService/deleteById' as const,
+    path: "/auth.UserService/deleteById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -99,11 +85,9 @@ const UserServiceService = {
   },
 } as const;
 
+
 export interface GrpcUserServiceClient extends Client {
-  getById(
-    request: IdField,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
+  getById(request: IdField, callback: (error: ServiceError | null, response: User) => void): ClientUnaryCall;
   getById(
     request: IdField,
     metadata: Metadata,
@@ -115,10 +99,7 @@ export interface GrpcUserServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: User) => void,
   ): ClientUnaryCall;
-  getOne(
-    request: UserRequest,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
+  getOne(request: UserRequest, callback: (error: ServiceError | null, response: User) => void): ClientUnaryCall;
   getOne(
     request: UserRequest,
     metadata: Metadata,
@@ -130,10 +111,7 @@ export interface GrpcUserServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: User) => void,
   ): ClientUnaryCall;
-  getMany(
-    request: UserRequest,
-    callback: (error: ServiceError | null, response: UserList) => void,
-  ): ClientUnaryCall;
+  getMany(request: UserRequest, callback: (error: ServiceError | null, response: UserList) => void): ClientUnaryCall;
   getMany(
     request: UserRequest,
     metadata: Metadata,
@@ -160,10 +138,7 @@ export interface GrpcUserServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: UserGetListResponse) => void,
   ): ClientUnaryCall;
-  createOne(
-    request: UserCreate,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
+  createOne(request: UserCreate, callback: (error: ServiceError | null, response: User) => void): ClientUnaryCall;
   createOne(
     request: UserCreate,
     metadata: Metadata,
@@ -190,10 +165,7 @@ export interface GrpcUserServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: User) => void,
   ): ClientUnaryCall;
-  deleteById(
-    request: IdField,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
+  deleteById(request: IdField, callback: (error: ServiceError | null, response: User) => void): ClientUnaryCall;
   deleteById(
     request: IdField,
     metadata: Metadata,
@@ -207,80 +179,9 @@ export interface GrpcUserServiceClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const GrpcUserServiceClient = makeGenericClientConstructor(
-  UserServiceService,
-  'auth.UserService',
-) as unknown as {
-  new (
-    address: string,
-    credentials: ChannelCredentials,
-    options?: Partial<ClientOptions>,
-  ): GrpcUserServiceClient;
-  service: {
-    readonly getById: {
-      readonly path: '/auth.UserService/getById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: IdField) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => IdField;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
-    readonly getOne: {
-      readonly path: '/auth.UserService/getOne';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: UserRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UserRequest;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
-    readonly getMany: {
-      readonly path: '/auth.UserService/getMany';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: UserRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UserRequest;
-      readonly responseSerialize: (value: UserList) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => UserList;
-    };
-    readonly getList: {
-      readonly path: '/auth.UserService/getList';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetListRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetListRequest;
-      readonly responseSerialize: (value: UserGetListResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => UserGetListResponse;
-    };
-    readonly createOne: {
-      readonly path: '/auth.UserService/createOne';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: UserCreate) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UserCreate;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
-    readonly updateById: {
-      readonly path: '/auth.UserService/updateById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: UserUpdateByIdRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UserUpdateByIdRequest;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
-    readonly deleteById: {
-      readonly path: '/auth.UserService/deleteById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: IdField) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => IdField;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
-  };
+export const GrpcUserServiceClient = makeGenericClientConstructor(UserServiceService, "auth.UserService") as unknown as {
+  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcUserServiceClient;
+  service: { readonly getById: { readonly path: "/auth.UserService/getById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: User) => Buffer; readonly responseDeserialize: (value: Buffer) => User; }; readonly getOne: { readonly path: "/auth.UserService/getOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: UserRequest) => Buffer; readonly requestDeserialize: (value: Buffer) => UserRequest; readonly responseSerialize: (value: User) => Buffer; readonly responseDeserialize: (value: Buffer) => User; }; readonly getMany: { readonly path: "/auth.UserService/getMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: UserRequest) => Buffer; readonly requestDeserialize: (value: Buffer) => UserRequest; readonly responseSerialize: (value: UserList) => Buffer; readonly responseDeserialize: (value: Buffer) => UserList; }; readonly getList: { readonly path: "/auth.UserService/getList"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetListRequest) => Buffer; readonly requestDeserialize: (value: Buffer) => GetListRequest; readonly responseSerialize: (value: UserGetListResponse) => Buffer; readonly responseDeserialize: (value: Buffer) => UserGetListResponse; }; readonly createOne: { readonly path: "/auth.UserService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: UserCreate) => Buffer; readonly requestDeserialize: (value: Buffer) => UserCreate; readonly responseSerialize: (value: User) => Buffer; readonly responseDeserialize: (value: Buffer) => User; }; readonly updateById: { readonly path: "/auth.UserService/updateById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: UserUpdateByIdRequest) => Buffer; readonly requestDeserialize: (value: Buffer) => UserUpdateByIdRequest; readonly responseSerialize: (value: User) => Buffer; readonly responseDeserialize: (value: Buffer) => User; }; readonly deleteById: { readonly path: "/auth.UserService/deleteById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: User) => Buffer; readonly responseDeserialize: (value: Buffer) => User; }; };
   serviceName: string;
 };
 
@@ -290,7 +191,7 @@ export class GrpcUserRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>,
+    options?: Partial<ClientOptions>
   ) {
     this.client = new GrpcUserServiceClient(address, credentials, options);
   }
@@ -411,3 +312,4 @@ export class GrpcUserRepository {
     });
   }
 }
+

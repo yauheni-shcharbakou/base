@@ -6,8 +6,8 @@
 // source: storage/models/image.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
 
 export interface Image {
   id: string;
@@ -23,21 +23,21 @@ export interface Image {
 
 function createBaseImage(): Image {
   return {
-    id: '',
+    id: "",
     createdAt: undefined,
     updatedAt: undefined,
     width: 0,
     height: 0,
-    alt: '',
-    userId: '',
-    fileId: '',
-    uploadId: '',
+    alt: "",
+    userId: "",
+    fileId: "",
+    uploadId: "",
   };
 }
 
 export const Image: MessageFns<Image> = {
   encode(message: Image, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -52,16 +52,16 @@ export const Image: MessageFns<Image> = {
     if (message.height !== 0) {
       writer.uint32(40).int32(message.height);
     }
-    if (message.alt !== '') {
+    if (message.alt !== "") {
       writer.uint32(50).string(message.alt);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(58).string(message.userId);
     }
-    if (message.fileId !== '') {
+    if (message.fileId !== "") {
       writer.uint32(66).string(message.fileId);
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       writer.uint32(74).string(message.uploadId);
     }
     return writer;
@@ -157,21 +157,21 @@ export const Image: MessageFns<Image> = {
 
   fromJSON(object: any): Image {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
       width: isSet(object.width) ? globalThis.Number(object.width) : 0,
       height: isSet(object.height) ? globalThis.Number(object.height) : 0,
-      alt: isSet(object.alt) ? globalThis.String(object.alt) : '',
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
-      fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
+      alt: isSet(object.alt) ? globalThis.String(object.alt) : "",
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+      fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : "",
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
     };
   },
 
   toJSON(message: Image): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -186,16 +186,16 @@ export const Image: MessageFns<Image> = {
     if (message.height !== 0) {
       obj.height = Math.round(message.height);
     }
-    if (message.alt !== '') {
+    if (message.alt !== "") {
       obj.alt = message.alt;
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.fileId !== '') {
+    if (message.fileId !== "") {
       obj.fileId = message.fileId;
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -206,34 +206,29 @@ export const Image: MessageFns<Image> = {
   },
   fromPartial<I extends Exact<DeepPartial<Image>, I>>(object: I): Image {
     const message = createBaseImage();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
     message.width = object.width ?? 0;
     message.height = object.height ?? 0;
-    message.alt = object.alt ?? '';
-    message.userId = object.userId ?? '';
-    message.fileId = object.fileId ?? '';
-    message.uploadId = object.uploadId ?? '';
+    message.alt = object.alt ?? "";
+    message.userId = object.userId ?? "";
+    message.fileId = object.fileId ?? "";
+    message.uploadId = object.uploadId ?? "";
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -251,7 +246,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

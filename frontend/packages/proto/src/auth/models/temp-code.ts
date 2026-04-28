@@ -6,8 +6,8 @@
 // source: auth/models/temp-code.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
 
 export interface TempCode {
   id: string;
@@ -21,11 +21,11 @@ export interface TempCode {
 
 function createBaseTempCode(): TempCode {
   return {
-    id: '',
+    id: "",
     createdAt: undefined,
     updatedAt: undefined,
-    userId: '',
-    code: '',
+    userId: "",
+    code: "",
     isActive: false,
     expiredAt: undefined,
   };
@@ -33,7 +33,7 @@ function createBaseTempCode(): TempCode {
 
 export const TempCode: MessageFns<TempCode> = {
   encode(message: TempCode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -42,10 +42,10 @@ export const TempCode: MessageFns<TempCode> = {
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(26).fork()).join();
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(34).string(message.userId);
     }
-    if (message.code !== '') {
+    if (message.code !== "") {
       writer.uint32(42).string(message.code);
     }
     if (message.isActive !== false) {
@@ -131,11 +131,11 @@ export const TempCode: MessageFns<TempCode> = {
 
   fromJSON(object: any): TempCode {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
-      code: isSet(object.code) ? globalThis.String(object.code) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
       isActive: isSet(object.isActive) ? globalThis.Boolean(object.isActive) : false,
       expiredAt: isSet(object.expiredAt) ? fromJsonTimestamp(object.expiredAt) : undefined,
     };
@@ -143,7 +143,7 @@ export const TempCode: MessageFns<TempCode> = {
 
   toJSON(message: TempCode): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -152,10 +152,10 @@ export const TempCode: MessageFns<TempCode> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.code !== '') {
+    if (message.code !== "") {
       obj.code = message.code;
     }
     if (message.isActive !== false) {
@@ -172,11 +172,11 @@ export const TempCode: MessageFns<TempCode> = {
   },
   fromPartial<I extends Exact<DeepPartial<TempCode>, I>>(object: I): TempCode {
     const message = createBaseTempCode();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
-    message.userId = object.userId ?? '';
-    message.code = object.code ?? '';
+    message.userId = object.userId ?? "";
+    message.code = object.code ?? "";
     message.isActive = object.isActive ?? false;
     message.expiredAt = object.expiredAt ?? undefined;
     return message;
@@ -185,19 +185,14 @@ export const TempCode: MessageFns<TempCode> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -215,7 +210,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

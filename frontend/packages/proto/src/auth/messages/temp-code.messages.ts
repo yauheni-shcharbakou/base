@@ -6,8 +6,8 @@
 // source: auth/messages/temp-code.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { TempCode } from '../models/temp-code';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { TempCode } from "../models/temp-code";
 
 export interface TempCodeGetListResponse {
   items: TempCode[];
@@ -23,10 +23,7 @@ function createBaseTempCodeGetListResponse(): TempCodeGetListResponse {
 }
 
 export const TempCodeGetListResponse: MessageFns<TempCodeGetListResponse> = {
-  encode(
-    message: TempCodeGetListResponse,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: TempCodeGetListResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     for (const v of message.items) {
       TempCode.encode(v!, writer.uint32(10).fork()).join();
     }
@@ -70,9 +67,7 @@ export const TempCodeGetListResponse: MessageFns<TempCodeGetListResponse> = {
 
   fromJSON(object: any): TempCodeGetListResponse {
     return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => TempCode.fromJSON(e))
-        : [],
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => TempCode.fromJSON(e)) : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
   },
@@ -88,14 +83,10 @@ export const TempCodeGetListResponse: MessageFns<TempCodeGetListResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<TempCodeGetListResponse>, I>>(
-    base?: I,
-  ): TempCodeGetListResponse {
+  create<I extends Exact<DeepPartial<TempCodeGetListResponse>, I>>(base?: I): TempCodeGetListResponse {
     return TempCodeGetListResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<TempCodeGetListResponse>, I>>(
-    object: I,
-  ): TempCodeGetListResponse {
+  fromPartial<I extends Exact<DeepPartial<TempCodeGetListResponse>, I>>(object: I): TempCodeGetListResponse {
     const message = createBaseTempCodeGetListResponse();
     message.items = object.items?.map((e) => TempCode.fromPartial(e)) || [];
     message.total = object.total ?? 0;
@@ -104,12 +95,12 @@ export const TempCodeGetListResponse: MessageFns<TempCodeGetListResponse> = {
 };
 
 function createBaseTempCodeCreate(): TempCodeCreate {
-  return { user: '' };
+  return { user: "" };
 }
 
 export const TempCodeCreate: MessageFns<TempCodeCreate> = {
   encode(message: TempCodeCreate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.user !== '') {
+    if (message.user !== "") {
       writer.uint32(10).string(message.user);
     }
     return writer;
@@ -140,12 +131,12 @@ export const TempCodeCreate: MessageFns<TempCodeCreate> = {
   },
 
   fromJSON(object: any): TempCodeCreate {
-    return { user: isSet(object.user) ? globalThis.String(object.user) : '' };
+    return { user: isSet(object.user) ? globalThis.String(object.user) : "" };
   },
 
   toJSON(message: TempCodeCreate): unknown {
     const obj: any = {};
-    if (message.user !== '') {
+    if (message.user !== "") {
       obj.user = message.user;
     }
     return obj;
@@ -156,26 +147,21 @@ export const TempCodeCreate: MessageFns<TempCodeCreate> = {
   },
   fromPartial<I extends Exact<DeepPartial<TempCodeCreate>, I>>(object: I): TempCodeCreate {
     const message = createBaseTempCodeCreate();
-    message.user = object.user ?? '';
+    message.user = object.user ?? "";
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

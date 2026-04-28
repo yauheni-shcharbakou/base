@@ -6,9 +6,9 @@
 // source: auth/messages/auth.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
-import { User } from '../models/user';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
+import { User } from "../models/user";
 
 export interface AuthLogin {
   login: string;
@@ -44,15 +44,15 @@ export interface AuthStreamCode {
 }
 
 function createBaseAuthLogin(): AuthLogin {
-  return { login: '', password: '' };
+  return { login: "", password: "" };
 }
 
 export const AuthLogin: MessageFns<AuthLogin> = {
   encode(message: AuthLogin, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.login !== '') {
+    if (message.login !== "") {
       writer.uint32(10).string(message.login);
     }
-    if (message.password !== '') {
+    if (message.password !== "") {
       writer.uint32(18).string(message.password);
     }
     return writer;
@@ -92,17 +92,17 @@ export const AuthLogin: MessageFns<AuthLogin> = {
 
   fromJSON(object: any): AuthLogin {
     return {
-      login: isSet(object.login) ? globalThis.String(object.login) : '',
-      password: isSet(object.password) ? globalThis.String(object.password) : '',
+      login: isSet(object.login) ? globalThis.String(object.login) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
     };
   },
 
   toJSON(message: AuthLogin): unknown {
     const obj: any = {};
-    if (message.login !== '') {
+    if (message.login !== "") {
       obj.login = message.login;
     }
-    if (message.password !== '') {
+    if (message.password !== "") {
       obj.password = message.password;
     }
     return obj;
@@ -113,19 +113,19 @@ export const AuthLogin: MessageFns<AuthLogin> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthLogin>, I>>(object: I): AuthLogin {
     const message = createBaseAuthLogin();
-    message.login = object.login ?? '';
-    message.password = object.password ?? '';
+    message.login = object.login ?? "";
+    message.password = object.password ?? "";
     return message;
   },
 };
 
 function createBaseAuthMe(): AuthMe {
-  return { accessToken: '' };
+  return { accessToken: "" };
 }
 
 export const AuthMe: MessageFns<AuthMe> = {
   encode(message: AuthMe, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.accessToken !== '') {
+    if (message.accessToken !== "") {
       writer.uint32(10).string(message.accessToken);
     }
     return writer;
@@ -156,12 +156,12 @@ export const AuthMe: MessageFns<AuthMe> = {
   },
 
   fromJSON(object: any): AuthMe {
-    return { accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : '' };
+    return { accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "" };
   },
 
   toJSON(message: AuthMe): unknown {
     const obj: any = {};
-    if (message.accessToken !== '') {
+    if (message.accessToken !== "") {
       obj.accessToken = message.accessToken;
     }
     return obj;
@@ -172,18 +172,18 @@ export const AuthMe: MessageFns<AuthMe> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthMe>, I>>(object: I): AuthMe {
     const message = createBaseAuthMe();
-    message.accessToken = object.accessToken ?? '';
+    message.accessToken = object.accessToken ?? "";
     return message;
   },
 };
 
 function createBaseAuthRefresh(): AuthRefresh {
-  return { refreshToken: '' };
+  return { refreshToken: "" };
 }
 
 export const AuthRefresh: MessageFns<AuthRefresh> = {
   encode(message: AuthRefresh, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.refreshToken !== '') {
+    if (message.refreshToken !== "") {
       writer.uint32(10).string(message.refreshToken);
     }
     return writer;
@@ -214,14 +214,12 @@ export const AuthRefresh: MessageFns<AuthRefresh> = {
   },
 
   fromJSON(object: any): AuthRefresh {
-    return {
-      refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : '',
-    };
+    return { refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "" };
   },
 
   toJSON(message: AuthRefresh): unknown {
     const obj: any = {};
-    if (message.refreshToken !== '') {
+    if (message.refreshToken !== "") {
       obj.refreshToken = message.refreshToken;
     }
     return obj;
@@ -232,18 +230,18 @@ export const AuthRefresh: MessageFns<AuthRefresh> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthRefresh>, I>>(object: I): AuthRefresh {
     const message = createBaseAuthRefresh();
-    message.refreshToken = object.refreshToken ?? '';
+    message.refreshToken = object.refreshToken ?? "";
     return message;
   },
 };
 
 function createBaseAuthToken(): AuthToken {
-  return { value: '', expireDate: undefined };
+  return { value: "", expireDate: undefined };
 }
 
 export const AuthToken: MessageFns<AuthToken> = {
   encode(message: AuthToken, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.value !== '') {
+    if (message.value !== "") {
       writer.uint32(10).string(message.value);
     }
     if (message.expireDate !== undefined) {
@@ -286,14 +284,14 @@ export const AuthToken: MessageFns<AuthToken> = {
 
   fromJSON(object: any): AuthToken {
     return {
-      value: isSet(object.value) ? globalThis.String(object.value) : '',
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
       expireDate: isSet(object.expireDate) ? fromJsonTimestamp(object.expireDate) : undefined,
     };
   },
 
   toJSON(message: AuthToken): unknown {
     const obj: any = {};
-    if (message.value !== '') {
+    if (message.value !== "") {
       obj.value = message.value;
     }
     if (message.expireDate !== undefined) {
@@ -307,7 +305,7 @@ export const AuthToken: MessageFns<AuthToken> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthToken>, I>>(object: I): AuthToken {
     const message = createBaseAuthToken();
-    message.value = object.value ?? '';
+    message.value = object.value ?? "";
     message.expireDate = object.expireDate ?? undefined;
     return message;
   },
@@ -363,9 +361,7 @@ export const AuthTokens: MessageFns<AuthTokens> = {
   fromJSON(object: any): AuthTokens {
     return {
       accessToken: isSet(object.accessToken) ? AuthToken.fromJSON(object.accessToken) : undefined,
-      refreshToken: isSet(object.refreshToken)
-        ? AuthToken.fromJSON(object.refreshToken)
-        : undefined,
+      refreshToken: isSet(object.refreshToken) ? AuthToken.fromJSON(object.refreshToken) : undefined,
     };
   },
 
@@ -385,14 +381,12 @@ export const AuthTokens: MessageFns<AuthTokens> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthTokens>, I>>(object: I): AuthTokens {
     const message = createBaseAuthTokens();
-    message.accessToken =
-      object.accessToken !== undefined && object.accessToken !== null
-        ? AuthToken.fromPartial(object.accessToken)
-        : undefined;
-    message.refreshToken =
-      object.refreshToken !== undefined && object.refreshToken !== null
-        ? AuthToken.fromPartial(object.refreshToken)
-        : undefined;
+    message.accessToken = (object.accessToken !== undefined && object.accessToken !== null)
+      ? AuthToken.fromPartial(object.accessToken)
+      : undefined;
+    message.refreshToken = (object.refreshToken !== undefined && object.refreshToken !== null)
+      ? AuthToken.fromPartial(object.refreshToken)
+      : undefined;
     return message;
   },
 };
@@ -467,23 +461,21 @@ export const AuthData: MessageFns<AuthData> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthData>, I>>(object: I): AuthData {
     const message = createBaseAuthData();
-    message.user =
-      object.user !== undefined && object.user !== null ? User.fromPartial(object.user) : undefined;
-    message.tokens =
-      object.tokens !== undefined && object.tokens !== null
-        ? AuthTokens.fromPartial(object.tokens)
-        : undefined;
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
+    message.tokens = (object.tokens !== undefined && object.tokens !== null)
+      ? AuthTokens.fromPartial(object.tokens)
+      : undefined;
     return message;
   },
 };
 
 function createBaseAuthStreamCode(): AuthStreamCode {
-  return { code: '', expireDate: undefined };
+  return { code: "", expireDate: undefined };
 }
 
 export const AuthStreamCode: MessageFns<AuthStreamCode> = {
   encode(message: AuthStreamCode, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.code !== '') {
+    if (message.code !== "") {
       writer.uint32(10).string(message.code);
     }
     if (message.expireDate !== undefined) {
@@ -526,14 +518,14 @@ export const AuthStreamCode: MessageFns<AuthStreamCode> = {
 
   fromJSON(object: any): AuthStreamCode {
     return {
-      code: isSet(object.code) ? globalThis.String(object.code) : '',
+      code: isSet(object.code) ? globalThis.String(object.code) : "",
       expireDate: isSet(object.expireDate) ? fromJsonTimestamp(object.expireDate) : undefined,
     };
   },
 
   toJSON(message: AuthStreamCode): unknown {
     const obj: any = {};
-    if (message.code !== '') {
+    if (message.code !== "") {
       obj.code = message.code;
     }
     if (message.expireDate !== undefined) {
@@ -547,7 +539,7 @@ export const AuthStreamCode: MessageFns<AuthStreamCode> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthStreamCode>, I>>(object: I): AuthStreamCode {
     const message = createBaseAuthStreamCode();
-    message.code = object.code ?? '';
+    message.code = object.code ?? "";
     message.expireDate = object.expireDate ?? undefined;
     return message;
   },
@@ -555,19 +547,14 @@ export const AuthStreamCode: MessageFns<AuthStreamCode> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -585,7 +572,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

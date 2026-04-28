@@ -6,35 +6,35 @@
 // source: auth/models/user.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
 
 export enum UserRole {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
+  ADMIN = "ADMIN",
+  USER = "USER",
 }
 
 export function userRoleFromJSON(object: any): UserRole {
   switch (object) {
     case 0:
-    case 'ADMIN':
+    case "ADMIN":
       return UserRole.ADMIN;
     case 1:
-    case 'USER':
+    case "USER":
       return UserRole.USER;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum UserRole');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum UserRole");
   }
 }
 
 export function userRoleToJSON(object: UserRole): string {
   switch (object) {
     case UserRole.ADMIN:
-      return 'ADMIN';
+      return "ADMIN";
     case UserRole.USER:
-      return 'USER';
+      return "USER";
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum UserRole');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum UserRole");
   }
 }
 
@@ -45,7 +45,7 @@ export function userRoleToNumber(object: UserRole): number {
     case UserRole.USER:
       return 1;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum UserRole');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum UserRole");
   }
 }
 
@@ -58,12 +58,12 @@ export interface User {
 }
 
 function createBaseUser(): User {
-  return { id: '', createdAt: undefined, updatedAt: undefined, email: '', role: UserRole.ADMIN };
+  return { id: "", createdAt: undefined, updatedAt: undefined, email: "", role: UserRole.ADMIN };
 }
 
 export const User: MessageFns<User> = {
   encode(message: User, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -72,7 +72,7 @@ export const User: MessageFns<User> = {
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(26).fork()).join();
     }
-    if (message.email !== '') {
+    if (message.email !== "") {
       writer.uint32(34).string(message.email);
     }
     if (message.role !== UserRole.ADMIN) {
@@ -139,17 +139,17 @@ export const User: MessageFns<User> = {
 
   fromJSON(object: any): User {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
-      email: isSet(object.email) ? globalThis.String(object.email) : '',
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
       role: isSet(object.role) ? userRoleFromJSON(object.role) : UserRole.ADMIN,
     };
   },
 
   toJSON(message: User): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -158,7 +158,7 @@ export const User: MessageFns<User> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
-    if (message.email !== '') {
+    if (message.email !== "") {
       obj.email = message.email;
     }
     if (message.role !== UserRole.ADMIN) {
@@ -172,10 +172,10 @@ export const User: MessageFns<User> = {
   },
   fromPartial<I extends Exact<DeepPartial<User>, I>>(object: I): User {
     const message = createBaseUser();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
-    message.email = object.email ?? '';
+    message.email = object.email ?? "";
     message.role = object.role ?? UserRole.ADMIN;
     return message;
   },
@@ -183,19 +183,14 @@ export const User: MessageFns<User> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -213,7 +208,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

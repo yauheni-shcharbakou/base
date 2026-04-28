@@ -6,16 +6,16 @@
 // source: storage/messages/file.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
 import {
-  File,
-  FileUploadStatus,
-  fileUploadStatusFromJSON,
-  fileUploadStatusToJSON,
-  fileUploadStatusToNumber,
-} from '../models/file';
-import { StorageObjectManyMetadata, StorageObjectMetadata } from './storage-object.messages';
+    File,
+    FileUploadStatus,
+    fileUploadStatusFromJSON,
+    fileUploadStatusToJSON,
+    fileUploadStatusToNumber,
+} from "../models/file";
+import { StorageObjectManyMetadata, StorageObjectMetadata } from "./storage-object.messages";
 
 export interface FileQuery {
   id?: string;
@@ -231,21 +231,15 @@ export const FileQuery: MessageFns<FileQuery> = {
   fromJSON(object: any): FileQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       mimeType: isSet(object.mimeType) ? globalThis.String(object.mimeType) : undefined,
       mimeTypes: globalThis.Array.isArray(object?.mimeTypes)
         ? object.mimeTypes.map((e: any) => globalThis.String(e))
         : [],
       userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
-      userIds: globalThis.Array.isArray(object?.userIds)
-        ? object.userIds.map((e: any) => globalThis.String(e))
-        : [],
+      userIds: globalThis.Array.isArray(object?.userIds) ? object.userIds.map((e: any) => globalThis.String(e)) : [],
       extension: isSet(object.extension) ? globalThis.String(object.extension) : undefined,
-      uploadStatus: isSet(object.uploadStatus)
-        ? fileUploadStatusFromJSON(object.uploadStatus)
-        : undefined,
+      uploadStatus: isSet(object.uploadStatus) ? fileUploadStatusFromJSON(object.uploadStatus) : undefined,
       uploadStatuses: globalThis.Array.isArray(object?.uploadStatuses)
         ? object.uploadStatuses.map((e: any) => fileUploadStatusFromJSON(e))
         : [],
@@ -360,10 +354,9 @@ export const FileRequest: MessageFns<FileRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<FileRequest>, I>>(object: I): FileRequest {
     const message = createBaseFileRequest();
-    message.query =
-      object.query !== undefined && object.query !== null
-        ? FileQuery.fromPartial(object.query)
-        : undefined;
+    message.query = (object.query !== undefined && object.query !== null)
+      ? FileQuery.fromPartial(object.query)
+      : undefined;
     return message;
   },
 };
@@ -417,9 +410,7 @@ export const FileGetListResponse: MessageFns<FileGetListResponse> = {
 
   fromJSON(object: any): FileGetListResponse {
     return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => File.fromJSON(e))
-        : [],
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => File.fromJSON(e)) : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
   },
@@ -438,9 +429,7 @@ export const FileGetListResponse: MessageFns<FileGetListResponse> = {
   create<I extends Exact<DeepPartial<FileGetListResponse>, I>>(base?: I): FileGetListResponse {
     return FileGetListResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<FileGetListResponse>, I>>(
-    object: I,
-  ): FileGetListResponse {
+  fromPartial<I extends Exact<DeepPartial<FileGetListResponse>, I>>(object: I): FileGetListResponse {
     const message = createBaseFileGetListResponse();
     message.items = object.items?.map((e) => File.fromPartial(e)) || [];
     message.total = object.total ?? 0;
@@ -449,18 +438,18 @@ export const FileGetListResponse: MessageFns<FileGetListResponse> = {
 };
 
 function createBaseFileCreate(): FileCreate {
-  return { originalName: '', size: 0, mimeType: '' };
+  return { originalName: "", size: 0, mimeType: "" };
 }
 
 export const FileCreate: MessageFns<FileCreate> = {
   encode(message: FileCreate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.originalName !== '') {
+    if (message.originalName !== "") {
       writer.uint32(10).string(message.originalName);
     }
     if (message.size !== 0) {
       writer.uint32(16).int32(message.size);
     }
-    if (message.mimeType !== '') {
+    if (message.mimeType !== "") {
       writer.uint32(26).string(message.mimeType);
     }
     return writer;
@@ -508,21 +497,21 @@ export const FileCreate: MessageFns<FileCreate> = {
 
   fromJSON(object: any): FileCreate {
     return {
-      originalName: isSet(object.originalName) ? globalThis.String(object.originalName) : '',
+      originalName: isSet(object.originalName) ? globalThis.String(object.originalName) : "",
       size: isSet(object.size) ? globalThis.Number(object.size) : 0,
-      mimeType: isSet(object.mimeType) ? globalThis.String(object.mimeType) : '',
+      mimeType: isSet(object.mimeType) ? globalThis.String(object.mimeType) : "",
     };
   },
 
   toJSON(message: FileCreate): unknown {
     const obj: any = {};
-    if (message.originalName !== '') {
+    if (message.originalName !== "") {
       obj.originalName = message.originalName;
     }
     if (message.size !== 0) {
       obj.size = Math.round(message.size);
     }
-    if (message.mimeType !== '') {
+    if (message.mimeType !== "") {
       obj.mimeType = message.mimeType;
     }
     return obj;
@@ -533,9 +522,9 @@ export const FileCreate: MessageFns<FileCreate> = {
   },
   fromPartial<I extends Exact<DeepPartial<FileCreate>, I>>(object: I): FileCreate {
     const message = createBaseFileCreate();
-    message.originalName = object.originalName ?? '';
+    message.originalName = object.originalName ?? "";
     message.size = object.size ?? 0;
-    message.mimeType = object.mimeType ?? '';
+    message.mimeType = object.mimeType ?? "";
     return message;
   },
 };
@@ -610,20 +599,18 @@ export const FileCreateRequest: MessageFns<FileCreateRequest> = {
   },
   fromPartial<I extends Exact<DeepPartial<FileCreateRequest>, I>>(object: I): FileCreateRequest {
     const message = createBaseFileCreateRequest();
-    message.file =
-      object.file !== undefined && object.file !== null
-        ? FileCreate.fromPartial(object.file)
-        : undefined;
-    message.storage =
-      object.storage !== undefined && object.storage !== null
-        ? StorageObjectMetadata.fromPartial(object.storage)
-        : undefined;
+    message.file = (object.file !== undefined && object.file !== null)
+      ? FileCreate.fromPartial(object.file)
+      : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? StorageObjectMetadata.fromPartial(object.storage)
+      : undefined;
     return message;
   },
 };
 
 function createBaseFileCreateManyItem(): FileCreateManyItem {
-  return { file: undefined, uploadId: '' };
+  return { file: undefined, uploadId: "" };
 }
 
 export const FileCreateManyItem: MessageFns<FileCreateManyItem> = {
@@ -631,7 +618,7 @@ export const FileCreateManyItem: MessageFns<FileCreateManyItem> = {
     if (message.file !== undefined) {
       FileCreate.encode(message.file, writer.uint32(10).fork()).join();
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       writer.uint32(18).string(message.uploadId);
     }
     return writer;
@@ -672,7 +659,7 @@ export const FileCreateManyItem: MessageFns<FileCreateManyItem> = {
   fromJSON(object: any): FileCreateManyItem {
     return {
       file: isSet(object.file) ? FileCreate.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
     };
   },
 
@@ -681,7 +668,7 @@ export const FileCreateManyItem: MessageFns<FileCreateManyItem> = {
     if (message.file !== undefined) {
       obj.file = FileCreate.toJSON(message.file);
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -692,11 +679,10 @@ export const FileCreateManyItem: MessageFns<FileCreateManyItem> = {
   },
   fromPartial<I extends Exact<DeepPartial<FileCreateManyItem>, I>>(object: I): FileCreateManyItem {
     const message = createBaseFileCreateManyItem();
-    message.file =
-      object.file !== undefined && object.file !== null
-        ? FileCreate.fromPartial(object.file)
-        : undefined;
-    message.uploadId = object.uploadId ?? '';
+    message.file = (object.file !== undefined && object.file !== null)
+      ? FileCreate.fromPartial(object.file)
+      : undefined;
+    message.uploadId = object.uploadId ?? "";
     return message;
   },
 };
@@ -750,9 +736,7 @@ export const FileCreateManyRequest: MessageFns<FileCreateManyRequest> = {
 
   fromJSON(object: any): FileCreateManyRequest {
     return {
-      storage: isSet(object.storage)
-        ? StorageObjectManyMetadata.fromJSON(object.storage)
-        : undefined,
+      storage: isSet(object.storage) ? StorageObjectManyMetadata.fromJSON(object.storage) : undefined,
       items: globalThis.Array.isArray(object?.items)
         ? object.items.map((e: any) => FileCreateManyItem.fromJSON(e))
         : [],
@@ -773,14 +757,11 @@ export const FileCreateManyRequest: MessageFns<FileCreateManyRequest> = {
   create<I extends Exact<DeepPartial<FileCreateManyRequest>, I>>(base?: I): FileCreateManyRequest {
     return FileCreateManyRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<FileCreateManyRequest>, I>>(
-    object: I,
-  ): FileCreateManyRequest {
+  fromPartial<I extends Exact<DeepPartial<FileCreateManyRequest>, I>>(object: I): FileCreateManyRequest {
     const message = createBaseFileCreateManyRequest();
-    message.storage =
-      object.storage !== undefined && object.storage !== null
-        ? StorageObjectManyMetadata.fromPartial(object.storage)
-        : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? StorageObjectManyMetadata.fromPartial(object.storage)
+      : undefined;
     message.items = object.items?.map((e) => FileCreateManyItem.fromPartial(e)) || [];
     return message;
   },
@@ -823,11 +804,7 @@ export const FileCreateManyResponse: MessageFns<FileCreateManyResponse> = {
   },
 
   fromJSON(object: any): FileCreateManyResponse {
-    return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => File.fromJSON(e))
-        : [],
-    };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => File.fromJSON(e)) : [] };
   },
 
   toJSON(message: FileCreateManyResponse): unknown {
@@ -838,14 +815,10 @@ export const FileCreateManyResponse: MessageFns<FileCreateManyResponse> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<FileCreateManyResponse>, I>>(
-    base?: I,
-  ): FileCreateManyResponse {
+  create<I extends Exact<DeepPartial<FileCreateManyResponse>, I>>(base?: I): FileCreateManyResponse {
     return FileCreateManyResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<FileCreateManyResponse>, I>>(
-    object: I,
-  ): FileCreateManyResponse {
+  fromPartial<I extends Exact<DeepPartial<FileCreateManyResponse>, I>>(object: I): FileCreateManyResponse {
     const message = createBaseFileCreateManyResponse();
     message.items = object.items?.map((e) => File.fromPartial(e)) || [];
     return message;
@@ -913,9 +886,7 @@ export const FileUploadResponse: MessageFns<FileUploadResponse> = {
   fromJSON(object: any): FileUploadResponse {
     return {
       entity: isSet(object.entity) ? File.fromJSON(object.entity) : undefined,
-      canSendChunks: isSet(object.canSendChunks)
-        ? globalThis.Boolean(object.canSendChunks)
-        : undefined,
+      canSendChunks: isSet(object.canSendChunks) ? globalThis.Boolean(object.canSendChunks) : undefined,
       ack: isSet(object.ack) ? globalThis.Boolean(object.ack) : undefined,
     };
   },
@@ -939,10 +910,9 @@ export const FileUploadResponse: MessageFns<FileUploadResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<FileUploadResponse>, I>>(object: I): FileUploadResponse {
     const message = createBaseFileUploadResponse();
-    message.entity =
-      object.entity !== undefined && object.entity !== null
-        ? File.fromPartial(object.entity)
-        : undefined;
+    message.entity = (object.entity !== undefined && object.entity !== null)
+      ? File.fromPartial(object.entity)
+      : undefined;
     message.canSendChunks = object.canSendChunks ?? undefined;
     message.ack = object.ack ?? undefined;
     return message;
@@ -951,19 +921,14 @@ export const FileUploadResponse: MessageFns<FileUploadResponse> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -981,7 +946,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));
