@@ -12,9 +12,9 @@ import {
 import { useSingleFileUpload } from '@/features/storage/hooks';
 import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import { GrpcFile } from '@packages/grpc';
 import React from 'react';
 import zod from 'zod';
+import type { BrowserStorage } from '@packages/proto';
 
 const schema = {
   parent: zod.string().optional(),
@@ -48,7 +48,7 @@ export default function FileCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdFile = await handleUpload<GrpcFile>(data.file, async () => {
+    const createdFile = await handleUpload<BrowserStorage.File>(data.file, async () => {
       return fileActionProvider.createOne(data.file, {
         parent: data.parent,
         name: data.name,

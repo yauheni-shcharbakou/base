@@ -6,9 +6,9 @@ import { folderActionProvider } from '@/features/storage/providers';
 import { FolderSelect } from '@/features/storage/components';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { GrpcStorageObject } from '@packages/grpc';
 import React, { useEffect } from 'react';
 import zod from 'zod';
+import type { BrowserStorage } from '@packages/proto';
 
 const schema = {
   parent: zod.string().optional(),
@@ -28,7 +28,7 @@ export default function StorageObjectEdit() {
     clearErrors,
     setError,
     setValue,
-  } = useValidatedForm<typeof schema, GrpcStorageObject>(schema);
+  } = useValidatedForm<typeof schema, BrowserStorage.StorageObject>(schema);
 
   useEffect(() => {
     if (formLoading) {

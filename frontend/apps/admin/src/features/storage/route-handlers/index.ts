@@ -1,5 +1,5 @@
 import { configService } from '@/common/services';
-import { GrpcUploadRequest } from '@frontend/grpc';
+import type { ClientStorage } from '@frontend/proto';
 import { ClientDuplexStream } from '@grpc/grpc-js';
 import Busboy from 'busboy';
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,14 +15,14 @@ type UploadResponse = {
 export const handleStreamFileUpload = <UploadRes extends UploadResponse>(
   req: NextRequest,
   id: string,
-  reqStreamFactory: () => ClientDuplexStream<GrpcUploadRequest, UploadRes>,
+  reqStreamFactory: () => ClientDuplexStream<ClientStorage.UploadRequest, UploadRes>,
   timeoutSeconds: number,
 ) => {
   const headers = Object.fromEntries(req.headers.entries());
   const reqBody$ = Readable.fromWeb(req.body as ReadableStream);
   const chunkSize = configService.getChunkSize();
 
-  let request$: ClientDuplexStream<GrpcUploadRequest, UploadRes>;
+  let request$: ClientDuplexStream<ClientStorage.UploadRequest, UploadRes>;
 
   return new Promise<NextResponse>((resolve) => {
     const busboy$ = Busboy({ headers });

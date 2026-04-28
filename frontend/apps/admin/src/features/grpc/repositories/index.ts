@@ -4,7 +4,7 @@ import {
   GrpcImageRepository,
   GrpcStorageObjectRepository,
   GrpcVideoRepository,
-} from '@frontend/grpc';
+} from '@frontend/proto';
 
 const grpcUrl = configService.getGrpcUrl();
 

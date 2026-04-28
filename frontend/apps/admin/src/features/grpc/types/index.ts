@@ -1,8 +1,8 @@
-import { GrpcGetListRequest, GrpcIdField } from '@frontend/grpc';
-import { type CallOptions, Metadata } from '@grpc/grpc-js';
+import { ClientCommon } from '@frontend/proto';
+import type { CallOptions, Metadata } from '@grpc/grpc-js';
 import { BaseRecord } from '@refinedev/core';
 
-export type GrpcUpdateById<Entity extends BaseRecord = BaseRecord> = GrpcIdField & {
+export type GrpcUpdateById<Entity extends BaseRecord = BaseRecord> = ClientCommon.IdField & {
   update: {
     set?: Partial<Entity>;
     delete?: string[];
@@ -12,17 +12,12 @@ export type GrpcUpdateById<Entity extends BaseRecord = BaseRecord> = GrpcIdField
 
 export interface GrpcDataRepository<Entity extends BaseRecord = BaseRecord> {
   getById(
-    request: GrpcIdField,
+    request: ClientCommon.IdField,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
-  // getMany(
-  //   request: { ids: string[] },
-  //   metadata?: Metadata,
-  //   options?: Partial<CallOptions>,
-  // ): Promise<{ items: Entity[] }>;
   getList(
-    request: GrpcGetListRequest,
+    request: ClientCommon.GetListRequest,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<{ items: Entity[]; total: number }>;
@@ -37,13 +32,13 @@ export interface GrpcDataRepository<Entity extends BaseRecord = BaseRecord> {
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
   deleteById(
-    request: GrpcIdField,
+    request: ClientCommon.IdField,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
 }
 
-export interface GrpcSingleEntityAction extends GrpcIdField {
+export interface GrpcSingleEntityAction extends ClientCommon.IdField {
   resource: string;
 }
 

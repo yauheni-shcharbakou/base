@@ -9,12 +9,12 @@ import { OpenInBrowserOutlined, ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcFileUploadStatus, GrpcImagePopulated } from '@packages/grpc';
 import React from 'react';
+import { BrowserStorage } from '@packages/proto';
 
 export default function ImageShow() {
-  const { isLoading, record } = useResourceShow<GrpcImagePopulated>();
-  const isFileReady = record?.file?.uploadStatus === GrpcFileUploadStatus.READY;
+  const { isLoading, record } = useResourceShow<BrowserStorage.ImagePopulated>();
+  const isFileReady = record?.file?.uploadStatus === BrowserStorage.FileUploadStatus.READY;
 
   return (
     <AppShow

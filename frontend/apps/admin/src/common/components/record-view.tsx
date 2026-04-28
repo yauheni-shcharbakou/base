@@ -3,11 +3,11 @@
 import { DateEntityField } from '@/common/components/entity-fields';
 import { IdField } from '@/common/components/id-field';
 import { Divider, Skeleton, Stack, Typography } from '@mui/material';
-import { GrpcEntityWithTimestamps } from '@packages/grpc';
+import type { BrowserCommon } from '@packages/proto';
 import React, { FC, ReactNode } from 'react';
 
 type Props = {
-  record?: GrpcEntityWithTimestamps;
+  record?: BrowserCommon.EntityWithTimestamps;
   children?: ReactNode;
 };
 

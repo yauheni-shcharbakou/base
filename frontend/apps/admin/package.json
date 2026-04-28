@@ -16,7 +16,7 @@
   "dependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
-    "@frontend/grpc": "workspace:*",
+    "@frontend/proto": "workspace:*",
     "@grpc/grpc-js": "1.14.3",
     "@hookform/resolvers": "5.2.2",
     "@mui/icons-material": "6.5.0",
@@ -24,7 +24,7 @@
     "@mui/material": "6.5.0",
     "@mui/x-data-grid": "7.29.12",
     "@packages/common": "workspace:*",
-    "@packages/grpc": "workspace:*",
+    "@packages/proto": "workspace:*",
     "@refinedev/core": "5.0.12",
     "@refinedev/devtools": "2.0.5",
     "@refinedev/kbar": "2.0.1",

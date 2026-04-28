@@ -13,9 +13,9 @@ import { useSingleFileUpload } from '@/features/storage/hooks';
 import { getGenericVideTitle } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import { GrpcVideo } from '@packages/grpc';
 import React from 'react';
 import zod from 'zod';
+import type { BrowserStorage } from '@packages/proto';
 
 const schema = {
   parent: zod.string().optional(),
@@ -57,7 +57,7 @@ export default function VideoCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdVideo = await handleUpload<GrpcVideo>(data.file, async () => {
+    const createdVideo = await handleUpload<BrowserStorage.Video>(data.file, async () => {
       return videoActionProvider.createOne(
         {
           file: data.file,
