@@ -5,7 +5,7 @@
 // source: auth/messages/user.messages.proto
 
 /* eslint-disable */
-import { User, UserRole } from '../models/user';
+import { User, UserRole } from "../models/user";
 
 export interface UserQuery {
   id?: string;
@@ -56,3 +56,4 @@ export interface UserUpdateByIdRequest {
   id: string;
   update: UserUpdate;
 }
+

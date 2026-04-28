@@ -5,7 +5,7 @@
 // source: storage/models/video.proto
 
 /* eslint-disable */
-import { wrappers } from 'protobufjs';
+import { wrappers } from "protobufjs";
 
 export interface Video {
   id: string;
@@ -21,7 +21,8 @@ export interface Video {
   uploadId: string;
 }
 
-wrappers['.google.protobuf.Timestamp'] = {
+
+wrappers[".google.protobuf.Timestamp"] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

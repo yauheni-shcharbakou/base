@@ -5,7 +5,7 @@
 // source: auth/messages/temp-code.messages.proto
 
 /* eslint-disable */
-import { TempCode } from '../models/temp-code';
+import { TempCode } from "../models/temp-code";
 
 export interface TempCodeGetListResponse {
   items: TempCode[];
@@ -15,3 +15,4 @@ export interface TempCodeGetListResponse {
 export interface TempCodeCreate {
   user: string;
 }
+

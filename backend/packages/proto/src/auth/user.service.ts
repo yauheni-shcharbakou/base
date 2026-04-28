@@ -5,18 +5,19 @@
 // source: auth/user.service.proto
 
 /* eslint-disable */
-import { type Metadata } from '@grpc/grpc-js';
-import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
-import { GetListRequest, IdField } from '../common/service';
+import { type Metadata } from "@grpc/grpc-js";
+import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
+import { Observable } from "rxjs";
+import { GetListRequest, IdField } from "../common/service";
 import {
-  UserCreate,
-  UserGetListResponse,
-  UserList,
-  UserRequest,
-  UserUpdateByIdRequest,
-} from './messages/user.messages';
-import { User } from './models/user';
+    UserCreate,
+    UserGetListResponse,
+    UserList,
+    UserRequest,
+    UserUpdateByIdRequest,
+} from "./messages/user.messages";
+import { User } from "./models/user";
+
 
 export interface GrpcUserServiceClient {
   getById(request: IdField, metadata?: Metadata): Observable<User>;
@@ -39,54 +40,39 @@ export interface GrpcUserServiceController {
 
   getOne(request: UserRequest, ...args: any[]): Promise<User> | Observable<User> | User;
 
-  getMany(
-    request: UserRequest,
-    ...args: any[]
-  ): Promise<UserList> | Observable<UserList> | UserList;
+  getMany(request: UserRequest, ...args: any[]): Promise<UserList> | Observable<UserList> | UserList;
 
-  getList(
-    request: GetListRequest,
-    ...args: any[]
-  ): Promise<UserGetListResponse> | Observable<UserGetListResponse> | UserGetListResponse;
+  getList(request: GetListRequest, ...args: any[]): Promise<UserGetListResponse> | Observable<UserGetListResponse> | UserGetListResponse;
 
   createOne(request: UserCreate, ...args: any[]): Promise<User> | Observable<User> | User;
 
-  updateById(
-    request: UserUpdateByIdRequest,
-    ...args: any[]
-  ): Promise<User> | Observable<User> | User;
+  updateById(request: UserUpdateByIdRequest, ...args: any[]): Promise<User> | Observable<User> | User;
 
   deleteById(request: IdField, ...args: any[]): Promise<User> | Observable<User> | User;
 }
 
 function UserServiceControllerMethods() {
-  return function (constructor: Function) {
-    const grpcMethods: string[] = [
-      'getById',
-      'getOne',
-      'getMany',
-      'getList',
-      'createOne',
-      'updateById',
-      'deleteById',
-    ];
+  return function(constructor: Function) {
+    const grpcMethods: string[] = ["getById", "getOne", "getMany", "getList", "createOne", "updateById", "deleteById"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod('UserService', method)(constructor.prototype[method], method, descriptor);
+      GrpcMethod("UserService", method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod('UserService', method)(constructor.prototype[method], method, descriptor);
+      GrpcStreamMethod("UserService", method)(constructor.prototype[method], method, descriptor);
     }
   };
 }
 
+
 export const GrpcUserTransport = {
   service: 'UserService',
   definition: {
-    package: 'auth',
+    package: "auth",
     protoPath: 'auth/user.service.proto',
   },
   ControllerMethods: (): ClassDecorator => UserServiceControllerMethods(),
 } as const;
+

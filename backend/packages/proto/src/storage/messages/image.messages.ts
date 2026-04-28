@@ -5,11 +5,11 @@
 // source: storage/messages/image.messages.proto
 
 /* eslint-disable */
-import { wrappers } from 'protobufjs';
-import { File } from '../models/file';
-import { Image } from '../models/image';
-import { FileCreate } from './file.messages';
-import { StorageObjectManyMetadata, StorageObjectMetadata } from './storage-object.messages';
+import { wrappers } from "protobufjs";
+import { File } from "../models/file";
+import { Image } from "../models/image";
+import { FileCreate } from "./file.messages";
+import { StorageObjectManyMetadata, StorageObjectMetadata } from "./storage-object.messages";
 
 export interface ImagePopulated {
   id: string;
@@ -81,7 +81,8 @@ export interface ImageUpdateByIdRequest {
   update: ImageUpdate;
 }
 
-wrappers['.google.protobuf.Timestamp'] = {
+
+wrappers[".google.protobuf.Timestamp"] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

@@ -5,11 +5,12 @@
 // source: auth/auth.service.proto
 
 /* eslint-disable */
-import { type Metadata } from '@grpc/grpc-js';
-import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
-import { AuthData, AuthLogin, AuthMe, AuthRefresh, AuthStreamCode } from './messages/auth.messages';
-import { User } from './models/user';
+import { type Metadata } from "@grpc/grpc-js";
+import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
+import { Observable } from "rxjs";
+import { AuthData, AuthLogin, AuthMe, AuthRefresh, AuthStreamCode } from "./messages/auth.messages";
+import { User } from "./models/user";
+
 
 export interface GrpcAuthServiceClient {
   login(request: AuthLogin, metadata?: Metadata): Observable<AuthData>;
@@ -22,28 +23,26 @@ export interface GrpcAuthServiceClient {
 export interface GrpcAuthServiceController {
   login(request: AuthLogin, ...args: any[]): Promise<AuthData> | Observable<AuthData> | AuthData;
 
-  refreshToken(
-    request: AuthRefresh,
-    ...args: any[]
-  ): Promise<AuthData> | Observable<AuthData> | AuthData;
+  refreshToken(request: AuthRefresh, ...args: any[]): Promise<AuthData> | Observable<AuthData> | AuthData;
 
   me(request: AuthMe, ...args: any[]): Promise<User> | Observable<User> | User;
 }
 
 function AuthServiceControllerMethods() {
-  return function (constructor: Function) {
-    const grpcMethods: string[] = ['login', 'refreshToken', 'me'];
+  return function(constructor: Function) {
+    const grpcMethods: string[] = ["login", "refreshToken", "me"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod('AuthService', method)(constructor.prototype[method], method, descriptor);
+      GrpcMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod('AuthService', method)(constructor.prototype[method], method, descriptor);
+      GrpcStreamMethod("AuthService", method)(constructor.prototype[method], method, descriptor);
     }
   };
 }
+
 
 export interface GrpcAuthProxyServiceClient {
   login(request: AuthLogin, metadata?: Metadata): Observable<AuthData>;
@@ -58,42 +57,33 @@ export interface GrpcAuthProxyServiceClient {
 export interface GrpcAuthProxyServiceController {
   login(request: AuthLogin, ...args: any[]): Promise<AuthData> | Observable<AuthData> | AuthData;
 
-  refreshToken(
-    request: AuthRefresh,
-    ...args: any[]
-  ): Promise<AuthData> | Observable<AuthData> | AuthData;
+  refreshToken(request: AuthRefresh, ...args: any[]): Promise<AuthData> | Observable<AuthData> | AuthData;
 
   me(request: AuthMe, ...args: any[]): Promise<User> | Observable<User> | User;
 
-  generateStreamCode(
-    request: AuthMe,
-    ...args: any[]
-  ): Promise<AuthStreamCode> | Observable<AuthStreamCode> | AuthStreamCode;
+  generateStreamCode(request: AuthMe, ...args: any[]): Promise<AuthStreamCode> | Observable<AuthStreamCode> | AuthStreamCode;
 }
 
 function AuthProxyServiceControllerMethods() {
-  return function (constructor: Function) {
-    const grpcMethods: string[] = ['login', 'refreshToken', 'me', 'generateStreamCode'];
+  return function(constructor: Function) {
+    const grpcMethods: string[] = ["login", "refreshToken", "me", "generateStreamCode"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod('AuthProxyService', method)(constructor.prototype[method], method, descriptor);
+      GrpcMethod("AuthProxyService", method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod('AuthProxyService', method)(
-        constructor.prototype[method],
-        method,
-        descriptor,
-      );
+      GrpcStreamMethod("AuthProxyService", method)(constructor.prototype[method], method, descriptor);
     }
   };
 }
 
+
 export const GrpcAuthTransport = {
   service: 'AuthService',
   definition: {
-    package: 'auth',
+    package: "auth",
     protoPath: 'auth/auth.service.proto',
   },
   ControllerMethods: (): ClassDecorator => AuthServiceControllerMethods(),
@@ -102,8 +92,9 @@ export const GrpcAuthTransport = {
 export const GrpcAuthProxyTransport = {
   service: 'AuthProxyService',
   definition: {
-    package: 'auth',
+    package: "auth",
     protoPath: 'auth/auth.service.proto',
   },
   ControllerMethods: (): ClassDecorator => AuthProxyServiceControllerMethods(),
 } as const;
+

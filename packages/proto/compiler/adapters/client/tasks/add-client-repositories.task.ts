@@ -67,6 +67,7 @@ export class AddClientRepositoriesTask extends TransformTask {
         [],
       );
 
+      this.addEntryExports(pascalCase(`grpc.${service.id}.repository`));
       acc.push({ id: service.id, unaryMethods });
       return acc;
     }, []);

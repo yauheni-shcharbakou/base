@@ -4,7 +4,7 @@ import { TransformTaskClass } from 'compiler/tasks';
 import { CompilerContext, OnFilePayload, OnFolderPayload, ProtoContext } from 'compiler/types';
 import Pug from 'pug';
 import { mkdir, rm, writeFile, readdir, readFile } from 'node:fs/promises';
-import { Project, SourceFile } from 'ts-morph';
+import { Project, SourceFile, type ImportSpecifierStructure, type OptionalKind } from 'ts-morph';
 import { join } from 'node:path';
 import { dotCase, pascalCase } from 'change-case-all';
 
@@ -32,6 +32,7 @@ export type AdapterFactory = (contextService: ContextService) => BaseAdapter;
 export abstract class BaseAdapter {
   protected readonly project: Project;
   protected readonly templateByName = new Map<string, Pug.compileTemplate>();
+  protected readonly entryExportsMap = new Map<string, Map<string, ImportSpecifierStructure>>();
 
   protected constructor(
     protected readonly contextService: ContextService,
@@ -51,15 +52,16 @@ export abstract class BaseAdapter {
   protected async executeTransformTasks(
     sourceFile: SourceFile,
     protoContext: ProtoContext,
-    filePath: string,
+    relativePath: string,
   ): Promise<void> {
     for (const Task of this.transformTasks) {
       const transformer = new Task(
         sourceFile,
         protoContext,
-        filePath,
+        relativePath,
         this.targetRoot,
         this.templateByName,
+        this.entryExportsMap,
       );
 
       if (await transformer.canTransform()) {
@@ -69,10 +71,26 @@ export abstract class BaseAdapter {
   }
 
   protected getEntrypointContent(): string[] {
-    return this.contextService.getExecutionContext().entrypointExports.map((item) => {
-      const exportAlias = pascalCase(`${this.name}.${dotCase(item)}.proto`);
+    const rows = this.contextService.getExecutionContext().entrypointExports.map((item) => {
+      const exportAlias = pascalCase(`${this.name}.${dotCase(item)}`);
       return `export * as ${exportAlias} from './${item}';`;
     });
+
+    this.entryExportsMap.entries().forEach(([moduleSpecifier, items]) => {
+      let content = '*';
+
+      if (items.size) {
+        const contentParts = Array.from(items.values())
+          .map((specifier) => (specifier.isTypeOnly ? `type ${specifier.name}` : specifier.name))
+          .join(', ');
+
+        content = `{ ${contentParts} }`;
+      }
+
+      rows.push(`export ${content} from '${moduleSpecifier}';`);
+    });
+
+    return rows;
   }
 
   protected async compileTemplates() {
@@ -162,7 +180,7 @@ export abstract class BaseAdapter {
 
     const protoContext = this.contextService.getProtoContext(relativePath);
 
-    await this.executeTransformTasks(sourceFile, protoContext, filePath);
+    await this.executeTransformTasks(sourceFile, protoContext, relativePath);
 
     sourceFile.formatText({ indentSize: 2 });
     sourceFile.fixUnusedIdentifiers();

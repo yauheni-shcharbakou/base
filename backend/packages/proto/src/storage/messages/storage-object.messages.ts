@@ -5,12 +5,12 @@
 // source: storage/messages/storage-object.messages.proto
 
 /* eslint-disable */
-import { wrappers } from 'protobufjs';
-import { BaseQuery } from '../../common/service';
-import { File } from '../models/file';
-import { Image } from '../models/image';
-import { StorageObjectType } from '../models/storage-object';
-import { Video } from '../models/video';
+import { wrappers } from "protobufjs";
+import { BaseQuery } from "../../common/service";
+import { File } from "../models/file";
+import { Image } from "../models/image";
+import { StorageObjectType } from "../models/storage-object";
+import { Video } from "../models/video";
 
 export interface StorageObjectPopulated {
   id: string;
@@ -114,7 +114,8 @@ export interface StorageObjectUpdateByIdRequest {
   update: StorageObjectUpdate;
 }
 
-wrappers['.google.protobuf.Timestamp'] = {
+
+wrappers[".google.protobuf.Timestamp"] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

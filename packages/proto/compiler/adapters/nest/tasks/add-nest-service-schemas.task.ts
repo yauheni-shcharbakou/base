@@ -27,6 +27,12 @@ export class AddNestServiceSchemasTask extends TransformTask {
         return;
       }
 
+      this.addEntryExports(
+        { name: controllerName, isTypeOnly: true },
+        { name: clientName, isTypeOnly: true },
+        pascalCase(`grpc.${service.id}.transport`),
+      );
+
       controllerInterface.getMethods().forEach((method) => {
         const structure = method.getStructure();
         const firstArg = method.getParameter('request');

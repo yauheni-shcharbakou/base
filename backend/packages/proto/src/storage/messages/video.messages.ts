@@ -5,11 +5,11 @@
 // source: storage/messages/video.messages.proto
 
 /* eslint-disable */
-import { wrappers } from 'protobufjs';
-import { File } from '../models/file';
-import { Video } from '../models/video';
-import { FileCreate } from './file.messages';
-import { StorageObjectManyMetadata, StorageObjectMetadata } from './storage-object.messages';
+import { wrappers } from "protobufjs";
+import { File } from "../models/file";
+import { Video } from "../models/video";
+import { FileCreate } from "./file.messages";
+import { StorageObjectManyMetadata, StorageObjectMetadata } from "./storage-object.messages";
 
 export interface VideoPopulated {
   id: string;
@@ -91,7 +91,8 @@ export interface VideoUpdateByIdRequest {
   update: VideoUpdate;
 }
 
-wrappers['.google.protobuf.Timestamp'] = {
+
+wrappers[".google.protobuf.Timestamp"] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

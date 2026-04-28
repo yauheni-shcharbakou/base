@@ -5,19 +5,20 @@
 // source: storage/image.service.proto
 
 /* eslint-disable */
-import { type Metadata } from '@grpc/grpc-js';
-import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
-import { GetListRequest, IdField } from '../common/service';
+import { type Metadata } from "@grpc/grpc-js";
+import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
+import { Observable } from "rxjs";
+import { GetListRequest, IdField } from "../common/service";
 import {
-  ImageCreateManyRequest,
-  ImageCreateManyResponse,
-  ImageCreateRequest,
-  ImageGetListResponse,
-  ImagePopulated,
-  ImageUpdateByIdRequest,
-} from './messages/image.messages';
-import { Image } from './models/image';
+    ImageCreateManyRequest,
+    ImageCreateManyResponse,
+    ImageCreateRequest,
+    ImageGetListResponse,
+    ImagePopulated,
+    ImageUpdateByIdRequest,
+} from "./messages/image.messages";
+import { Image } from "./models/image";
+
 
 export interface GrpcImageServiceClient {
   getById(request: IdField, metadata?: Metadata): Observable<ImagePopulated>;
@@ -26,10 +27,7 @@ export interface GrpcImageServiceClient {
 
   createOne(request: ImageCreateRequest, metadata?: Metadata): Observable<Image>;
 
-  createMany(
-    request: ImageCreateManyRequest,
-    metadata?: Metadata,
-  ): Observable<ImageCreateManyResponse>;
+  createMany(request: ImageCreateManyRequest, metadata?: Metadata): Observable<ImageCreateManyResponse>;
 
   updateById(request: ImageUpdateByIdRequest, metadata?: Metadata): Observable<Image>;
 
@@ -37,64 +35,41 @@ export interface GrpcImageServiceClient {
 }
 
 export interface GrpcImageServiceController {
-  getById(
-    request: IdField,
-    ...args: any[]
-  ): Promise<ImagePopulated> | Observable<ImagePopulated> | ImagePopulated;
+  getById(request: IdField, ...args: any[]): Promise<ImagePopulated> | Observable<ImagePopulated> | ImagePopulated;
 
-  getList(
-    request: GetListRequest,
-    ...args: any[]
-  ): Promise<ImageGetListResponse> | Observable<ImageGetListResponse> | ImageGetListResponse;
+  getList(request: GetListRequest, ...args: any[]): Promise<ImageGetListResponse> | Observable<ImageGetListResponse> | ImageGetListResponse;
 
-  createOne(
-    request: ImageCreateRequest,
-    ...args: any[]
-  ): Promise<Image> | Observable<Image> | Image;
+  createOne(request: ImageCreateRequest, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 
-  createMany(
-    request: ImageCreateManyRequest,
-    ...args: any[]
-  ):
-    | Promise<ImageCreateManyResponse>
-    | Observable<ImageCreateManyResponse>
-    | ImageCreateManyResponse;
+  createMany(request: ImageCreateManyRequest, ...args: any[]): Promise<ImageCreateManyResponse> | Observable<ImageCreateManyResponse> | ImageCreateManyResponse;
 
-  updateById(
-    request: ImageUpdateByIdRequest,
-    ...args: any[]
-  ): Promise<Image> | Observable<Image> | Image;
+  updateById(request: ImageUpdateByIdRequest, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 
   deleteById(request: IdField, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 }
 
 function ImageServiceControllerMethods() {
-  return function (constructor: Function) {
-    const grpcMethods: string[] = [
-      'getById',
-      'getList',
-      'createOne',
-      'createMany',
-      'updateById',
-      'deleteById',
-    ];
+  return function(constructor: Function) {
+    const grpcMethods: string[] = ["getById", "getList", "createOne", "createMany", "updateById", "deleteById"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod('ImageService', method)(constructor.prototype[method], method, descriptor);
+      GrpcMethod("ImageService", method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod('ImageService', method)(constructor.prototype[method], method, descriptor);
+      GrpcStreamMethod("ImageService", method)(constructor.prototype[method], method, descriptor);
     }
   };
 }
 
+
 export const GrpcImageTransport = {
   service: 'ImageService',
   definition: {
-    package: 'storage',
+    package: "storage",
     protoPath: 'storage/image.service.proto',
   },
   ControllerMethods: (): ClassDecorator => ImageServiceControllerMethods(),
 } as const;
+

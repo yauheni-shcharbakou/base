@@ -317,6 +317,9 @@ importers:
       '@backend/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
+      '@backend/proto':
+        specifier: workspace:*
+        version: link:../../packages/proto
       '@backend/transport':
         specifier: workspace:*
         version: link:../../packages/transport
@@ -662,9 +665,9 @@ importers:
       '@emotion/styled':
         specifier: 11.14.1
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4))(@types/react@19.2.9)(react@19.2.4)
-      '@frontend/grpc':
+      '@frontend/proto':
         specifier: workspace:*
-        version: link:../../packages/grpc
+        version: link:../../packages/proto
       '@grpc/grpc-js':
         specifier: 1.14.3
         version: 1.14.3
@@ -686,9 +689,9 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
-      '@packages/grpc':
+      '@packages/proto':
         specifier: workspace:*
-        version: link:../../../packages/grpc
+        version: link:../../../packages/proto
       '@refinedev/core':
         specifier: 5.0.12
         version: 5.0.12(@tanstack/react-query@5.100.5(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
