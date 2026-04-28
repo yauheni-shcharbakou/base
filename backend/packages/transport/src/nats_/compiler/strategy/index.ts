@@ -1,4 +1,4 @@
-import { GrpcIdField } from '@backend/grpc';
+import type { NestCommon } from '@backend/proto';
 import {
   ProviderIdEvent,
   StorageObjectUpdateParentEvent,
@@ -19,10 +19,10 @@ import {
 export interface NatsStrategy {
   auth: {
     user: {
-      createOne: GrpcIdField;
+      createOne: NestCommon.IdField;
     };
     tempCode: {
-      deactivateOne: GrpcIdField;
+      deactivateOne: NestCommon.IdField;
     };
   };
   storage: {

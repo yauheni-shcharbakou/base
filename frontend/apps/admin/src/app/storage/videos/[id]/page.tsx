@@ -9,12 +9,12 @@ import { getVideoDuration } from '@/features/video/helpers';
 import { ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcFileUploadStatus, GrpcVideoPopulated } from '@packages/grpc';
+import { BrowserStorage } from '@packages/proto';
 import React from 'react';
 
 export default function VideoShow() {
-  const { isLoading, record } = useResourceShow<GrpcVideoPopulated>();
-  const isFileReady = record?.file?.uploadStatus === GrpcFileUploadStatus.READY;
+  const { isLoading, record } = useResourceShow<BrowserStorage.VideoPopulated>();
+  const isFileReady = record?.file?.uploadStatus === BrowserStorage.FileUploadStatus.READY;
 
   return (
     <AppShow

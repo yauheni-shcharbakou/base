@@ -8,12 +8,12 @@ import { ExpandMore, OpenInBrowserOutlined } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcFile, GrpcFileUploadStatus } from '@packages/grpc';
+import { BrowserStorage } from '@packages/proto';
 import React from 'react';
 
 export default function FileShow() {
-  const { isLoading, record } = useResourceShow<GrpcFile>();
-  const isFileReady = record?.uploadStatus === GrpcFileUploadStatus.READY;
+  const { isLoading, record } = useResourceShow<BrowserStorage.File>();
+  const isFileReady = record?.uploadStatus === BrowserStorage.FileUploadStatus.READY;
 
   return (
     <AppShow
@@ -27,11 +27,15 @@ export default function FileShow() {
                 startIcon={<OpenInBrowserOutlined />}
                 component="a"
                 target="_blank"
-                href={`/api/files/${record.id}/open`}
+                href={`/api/files/${record!.id}/open`}
               >
                 Open
               </Button>
-              <DownloadButton variant="text" resource={StorageDatabaseEntity.FILE} id={record.id} />
+              <DownloadButton
+                variant="text"
+                resource={StorageDatabaseEntity.FILE}
+                id={record!.id}
+              />
             </>
           )}
           {defaultButtons}

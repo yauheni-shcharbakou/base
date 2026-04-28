@@ -7,20 +7,13 @@ import {
   imageGrpcRepository,
   videoGrpcRepository,
 } from '@/features/grpc/repositories';
-import {
-  GrpcFile,
-  GrpcFileCreateRequest,
-  GrpcImage,
-  GrpcImageCreateRequest,
-  GrpcVideo,
-  GrpcVideoCreateRequest,
-} from '@frontend/grpc';
+import type { ClientStorage } from '@frontend/proto';
 
 type CreateActionResponse<T> = { entity: T } | { error: string };
 
 export async function createFile(
-  request: GrpcFileCreateRequest,
-): Promise<CreateActionResponse<GrpcFile>> {
+  request: ClientStorage.FileCreateRequest,
+): Promise<CreateActionResponse<ClientStorage.File>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const entity = await fileGrpcRepository.createOne(request, metadata);
@@ -31,8 +24,8 @@ export async function createFile(
 }
 
 export async function createVideo(
-  request: GrpcVideoCreateRequest,
-): Promise<CreateActionResponse<GrpcVideo>> {
+  request: ClientStorage.VideoCreateRequest,
+): Promise<CreateActionResponse<ClientStorage.Video>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const entity = await videoGrpcRepository.createOne(request, metadata);
@@ -43,8 +36,8 @@ export async function createVideo(
 }
 
 export async function createImage(
-  request: GrpcImageCreateRequest,
-): Promise<CreateActionResponse<GrpcImage>> {
+  request: ClientStorage.ImageCreateRequest,
+): Promise<CreateActionResponse<ClientStorage.Image>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const entity = await imageGrpcRepository.createOne(request, metadata);

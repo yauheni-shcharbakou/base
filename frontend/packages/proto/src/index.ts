@@ -1,0 +1,11 @@
+export * as ClientAuth from './auth';
+export * as ClientCommon from './common';
+export * as ClientStorage from './storage';
+export * as ClientGoogle from './google';
+export { GrpcAuthRepository, GrpcAuthProxyRepository } from './auth/auth.service';
+export { GrpcTempCodeRepository } from './auth/temp-code.service';
+export { GrpcUserRepository } from './auth/user.service';
+export { GrpcFileRepository } from './storage/file.service';
+export { GrpcImageRepository } from './storage/image.service';
+export { GrpcStorageObjectRepository } from './storage/storage-object.service';
+export { GrpcVideoRepository } from './storage/video.service';

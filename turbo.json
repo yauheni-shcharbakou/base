@@ -16,7 +16,9 @@
       "dependsOn": ["^compile", "^build"]
     },
     "prod": {},
-    "format": {},
+    "format": {
+      "cache": false
+    },
     "lint": {},
     "reset": {
       "cache": false

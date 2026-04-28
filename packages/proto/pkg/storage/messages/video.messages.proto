@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package storage.messages;
+
+import "google/protobuf/timestamp.proto";
+
+import "common/service.proto";
+import "storage/models/file.proto";
+import "storage/models/video.proto";
+import "storage/messages/file.messages.proto";
+import "storage/messages/storage-object.messages.proto";
+
+// populate
+
+message VideoPopulated {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string title = 4;
+  int32 duration = 5;
+  int32 views = 6;
+  optional string description = 7;
+  string providerId = 8;
+
+  string userId = 9;
+  string fileId = 10;
+  models.File file = 11;
+  string uploadId = 12;
+}
+
+// query
+
+message VideoQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string file = 3;
+  optional string providerId = 4;
+  repeated string providerIds = 5;
+  optional string userId = 6;
+}
+
+// get
+
+message VideoGetListResponse {
+  repeated VideoPopulated items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message VideoCreate {
+  string title = 1;
+  optional string description = 2;
+}
+
+message VideoCreateRequest {
+  VideoCreate video = 1;
+  FileCreate file = 2;
+  optional StorageObjectMetadata storage = 3;
+}
+
+message VideoCreateManyItem {
+  VideoCreate video = 1;
+  FileCreate file = 2;
+  string uploadId = 3;
+}
+
+message VideoCreateManyRequest {
+  optional StorageObjectManyMetadata storage = 1;
+  repeated VideoCreateManyItem items = 2;
+}
+
+message VideoCreateManyResponse {
+  repeated models.Video items = 1;
+}
+
+// upload
+
+message VideoUploadResponse {
+  oneof payload {
+    models.Video entity = 1;
+    bool canSendChunks = 2;
+    bool ack = 3;
+  }
+}
+
+// update
+
+message VideoUpdateSet {
+  optional string title = 1;
+  optional string description = 2;
+}
+
+message VideoUpdate {
+  optional VideoUpdateSet set = 1;
+}
+
+message VideoUpdateRequest {
+  VideoQuery query = 1;
+  VideoUpdate update = 2;
+}
+
+message VideoUpdateByIdRequest {
+  string id = 1;
+  VideoUpdate update = 2;
+}

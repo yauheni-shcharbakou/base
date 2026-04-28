@@ -1,4 +1,4 @@
-import { GrpcEntityWithTimestamps } from '@backend/grpc';
+import type { NestCommon } from '@backend/proto';
 import { NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 import {
@@ -13,7 +13,7 @@ import {
 import { CrudService } from 'common/services/crud/crud.service';
 
 export abstract class CrudServiceImpl<
-  Entity extends GrpcEntityWithTimestamps = GrpcEntityWithTimestamps,
+  Entity extends NestCommon.EntityWithTimestamps = NestCommon.EntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
@@ -30,28 +30,28 @@ export abstract class CrudServiceImpl<
     return this.repository.deleteById(id);
   }
 
-  getById<E extends GrpcEntityWithTimestamps = Entity>(
+  getById<E extends NestCommon.EntityWithTimestamps = Entity>(
     id: string,
     options?: OptionsOf<E>,
   ): Promise<Either<NotFoundException, E>> {
     return this.repository.getById(id, options);
   }
 
-  getOne<E extends GrpcEntityWithTimestamps = Entity>(
+  getOne<E extends NestCommon.EntityWithTimestamps = Entity>(
     query?: Query,
     options?: OptionsOf<E>,
   ): Promise<Either<NotFoundException, E>> {
     return this.repository.getOne(query, options);
   }
 
-  getMany<E extends GrpcEntityWithTimestamps = Entity>(
+  getMany<E extends NestCommon.EntityWithTimestamps = Entity>(
     query?: Query,
     options?: OptionsOf<E>,
   ): Promise<E[]> {
     return this.repository.getMany(query, options);
   }
 
-  getList<E extends GrpcEntityWithTimestamps = Entity>(
+  getList<E extends NestCommon.EntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
     options?: OptionsOf<E>,
   ): Promise<DatabaseRepositoryGetListRes<E>> {

@@ -13,7 +13,7 @@ import { useMultipleFileUpload } from '@/features/storage/hooks';
 import { StorageUploadItem } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { GrpcIdField } from '@packages/grpc';
+import type { BrowserCommon } from '@packages/proto';
 import { useInvalidate, useNavigation } from '@refinedev/core';
 import React, { useCallback, useMemo } from 'react';
 import zod from 'zod';
@@ -27,7 +27,7 @@ const schema = {
 
 type Params = SchemaTypeOf<typeof schema>;
 
-type Props<Entity extends GrpcIdField & { uploadId: string }> = {
+type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
   fileResource: string;
   resource: string;
   batchSize: number;
@@ -36,7 +36,7 @@ type Props<Entity extends GrpcIdField & { uploadId: string }> = {
   fileRefField?: keyof Entity | string;
 };
 
-export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }>(
+export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId: string }>(
   props: Props<Entity>,
 ) => {
   const {

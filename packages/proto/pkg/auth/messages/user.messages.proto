@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package auth.messages;
+
+import "auth/models/user.proto";
+
+// query
+
+message UserQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string email = 3;
+  repeated models.UserRole roles = 4;
+}
+
+message UserRequest {
+  UserQuery query = 1;
+}
+
+// get
+
+message UserList {
+  repeated models.User items = 1;
+}
+
+message UserGetListResponse {
+  repeated models.User items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message UserCreate {
+  string email = 1;
+  string password = 2;
+  optional models.UserRole role = 3;
+}
+
+message UserCreateManyRequest {
+  repeated UserCreate items = 1;
+}
+
+// update
+
+message UserUpdateSet {
+  optional string email = 1;
+  optional models.UserRole role = 2;
+  optional string password = 3;
+}
+
+message UserUpdate {
+  optional UserUpdateSet set = 1;
+}
+
+message UserUpdateRequest {
+  UserQuery query = 1;
+  UserUpdate update = 2;
+}
+
+message UserUpdateByIdRequest {
+  string id = 1;
+  UserUpdate update = 2;
+}

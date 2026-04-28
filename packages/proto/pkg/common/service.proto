@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package common;
+
+import "google/protobuf/timestamp.proto";
+
+import "common/crud.proto";
+
+message IdField {
+  string id = 1;
+}
+
+message IdsField {
+  repeated string ids = 1;
+}
+
+message EntityWithTimestamps {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+}
+
+message BaseQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+}
+
+message BaseRequest {
+  BaseQuery query = 1;
+}
+
+message Pagination {
+  optional int32 page = 1;
+  optional int32 limit = 2;
+}
+
+message GetListRequest {
+  repeated CrudLogicalFilter logicalFilters = 1;
+  repeated CrudConditionalFilter conditionalFilters = 2;
+  repeated CrudSorter sorters = 3;
+  optional Pagination pagination = 4;
+}
+
+message BooleanResult {
+  bool value = 1;
+}

@@ -1,5 +1,5 @@
-export * from './auth';
-export * from './common';
-export * from './storage';
-export * from './google';
+export * as NestAuthProto from './auth';
+export * as NestGrpcCommon from './common';
+export * as NestGrpcStorage from './storage';
+export * as NestGrpcGoogle from './google';
 export * from './__compiler__';

@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package storage.messages;
+
+import "google/protobuf/timestamp.proto";
+
+import "common/service.proto";
+import "storage/models/file.proto";
+import "storage/models/image.proto";
+import "storage/messages/file.messages.proto";
+import "storage/messages/storage-object.messages.proto";
+
+// populate
+
+message ImagePopulated {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  int32 width = 4;
+  int32 height = 5;
+  string alt = 6;
+
+  string userId = 7;
+  string fileId = 8;
+  models.File file = 9;
+  string uploadId = 10;
+}
+
+// query
+
+message ImageQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string file = 3;
+  optional string userId = 4;
+}
+
+// get
+
+message ImageGetListResponse {
+  repeated ImagePopulated items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message ImageCreate {
+  int32 width = 1;
+  int32 height = 2;
+  string alt = 3;
+}
+
+message ImageCreateRequest {
+  ImageCreate image = 1;
+  FileCreate file = 2;
+  optional StorageObjectMetadata storage = 3;
+}
+
+message ImageCreateManyItem {
+  ImageCreate image = 1;
+  FileCreate file = 2;
+  string uploadId = 3;
+}
+
+message ImageCreateManyRequest {
+  optional StorageObjectManyMetadata storage = 1;
+  repeated ImageCreateManyItem items = 2;
+}
+
+message ImageCreateManyResponse {
+  repeated models.Image items = 1;
+}
+
+// update
+
+message ImageUpdateSet {
+  optional string alt = 1;
+}
+
+message ImageUpdate {
+  optional ImageUpdateSet set = 1;
+}
+
+message ImageUpdateRequest {
+  ImageQuery query = 1;
+  ImageUpdate update = 2;
+}
+
+message ImageUpdateByIdRequest {
+  string id = 1;
+  ImageUpdate update = 2;
+}

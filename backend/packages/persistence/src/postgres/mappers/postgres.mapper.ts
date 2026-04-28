@@ -1,21 +1,15 @@
-import {
-  GrpcCrudConditionalFilter,
-  GrpcCrudConditionalOperator,
-  GrpcCrudLogicalFilter,
-  GrpcCrudLogicalOperator,
-  GrpcCrudSort,
-  GrpcCrudSorter,
-  GrpcEntityWithTimestamps,
-  GrpcIdField,
-} from '@backend/grpc';
+import { NestCommon } from '@backend/proto';
 import { FilterObject, ObjectQuery, wrap } from '@mikro-orm/core';
-import { OperatorMap } from '@mikro-orm/core/typings';
 import { DatabaseRepositoryGetList, QueryOf } from 'common';
 import _ from 'lodash';
 import { PostgresEntity } from 'postgres/entities';
 import { PostgresSorting } from 'postgres/postgres.types';
+import { OperatorMap } from '@mikro-orm/core/typings';
 
-interface ParsedLogicalFilter extends Omit<GrpcCrudLogicalFilter, 'string' | 'number' | 'boolean'> {
+interface ParsedLogicalFilter extends Omit<
+  NestCommon.CrudLogicalFilter,
+  'string' | 'number' | 'boolean'
+> {
   value?: any;
 }
 
@@ -25,18 +19,21 @@ type FilterConverter = (
 
 export class PostgresMapper<
   Doc extends PostgresEntity<any>,
-  Entity extends GrpcEntityWithTimestamps,
+  Entity extends NestCommon.EntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
 > {
   constructor(protected readonly fieldNameConverter: Record<string, keyof Doc | string> = {}) {}
 
-  protected readonly additionalFilterConverters: [GrpcCrudLogicalOperator, FilterConverter][] = [];
+  protected readonly additionalFilterConverters: [
+    NestCommon.CrudLogicalOperator,
+    FilterConverter,
+  ][] = [];
 
   protected convertFieldName(fieldName: string): string {
     return (this.fieldNameConverter[fieldName] ?? fieldName).toString();
   }
 
-  protected parseLogicalFilter(filter: GrpcCrudLogicalFilter): ParsedLogicalFilter {
+  protected parseLogicalFilter(filter: NestCommon.CrudLogicalFilter): ParsedLogicalFilter {
     const result: ParsedLogicalFilter = _.pick(filter, ['field', 'operator']);
 
     if (_.isNumber(filter.number) ?? _.isBoolean(filter.boolean)) {
@@ -62,61 +59,55 @@ export class PostgresMapper<
     return result;
   }
 
-  protected readonly converterByFilter: Map<GrpcCrudLogicalOperator, FilterConverter> = new Map([
-    // Равенство (eq - регистронезависимо для строк в Postgres обычно через ILIKE или регулярку)
-    [
-      GrpcCrudLogicalOperator.eq,
-      ({ value }) => (_.isString(value) ? { $re: `^${value}$` } : value),
-    ],
-    [GrpcCrudLogicalOperator.eqs, ({ value }) => value], // Строгое равенство
+  protected readonly converterByFilter: Map<NestCommon.CrudLogicalOperator, FilterConverter> =
+    new Map([
+      [
+        NestCommon.CrudLogicalOperator.eq,
+        ({ value }) => (_.isString(value) ? { $re: `^${value}$` } : value),
+      ],
 
-    // Неравенство
-    [
-      GrpcCrudLogicalOperator.ne,
-      ({ value }) => (_.isString(value) ? { $not: { $re: `^${value}$` } } : { $ne: value }),
-    ],
-    [GrpcCrudLogicalOperator.nes, ({ value }) => ({ $ne: value })],
+      [NestCommon.CrudLogicalOperator.eqs, ({ value }) => value],
+      [
+        NestCommon.CrudLogicalOperator.ne,
+        ({ value }) => (_.isString(value) ? { $not: { $re: `^${value}$` } } : { $ne: value }),
+      ],
+      [NestCommon.CrudLogicalOperator.nes, ({ value }) => ({ $ne: value })],
 
-    // Сравнения
-    [GrpcCrudLogicalOperator.gt, ({ value }) => ({ $gt: value })],
-    [GrpcCrudLogicalOperator.gte, ({ value }) => ({ $gte: value })],
-    [GrpcCrudLogicalOperator.lt, ({ value }) => ({ $lt: value })],
-    [GrpcCrudLogicalOperator.lte, ({ value }) => ({ $lte: value })],
+      [NestCommon.CrudLogicalOperator.gt, ({ value }) => ({ $gt: value })],
+      [NestCommon.CrudLogicalOperator.gte, ({ value }) => ({ $gte: value })],
+      [NestCommon.CrudLogicalOperator.lt, ({ value }) => ({ $lt: value })],
+      [NestCommon.CrudLogicalOperator.lte, ({ value }) => ({ $lte: value })],
 
-    // Списки
-    [GrpcCrudLogicalOperator.in, ({ value }) => ({ $in: _.castArray(value) })],
-    [GrpcCrudLogicalOperator.nin, ({ value }) => ({ $nin: _.castArray(value) })],
+      [NestCommon.CrudLogicalOperator.in, ({ value }) => ({ $in: _.castArray(value) })],
+      [NestCommon.CrudLogicalOperator.nin, ({ value }) => ({ $nin: _.castArray(value) })],
 
-    // Поиск подстроки (Postgres ILIKE)
-    [GrpcCrudLogicalOperator.contains, ({ value }) => ({ $ilike: `%${value}%` })],
-    [GrpcCrudLogicalOperator.containss, ({ value }) => ({ $like: `%${value}%` })],
-    [GrpcCrudLogicalOperator.startswith, ({ value }) => ({ $ilike: `${value}%` })],
-    [GrpcCrudLogicalOperator.startswiths, ({ value }) => ({ $like: `${value}%` })],
-    [GrpcCrudLogicalOperator.endswith, ({ value }) => ({ $ilike: `%${value}` })],
-    [GrpcCrudLogicalOperator.endswiths, ({ value }) => ({ $like: `%${value}` })],
+      [NestCommon.CrudLogicalOperator.contains, ({ value }) => ({ $ilike: `%${value}%` })],
+      [NestCommon.CrudLogicalOperator.containss, ({ value }) => ({ $like: `%${value}%` })],
+      [NestCommon.CrudLogicalOperator.startswith, ({ value }) => ({ $ilike: `${value}%` })],
+      [NestCommon.CrudLogicalOperator.startswiths, ({ value }) => ({ $like: `${value}%` })],
+      [NestCommon.CrudLogicalOperator.endswith, ({ value }) => ({ $ilike: `%${value}` })],
+      [NestCommon.CrudLogicalOperator.endswiths, ({ value }) => ({ $like: `%${value}` })],
 
-    // Промежутки
-    [
-      GrpcCrudLogicalOperator.between,
-      ({ value }) => {
-        if (_.isArray(value)) {
-          return { $gte: value[0], $lte: value[1] };
-        }
-      },
-    ],
+      [
+        NestCommon.CrudLogicalOperator.between,
+        ({ value }) => {
+          if (_.isArray(value)) {
+            return { $gte: value[0], $lte: value[1] };
+          }
+        },
+      ],
 
-    // Null checks
-    [GrpcCrudLogicalOperator.null, () => null],
-    [GrpcCrudLogicalOperator.nnull, () => ({ $ne: null })],
-    ...this.additionalFilterConverters,
-  ]);
+      [NestCommon.CrudLogicalOperator.null, () => null],
+      [NestCommon.CrudLogicalOperator.nnull, () => ({ $ne: null })],
+      ...this.additionalFilterConverters,
+    ]);
 
-  protected convertConditionalFilter(filter: GrpcCrudConditionalFilter): any {
+  protected convertConditionalFilter(filter: NestCommon.CrudConditionalFilter): any {
     if (!filter.value?.length) {
       return;
     }
 
-    const operator = filter.operator === GrpcCrudConditionalOperator.or ? '$or' : '$and';
+    const operator = filter.operator === NestCommon.CrudConditionalOperator.or ? '$or' : '$and';
 
     return {
       [operator]: _.reduce(
@@ -136,14 +127,14 @@ export class PostgresMapper<
     };
   }
 
-  transformSorters(sorters: GrpcCrudSorter[] = []): PostgresSorting[] {
+  transformSorters(sorters: NestCommon.CrudSorter[] = []): PostgresSorting[] {
     return _.map(sorters, (sorter): PostgresSorting => {
-      return { [sorter.field]: sorter.order === GrpcCrudSort.desc ? 'DESC' : 'ASC' };
+      return { [sorter.field]: sorter.order === NestCommon.CrudSort.desc ? 'DESC' : 'ASC' };
     });
   }
 
   transformQuery({ ids, ...rest }: Partial<Query>): ObjectQuery<Doc> {
-    const result = _.omitBy(rest, _.isNil) as ObjectQuery<GrpcIdField>;
+    const result = _.omitBy(rest, _.isNil) as ObjectQuery<NestCommon.IdField>;
 
     if (ids?.length) {
       result.id = { $in: ids };

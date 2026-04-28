@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { GrpcIdField } from '@backend/grpc';
+import type { NestCommon } from '@backend/proto';
 import {
   NatsJetStreamClientProxy,
   NatsJetStreamContext,
@@ -45,13 +45,13 @@ export const NatsUserTransport = {
 
 export interface NatsUserEventController {
   onCreateOne(
-    event: GrpcIdField,
+    event: NestCommon.IdField,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 export interface NatsUserCreateOneEventHandler {
   onUserCreateOne(
-    event: GrpcIdField,
+    event: NestCommon.IdField,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -89,13 +89,13 @@ export const NatsTempCodeTransport = {
 
 export interface NatsTempCodeEventController {
   onDeactivateOne(
-    event: GrpcIdField,
+    event: NestCommon.IdField,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 export interface NatsTempCodeDeactivateOneEventHandler {
   onTempCodeDeactivateOne(
-    event: GrpcIdField,
+    event: NestCommon.IdField,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -258,23 +258,23 @@ export interface NatsVideoUpdateOneEventHandler {
 }
 
 interface NatsAuthUserClient {
-  createOne(data: GrpcIdField): Observable<any>;
+  createOne(data: NestCommon.IdField): Observable<any>;
 }
 
 class NatsAuthUserClientImpl implements NatsAuthUserClient {
   constructor(protected readonly client: NatsJetStreamClientProxy) {}
-  createOne(data: GrpcIdField): Observable<any> {
+  createOne(data: NestCommon.IdField): Observable<any> {
     return this.client.emit('auth.user.create.one', data);
   }
 }
 
 interface NatsAuthTempCodeClient {
-  deactivateOne(data: GrpcIdField): Observable<any>;
+  deactivateOne(data: NestCommon.IdField): Observable<any>;
 }
 
 class NatsAuthTempCodeClientImpl implements NatsAuthTempCodeClient {
   constructor(protected readonly client: NatsJetStreamClientProxy) {}
-  deactivateOne(data: GrpcIdField): Observable<any> {
+  deactivateOne(data: NestCommon.IdField): Observable<any> {
     return this.client.emit('auth.temp.code.deactivate.one', data);
   }
 }
