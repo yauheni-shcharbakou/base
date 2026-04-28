@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
-import { GrpcBaseQuery, GrpcEntityWithTimestamps, GrpcGetListRequest } from '@backend/grpc';
 import { Either } from '@sweet-monads/either';
+import type { NestCommon } from '@backend/proto';
 
 export type ExcludeDatabaseSystemFields<Entity> = Omit<Entity, 'id' | 'createdAt' | 'updatedAt'>;
 
-export type QueryOf<Entity> = Partial<GrpcBaseQuery & Omit<Entity, 'id'>>;
+export type QueryOf<Entity> = Partial<NestCommon.BaseQuery & Omit<Entity, 'id'>>;
 
 export type CreateOf<Entity> = ExcludeDatabaseSystemFields<Entity>;
 
@@ -24,7 +24,7 @@ export type UpdateOf<Entity> = {
   inc?: UpdateIncOf<Entity>;
 };
 
-export interface DatabaseRepositoryGetList<Query> extends Partial<GrpcGetListRequest> {
+export interface DatabaseRepositoryGetList<Query> extends Partial<NestCommon.GetListRequest> {
   query?: Partial<Query>;
 }
 
@@ -33,13 +33,13 @@ export interface DatabaseRepositoryGetListRes<Entity> {
   total: number;
 }
 
-export type JoinField<Entity extends GrpcEntityWithTimestamps> = keyof Entity | string;
+export type JoinField<Entity extends NestCommon.EntityWithTimestamps> = keyof Entity | string;
 
-export type OptionsOf<Entity extends GrpcEntityWithTimestamps> = {
+export type OptionsOf<Entity extends NestCommon.EntityWithTimestamps> = {
   populate?: JoinField<Entity>[];
 };
 
-export type BulkUpdate<Entity extends GrpcEntityWithTimestamps> = {
+export type BulkUpdate<Entity extends NestCommon.EntityWithTimestamps> = {
   filter: {
     key: keyof Entity | string;
     value: any;
@@ -48,7 +48,7 @@ export type BulkUpdate<Entity extends GrpcEntityWithTimestamps> = {
 };
 
 export interface DatabaseRepository<
-  Entity extends GrpcEntityWithTimestamps = GrpcEntityWithTimestamps,
+  Entity extends NestCommon.EntityWithTimestamps = NestCommon.EntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
@@ -60,19 +60,19 @@ export interface DatabaseRepository<
     field: Field,
     query?: Partial<Query>,
   ): Promise<Set<Entity[Field]>>;
-  getById<E extends GrpcEntityWithTimestamps = Entity>(
+  getById<E extends NestCommon.EntityWithTimestamps = Entity>(
     id: string,
     options?: OptionsOf<E>,
   ): Promise<Either<NotFoundException, E>>;
-  getOne<E extends GrpcEntityWithTimestamps = Entity>(
+  getOne<E extends NestCommon.EntityWithTimestamps = Entity>(
     query?: Partial<Query>,
     options?: OptionsOf<E>,
   ): Promise<Either<NotFoundException, E>>;
-  getMany<E extends GrpcEntityWithTimestamps = Entity>(
+  getMany<E extends NestCommon.EntityWithTimestamps = Entity>(
     query?: Partial<Query>,
     options?: OptionsOf<E>,
   ): Promise<E[]>;
-  getList<E extends GrpcEntityWithTimestamps = Entity>(
+  getList<E extends NestCommon.EntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
     options?: OptionsOf<E>,
   ): Promise<DatabaseRepositoryGetListRes<E>>;

@@ -7,44 +7,44 @@
 /* eslint-disable */
 
 export enum CrudLogicalOperator {
-  eq = "eq",
-  ne = "ne",
-  eqs = "eqs",
-  nes = "nes",
-  lt = "lt",
-  gt = "gt",
-  lte = "lte",
-  gte = "gte",
-  in = "in",
-  nin = "nin",
-  ina = "ina",
-  nina = "nina",
-  contains = "contains",
-  ncontains = "ncontains",
-  containss = "containss",
-  ncontainss = "ncontainss",
-  between = "between",
-  nbetween = "nbetween",
-  null = "null",
-  nnull = "nnull",
-  startswith = "startswith",
-  nstartswith = "nstartswith",
-  startswiths = "startswiths",
-  nstartswiths = "nstartswiths",
-  endswith = "endswith",
-  nendswith = "nendswith",
-  endswiths = "endswiths",
-  nendswiths = "nendswiths",
+  eq = 'eq',
+  ne = 'ne',
+  eqs = 'eqs',
+  nes = 'nes',
+  lt = 'lt',
+  gt = 'gt',
+  lte = 'lte',
+  gte = 'gte',
+  in = 'in',
+  nin = 'nin',
+  ina = 'ina',
+  nina = 'nina',
+  contains = 'contains',
+  ncontains = 'ncontains',
+  containss = 'containss',
+  ncontainss = 'ncontainss',
+  between = 'between',
+  nbetween = 'nbetween',
+  null = 'null',
+  nnull = 'nnull',
+  startswith = 'startswith',
+  nstartswith = 'nstartswith',
+  startswiths = 'startswiths',
+  nstartswiths = 'nstartswiths',
+  endswith = 'endswith',
+  nendswith = 'nendswith',
+  endswiths = 'endswiths',
+  nendswiths = 'nendswiths',
 }
 
 export enum CrudConditionalOperator {
-  or = "or",
-  and = "and",
+  or = 'or',
+  and = 'and',
 }
 
 export enum CrudSort {
-  asc = "asc",
-  desc = "desc",
+  asc = 'asc',
+  desc = 'desc',
 }
 
 export interface CrudLogicalFilter {
@@ -65,4 +65,3 @@ export interface CrudSorter {
   field: string;
   order: CrudSort;
 }
-

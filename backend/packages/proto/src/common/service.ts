@@ -5,8 +5,8 @@
 // source: common/service.proto
 
 /* eslint-disable */
-import { wrappers } from "protobufjs";
-import { CrudConditionalFilter, CrudLogicalFilter, CrudSorter } from "./crud";
+import { wrappers } from 'protobufjs';
+import { CrudConditionalFilter, CrudLogicalFilter, CrudSorter } from './crud';
 
 export interface IdField {
   id: string;
@@ -47,8 +47,7 @@ export interface BooleanResult {
   value: boolean;
 }
 
-
-wrappers[".google.protobuf.Timestamp"] = {
+wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

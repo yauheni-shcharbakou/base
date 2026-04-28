@@ -5,9 +5,9 @@
 // source: storage/messages/file.messages.proto
 
 /* eslint-disable */
-import { wrappers } from "protobufjs";
-import { File, FileUploadStatus } from "../models/file";
-import { StorageObjectManyMetadata, StorageObjectMetadata } from "./storage-object.messages";
+import { wrappers } from 'protobufjs';
+import { File, FileUploadStatus } from '../models/file';
+import { StorageObjectManyMetadata, StorageObjectMetadata } from './storage-object.messages';
 
 export interface FileQuery {
   id?: string;
@@ -62,8 +62,7 @@ export interface FileUploadResponse {
   ack?: boolean;
 }
 
-
-wrappers[".google.protobuf.Timestamp"] = {
+wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

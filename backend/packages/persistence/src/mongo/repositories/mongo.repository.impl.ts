@@ -1,5 +1,4 @@
 import { NotFoundException } from '@nestjs/common';
-import { GrpcEntityWithTimestamps } from '@backend/grpc';
 import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { MongoEntity } from 'mongo/entities';
@@ -15,10 +14,11 @@ import {
 } from 'common';
 import { MongoMapper } from 'mongo/mappers';
 import { Model } from 'mongoose';
+import type { NestCommon } from '@backend/proto';
 
 export abstract class MongoRepositoryImpl<
   Doc extends MongoEntity,
-  Entity extends GrpcEntityWithTimestamps = GrpcEntityWithTimestamps,
+  Entity extends NestCommon.EntityWithTimestamps = NestCommon.EntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
@@ -28,7 +28,9 @@ export abstract class MongoRepositoryImpl<
     protected readonly mapper: MongoMapper<Doc, Entity, Query> = new MongoMapper(),
   ) {}
 
-  private getPopulate<E extends GrpcEntityWithTimestamps = Entity>(options: OptionsOf<E> = {}) {
+  private getPopulate<E extends NestCommon.EntityWithTimestamps = Entity>(
+    options: OptionsOf<E> = {},
+  ) {
     if (!options.populate) {
       return undefined;
     }
@@ -76,14 +78,14 @@ export abstract class MongoRepositoryImpl<
     }
   }
 
-  async getById<E extends GrpcEntityWithTimestamps = Entity>(
+  async getById<E extends NestCommon.EntityWithTimestamps = Entity>(
     id: string,
     options: OptionsOf<E> = {},
   ): Promise<Either<NotFoundException, E>> {
     return this.getOne({ id } as Partial<Query>, options);
   }
 
-  async getOne<E extends GrpcEntityWithTimestamps = Entity>(
+  async getOne<E extends NestCommon.EntityWithTimestamps = Entity>(
     query: Partial<Query> = {},
     options: OptionsOf<E> = {},
   ): Promise<Either<NotFoundException, E>> {
@@ -100,7 +102,7 @@ export abstract class MongoRepositoryImpl<
     return right(this.mapper.stringify(entity) as unknown as E);
   }
 
-  async getMany<E extends GrpcEntityWithTimestamps = Entity>(
+  async getMany<E extends NestCommon.EntityWithTimestamps = Entity>(
     query: Partial<Query> = {},
     options: OptionsOf<E> = {},
   ): Promise<E[]> {
@@ -111,7 +113,7 @@ export abstract class MongoRepositoryImpl<
     return this.mapper.stringifyMany(entities) as unknown as E[];
   }
 
-  async getList<E extends GrpcEntityWithTimestamps = Entity>(
+  async getList<E extends NestCommon.EntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
     options: OptionsOf<E> = {},
   ): Promise<DatabaseRepositoryGetListRes<E>> {

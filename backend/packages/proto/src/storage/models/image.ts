@@ -5,7 +5,7 @@
 // source: storage/models/image.proto
 
 /* eslint-disable */
-import { wrappers } from "protobufjs";
+import { wrappers } from 'protobufjs';
 
 export interface Image {
   id: string;
@@ -19,8 +19,7 @@ export interface Image {
   uploadId: string;
 }
 
-
-wrappers[".google.protobuf.Timestamp"] = {
+wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

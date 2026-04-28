@@ -5,13 +5,13 @@
 // source: storage/models/storage-object.proto
 
 /* eslint-disable */
-import { wrappers } from "protobufjs";
+import { wrappers } from 'protobufjs';
 
 export enum StorageObjectType {
-  FOLDER = "FOLDER",
-  FILE = "FILE",
-  IMAGE = "IMAGE",
-  VIDEO = "VIDEO",
+  FOLDER = 'FOLDER',
+  FILE = 'FILE',
+  IMAGE = 'IMAGE',
+  VIDEO = 'VIDEO',
 }
 
 export interface StorageObject {
@@ -30,8 +30,7 @@ export interface StorageObject {
   videoId?: string;
 }
 
-
-wrappers[".google.protobuf.Timestamp"] = {
+wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

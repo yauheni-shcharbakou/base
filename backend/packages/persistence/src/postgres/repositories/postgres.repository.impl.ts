@@ -1,4 +1,4 @@
-import { GrpcEntityWithTimestamps } from '@backend/grpc';
+import type { NestCommon } from '@backend/proto';
 import { FilterQuery, Populate, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { NotFoundException } from '@nestjs/common';
@@ -19,7 +19,7 @@ import { PostgresMapper } from 'postgres/mappers';
 
 export abstract class PostgresRepositoryImpl<
   Doc extends PostgresEntity<any>,
-  Entity extends GrpcEntityWithTimestamps,
+  Entity extends NestCommon.EntityWithTimestamps,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
@@ -55,7 +55,9 @@ export abstract class PostgresRepositoryImpl<
     return entity;
   }
 
-  protected getPopulate<E extends GrpcEntityWithTimestamps = Entity>(options: OptionsOf<E> = {}) {
+  protected getPopulate<E extends NestCommon.EntityWithTimestamps = Entity>(
+    options: OptionsOf<E> = {},
+  ) {
     if (!options.populate) {
       return undefined;
     }
@@ -146,14 +148,14 @@ export abstract class PostgresRepositoryImpl<
     }
   }
 
-  async getById<E extends GrpcEntityWithTimestamps = Entity>(
+  async getById<E extends NestCommon.EntityWithTimestamps = Entity>(
     id: string,
     options: OptionsOf<E> = {},
   ): Promise<Either<NotFoundException, E>> {
     return this.getOne({ id } as Partial<Query>, options);
   }
 
-  async getList<E extends GrpcEntityWithTimestamps = Entity>(
+  async getList<E extends NestCommon.EntityWithTimestamps = Entity>(
     request: DatabaseRepositoryGetList<Query>,
     options: OptionsOf<E> = {},
   ): Promise<DatabaseRepositoryGetListRes<E>> {
@@ -180,7 +182,7 @@ export abstract class PostgresRepositoryImpl<
     }
   }
 
-  async getMany<E extends GrpcEntityWithTimestamps = Entity>(
+  async getMany<E extends NestCommon.EntityWithTimestamps = Entity>(
     query?: Partial<Query>,
     options: OptionsOf<E> = {},
   ): Promise<E[]> {
@@ -194,7 +196,7 @@ export abstract class PostgresRepositoryImpl<
     return this.mapper.stringifyMany(entities) as unknown as E[];
   }
 
-  async getOne<E extends GrpcEntityWithTimestamps = Entity>(
+  async getOne<E extends NestCommon.EntityWithTimestamps = Entity>(
     query: Partial<Query> = {},
     options: OptionsOf<E> = {},
   ): Promise<Either<NotFoundException, E>> {

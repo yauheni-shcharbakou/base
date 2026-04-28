@@ -5,13 +5,12 @@
 // source: auth/temp-code.service.proto
 
 /* eslint-disable */
-import { type Metadata } from "@grpc/grpc-js";
-import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
-import { Observable } from "rxjs";
-import { GetListRequest, IdField } from "../common/service";
-import { TempCodeCreate, TempCodeGetListResponse } from "./messages/temp-code.messages";
-import { TempCode } from "./models/temp-code";
-
+import { type Metadata } from '@grpc/grpc-js';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
+import { GetListRequest, IdField } from '../common/service';
+import { TempCodeCreate, TempCodeGetListResponse } from './messages/temp-code.messages';
+import { TempCode } from './models/temp-code';
 
 export interface GrpcTempCodeServiceClient {
   getById(request: IdField, metadata?: Metadata): Observable<TempCode>;
@@ -26,35 +25,46 @@ export interface GrpcTempCodeServiceClient {
 export interface GrpcTempCodeServiceController {
   getById(request: IdField, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
 
-  getList(request: GetListRequest, ...args: any[]): Promise<TempCodeGetListResponse> | Observable<TempCodeGetListResponse> | TempCodeGetListResponse;
+  getList(
+    request: GetListRequest,
+    ...args: any[]
+  ):
+    | Promise<TempCodeGetListResponse>
+    | Observable<TempCodeGetListResponse>
+    | TempCodeGetListResponse;
 
-  createOne(request: TempCodeCreate, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
+  createOne(
+    request: TempCodeCreate,
+    ...args: any[]
+  ): Promise<TempCode> | Observable<TempCode> | TempCode;
 
   deleteById(request: IdField, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
 }
 
 function TempCodeServiceControllerMethods() {
-  return function(constructor: Function) {
-    const grpcMethods: string[] = ["getById", "getList", "createOne", "deleteById"];
+  return function (constructor: Function) {
+    const grpcMethods: string[] = ['getById', 'getList', 'createOne', 'deleteById'];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcMethod("TempCodeService", method)(constructor.prototype[method], method, descriptor);
+      GrpcMethod('TempCodeService', method)(constructor.prototype[method], method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
-      GrpcStreamMethod("TempCodeService", method)(constructor.prototype[method], method, descriptor);
+      GrpcStreamMethod('TempCodeService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
     }
   };
 }
 
-
 export const GrpcTempCodeTransport = {
   service: 'TempCodeService',
   definition: {
-    package: "auth",
+    package: 'auth',
     protoPath: 'auth/temp-code.service.proto',
   },
   ControllerMethods: (): ClassDecorator => TempCodeServiceControllerMethods(),
 } as const;
-

@@ -12,7 +12,7 @@ export interface DownloadData {
 }
 
 export interface UrlMap {
-  items: { [key: string]: string; };
+  items: { [key: string]: string };
 }
 
 export interface UrlMapItemsEntry {
@@ -21,7 +21,7 @@ export interface UrlMapItemsEntry {
 }
 
 export interface DownloadMap {
-  items: { [key: string]: DownloadData; };
+  items: { [key: string]: DownloadData };
 }
 
 export interface DownloadMapItemsEntry {
@@ -33,4 +33,3 @@ export interface UploadRequest {
   id?: string;
   chunk?: Uint8Array<ArrayBufferLike>;
 }
-

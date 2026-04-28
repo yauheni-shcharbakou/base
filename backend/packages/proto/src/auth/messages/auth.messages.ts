@@ -5,8 +5,8 @@
 // source: auth/messages/auth.messages.proto
 
 /* eslint-disable */
-import { wrappers } from "protobufjs";
-import { User } from "../models/user";
+import { wrappers } from 'protobufjs';
+import { User } from '../models/user';
 
 export interface AuthLogin {
   login: string;
@@ -41,8 +41,7 @@ export interface AuthStreamCode {
   expireDate: Date;
 }
 
-
-wrappers[".google.protobuf.Timestamp"] = {
+wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },

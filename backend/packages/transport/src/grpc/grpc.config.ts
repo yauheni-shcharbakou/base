@@ -1,16 +1,16 @@
+import {
+  GrpcAuthProxyTransport,
+  GrpcAuthTransport,
+  GrpcFileTransport,
+  GrpcImageTransport,
+  GrpcStorageObjectTransport,
+  GrpcTempCodeTransport,
+  GrpcUserTransport,
+  GrpcVideoTransport,
+} from '@backend/proto';
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import {
-  GrpcAuthProxyService,
-  GrpcAuthService,
-  GrpcFileService,
-  GrpcImageService,
-  GrpcStorageObjectService,
-  GrpcTempCodeService,
-  GrpcUserService,
-  GrpcVideoService,
-} from '@backend/grpc';
 import { PROTO_PATH } from 'grpc/constants';
 import { wrappers } from 'protobufjs';
 import zod from 'zod';
@@ -60,14 +60,14 @@ export const grpcConfig = () => {
         url: env.API_GATEWAY_GRPC_URL,
       },
       services: {
-        [GrpcAuthProxyService.name]: GrpcAuthProxyService.definition,
-        [GrpcTempCodeService.name]: GrpcTempCodeService.definition,
-        [GrpcUserService.name]: GrpcUserService.definition,
+        [GrpcAuthProxyTransport.service]: GrpcAuthProxyTransport.definition,
+        [GrpcTempCodeTransport.service]: GrpcTempCodeTransport.definition,
+        [GrpcUserTransport.service]: GrpcUserTransport.definition,
 
-        [GrpcFileService.name]: GrpcFileService.definition,
-        [GrpcImageService.name]: GrpcImageService.definition,
-        [GrpcStorageObjectService.name]: GrpcStorageObjectService.definition,
-        [GrpcVideoService.name]: GrpcVideoService.definition,
+        [GrpcFileTransport.service]: GrpcFileTransport.definition,
+        [GrpcImageTransport.service]: GrpcImageTransport.definition,
+        [GrpcStorageObjectTransport.service]: GrpcStorageObjectTransport.definition,
+        [GrpcVideoTransport.service]: GrpcVideoTransport.definition,
       },
     },
     auth: {
@@ -77,9 +77,9 @@ export const grpcConfig = () => {
         url: env.AUTH_GRPC_URL,
       },
       services: {
-        [GrpcAuthService.name]: GrpcAuthService.definition,
-        [GrpcTempCodeService.name]: GrpcTempCodeService.definition,
-        [GrpcUserService.name]: GrpcUserService.definition,
+        [GrpcAuthTransport.service]: GrpcAuthTransport.definition,
+        [GrpcTempCodeTransport.service]: GrpcTempCodeTransport.definition,
+        [GrpcUserTransport.service]: GrpcUserTransport.definition,
       },
     },
     storage: {
@@ -89,10 +89,10 @@ export const grpcConfig = () => {
         url: env.STORAGE_GRPC_URL,
       },
       services: {
-        [GrpcFileService.name]: GrpcFileService.definition,
-        [GrpcImageService.name]: GrpcImageService.definition,
-        [GrpcStorageObjectService.name]: GrpcStorageObjectService.definition,
-        [GrpcVideoService.name]: GrpcVideoService.definition,
+        [GrpcFileTransport.service]: GrpcFileTransport.definition,
+        [GrpcImageTransport.service]: GrpcImageTransport.definition,
+        [GrpcStorageObjectTransport.service]: GrpcStorageObjectTransport.definition,
+        [GrpcVideoTransport.service]: GrpcVideoTransport.definition,
       },
     },
   } as const;

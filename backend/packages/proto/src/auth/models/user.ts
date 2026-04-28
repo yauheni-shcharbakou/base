@@ -5,11 +5,11 @@
 // source: auth/models/user.proto
 
 /* eslint-disable */
-import { wrappers } from "protobufjs";
+import { wrappers } from 'protobufjs';
 
 export enum UserRole {
-  ADMIN = "ADMIN",
-  USER = "USER",
+  ADMIN = 'ADMIN',
+  USER = 'USER',
 }
 
 export interface User {
@@ -20,8 +20,7 @@ export interface User {
   role: UserRole;
 }
 
-
-wrappers[".google.protobuf.Timestamp"] = {
+wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
   },
