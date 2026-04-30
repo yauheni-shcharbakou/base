@@ -1,0 +1,102 @@
+syntax = "proto3";
+
+package storage.video;
+
+import "google/protobuf/timestamp.proto";
+
+import "storage/video/video.proto";
+import "storage/video/video.populates.proto";
+import "storage/file/file.messages.proto";
+import "storage/common/common.messages.proto";
+
+// query
+
+message VideoQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string file = 3;
+  optional string providerId = 4;
+  repeated string providerIds = 5;
+  optional string userId = 6;
+}
+
+// types
+
+message VideoArray {
+  repeated Video videos = 1;
+}
+
+message VideoList {
+  repeated VideoPopulated items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message VideoCreate {
+  string title = 1;
+  optional string description = 2;
+}
+
+message VideoCreateOne {
+  VideoCreate video = 1;
+  file.FileCreate file = 2;
+  optional common.StorageMeta storage = 3;
+  string userId = 4;
+}
+
+message VideoCreateOneWeb {
+  VideoCreate video = 1;
+  file.FileCreate file = 2;
+  optional common.StorageMeta storage = 3;
+}
+
+// create many
+
+message VideoCreateManyItem {
+  VideoCreate video = 1;
+  file.FileCreate file = 2;
+  string uploadId = 3;
+}
+
+message VideoCreateMany {
+  optional common.StorageManyMeta storage = 1;
+  repeated VideoCreateManyItem items = 2;
+  string userId = 3;
+}
+
+message VideoCreateManyWeb {
+  optional common.StorageManyMeta storage = 1;
+  repeated VideoCreateManyItem items = 2;
+}
+
+// upload
+
+message VideoUploadResponse {
+  oneof payload {
+    Video entity = 1;
+    bool canSendChunks = 2;
+    bool ack = 3;
+  }
+}
+
+// update
+
+message VideoUpdateSet {
+  optional string title = 1;
+  optional string description = 2;
+}
+
+message VideoUpdate {
+  optional VideoUpdateSet set = 1;
+}
+
+message VideoUpdateOne {
+  VideoQuery query = 1;
+  VideoUpdate update = 2;
+}
+
+message VideoUpdateById {
+  string id = 1;
+  VideoUpdate update = 2;
+}

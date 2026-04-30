@@ -1,25 +1,18 @@
-import {
-  GrpcCrudConditionalFilter,
-  GrpcCrudLogicalFilter,
-  GrpcCrudConditionalOperator,
-  GrpcCrudSort,
-  GrpcCrudSorter,
-  GrpcGetListRequest,
-} from '@packages/grpc';
 import { CrudFilter, CrudSort, GetListParams, LogicalFilter } from '@refinedev/core';
 import _ from 'lodash';
+import { BrowserCommon } from '@packages/proto';
 
 type ParsedFilters = {
-  logicalFilters: GrpcCrudLogicalFilter[];
-  conditionalFilters: GrpcCrudConditionalFilter[];
+  logicalFilters: BrowserCommon.CrudLogicalFilter[];
+  conditionalFilters: BrowserCommon.CrudConditionalFilter[];
 };
 
 export class GrpcDataMapper {
-  protected convertLogicalFilter(logicalFilter: LogicalFilter): GrpcCrudLogicalFilter {
-    const filter: GrpcCrudLogicalFilter = _.pick(logicalFilter, [
+  protected convertLogicalFilter(logicalFilter: LogicalFilter): BrowserCommon.CrudLogicalFilter {
+    const filter: BrowserCommon.CrudLogicalFilter = _.pick(logicalFilter, [
       'field',
       'operator',
-    ]) as GrpcCrudLogicalFilter;
+    ]) as BrowserCommon.CrudLogicalFilter;
 
     if (_.isString(logicalFilter.value)) {
       filter.string = logicalFilter.value;
@@ -48,13 +41,13 @@ export class GrpcDataMapper {
     return _.reduce(
       filters,
       (acc: ParsedFilters, filter) => {
-        if (_.includes(_.values(GrpcCrudConditionalOperator), filter.operator)) {
+        if (_.includes(_.values(BrowserCommon.CrudConditionalOperator), filter.operator)) {
           if (!filter.value?.length) {
             return acc;
           }
 
           acc.conditionalFilters.push({
-            ...(filter as GrpcCrudConditionalFilter),
+            ...(filter as BrowserCommon.CrudConditionalFilter),
             value: _.map(filter.value, (nestedFilter) => this.convertLogicalFilter(nestedFilter)),
           });
 
@@ -71,16 +64,16 @@ export class GrpcDataMapper {
     );
   }
 
-  protected convertSorters(sorters: CrudSort[] = []): GrpcCrudSorter[] {
+  protected convertSorters(sorters: CrudSort[] = []): BrowserCommon.CrudSorter[] {
     return _.map(sorters, (sorter) => {
       return {
         field: sorter.field,
-        order: sorter.order === 'desc' ? GrpcCrudSort.desc : GrpcCrudSort.asc,
+        order: sorter.order === 'desc' ? BrowserCommon.CrudSort.desc : BrowserCommon.CrudSort.asc,
       };
     });
   }
 
-  convertGetListParams(params: GetListParams): GrpcGetListRequest {
+  convertGetListParams(params: GetListParams): BrowserCommon.GetListRequest {
     return {
       ...this.convertFilters(params.filters),
       sorters: this.convertSorters(params.sorters),

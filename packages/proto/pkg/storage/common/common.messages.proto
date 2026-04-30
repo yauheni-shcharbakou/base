@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package storage.common;
+
+message DownloadData {
+  string url = 1;
+  string fileName = 2;
+}
+
+message DownloadMap {
+  map<string, DownloadData> items = 1;
+}
+
+message UploadOne {
+  oneof payload {
+    string id = 1;
+    bytes chunk = 2;
+  }
+}
+
+message StorageMeta {
+  string name = 1;
+  bool isPublic = 2;
+  string parent = 3;
+}
+
+message StorageManyMeta {
+  bool isPublic = 1;
+  string parent = 2;
+}
+
+message GetUrlMap {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string ip = 3;
+  string userId = 4;
+}
+
+message GetUrlMapWeb {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string ip = 3;
+}

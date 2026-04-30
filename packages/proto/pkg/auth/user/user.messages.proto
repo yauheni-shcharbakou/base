@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package auth.user;
+
+import "auth/user/user.proto";
+
+// query
+
+message UserQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string email = 3;
+  repeated UserRole roles = 4;
+}
+
+// types
+
+message UserArray {
+  repeated User users = 1;
+}
+
+message UserList {
+  repeated User items = 1;
+  int32 total = 2;
+}
+
+// get
+
+message UserGet {
+  optional UserQuery query = 1;
+}
+
+// create
+
+message UserCreate {
+  string email = 1;
+  string password = 2;
+  optional UserRole role = 3;
+}
+
+// update
+
+message UserUpdateSet {
+  optional string email = 1;
+  optional UserRole role = 2;
+  optional string password = 3;
+}
+
+message UserUpdate {
+  optional UserUpdateSet set = 1;
+}
+
+message UserUpdateById {
+  string id = 1;
+  UserUpdate update = 2;
+}

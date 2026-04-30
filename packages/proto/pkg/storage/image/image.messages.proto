@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package storage.image;
+
+import "storage/common/common.messages.proto";
+import "storage/image/image.proto";
+import "storage/image/image.populates.proto";
+import "storage/file/file.messages.proto";
+
+// query
+
+message ImageQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string file = 3;
+  optional string userId = 4;
+}
+
+// types
+
+message ImageList {
+  repeated ImagePopulated items = 1;
+  int32 total = 2;
+}
+
+message ImageArray {
+  repeated Image images = 1;
+}
+
+// create
+
+message ImageCreate {
+  int32 width = 1;
+  int32 height = 2;
+  string alt = 3;
+}
+
+message ImageCreateOne {
+  ImageCreate image = 1;
+  file.FileCreate file = 2;
+  optional common.StorageMeta storage = 3;
+  string userId = 4;
+}
+
+message ImageCreateOneWeb {
+  ImageCreate image = 1;
+  file.FileCreate file = 2;
+  optional common.StorageMeta storage = 3;
+}
+
+// create many
+
+message ImageCreateManyItem {
+  ImageCreate image = 1;
+  file.FileCreate file = 2;
+  string uploadId = 3;
+}
+
+message ImageCreateMany {
+  optional common.StorageManyMeta storage = 1;
+  repeated ImageCreateManyItem items = 2;
+  string userId = 3;
+}
+
+message ImageCreateManyWeb {
+  optional common.StorageManyMeta storage = 1;
+  repeated ImageCreateManyItem items = 2;
+}
+
+// update
+
+message ImageUpdateSet {
+  optional string alt = 1;
+}
+
+message ImageUpdate {
+  optional ImageUpdateSet set = 1;
+}
+
+message ImageUpdateOne {
+  ImageQuery query = 1;
+  ImageUpdate update = 2;
+}
+
+message ImageUpdateById {
+  string id = 1;
+  ImageUpdate update = 2;
+}

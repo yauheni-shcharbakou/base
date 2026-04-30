@@ -7,7 +7,7 @@ import {
   GrpcTempCodeRepository,
   GrpcUserRepository,
   GrpcVideoRepository,
-} from '@frontend/grpc';
+} from '@frontend/proto';
 import { AuthDatabaseEntity, StorageDatabaseEntity } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
 

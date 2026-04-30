@@ -1,2 +1,2 @@
 export * from './grpc';
-export * from 'nats_';
+export * from './nats_';

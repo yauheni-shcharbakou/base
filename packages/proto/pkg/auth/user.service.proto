@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package auth;
+
+import "google/protobuf/empty.proto";
+
+import "common/fields.proto";
+import "common/messages.proto";
+
+import "auth/user/user.proto";
+import "auth/user/user.messages.proto";
+
+service UserService {
+  rpc getById (IdField) returns (user.User) {}
+  rpc getMany (user.UserQuery) returns (user.UserArray) {}
+  rpc getList (GetList) returns (user.UserList) {}
+  rpc createOne (user.UserCreate) returns (user.User) {}
+  rpc updateById (user.UserUpdateById) returns (user.User) {}
+  rpc deleteById (IdField) returns (user.User) {}
+}
+
+service UserAdminService {
+  rpc getById (IdField) returns (user.User) {}
+  rpc getList (GetList) returns (user.UserList) {}
+  rpc createOne (user.UserCreate) returns (user.User) {}
+  rpc updateById (user.UserUpdateById) returns (user.User) {}
+  rpc deleteById (IdField) returns (user.User) {}
+}
+
+service UserWebService {
+  rpc getOne (google.protobuf.Empty) returns (user.User) {}
+}

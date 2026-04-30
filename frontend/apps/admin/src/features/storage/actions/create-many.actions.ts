@@ -7,20 +7,13 @@ import {
   imageGrpcRepository,
   videoGrpcRepository,
 } from '@/features/grpc/repositories';
-import {
-  GrpcFile,
-  GrpcFileCreateManyRequest,
-  GrpcImage,
-  GrpcImageCreateManyRequest,
-  GrpcVideo,
-  GrpcVideoCreateManyRequest,
-} from '@frontend/grpc';
+import type { ClientStorage } from '@frontend/proto';
 
 type CreateActionResponse<T> = { data: T } | { error: string };
 
 export async function createManyFiles(
-  request: GrpcFileCreateManyRequest,
-): Promise<CreateActionResponse<GrpcFile[]>> {
+  request: ClientStorage.FileCreateManyRequest,
+): Promise<CreateActionResponse<ClientStorage.File[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const response = await fileGrpcRepository.createMany(request, metadata);
@@ -31,8 +24,8 @@ export async function createManyFiles(
 }
 
 export async function createManyImages(
-  request: GrpcImageCreateManyRequest,
-): Promise<CreateActionResponse<GrpcImage[]>> {
+  request: ClientStorage.ImageCreateManyRequest,
+): Promise<CreateActionResponse<ClientStorage.Image[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const response = await imageGrpcRepository.createMany(request, metadata);
@@ -43,8 +36,8 @@ export async function createManyImages(
 }
 
 export async function createManyVideos(
-  request: GrpcVideoCreateManyRequest,
-): Promise<CreateActionResponse<GrpcVideo[]>> {
+  request: ClientStorage.VideoCreateManyRequest,
+): Promise<CreateActionResponse<ClientStorage.Video[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const response = await videoGrpcRepository.createMany(request, metadata);

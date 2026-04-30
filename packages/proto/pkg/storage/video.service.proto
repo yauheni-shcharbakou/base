@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package storage;
+
+import "common/fields.proto";
+import "common/messages.proto";
+import "common/types.proto";
+
+import "storage/video/video.proto";
+import "storage/video/video.populates.proto";
+import "storage/video/video.messages.proto";
+import "storage/common/common.messages.proto";
+
+service VideoService {
+  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getOne (video.VideoQuery) returns (video.VideoPopulated) {}
+  rpc getList (GetList) returns (video.VideoList) {}
+  rpc createOne (video.VideoCreateOne) returns (video.Video) {}
+  rpc createMany (video.VideoCreateMany) returns (video.VideoArray) {}
+  rpc updateOne (video.VideoUpdateOne) returns (video.Video) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc deleteOne (video.VideoQuery) returns (video.Video) {}
+}
+
+service VideoAdminService {
+  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getById (IdField) returns (video.VideoPopulated) {}
+  rpc getList (GetList) returns (video.VideoList) {}
+  rpc createOne (video.VideoCreateOne) returns (video.Video) {}
+  rpc createMany (video.VideoCreateMany) returns (video.VideoArray) {}
+  rpc updateById (video.VideoUpdateById) returns (video.Video) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc deleteById (IdField) returns (video.Video) {}
+}
+
+service VideoWebService {
+  rpc getUrlMap (common.GetUrlMapWeb) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMapWeb) returns (common.DownloadMap) {}
+  rpc createOne (video.VideoCreateOneWeb) returns (video.Video) {}
+  rpc createMany (video.VideoCreateManyWeb) returns (video.VideoArray) {}
+  rpc updateById (video.VideoUpdateById) returns (video.Video) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc deleteById (IdField) returns (video.Video) {}
+}

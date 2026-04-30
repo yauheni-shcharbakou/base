@@ -11,15 +11,15 @@ import { folderActionProvider } from '@/features/storage/providers';
 import { FolderSelect } from '@/features/storage/components';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { GrpcStorageObjectType } from '@packages/grpc';
 import React from 'react';
 import zod from 'zod';
+import { BrowserStorage } from '@packages/proto';
 
 const schema = {
   parent: zod.string().nonempty(),
   name: zod.string().nonempty(),
   isPublic: zod.boolean(),
-  type: zod.enum(Object.values(GrpcStorageObjectType)),
+  type: zod.enum(Object.values(BrowserStorage.StorageObjectType)),
 };
 
 type Params = SchemaTypeOf<typeof schema>;
@@ -35,7 +35,7 @@ export default function StorageObjectCreate() {
   } = useValidatedForm(schema);
 
   const handleSave = async (data: Params) => {
-    if (data.type === GrpcStorageObjectType.FOLDER) {
+    if (data.type === BrowserStorage.StorageObjectType.FOLDER) {
       const hasFolderWithSameName = await folderActionProvider.isExistsFolder({
         parent: data.parent,
         name: data.name,
@@ -75,9 +75,9 @@ export default function StorageObjectCreate() {
         <ControlledSingleSelect
           control={control}
           fieldName="type"
-          defaultValue={GrpcStorageObjectType.FOLDER}
+          defaultValue={BrowserStorage.StorageObjectType.FOLDER}
           label="Type"
-          options={[GrpcStorageObjectType.FOLDER] /*Object.values(GrpcStorageObjectType) */}
+          options={[BrowserStorage.StorageObjectType.FOLDER]}
           required
         />
       </Box>

@@ -1,0 +1,4 @@
+packages/proto/**
+frontend/packages/proto/**
+backend/packages/proto/**
+backend/packages/transport/src/nats_/compiler/generated/**

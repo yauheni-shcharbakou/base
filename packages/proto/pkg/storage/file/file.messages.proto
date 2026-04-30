@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package storage.file;
+
+import "google/protobuf/timestamp.proto";
+
+import "storage/common/common.messages.proto";
+import "storage/file/file.proto";
+import "storage/storage-object/storage-object.messages.proto";
+
+// query
+
+message FileQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string mimeType = 3;
+  repeated string mimeTypes = 4;
+  optional string userId = 5;
+  repeated string userIds = 6;
+  optional string extension = 7;
+  optional FileUploadStatus uploadStatus = 8;
+  repeated FileUploadStatus uploadStatuses = 9;
+  optional google.protobuf.Timestamp createdAfter = 10;
+}
+
+// types
+
+message FileList {
+  repeated File items = 1;
+  int32 total = 2;
+}
+
+message FileArray {
+  repeated File files = 1;
+}
+
+// create
+
+message FileCreate {
+  string originalName = 1;
+  int32 size = 2;
+  string mimeType = 3;
+}
+
+message FileCreateOne {
+  FileCreate file = 1;
+  optional common.StorageMeta storage = 2;
+  string userId = 3;
+}
+
+message FileCreateOneWeb {
+  FileCreate file = 1;
+  optional common.StorageMeta storage = 2;
+}
+
+// create many
+
+message FileCreateManyItem {
+  FileCreate file = 1;
+  string uploadId = 2;
+}
+
+message FileCreateMany {
+  optional common.StorageManyMeta storage = 1;
+  repeated FileCreateManyItem items = 2;
+  string userId = 3;
+}
+
+message FileCreateManyWeb {
+  optional common.StorageManyMeta storage = 1;
+  repeated FileCreateManyItem items = 2;
+}
+
+// upload
+
+message FileUploadResponse {
+  oneof payload {
+    File entity = 1;
+    bool canSendChunks = 2;
+    bool ack = 3;
+  }
+}

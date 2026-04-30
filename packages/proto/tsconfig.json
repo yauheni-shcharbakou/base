@@ -1,0 +1,10 @@
+{
+  "extends": "@packages/configs/tsconfig/package/base.tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./",
+    "baseUrl": "./",
+    "types": ["node"]
+  },
+  "include": ["src", "compiler"],
+  "exclude": ["node_modules", "dist"]
+}

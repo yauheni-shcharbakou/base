@@ -7,7 +7,7 @@ type Props = {
   videoId?: string;
 };
 
-export const VideoPlayer: FC<Props> = ({ videoId }: Props) => {
+export const VideoPlayer: FC<Props> = ({ videoId }) => {
   if (!videoId) {
     return <Skeleton variant="rectangular" height={400} animation="wave" />;
   }

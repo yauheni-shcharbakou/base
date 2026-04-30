@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package storage.storage_object;
+
+import "google/protobuf/timestamp.proto";
+
+import "storage/file/file.proto";
+import "storage/image/image.proto";
+import "storage/storage-object/storage-object.proto";
+import "storage/video/video.proto";
+
+message StorageObjectPopulated {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string name = 4;
+  bool isPublic = 5;
+  bool isFolder = 6;
+  StorageObjectType type = 7;
+
+  string userId = 8;
+  optional string fileId = 9;
+  optional string parentId = 10;
+  optional file.File file = 11;
+
+  oneof metadata {
+    string folderPath = 12;
+    string imageId = 13;
+    string videoId = 14;
+  }
+
+  oneof populatedMetadata {
+    image.Image image = 15;
+    video.Video video = 16;
+  }
+}

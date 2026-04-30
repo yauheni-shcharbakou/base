@@ -1,14 +1,14 @@
-import { GrpcStorageObject, GrpcVideoUpdateSet } from '@backend/grpc';
+import type { NestStorage } from '@backend/proto';
 
 export interface ProviderIdEvent {
   providerId: string;
 }
 
 export interface VideoUpdateOneEvent extends ProviderIdEvent {
-  update: GrpcVideoUpdateSet;
+  update: NestStorage.VideoUpdateSet;
 }
 
 export interface StorageObjectUpdateParentEvent {
   parent: string;
-  update: Partial<Pick<GrpcStorageObject, 'folderPath' | 'isPublic'>>;
+  update: Partial<Pick<NestStorage.StorageObject, 'folderPath' | 'isPublic'>>;
 }

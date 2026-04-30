@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+message IdField {
+  string id = 1;
+}
+
+message IdsField {
+  repeated string ids = 1;
+}
+
+message UserIdField {
+  string userId = 1;
+}
+
+message UserField {
+  string user = 1;
+}

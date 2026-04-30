@@ -5,14 +5,14 @@ import { getErrorMessage } from '@/common/helpers';
 import { StorageUploadItem } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
 import { useState } from 'react';
-import { GrpcIdField } from '@packages/grpc';
 import { monotonicFactory } from 'ulid';
+import type { BrowserCommon } from '@packages/proto';
 
 type Params = {
   resource: string;
 };
 
-type Entity = GrpcIdField & { uploadId: string };
+type Entity = BrowserCommon.IdField & { uploadId: string };
 
 type StorageUploadMap = {
   [id: string]: StorageUploadItem;

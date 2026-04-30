@@ -12,9 +12,9 @@ import {
 import { useSingleFileUpload } from '@/features/storage/hooks';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import { GrpcImage } from '@packages/grpc';
 import React from 'react';
 import zod from 'zod';
+import type { BrowserStorage } from '@packages/proto';
 
 const schema = {
   parent: zod.string().optional(),
@@ -49,7 +49,7 @@ export default function ImageCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdImage = await handleUpload<GrpcImage>(
+    const createdImage = await handleUpload<BrowserStorage.Image>(
       data.file,
       async () => {
         return imageActionProvider.createOne(

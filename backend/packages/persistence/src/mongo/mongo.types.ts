@@ -1,5 +1,5 @@
-import { GrpcCrudSort } from '@backend/grpc';
+import type { NestCommon } from '@backend/proto';
 
 export type MongoSort = {
-  [field: string]: GrpcCrudSort | 1 | -1;
+  [field: string]: NestCommon.CrudSort | 1 | -1;
 };

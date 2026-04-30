@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package storage;
+
+import "common/fields.proto";
+import "common/messages.proto";
+import "common/types.proto";
+
+import "storage/file/file.proto";
+import "storage/file/file.messages.proto";
+import "storage/common/common.messages.proto";
+
+service FileService {
+  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getById (IdField) returns (file.File) {}
+  rpc getList (GetList) returns (file.FileList) {}
+  rpc createOne (file.FileCreateOne) returns (file.File) {}
+  rpc createMany (file.FileCreateMany) returns (file.FileArray) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream file.FileUploadResponse) {}
+  rpc deleteOne (file.FileQuery) returns (file.File) {}
+}
+
+service FileAdminService {
+  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getById (IdField) returns (storage.file.File) {}
+  rpc getList (GetList) returns (storage.file.FileList) {}
+  rpc createOne (storage.file.FileCreateOne) returns (storage.file.File) {}
+  rpc createMany (storage.file.FileCreateMany) returns (storage.file.FileArray) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream storage.file.FileUploadResponse) {}
+  rpc deleteById (IdField) returns (storage.file.File) {}
+}
+
+service FileWebService {
+  rpc getUrlMap (common.GetUrlMapWeb) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMapWeb) returns (common.DownloadMap) {}
+  rpc createOne (storage.file.FileCreateOneWeb) returns (storage.file.File) {}
+  rpc createMany (storage.file.FileCreateManyWeb) returns (storage.file.FileArray) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream storage.file.FileUploadResponse) {}
+  rpc deleteById (IdField) returns (storage.file.File) {}
+}

@@ -2,15 +2,15 @@
 
 import { imageLoader } from '@/common/helpers';
 import { Card, Skeleton } from '@mui/material';
-import { GrpcImage } from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 import Image from 'next/image';
 import React, { FC } from 'react';
 
 type Props = {
-  image?: GrpcImage;
+  image?: BrowserStorage.Image;
 };
 
-export const ImagePreview: FC<Props> = ({ image }: Props) => {
+export const ImagePreview: FC<Props> = ({ image }) => {
   if (!image) {
     return <Skeleton variant="rectangular" height={400} animation="wave" />;
   }

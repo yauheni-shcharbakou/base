@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package auth;
+
+import "auth/auth/auth.messages.proto";
+
+service AuthPublicService {
+  rpc login (auth.AuthLogin) returns (auth.AuthData) {}
+  rpc refreshToken (auth.AuthRefresh) returns (auth.AuthData) {}
+}

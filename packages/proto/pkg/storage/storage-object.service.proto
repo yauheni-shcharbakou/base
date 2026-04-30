@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package storage;
+
+import "common/fields.proto";
+import "common/messages.proto";
+import "common/types.proto";
+
+import "storage/storage-object/storage-object.proto";
+import "storage/storage-object/storage-object.populates.proto";
+import "storage/storage-object/storage-object.messages.proto";
+
+service StorageObjectService {
+  rpc getById (IdField) returns (storage_object.StorageObjectPopulated) {}
+  rpc getMany (storage_object.StorageObjectQuery) returns (storage_object.StorageObjectArray) {}
+  rpc getList (GetList) returns (storage_object.StorageObjectList) {}
+  rpc getFolders (storage_object.StorageObjectGetFolders) returns (storage_object.StorageObjectArray) {}
+  rpc isExists (storage_object.StorageObjectQuery) returns (Boolean) {}
+  rpc createOne (storage_object.StorageObjectCreate) returns (storage_object.StorageObject) {}
+  rpc updateOne (storage_object.StorageObjectUpdateOne) returns (storage_object.StorageObject) {}
+  rpc deleteOne (storage_object.StorageObjectQuery) returns (storage_object.StorageObject) {}
+}
+
+service StorageObjectAdminService {
+  rpc getById (IdField) returns (storage_object.StorageObjectPopulated) {}
+  rpc getMany (storage_object.StorageObjectQuery) returns (storage_object.StorageObjectArray) {}
+  rpc getList (GetList) returns (storage_object.StorageObjectList) {}
+  rpc getFolders (storage_object.StorageObjectGetFolders) returns (storage_object.StorageObjectArray) {}
+  rpc isExists (storage_object.StorageObjectQuery) returns (Boolean) {}
+  rpc createOne (storage_object.StorageObjectCreate) returns (storage_object.StorageObject) {}
+  rpc updateById (storage_object.StorageObjectUpdateById) returns (storage_object.StorageObject) {}
+  rpc deleteById (IdField) returns (storage_object.StorageObject) {}
+}
+
+service StorageObjectWebService {
+  rpc getFolders (storage_object.StorageObjectGetFoldersWeb) returns (storage_object.StorageObjectArray) {}
+  rpc isExists (storage_object.StorageObjectQueryWeb) returns (Boolean) {}
+  rpc createOne (storage_object.StorageObjectCreateWeb) returns (storage_object.StorageObject) {}
+  rpc updateById (storage_object.StorageObjectUpdateById) returns (storage_object.StorageObject) {}
+  rpc deleteById (IdField) returns (storage_object.StorageObject) {}
+}

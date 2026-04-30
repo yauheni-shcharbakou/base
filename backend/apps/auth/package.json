@@ -29,7 +29,6 @@
   },
   "dependencies": {
     "@backend/common": "workspace:*",
-    "@backend/grpc": "workspace:*",
     "@backend/persistence": "workspace:*",
     "@backend/transport": "workspace:*",
     "@grpc/grpc-js": "1.14.3",
@@ -48,7 +47,6 @@
     "@nestjs/platform-express": "11.1.19",
     "@nestjs/schedule": "6.1.1",
     "@packages/common": "workspace:*",
-    "@packages/grpc": "workspace:*",
     "@sweet-monads/either": "3.3.1",
     "bcrypt": "6.0.0",
     "class-transformer": "0.5.1",

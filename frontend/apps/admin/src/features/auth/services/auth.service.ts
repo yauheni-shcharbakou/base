@@ -1,5 +1,5 @@
 import { ConfigService } from '@/common/services/config.service';
-import { GrpcAuthData, GrpcAuthLogin, GrpcAuthProxyRepository, GrpcUserRole } from '@frontend/grpc';
+import { ClientAuth, GrpcAuthProxyRepository } from '@frontend/proto';
 import { Metadata } from '@grpc/grpc-js';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies } from 'next/headers';
@@ -26,7 +26,7 @@ export class AuthService {
     const accessToken = cookieStore.get('access-token');
     const refreshToken = cookieStore.get('refresh-token');
 
-    const invalidRole = role?.value ? role.value !== GrpcUserRole.ADMIN : false;
+    const invalidRole = role?.value ? role.value !== ClientAuth.UserRole.ADMIN : false;
 
     return {
       values: {
@@ -39,7 +39,7 @@ export class AuthService {
     };
   }
 
-  private async setAuthCookies(authData: GrpcAuthData) {
+  private async setAuthCookies(authData: ClientAuth.AuthData) {
     const cookieStore = await cookies();
 
     const userId = authData.user.id;
@@ -94,7 +94,7 @@ export class AuthService {
 
     const authData = await this.authRepository.refreshToken({ refreshToken });
 
-    if (authData.user.role !== GrpcUserRole.ADMIN) {
+    if (authData.user.role !== ClientAuth.UserRole.ADMIN) {
       throw new Error('Forbidden');
     }
 
@@ -135,7 +135,7 @@ export class AuthService {
     }
   }
 
-  async login(data: GrpcAuthLogin) {
+  async login(data: ClientAuth.AuthLogin) {
     const authData = await this.authRepository.login(data);
     await this.setAuthCookies(authData);
   }

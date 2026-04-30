@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package auth;
+
+import "google/protobuf/empty.proto";
+
+import "common/fields.proto";
+import "common/messages.proto";
+
+import "auth/temp-code/temp-code.proto";
+import "auth/temp-code/temp-code.messages.proto";
+
+service TempCodeService {
+  rpc getById (IdField) returns (temp_code.TempCode) {}
+  rpc getList (GetList) returns (temp_code.TempCodeList) {}
+  rpc createOne (temp_code.TempCodeCreate) returns (temp_code.TempCode) {}
+  rpc deactivateOne (Query) returns (temp_code.TempCode) {}
+  rpc deleteById (IdField) returns (temp_code.TempCode) {}
+}
+
+service TempCodeAdminService {
+  rpc getById (IdField) returns (temp_code.TempCode) {}
+  rpc getList (GetList) returns (temp_code.TempCodeList) {}
+  rpc createOne (temp_code.TempCodeCreate) returns (temp_code.TempCode) {}
+  rpc deactivateOne (Query) returns (temp_code.TempCode) {}
+  rpc deleteById (IdField) returns (temp_code.TempCode) {}
+}
+
+service TempCodeWebService {
+  rpc generate (google.protobuf.Empty) returns (auth.temp_code.TempCode) {}
+}
