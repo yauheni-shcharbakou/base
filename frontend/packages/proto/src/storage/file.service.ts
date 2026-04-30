@@ -17,16 +17,21 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { BaseQuery, GetListRequest, IdField } from '../common/service';
-import { DownloadMap, UploadRequest, UrlMap } from './messages/common.messages';
+import { IdField } from '../common/fields';
+import { GetList } from '../common/messages';
+import { StringMap } from '../common/types';
+import { DownloadMap, GetUrlMap, GetUrlMapWeb, UploadOne } from './common/common.messages';
+import { File } from './file/file';
 import {
-  FileCreateManyRequest,
-  FileCreateManyResponse,
-  FileCreateRequest,
-  FileGetListResponse,
+  FileArray,
+  FileCreateMany,
+  FileCreateManyWeb,
+  FileCreateOne,
+  FileCreateOneWeb,
+  FileList,
+  FileQuery,
   FileUploadResponse,
-} from './messages/file.messages';
-import { File } from './models/file';
+} from './file/file.messages';
 
 type FileServiceService = typeof FileServiceService;
 const FileServiceService = {
@@ -34,17 +39,17 @@ const FileServiceService = {
     path: '/storage.FileService/getUrlMap' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: BaseQuery): Buffer => Buffer.from(BaseQuery.encode(value).finish()),
-    requestDeserialize: (value: Buffer): BaseQuery => BaseQuery.decode(value),
-    responseSerialize: (value: UrlMap): Buffer => Buffer.from(UrlMap.encode(value).finish()),
-    responseDeserialize: (value: Buffer): UrlMap => UrlMap.decode(value),
+    requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
+    responseSerialize: (value: StringMap): Buffer => Buffer.from(StringMap.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
   },
   getDownloadMap: {
     path: '/storage.FileService/getDownloadMap' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: BaseQuery): Buffer => Buffer.from(BaseQuery.encode(value).finish()),
-    requestDeserialize: (value: Buffer): BaseQuery => BaseQuery.decode(value),
+    requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
     responseSerialize: (value: DownloadMap): Buffer =>
       Buffer.from(DownloadMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
@@ -62,20 +67,18 @@ const FileServiceService = {
     path: '/storage.FileService/getList' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetListRequest): Buffer =>
-      Buffer.from(GetListRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetListRequest => GetListRequest.decode(value),
-    responseSerialize: (value: FileGetListResponse): Buffer =>
-      Buffer.from(FileGetListResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileGetListResponse => FileGetListResponse.decode(value),
+    requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetList => GetList.decode(value),
+    responseSerialize: (value: FileList): Buffer => Buffer.from(FileList.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileList => FileList.decode(value),
   },
   createOne: {
     path: '/storage.FileService/createOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateRequest): Buffer =>
-      Buffer.from(FileCreateRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): FileCreateRequest => FileCreateRequest.decode(value),
+    requestSerialize: (value: FileCreateOne): Buffer =>
+      Buffer.from(FileCreateOne.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCreateOne => FileCreateOne.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
@@ -83,32 +86,28 @@ const FileServiceService = {
     path: '/storage.FileService/createMany' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateManyRequest): Buffer =>
-      Buffer.from(FileCreateManyRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): FileCreateManyRequest =>
-      FileCreateManyRequest.decode(value),
-    responseSerialize: (value: FileCreateManyResponse): Buffer =>
-      Buffer.from(FileCreateManyResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileCreateManyResponse =>
-      FileCreateManyResponse.decode(value),
+    requestSerialize: (value: FileCreateMany): Buffer =>
+      Buffer.from(FileCreateMany.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCreateMany => FileCreateMany.decode(value),
+    responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
   },
   uploadOne: {
     path: '/storage.FileService/uploadOne' as const,
     requestStream: true as const,
     responseStream: true as const,
-    requestSerialize: (value: UploadRequest): Buffer =>
-      Buffer.from(UploadRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UploadRequest => UploadRequest.decode(value),
+    requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
     responseSerialize: (value: FileUploadResponse): Buffer =>
       Buffer.from(FileUploadResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
   },
-  deleteById: {
-    path: '/storage.FileService/deleteById' as const,
+  deleteOne: {
+    path: '/storage.FileService/deleteOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
-    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    requestSerialize: (value: FileQuery): Buffer => Buffer.from(FileQuery.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileQuery => FileQuery.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
@@ -116,31 +115,31 @@ const FileServiceService = {
 
 export interface GrpcFileServiceClient extends Client {
   getUrlMap(
-    request: BaseQuery,
-    callback: (error: ServiceError | null, response: UrlMap) => void,
+    request: GetUrlMap,
+    callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getUrlMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: UrlMap) => void,
+    callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getUrlMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: UrlMap) => void,
+    callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
@@ -161,67 +160,67 @@ export interface GrpcFileServiceClient extends Client {
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
   getList(
-    request: GetListRequest,
-    callback: (error: ServiceError | null, response: FileGetListResponse) => void,
+    request: GetList,
+    callback: (error: ServiceError | null, response: FileList) => void,
   ): ClientUnaryCall;
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: FileGetListResponse) => void,
+    callback: (error: ServiceError | null, response: FileList) => void,
   ): ClientUnaryCall;
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: FileGetListResponse) => void,
+    callback: (error: ServiceError | null, response: FileList) => void,
   ): ClientUnaryCall;
   createOne(
-    request: FileCreateRequest,
+    request: FileCreateOne,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
   createOne(
-    request: FileCreateRequest,
+    request: FileCreateOne,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
   createOne(
-    request: FileCreateRequest,
+    request: FileCreateOne,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
   createMany(
-    request: FileCreateManyRequest,
-    callback: (error: ServiceError | null, response: FileCreateManyResponse) => void,
+    request: FileCreateMany,
+    callback: (error: ServiceError | null, response: FileArray) => void,
   ): ClientUnaryCall;
   createMany(
-    request: FileCreateManyRequest,
+    request: FileCreateMany,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: FileCreateManyResponse) => void,
+    callback: (error: ServiceError | null, response: FileArray) => void,
   ): ClientUnaryCall;
   createMany(
-    request: FileCreateManyRequest,
+    request: FileCreateMany,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: FileCreateManyResponse) => void,
+    callback: (error: ServiceError | null, response: FileArray) => void,
   ): ClientUnaryCall;
-  uploadOne(): ClientDuplexStream<UploadRequest, FileUploadResponse>;
-  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadRequest, FileUploadResponse>;
+  uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
   uploadOne(
     metadata: Metadata,
     options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadRequest, FileUploadResponse>;
-  deleteById(
-    request: IdField,
+  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  deleteOne(
+    request: FileQuery,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
-  deleteById(
-    request: IdField,
+  deleteOne(
+    request: FileQuery,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
-  deleteById(
-    request: IdField,
+  deleteOne(
+    request: FileQuery,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: File) => void,
@@ -242,17 +241,17 @@ export const GrpcFileServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileService/getUrlMap';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: BaseQuery) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => BaseQuery;
-      readonly responseSerialize: (value: UrlMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => UrlMap;
+      readonly requestSerialize: (value: GetUrlMap) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
+      readonly responseSerialize: (value: StringMap) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StringMap;
     };
     readonly getDownloadMap: {
       readonly path: '/storage.FileService/getDownloadMap';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: BaseQuery) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => BaseQuery;
+      readonly requestSerialize: (value: GetUrlMap) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
       readonly responseSerialize: (value: DownloadMap) => Buffer;
       readonly responseDeserialize: (value: Buffer) => DownloadMap;
     };
@@ -269,17 +268,17 @@ export const GrpcFileServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileService/getList';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetListRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetListRequest;
-      readonly responseSerialize: (value: FileGetListResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileGetListResponse;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: FileList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileList;
     };
     readonly createOne: {
       readonly path: '/storage.FileService/createOne';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateRequest;
+      readonly requestSerialize: (value: FileCreateOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCreateOne;
       readonly responseSerialize: (value: File) => Buffer;
       readonly responseDeserialize: (value: Buffer) => File;
     };
@@ -287,22 +286,518 @@ export const GrpcFileServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileService/createMany';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateManyRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateManyRequest;
-      readonly responseSerialize: (value: FileCreateManyResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileCreateManyResponse;
+      readonly requestSerialize: (value: FileCreateMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCreateMany;
+      readonly responseSerialize: (value: FileArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileArray;
     };
     readonly uploadOne: {
       readonly path: '/storage.FileService/uploadOne';
       readonly requestStream: true;
       readonly responseStream: true;
-      readonly requestSerialize: (value: UploadRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadRequest;
+      readonly requestSerialize: (value: UploadOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UploadOne;
+      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
+    };
+    readonly deleteOne: {
+      readonly path: '/storage.FileService/deleteOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileQuery;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
+    };
+  };
+  serviceName: string;
+};
+
+type FileAdminServiceService = typeof FileAdminServiceService;
+const FileAdminServiceService = {
+  getUrlMap: {
+    path: '/storage.FileAdminService/getUrlMap' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
+    responseSerialize: (value: StringMap): Buffer => Buffer.from(StringMap.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
+  },
+  getDownloadMap: {
+    path: '/storage.FileAdminService/getDownloadMap' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
+    responseSerialize: (value: DownloadMap): Buffer =>
+      Buffer.from(DownloadMap.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
+  },
+  getById: {
+    path: '/storage.FileAdminService/getById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+  getList: {
+    path: '/storage.FileAdminService/getList' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetList => GetList.decode(value),
+    responseSerialize: (value: FileList): Buffer => Buffer.from(FileList.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileList => FileList.decode(value),
+  },
+  createOne: {
+    path: '/storage.FileAdminService/createOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FileCreateOne): Buffer =>
+      Buffer.from(FileCreateOne.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCreateOne => FileCreateOne.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+  createMany: {
+    path: '/storage.FileAdminService/createMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FileCreateMany): Buffer =>
+      Buffer.from(FileCreateMany.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCreateMany => FileCreateMany.decode(value),
+    responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
+  },
+  uploadOne: {
+    path: '/storage.FileAdminService/uploadOne' as const,
+    requestStream: true as const,
+    responseStream: true as const,
+    requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
+    responseSerialize: (value: FileUploadResponse): Buffer =>
+      Buffer.from(FileUploadResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
+  },
+  deleteById: {
+    path: '/storage.FileAdminService/deleteById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+} as const;
+
+export interface GrpcFileAdminServiceClient extends Client {
+  getUrlMap(
+    request: GetUrlMap,
+    callback: (error: ServiceError | null, response: StringMap) => void,
+  ): ClientUnaryCall;
+  getUrlMap(
+    request: GetUrlMap,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StringMap) => void,
+  ): ClientUnaryCall;
+  getUrlMap(
+    request: GetUrlMap,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StringMap) => void,
+  ): ClientUnaryCall;
+  getDownloadMap(
+    request: GetUrlMap,
+    callback: (error: ServiceError | null, response: DownloadMap) => void,
+  ): ClientUnaryCall;
+  getDownloadMap(
+    request: GetUrlMap,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DownloadMap) => void,
+  ): ClientUnaryCall;
+  getDownloadMap(
+    request: GetUrlMap,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DownloadMap) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    callback: (error: ServiceError | null, response: FileList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: FileList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: FileList) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: FileCreateOne,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: FileCreateOne,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: FileCreateOne,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  createMany(
+    request: FileCreateMany,
+    callback: (error: ServiceError | null, response: FileArray) => void,
+  ): ClientUnaryCall;
+  createMany(
+    request: FileCreateMany,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: FileArray) => void,
+  ): ClientUnaryCall;
+  createMany(
+    request: FileCreateMany,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: FileArray) => void,
+  ): ClientUnaryCall;
+  uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  uploadOne(
+    metadata: Metadata,
+    options?: Partial<CallOptions>,
+  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+}
+
+export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
+  FileAdminServiceService,
+  'storage.FileAdminService',
+) as unknown as {
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcFileAdminServiceClient;
+  service: {
+    readonly getUrlMap: {
+      readonly path: '/storage.FileAdminService/getUrlMap';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetUrlMap) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
+      readonly responseSerialize: (value: StringMap) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StringMap;
+    };
+    readonly getDownloadMap: {
+      readonly path: '/storage.FileAdminService/getDownloadMap';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetUrlMap) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
+      readonly responseSerialize: (value: DownloadMap) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => DownloadMap;
+    };
+    readonly getById: {
+      readonly path: '/storage.FileAdminService/getById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
+    };
+    readonly getList: {
+      readonly path: '/storage.FileAdminService/getList';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: FileList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileList;
+    };
+    readonly createOne: {
+      readonly path: '/storage.FileAdminService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileCreateOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCreateOne;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
+    };
+    readonly createMany: {
+      readonly path: '/storage.FileAdminService/createMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileCreateMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCreateMany;
+      readonly responseSerialize: (value: FileArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileArray;
+    };
+    readonly uploadOne: {
+      readonly path: '/storage.FileAdminService/uploadOne';
+      readonly requestStream: true;
+      readonly responseStream: true;
+      readonly requestSerialize: (value: UploadOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UploadOne;
       readonly responseSerialize: (value: FileUploadResponse) => Buffer;
       readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
     };
     readonly deleteById: {
-      readonly path: '/storage.FileService/deleteById';
+      readonly path: '/storage.FileAdminService/deleteById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
+    };
+  };
+  serviceName: string;
+};
+
+type FileWebServiceService = typeof FileWebServiceService;
+const FileWebServiceService = {
+  getUrlMap: {
+    path: '/storage.FileWebService/getUrlMap' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetUrlMapWeb): Buffer =>
+      Buffer.from(GetUrlMapWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMapWeb => GetUrlMapWeb.decode(value),
+    responseSerialize: (value: StringMap): Buffer => Buffer.from(StringMap.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
+  },
+  getDownloadMap: {
+    path: '/storage.FileWebService/getDownloadMap' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetUrlMapWeb): Buffer =>
+      Buffer.from(GetUrlMapWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMapWeb => GetUrlMapWeb.decode(value),
+    responseSerialize: (value: DownloadMap): Buffer =>
+      Buffer.from(DownloadMap.encode(value).finish()),
+    responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
+  },
+  createOne: {
+    path: '/storage.FileWebService/createOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FileCreateOneWeb): Buffer =>
+      Buffer.from(FileCreateOneWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCreateOneWeb => FileCreateOneWeb.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+  createMany: {
+    path: '/storage.FileWebService/createMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FileCreateManyWeb): Buffer =>
+      Buffer.from(FileCreateManyWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCreateManyWeb => FileCreateManyWeb.decode(value),
+    responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
+  },
+  uploadOne: {
+    path: '/storage.FileWebService/uploadOne' as const,
+    requestStream: true as const,
+    responseStream: true as const,
+    requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
+    responseSerialize: (value: FileUploadResponse): Buffer =>
+      Buffer.from(FileUploadResponse.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
+  },
+  deleteById: {
+    path: '/storage.FileWebService/deleteById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+} as const;
+
+export interface GrpcFileWebServiceClient extends Client {
+  getUrlMap(
+    request: GetUrlMapWeb,
+    callback: (error: ServiceError | null, response: StringMap) => void,
+  ): ClientUnaryCall;
+  getUrlMap(
+    request: GetUrlMapWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StringMap) => void,
+  ): ClientUnaryCall;
+  getUrlMap(
+    request: GetUrlMapWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StringMap) => void,
+  ): ClientUnaryCall;
+  getDownloadMap(
+    request: GetUrlMapWeb,
+    callback: (error: ServiceError | null, response: DownloadMap) => void,
+  ): ClientUnaryCall;
+  getDownloadMap(
+    request: GetUrlMapWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: DownloadMap) => void,
+  ): ClientUnaryCall;
+  getDownloadMap(
+    request: GetUrlMapWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: DownloadMap) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: FileCreateOneWeb,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: FileCreateOneWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: FileCreateOneWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  createMany(
+    request: FileCreateManyWeb,
+    callback: (error: ServiceError | null, response: FileArray) => void,
+  ): ClientUnaryCall;
+  createMany(
+    request: FileCreateManyWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: FileArray) => void,
+  ): ClientUnaryCall;
+  createMany(
+    request: FileCreateManyWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: FileArray) => void,
+  ): ClientUnaryCall;
+  uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  uploadOne(
+    metadata: Metadata,
+    options?: Partial<CallOptions>,
+  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+}
+
+export const GrpcFileWebServiceClient = makeGenericClientConstructor(
+  FileWebServiceService,
+  'storage.FileWebService',
+) as unknown as {
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcFileWebServiceClient;
+  service: {
+    readonly getUrlMap: {
+      readonly path: '/storage.FileWebService/getUrlMap';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetUrlMapWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb;
+      readonly responseSerialize: (value: StringMap) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StringMap;
+    };
+    readonly getDownloadMap: {
+      readonly path: '/storage.FileWebService/getDownloadMap';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetUrlMapWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb;
+      readonly responseSerialize: (value: DownloadMap) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => DownloadMap;
+    };
+    readonly createOne: {
+      readonly path: '/storage.FileWebService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileCreateOneWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCreateOneWeb;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
+    };
+    readonly createMany: {
+      readonly path: '/storage.FileWebService/createMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileCreateManyWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCreateManyWeb;
+      readonly responseSerialize: (value: FileArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileArray;
+    };
+    readonly uploadOne: {
+      readonly path: '/storage.FileWebService/uploadOne';
+      readonly requestStream: true;
+      readonly responseStream: true;
+      readonly requestSerialize: (value: UploadOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UploadOne;
+      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
+    };
+    readonly deleteById: {
+      readonly path: '/storage.FileWebService/deleteById';
       readonly requestStream: false;
       readonly responseStream: false;
       readonly requestSerialize: (value: IdField) => Buffer;
@@ -330,11 +825,11 @@ export class GrpcFileRepository {
   }
 
   getUrlMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<UrlMap> {
-    return new Promise<UrlMap>((resolve, reject) => {
+  ): Promise<StringMap> {
+    return new Promise<StringMap>((resolve, reject) => {
       this.client.getUrlMap(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -346,7 +841,7 @@ export class GrpcFileRepository {
   }
 
   getDownloadMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<DownloadMap> {
@@ -378,11 +873,11 @@ export class GrpcFileRepository {
   }
 
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<FileGetListResponse> {
-    return new Promise<FileGetListResponse>((resolve, reject) => {
+  ): Promise<FileList> {
+    return new Promise<FileList>((resolve, reject) => {
       this.client.getList(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -394,7 +889,7 @@ export class GrpcFileRepository {
   }
 
   createOne(
-    request: FileCreateRequest,
+    request: FileCreateOne,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<File> {
@@ -410,11 +905,235 @@ export class GrpcFileRepository {
   }
 
   createMany(
-    request: FileCreateManyRequest,
+    request: FileCreateMany,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<FileCreateManyResponse> {
-    return new Promise<FileCreateManyResponse>((resolve, reject) => {
+  ): Promise<FileArray> {
+    return new Promise<FileArray>((resolve, reject) => {
+      this.client.createMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deleteOne(
+    request: FileQuery,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.deleteOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}
+
+export class GrpcFileAdminRepository {
+  protected readonly client: GrpcFileAdminServiceClient;
+
+  constructor(
+    address: string,
+    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+    options?: Partial<ClientOptions>,
+  ) {
+    this.client = new GrpcFileAdminServiceClient(address, credentials, options);
+  }
+
+  getClient(): GrpcFileAdminServiceClient {
+    return this.client;
+  }
+
+  getUrlMap(
+    request: GetUrlMap,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StringMap> {
+    return new Promise<StringMap>((resolve, reject) => {
+      this.client.getUrlMap(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getDownloadMap(
+    request: GetUrlMap,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<DownloadMap> {
+    return new Promise<DownloadMap>((resolve, reject) => {
+      this.client.getDownloadMap(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getById(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.getById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getList(
+    request: GetList,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<FileList> {
+    return new Promise<FileList>((resolve, reject) => {
+      this.client.getList(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createOne(
+    request: FileCreateOne,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.createOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createMany(
+    request: FileCreateMany,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<FileArray> {
+    return new Promise<FileArray>((resolve, reject) => {
+      this.client.createMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deleteById(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.deleteById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}
+
+export class GrpcFileWebRepository {
+  protected readonly client: GrpcFileWebServiceClient;
+
+  constructor(
+    address: string,
+    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+    options?: Partial<ClientOptions>,
+  ) {
+    this.client = new GrpcFileWebServiceClient(address, credentials, options);
+  }
+
+  getClient(): GrpcFileWebServiceClient {
+    return this.client;
+  }
+
+  getUrlMap(
+    request: GetUrlMapWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StringMap> {
+    return new Promise<StringMap>((resolve, reject) => {
+      this.client.getUrlMap(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getDownloadMap(
+    request: GetUrlMapWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<DownloadMap> {
+    return new Promise<DownloadMap>((resolve, reject) => {
+      this.client.getDownloadMap(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createOne(
+    request: FileCreateOneWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.createOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createMany(
+    request: FileCreateManyWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<FileArray> {
+    return new Promise<FileArray>((resolve, reject) => {
       this.client.createMany(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);

@@ -2,15 +2,34 @@ syntax = "proto3";
 
 package storage;
 
-import "common/service.proto";
-import "storage/models/image.proto";
-import "storage/messages/image.messages.proto";
+import "common/fields.proto";
+import "common/messages.proto";
+
+import "storage/image/image.proto";
+import "storage/image/image.populates.proto";
+import "storage/image/image.messages.proto";
 
 service ImageService {
-  rpc getById (common.IdField) returns (messages.ImagePopulated) {}
-  rpc getList (common.GetListRequest) returns (messages.ImageGetListResponse) {}
-  rpc createOne (messages.ImageCreateRequest) returns (models.Image) {}
-  rpc createMany (messages.ImageCreateManyRequest) returns (messages.ImageCreateManyResponse) {}
-  rpc updateById (messages.ImageUpdateByIdRequest) returns (models.Image) {}
-  rpc deleteById (common.IdField) returns (models.Image) {}
+  rpc getById (IdField) returns (image.ImagePopulated) {}
+  rpc getList (GetList) returns (image.ImageList) {}
+  rpc createOne (image.ImageCreateOne) returns (image.Image) {}
+  rpc createMany (image.ImageCreateMany) returns (image.ImageArray) {}
+  rpc updateOne (image.ImageUpdateOne) returns (image.Image) {}
+  rpc deleteOne (image.ImageQuery) returns (image.Image) {}
+}
+
+service ImageAdminService {
+  rpc getById (IdField) returns (image.ImagePopulated) {}
+  rpc getList (GetList) returns (image.ImageList) {}
+  rpc createOne (image.ImageCreateOne) returns (image.Image) {}
+  rpc createMany (image.ImageCreateMany) returns (image.ImageArray) {}
+  rpc updateById (image.ImageUpdateById) returns (image.Image) {}
+  rpc deleteById (IdField) returns (image.Image) {}
+}
+
+service ImageWebService {
+  rpc createOne (image.ImageCreateOneWeb) returns (image.Image) {}
+  rpc createMany (image.ImageCreateManyWeb) returns (image.ImageArray) {}
+  rpc updateById (image.ImageUpdateById) returns (image.Image) {}
+  rpc deleteById (IdField) returns (image.Image) {}
 }

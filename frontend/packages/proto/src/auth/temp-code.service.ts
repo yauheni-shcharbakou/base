@@ -16,9 +16,11 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { GetListRequest, IdField } from '../common/service';
-import { TempCodeCreate, TempCodeGetListResponse } from './messages/temp-code.messages';
-import { TempCode } from './models/temp-code';
+import { IdField } from '../common/fields';
+import { GetList, Query } from '../common/messages';
+import { Empty } from '../google/protobuf/empty';
+import { TempCode } from './temp-code/temp-code';
+import { TempCodeCreate, TempCodeList } from './temp-code/temp-code.messages';
 
 type TempCodeServiceService = typeof TempCodeServiceService;
 const TempCodeServiceService = {
@@ -35,13 +37,11 @@ const TempCodeServiceService = {
     path: '/auth.TempCodeService/getList' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetListRequest): Buffer =>
-      Buffer.from(GetListRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetListRequest => GetListRequest.decode(value),
-    responseSerialize: (value: TempCodeGetListResponse): Buffer =>
-      Buffer.from(TempCodeGetListResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): TempCodeGetListResponse =>
-      TempCodeGetListResponse.decode(value),
+    requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetList => GetList.decode(value),
+    responseSerialize: (value: TempCodeList): Buffer =>
+      Buffer.from(TempCodeList.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCodeList => TempCodeList.decode(value),
   },
   createOne: {
     path: '/auth.TempCodeService/createOne' as const,
@@ -50,6 +50,15 @@ const TempCodeServiceService = {
     requestSerialize: (value: TempCodeCreate): Buffer =>
       Buffer.from(TempCodeCreate.encode(value).finish()),
     requestDeserialize: (value: Buffer): TempCodeCreate => TempCodeCreate.decode(value),
+    responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
+  },
+  deactivateOne: {
+    path: '/auth.TempCodeService/deactivateOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: Query): Buffer => Buffer.from(Query.encode(value).finish()),
+    requestDeserialize: (value: Buffer): Query => Query.decode(value),
     responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
     responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
   },
@@ -81,19 +90,19 @@ export interface GrpcTempCodeServiceClient extends Client {
     callback: (error: ServiceError | null, response: TempCode) => void,
   ): ClientUnaryCall;
   getList(
-    request: GetListRequest,
-    callback: (error: ServiceError | null, response: TempCodeGetListResponse) => void,
+    request: GetList,
+    callback: (error: ServiceError | null, response: TempCodeList) => void,
   ): ClientUnaryCall;
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: TempCodeGetListResponse) => void,
+    callback: (error: ServiceError | null, response: TempCodeList) => void,
   ): ClientUnaryCall;
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: TempCodeGetListResponse) => void,
+    callback: (error: ServiceError | null, response: TempCodeList) => void,
   ): ClientUnaryCall;
   createOne(
     request: TempCodeCreate,
@@ -106,6 +115,21 @@ export interface GrpcTempCodeServiceClient extends Client {
   ): ClientUnaryCall;
   createOne(
     request: TempCodeCreate,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deactivateOne(
+    request: Query,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deactivateOne(
+    request: Query,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deactivateOne(
+    request: Query,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: TempCode) => void,
@@ -150,10 +174,10 @@ export const GrpcTempCodeServiceClient = makeGenericClientConstructor(
       readonly path: '/auth.TempCodeService/getList';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetListRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetListRequest;
-      readonly responseSerialize: (value: TempCodeGetListResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => TempCodeGetListResponse;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: TempCodeList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCodeList;
     };
     readonly createOne: {
       readonly path: '/auth.TempCodeService/createOne';
@@ -164,12 +188,263 @@ export const GrpcTempCodeServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: TempCode) => Buffer;
       readonly responseDeserialize: (value: Buffer) => TempCode;
     };
+    readonly deactivateOne: {
+      readonly path: '/auth.TempCodeService/deactivateOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: Query) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => Query;
+      readonly responseSerialize: (value: TempCode) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCode;
+    };
     readonly deleteById: {
       readonly path: '/auth.TempCodeService/deleteById';
       readonly requestStream: false;
       readonly responseStream: false;
       readonly requestSerialize: (value: IdField) => Buffer;
       readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: TempCode) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCode;
+    };
+  };
+  serviceName: string;
+};
+
+type TempCodeAdminServiceService = typeof TempCodeAdminServiceService;
+const TempCodeAdminServiceService = {
+  getById: {
+    path: '/auth.TempCodeAdminService/getById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
+  },
+  getList: {
+    path: '/auth.TempCodeAdminService/getList' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetList => GetList.decode(value),
+    responseSerialize: (value: TempCodeList): Buffer =>
+      Buffer.from(TempCodeList.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCodeList => TempCodeList.decode(value),
+  },
+  createOne: {
+    path: '/auth.TempCodeAdminService/createOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: TempCodeCreate): Buffer =>
+      Buffer.from(TempCodeCreate.encode(value).finish()),
+    requestDeserialize: (value: Buffer): TempCodeCreate => TempCodeCreate.decode(value),
+    responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
+  },
+  deactivateOne: {
+    path: '/auth.TempCodeAdminService/deactivateOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: Query): Buffer => Buffer.from(Query.encode(value).finish()),
+    requestDeserialize: (value: Buffer): Query => Query.decode(value),
+    responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
+  },
+  deleteById: {
+    path: '/auth.TempCodeAdminService/deleteById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
+  },
+} as const;
+
+export interface GrpcTempCodeAdminServiceClient extends Client {
+  getById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    callback: (error: ServiceError | null, response: TempCodeList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCodeList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCodeList) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: TempCodeCreate,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: TempCodeCreate,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: TempCodeCreate,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deactivateOne(
+    request: Query,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deactivateOne(
+    request: Query,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deactivateOne(
+    request: Query,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+}
+
+export const GrpcTempCodeAdminServiceClient = makeGenericClientConstructor(
+  TempCodeAdminServiceService,
+  'auth.TempCodeAdminService',
+) as unknown as {
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcTempCodeAdminServiceClient;
+  service: {
+    readonly getById: {
+      readonly path: '/auth.TempCodeAdminService/getById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: TempCode) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCode;
+    };
+    readonly getList: {
+      readonly path: '/auth.TempCodeAdminService/getList';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: TempCodeList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCodeList;
+    };
+    readonly createOne: {
+      readonly path: '/auth.TempCodeAdminService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: TempCodeCreate) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => TempCodeCreate;
+      readonly responseSerialize: (value: TempCode) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCode;
+    };
+    readonly deactivateOne: {
+      readonly path: '/auth.TempCodeAdminService/deactivateOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: Query) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => Query;
+      readonly responseSerialize: (value: TempCode) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCode;
+    };
+    readonly deleteById: {
+      readonly path: '/auth.TempCodeAdminService/deleteById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: TempCode) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => TempCode;
+    };
+  };
+  serviceName: string;
+};
+
+type TempCodeWebServiceService = typeof TempCodeWebServiceService;
+const TempCodeWebServiceService = {
+  generate: {
+    path: '/auth.TempCodeWebService/generate' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
+    requestDeserialize: (value: Buffer): Empty => Empty.decode(value),
+    responseSerialize: (value: TempCode): Buffer => Buffer.from(TempCode.encode(value).finish()),
+    responseDeserialize: (value: Buffer): TempCode => TempCode.decode(value),
+  },
+} as const;
+
+export interface GrpcTempCodeWebServiceClient extends Client {
+  generate(
+    request: Empty,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  generate(
+    request: Empty,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+  generate(
+    request: Empty,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: TempCode) => void,
+  ): ClientUnaryCall;
+}
+
+export const GrpcTempCodeWebServiceClient = makeGenericClientConstructor(
+  TempCodeWebServiceService,
+  'auth.TempCodeWebService',
+) as unknown as {
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcTempCodeWebServiceClient;
+  service: {
+    readonly generate: {
+      readonly path: '/auth.TempCodeWebService/generate';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: Empty) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => Empty;
       readonly responseSerialize: (value: TempCode) => Buffer;
       readonly responseDeserialize: (value: Buffer) => TempCode;
     };
@@ -209,11 +484,11 @@ export class GrpcTempCodeRepository {
   }
 
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<TempCodeGetListResponse> {
-    return new Promise<TempCodeGetListResponse>((resolve, reject) => {
+  ): Promise<TempCodeList> {
+    return new Promise<TempCodeList>((resolve, reject) => {
       this.client.getList(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -240,6 +515,22 @@ export class GrpcTempCodeRepository {
     });
   }
 
+  deactivateOne(
+    request: Query,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCode> {
+    return new Promise<TempCode>((resolve, reject) => {
+      this.client.deactivateOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
   deleteById(
     request: IdField,
     metadata: Metadata = new Metadata(),
@@ -247,6 +538,134 @@ export class GrpcTempCodeRepository {
   ): Promise<TempCode> {
     return new Promise<TempCode>((resolve, reject) => {
       this.client.deleteById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}
+
+export class GrpcTempCodeAdminRepository {
+  protected readonly client: GrpcTempCodeAdminServiceClient;
+
+  constructor(
+    address: string,
+    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+    options?: Partial<ClientOptions>,
+  ) {
+    this.client = new GrpcTempCodeAdminServiceClient(address, credentials, options);
+  }
+
+  getClient(): GrpcTempCodeAdminServiceClient {
+    return this.client;
+  }
+
+  getById(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCode> {
+    return new Promise<TempCode>((resolve, reject) => {
+      this.client.getById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getList(
+    request: GetList,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCodeList> {
+    return new Promise<TempCodeList>((resolve, reject) => {
+      this.client.getList(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createOne(
+    request: TempCodeCreate,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCode> {
+    return new Promise<TempCode>((resolve, reject) => {
+      this.client.createOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deactivateOne(
+    request: Query,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCode> {
+    return new Promise<TempCode>((resolve, reject) => {
+      this.client.deactivateOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deleteById(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCode> {
+    return new Promise<TempCode>((resolve, reject) => {
+      this.client.deleteById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}
+
+export class GrpcTempCodeWebRepository {
+  protected readonly client: GrpcTempCodeWebServiceClient;
+
+  constructor(
+    address: string,
+    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+    options?: Partial<ClientOptions>,
+  ) {
+    this.client = new GrpcTempCodeWebServiceClient(address, credentials, options);
+  }
+
+  getClient(): GrpcTempCodeWebServiceClient {
+    return this.client;
+  }
+
+  generate(
+    request: Empty,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<TempCode> {
+    return new Promise<TempCode>((resolve, reject) => {
+      this.client.generate(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

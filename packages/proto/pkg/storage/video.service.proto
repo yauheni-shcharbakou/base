@@ -2,19 +2,45 @@ syntax = "proto3";
 
 package storage;
 
-import "common/service.proto";
-import "storage/models/video.proto";
-import "storage/messages/common.messages.proto";
-import "storage/messages/video.messages.proto";
+import "common/fields.proto";
+import "common/messages.proto";
+import "common/types.proto";
+
+import "storage/video/video.proto";
+import "storage/video/video.populates.proto";
+import "storage/video/video.messages.proto";
+import "storage/common/common.messages.proto";
 
 service VideoService {
-  rpc getUrlMap (common.BaseQuery) returns (messages.UrlMap) {}
-  rpc getDownloadMap (common.BaseQuery) returns (messages.DownloadMap) {}
-  rpc getById (common.IdField) returns (messages.VideoPopulated) {}
-  rpc getList (common.GetListRequest) returns (messages.VideoGetListResponse) {}
-  rpc createOne (messages.VideoCreateRequest) returns (models.Video) {}
-  rpc createMany (messages.VideoCreateManyRequest) returns (messages.VideoCreateManyResponse) {}
-  rpc updateById (messages.VideoUpdateByIdRequest) returns (models.Video) {}
-  rpc uploadOne (stream messages.UploadRequest) returns (stream messages.VideoUploadResponse) {}
-  rpc deleteById (common.IdField) returns (models.Video) {}
+  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getOne (video.VideoQuery) returns (video.VideoPopulated) {}
+  rpc getList (GetList) returns (video.VideoList) {}
+  rpc createOne (video.VideoCreateOne) returns (video.Video) {}
+  rpc createMany (video.VideoCreateMany) returns (video.VideoArray) {}
+  rpc updateOne (video.VideoUpdateOne) returns (video.Video) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc deleteOne (video.VideoQuery) returns (video.Video) {}
+}
+
+service VideoAdminService {
+  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getById (IdField) returns (video.VideoPopulated) {}
+  rpc getList (GetList) returns (video.VideoList) {}
+  rpc createOne (video.VideoCreateOne) returns (video.Video) {}
+  rpc createMany (video.VideoCreateMany) returns (video.VideoArray) {}
+  rpc updateById (video.VideoUpdateById) returns (video.Video) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc deleteById (IdField) returns (video.Video) {}
+}
+
+service VideoWebService {
+  rpc getUrlMap (common.GetUrlMapWeb) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMapWeb) returns (common.DownloadMap) {}
+  rpc createOne (video.VideoCreateOneWeb) returns (video.Video) {}
+  rpc createMany (video.VideoCreateManyWeb) returns (video.VideoArray) {}
+  rpc updateById (video.VideoUpdateById) returns (video.Video) {}
+  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc deleteById (IdField) returns (video.Video) {}
 }

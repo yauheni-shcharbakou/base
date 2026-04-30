@@ -69,9 +69,6 @@ importers:
       '@backend/common':
         specifier: workspace:*
         version: link:../../packages/common
-      '@backend/grpc':
-        specifier: workspace:*
-        version: link:../../packages/grpc
       '@backend/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -108,9 +105,6 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
-      '@packages/grpc':
-        specifier: workspace:*
-        version: link:../../../packages/grpc
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
@@ -175,9 +169,6 @@ importers:
       '@backend/common':
         specifier: workspace:*
         version: link:../../packages/common
-      '@backend/grpc':
-        specifier: workspace:*
-        version: link:../../packages/grpc
       '@backend/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -232,9 +223,6 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
-      '@packages/grpc':
-        specifier: workspace:*
-        version: link:../../../packages/grpc
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
@@ -311,9 +299,6 @@ importers:
       '@backend/common':
         specifier: workspace:*
         version: link:../../packages/common
-      '@backend/grpc':
-        specifier: workspace:*
-        version: link:../../packages/grpc
       '@backend/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -368,9 +353,6 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
-      '@packages/grpc':
-        specifier: workspace:*
-        version: link:../../../packages/grpc
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
@@ -460,34 +442,6 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
-
-  backend/packages/grpc:
-    dependencies:
-      '@grpc/grpc-js':
-        specifier: 1.14.3
-        version: 1.14.3
-      '@nestjs/common':
-        specifier: 11.1.19
-        version: 11.1.19(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/microservices':
-        specifier: 11.1.19
-        version: 11.1.19(@grpc/grpc-js@1.14.3)(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(nats@2.29.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      protobufjs:
-        specifier: 7.5.5
-        version: 7.5.5
-      reflect-metadata:
-        specifier: 0.2.2
-        version: 0.2.2
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-    devDependencies:
-      '@packages/configs':
-        specifier: workspace:*
-        version: link:../../../packages/configs
-      '@packages/grpc':
-        specifier: workspace:*
-        version: link:../../../packages/grpc
 
   backend/packages/persistence:
     dependencies:
@@ -745,25 +699,6 @@ importers:
         specifier: 10.1.0
         version: 10.1.0
 
-  frontend/packages/grpc:
-    dependencies:
-      '@bufbuild/protobuf':
-        specifier: 2.12.0
-        version: 2.12.0
-      '@grpc/grpc-js':
-        specifier: 1.14.3
-        version: 1.14.3
-      server-only:
-        specifier: 0.0.1
-        version: 0.0.1
-    devDependencies:
-      '@packages/configs':
-        specifier: workspace:*
-        version: link:../../../packages/configs
-      '@packages/grpc':
-        specifier: workspace:*
-        version: link:../../../packages/grpc
-
   frontend/packages/proto:
     dependencies:
       '@bufbuild/protobuf':
@@ -822,42 +757,6 @@ importers:
       typescript-eslint:
         specifier: 8.50.0
         version: 8.50.0(eslint@9.39.2)(typescript@5.9.3)
-
-  packages/grpc:
-    devDependencies:
-      '@grpc/grpc-js':
-        specifier: 1.14.3
-        version: 1.14.3
-      '@nestjs/common':
-        specifier: 11.1.19
-        version: 11.1.19(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@packages/configs':
-        specifier: workspace:*
-        version: link:../configs
-      '@types/pug':
-        specifier: 2.0.10
-        version: 2.0.10
-      protobufjs:
-        specifier: 7.5.5
-        version: 7.5.5
-      pug:
-        specifier: 3.0.4
-        version: 3.0.4
-      rxjs:
-        specifier: 7.8.2
-        version: 7.8.2
-      ts-morph:
-        specifier: 28.0.0
-        version: 28.0.0
-      ts-node-dev:
-        specifier: 2.0.0
-        version: 2.0.0(@types/node@22.19.17)(typescript@5.9.3)
-      ts-proto:
-        specifier: 2.11.6
-        version: 2.11.6
-      tsconfig-paths:
-        specifier: 4.2.0
-        version: 4.2.0
 
   packages/proto:
     devDependencies:
@@ -6561,9 +6460,6 @@ packages:
   serve-static@2.2.1:
     resolution: {integrity: sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==}
     engines: {node: '>= 18'}
-
-  server-only@0.0.1:
-    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
 
   set-function-length@1.2.2:
     resolution: {integrity: sha512-pgRc4hJ4/sNjWCSS9AmnS40x3bNMDTknHgL5UaMBTMyJnU90EgWh1Rz+MC9eFu4BuN/UwZjKQuY/1v3rM7HMfg==}
@@ -13802,8 +13698,6 @@ snapshots:
       send: 1.2.1
     transitivePeerDependencies:
       - supports-color
-
-  server-only@0.0.1: {}
 
   set-function-length@1.2.2:
     dependencies:

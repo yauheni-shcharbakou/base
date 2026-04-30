@@ -14,5 +14,6 @@
   "prettier.prettierPath": "./node_modules/prettier",
   "prettier.requireConfig": true,
   "prettier.singleQuote": true,
-  "prettier.useEditorConfig": false
+  "prettier.useEditorConfig": false,
+  "tooltitude.pb.inspection.namesEnabled": false
 }

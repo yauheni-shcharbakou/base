@@ -1,8 +1,6 @@
 syntax = "proto3";
 
-package common;
-
-enum CrudLogicalOperator {
+enum LogicalOperator {
   eq = 0;
   ne = 1;
   eqs = 2;
@@ -33,19 +31,19 @@ enum CrudLogicalOperator {
   nendswiths = 27;
 }
 
-enum CrudConditionalOperator {
+enum ConditionalOperator {
   or = 0;
   and = 1;
 }
 
-enum CrudSort {
+enum Sort {
   asc = 0;
   desc = 1;
 }
 
-message CrudLogicalFilter {
+message LogicalFilter {
   string field = 1;
-  CrudLogicalOperator operator = 2;
+  LogicalOperator operator = 2;
 
   oneof value {
     string string = 3;
@@ -54,13 +52,13 @@ message CrudLogicalFilter {
   }
 }
 
-message CrudConditionalFilter {
+message ConditionalFilter {
   optional string key = 1;
-  CrudConditionalOperator operator = 2;
-  repeated CrudLogicalFilter value = 3;
+  ConditionalOperator operator = 2;
+  repeated LogicalFilter value = 3;
 }
 
-message CrudSorter {
+message Sorter {
   string field = 1;
-  CrudSort order = 2;
+  Sort order = 2;
 }

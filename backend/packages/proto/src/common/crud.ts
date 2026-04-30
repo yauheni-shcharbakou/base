@@ -6,7 +6,7 @@
 
 /* eslint-disable */
 
-export enum CrudLogicalOperator {
+export enum LogicalOperator {
   eq = 'eq',
   ne = 'ne',
   eqs = 'eqs',
@@ -37,31 +37,33 @@ export enum CrudLogicalOperator {
   nendswiths = 'nendswiths',
 }
 
-export enum CrudConditionalOperator {
+export enum ConditionalOperator {
   or = 'or',
   and = 'and',
 }
 
-export enum CrudSort {
+export enum Sort {
   asc = 'asc',
   desc = 'desc',
 }
 
-export interface CrudLogicalFilter {
+export interface LogicalFilter {
   field: string;
-  operator: CrudLogicalOperator;
+  operator: LogicalOperator;
   string?: string;
   number?: number;
   boolean?: boolean;
 }
 
-export interface CrudConditionalFilter {
+export interface ConditionalFilter {
   key?: string;
-  operator: CrudConditionalOperator;
-  value: CrudLogicalFilter[];
+  operator: ConditionalOperator;
+  value: LogicalFilter[];
 }
 
-export interface CrudSorter {
+export interface Sorter {
   field: string;
-  order: CrudSort;
+  order: Sort;
 }
+
+export const _PACKAGE_NAME = '';

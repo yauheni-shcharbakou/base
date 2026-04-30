@@ -2,18 +2,9 @@ syntax = "proto3";
 
 package auth;
 
-import "auth/models/user.proto";
-import "auth/messages/auth.messages.proto";
+import "auth/auth/auth.messages.proto";
 
-service AuthService {
-  rpc login (messages.AuthLogin) returns (messages.AuthData) {}
-  rpc refreshToken (messages.AuthRefresh) returns (messages.AuthData) {}
-  rpc me (messages.AuthMe) returns (models.User) {}
-}
-
-service AuthProxyService {
-  rpc login (messages.AuthLogin) returns (messages.AuthData) {}
-  rpc refreshToken (messages.AuthRefresh) returns (messages.AuthData) {}
-  rpc me (messages.AuthMe) returns (models.User) {}
-  rpc generateStreamCode (messages.AuthMe) returns (messages.AuthStreamCode) {}
+service AuthPublicService {
+  rpc login (auth.AuthLogin) returns (auth.AuthData) {}
+  rpc refreshToken (auth.AuthRefresh) returns (auth.AuthData) {}
 }

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package auth.temp_code;
+
+import "auth/temp-code/temp-code.proto";
+
+// query
+
+message TempCodeQuery {
+  optional string id = 1;
+  repeated string ids = 2;
+  optional string user = 3;
+}
+
+// types
+
+message TempCodeList {
+  repeated TempCode items = 1;
+  int32 total = 2;
+}
+
+// create
+
+message TempCodeCreate {
+  string user = 1;
+}

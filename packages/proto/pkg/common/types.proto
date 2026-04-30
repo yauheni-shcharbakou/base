@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message Boolean {
+  bool value = 1;
+}
+
+message StringMap {
+  map<string, string> value = 1;
+}
+
+message StringArray {
+  repeated string value = 1;
+}

@@ -16,19 +16,23 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { BooleanResult, GetListRequest, IdField } from '../common/service';
+import { IdField } from '../common/fields';
+import { GetList } from '../common/messages';
+import { Boolean } from '../common/types';
+import { StorageObject } from './storage-object/storage-object';
 import {
+  StorageObjectArray,
   StorageObjectCreate,
-  StorageObjectExistsFolderRequest,
-  StorageObjectGetFoldersRequest,
-  StorageObjectGetFoldersResponse,
-  StorageObjectGetListResponse,
+  StorageObjectCreateWeb,
+  StorageObjectGetFolders,
+  StorageObjectGetFoldersWeb,
   StorageObjectList,
-  StorageObjectPopulated,
-  StorageObjectRequest,
-  StorageObjectUpdateByIdRequest,
-} from './messages/storage-object.messages';
-import { StorageObject } from './models/storage-object';
+  StorageObjectQuery,
+  StorageObjectQueryWeb,
+  StorageObjectUpdateById,
+  StorageObjectUpdateOne,
+} from './storage-object/storage-object.messages';
+import { StorageObjectPopulated } from './storage-object/storage-object.populates';
 
 type StorageObjectServiceService = typeof StorageObjectServiceService;
 const StorageObjectServiceService = {
@@ -47,49 +51,44 @@ const StorageObjectServiceService = {
     path: '/storage.StorageObjectService/getMany' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: StorageObjectRequest): Buffer =>
-      Buffer.from(StorageObjectRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): StorageObjectRequest => StorageObjectRequest.decode(value),
-    responseSerialize: (value: StorageObjectList): Buffer =>
-      Buffer.from(StorageObjectList.encode(value).finish()),
-    responseDeserialize: (value: Buffer): StorageObjectList => StorageObjectList.decode(value),
+    requestSerialize: (value: StorageObjectQuery): Buffer =>
+      Buffer.from(StorageObjectQuery.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectQuery => StorageObjectQuery.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
   },
   getList: {
     path: '/storage.StorageObjectService/getList' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetListRequest): Buffer =>
-      Buffer.from(GetListRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetListRequest => GetListRequest.decode(value),
-    responseSerialize: (value: StorageObjectGetListResponse): Buffer =>
-      Buffer.from(StorageObjectGetListResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): StorageObjectGetListResponse =>
-      StorageObjectGetListResponse.decode(value),
+    requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetList => GetList.decode(value),
+    responseSerialize: (value: StorageObjectList): Buffer =>
+      Buffer.from(StorageObjectList.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectList => StorageObjectList.decode(value),
   },
   getFolders: {
     path: '/storage.StorageObjectService/getFolders' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: StorageObjectGetFoldersRequest): Buffer =>
-      Buffer.from(StorageObjectGetFoldersRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): StorageObjectGetFoldersRequest =>
-      StorageObjectGetFoldersRequest.decode(value),
-    responseSerialize: (value: StorageObjectGetFoldersResponse): Buffer =>
-      Buffer.from(StorageObjectGetFoldersResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): StorageObjectGetFoldersResponse =>
-      StorageObjectGetFoldersResponse.decode(value),
+    requestSerialize: (value: StorageObjectGetFolders): Buffer =>
+      Buffer.from(StorageObjectGetFolders.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectGetFolders =>
+      StorageObjectGetFolders.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
   },
-  isExistsFolder: {
-    path: '/storage.StorageObjectService/isExistsFolder' as const,
+  isExists: {
+    path: '/storage.StorageObjectService/isExists' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: StorageObjectExistsFolderRequest): Buffer =>
-      Buffer.from(StorageObjectExistsFolderRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): StorageObjectExistsFolderRequest =>
-      StorageObjectExistsFolderRequest.decode(value),
-    responseSerialize: (value: BooleanResult): Buffer =>
-      Buffer.from(BooleanResult.encode(value).finish()),
-    responseDeserialize: (value: Buffer): BooleanResult => BooleanResult.decode(value),
+    requestSerialize: (value: StorageObjectQuery): Buffer =>
+      Buffer.from(StorageObjectQuery.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectQuery => StorageObjectQuery.decode(value),
+    responseSerialize: (value: Boolean): Buffer => Buffer.from(Boolean.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Boolean => Boolean.decode(value),
   },
   createOne: {
     path: '/storage.StorageObjectService/createOne' as const,
@@ -102,24 +101,25 @@ const StorageObjectServiceService = {
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
   },
-  updateById: {
-    path: '/storage.StorageObjectService/updateById' as const,
+  updateOne: {
+    path: '/storage.StorageObjectService/updateOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: StorageObjectUpdateByIdRequest): Buffer =>
-      Buffer.from(StorageObjectUpdateByIdRequest.encode(value).finish()),
-    requestDeserialize: (value: Buffer): StorageObjectUpdateByIdRequest =>
-      StorageObjectUpdateByIdRequest.decode(value),
+    requestSerialize: (value: StorageObjectUpdateOne): Buffer =>
+      Buffer.from(StorageObjectUpdateOne.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectUpdateOne =>
+      StorageObjectUpdateOne.decode(value),
     responseSerialize: (value: StorageObject): Buffer =>
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
   },
-  deleteById: {
-    path: '/storage.StorageObjectService/deleteById' as const,
+  deleteOne: {
+    path: '/storage.StorageObjectService/deleteOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
-    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    requestSerialize: (value: StorageObjectQuery): Buffer =>
+      Buffer.from(StorageObjectQuery.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectQuery => StorageObjectQuery.decode(value),
     responseSerialize: (value: StorageObject): Buffer =>
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
@@ -143,64 +143,64 @@ export interface GrpcStorageObjectServiceClient extends Client {
     callback: (error: ServiceError | null, response: StorageObjectPopulated) => void,
   ): ClientUnaryCall;
   getMany(
-    request: StorageObjectRequest,
-    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+    request: StorageObjectQuery,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
   getMany(
-    request: StorageObjectRequest,
+    request: StorageObjectQuery,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
   getMany(
-    request: StorageObjectRequest,
+    request: StorageObjectQuery,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObjectList) => void,
   ): ClientUnaryCall;
-  getList(
-    request: GetListRequest,
-    callback: (error: ServiceError | null, response: StorageObjectGetListResponse) => void,
-  ): ClientUnaryCall;
-  getList(
-    request: GetListRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: StorageObjectGetListResponse) => void,
-  ): ClientUnaryCall;
-  getList(
-    request: GetListRequest,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: StorageObjectGetListResponse) => void,
+  getFolders(
+    request: StorageObjectGetFolders,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
   getFolders(
-    request: StorageObjectGetFoldersRequest,
-    callback: (error: ServiceError | null, response: StorageObjectGetFoldersResponse) => void,
+    request: StorageObjectGetFolders,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
   getFolders(
-    request: StorageObjectGetFoldersRequest,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: StorageObjectGetFoldersResponse) => void,
-  ): ClientUnaryCall;
-  getFolders(
-    request: StorageObjectGetFoldersRequest,
+    request: StorageObjectGetFolders,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: StorageObjectGetFoldersResponse) => void,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
-  isExistsFolder(
-    request: StorageObjectExistsFolderRequest,
-    callback: (error: ServiceError | null, response: BooleanResult) => void,
+  isExists(
+    request: StorageObjectQuery,
+    callback: (error: ServiceError | null, response: Boolean) => void,
   ): ClientUnaryCall;
-  isExistsFolder(
-    request: StorageObjectExistsFolderRequest,
+  isExists(
+    request: StorageObjectQuery,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: BooleanResult) => void,
+    callback: (error: ServiceError | null, response: Boolean) => void,
   ): ClientUnaryCall;
-  isExistsFolder(
-    request: StorageObjectExistsFolderRequest,
+  isExists(
+    request: StorageObjectQuery,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: BooleanResult) => void,
+    callback: (error: ServiceError | null, response: Boolean) => void,
   ): ClientUnaryCall;
   createOne(
     request: StorageObjectCreate,
@@ -217,32 +217,32 @@ export interface GrpcStorageObjectServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
-  updateById(
-    request: StorageObjectUpdateByIdRequest,
+  updateOne(
+    request: StorageObjectUpdateOne,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
-  updateById(
-    request: StorageObjectUpdateByIdRequest,
+  updateOne(
+    request: StorageObjectUpdateOne,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
-  updateById(
-    request: StorageObjectUpdateByIdRequest,
+  updateOne(
+    request: StorageObjectUpdateOne,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
-  deleteById(
-    request: IdField,
+  deleteOne(
+    request: StorageObjectQuery,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
-  deleteById(
-    request: IdField,
+  deleteOne(
+    request: StorageObjectQuery,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
-  deleteById(
-    request: IdField,
+  deleteOne(
+    request: StorageObjectQuery,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
@@ -272,37 +272,37 @@ export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.StorageObjectService/getMany';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: StorageObjectRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => StorageObjectRequest;
-      readonly responseSerialize: (value: StorageObjectList) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => StorageObjectList;
+      readonly requestSerialize: (value: StorageObjectQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectQuery;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
     readonly getList: {
       readonly path: '/storage.StorageObjectService/getList';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetListRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetListRequest;
-      readonly responseSerialize: (value: StorageObjectGetListResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => StorageObjectGetListResponse;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: StorageObjectList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectList;
     };
     readonly getFolders: {
       readonly path: '/storage.StorageObjectService/getFolders';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: StorageObjectGetFoldersRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFoldersRequest;
-      readonly responseSerialize: (value: StorageObjectGetFoldersResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => StorageObjectGetFoldersResponse;
+      readonly requestSerialize: (value: StorageObjectGetFolders) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFolders;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
-    readonly isExistsFolder: {
-      readonly path: '/storage.StorageObjectService/isExistsFolder';
+    readonly isExists: {
+      readonly path: '/storage.StorageObjectService/isExists';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: StorageObjectExistsFolderRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => StorageObjectExistsFolderRequest;
-      readonly responseSerialize: (value: BooleanResult) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => BooleanResult;
+      readonly requestSerialize: (value: StorageObjectQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectQuery;
+      readonly responseSerialize: (value: Boolean) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Boolean;
     };
     readonly createOne: {
       readonly path: '/storage.StorageObjectService/createOne';
@@ -313,17 +313,515 @@ export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: StorageObject) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObject;
     };
-    readonly updateById: {
-      readonly path: '/storage.StorageObjectService/updateById';
+    readonly updateOne: {
+      readonly path: '/storage.StorageObjectService/updateOne';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: StorageObjectUpdateByIdRequest) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => StorageObjectUpdateByIdRequest;
+      readonly requestSerialize: (value: StorageObjectUpdateOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectUpdateOne;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly deleteOne: {
+      readonly path: '/storage.StorageObjectService/deleteOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectQuery;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+  };
+  serviceName: string;
+};
+
+type StorageObjectAdminServiceService = typeof StorageObjectAdminServiceService;
+const StorageObjectAdminServiceService = {
+  getById: {
+    path: '/storage.StorageObjectAdminService/getById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: StorageObjectPopulated): Buffer =>
+      Buffer.from(StorageObjectPopulated.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectPopulated =>
+      StorageObjectPopulated.decode(value),
+  },
+  getMany: {
+    path: '/storage.StorageObjectAdminService/getMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectQuery): Buffer =>
+      Buffer.from(StorageObjectQuery.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectQuery => StorageObjectQuery.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  getList: {
+    path: '/storage.StorageObjectAdminService/getList' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetList => GetList.decode(value),
+    responseSerialize: (value: StorageObjectList): Buffer =>
+      Buffer.from(StorageObjectList.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectList => StorageObjectList.decode(value),
+  },
+  getFolders: {
+    path: '/storage.StorageObjectAdminService/getFolders' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectGetFolders): Buffer =>
+      Buffer.from(StorageObjectGetFolders.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectGetFolders =>
+      StorageObjectGetFolders.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  isExists: {
+    path: '/storage.StorageObjectAdminService/isExists' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectQuery): Buffer =>
+      Buffer.from(StorageObjectQuery.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectQuery => StorageObjectQuery.decode(value),
+    responseSerialize: (value: Boolean): Buffer => Buffer.from(Boolean.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Boolean => Boolean.decode(value),
+  },
+  createOne: {
+    path: '/storage.StorageObjectAdminService/createOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectCreate): Buffer =>
+      Buffer.from(StorageObjectCreate.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectCreate => StorageObjectCreate.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  updateById: {
+    path: '/storage.StorageObjectAdminService/updateById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectUpdateById): Buffer =>
+      Buffer.from(StorageObjectUpdateById.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectUpdateById =>
+      StorageObjectUpdateById.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  deleteById: {
+    path: '/storage.StorageObjectAdminService/deleteById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+} as const;
+
+export interface GrpcStorageObjectAdminServiceClient extends Client {
+  getById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: StorageObjectPopulated) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectPopulated) => void,
+  ): ClientUnaryCall;
+  getById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectPopulated) => void,
+  ): ClientUnaryCall;
+  getMany(
+    request: StorageObjectQuery,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getMany(
+    request: StorageObjectQuery,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getMany(
+    request: StorageObjectQuery,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+  ): ClientUnaryCall;
+  getList(
+    request: GetList,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectList) => void,
+  ): ClientUnaryCall;
+  getFolders(
+    request: StorageObjectGetFolders,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolders(
+    request: StorageObjectGetFolders,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolders(
+    request: StorageObjectGetFolders,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  isExists(
+    request: StorageObjectQuery,
+    callback: (error: ServiceError | null, response: Boolean) => void,
+  ): ClientUnaryCall;
+  isExists(
+    request: StorageObjectQuery,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Boolean) => void,
+  ): ClientUnaryCall;
+  isExists(
+    request: StorageObjectQuery,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Boolean) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: StorageObjectCreate,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: StorageObjectCreate,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: StorageObjectCreate,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  updateById(
+    request: StorageObjectUpdateById,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  updateById(
+    request: StorageObjectUpdateById,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  updateById(
+    request: StorageObjectUpdateById,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+}
+
+export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
+  StorageObjectAdminServiceService,
+  'storage.StorageObjectAdminService',
+) as unknown as {
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcStorageObjectAdminServiceClient;
+  service: {
+    readonly getById: {
+      readonly path: '/storage.StorageObjectAdminService/getById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: StorageObjectPopulated) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectPopulated;
+    };
+    readonly getMany: {
+      readonly path: '/storage.StorageObjectAdminService/getMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectQuery;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly getList: {
+      readonly path: '/storage.StorageObjectAdminService/getList';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: StorageObjectList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectList;
+    };
+    readonly getFolders: {
+      readonly path: '/storage.StorageObjectAdminService/getFolders';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectGetFolders) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFolders;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly isExists: {
+      readonly path: '/storage.StorageObjectAdminService/isExists';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectQuery;
+      readonly responseSerialize: (value: Boolean) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Boolean;
+    };
+    readonly createOne: {
+      readonly path: '/storage.StorageObjectAdminService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectCreate) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectCreate;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly updateById: {
+      readonly path: '/storage.StorageObjectAdminService/updateById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectUpdateById) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectUpdateById;
       readonly responseSerialize: (value: StorageObject) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObject;
     };
     readonly deleteById: {
-      readonly path: '/storage.StorageObjectService/deleteById';
+      readonly path: '/storage.StorageObjectAdminService/deleteById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+  };
+  serviceName: string;
+};
+
+type StorageObjectWebServiceService = typeof StorageObjectWebServiceService;
+const StorageObjectWebServiceService = {
+  getFolders: {
+    path: '/storage.StorageObjectWebService/getFolders' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectGetFoldersWeb): Buffer =>
+      Buffer.from(StorageObjectGetFoldersWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectGetFoldersWeb =>
+      StorageObjectGetFoldersWeb.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  isExists: {
+    path: '/storage.StorageObjectWebService/isExists' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectQueryWeb): Buffer =>
+      Buffer.from(StorageObjectQueryWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectQueryWeb =>
+      StorageObjectQueryWeb.decode(value),
+    responseSerialize: (value: Boolean): Buffer => Buffer.from(Boolean.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Boolean => Boolean.decode(value),
+  },
+  createOne: {
+    path: '/storage.StorageObjectWebService/createOne' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectCreateWeb): Buffer =>
+      Buffer.from(StorageObjectCreateWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectCreateWeb =>
+      StorageObjectCreateWeb.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  updateById: {
+    path: '/storage.StorageObjectWebService/updateById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectUpdateById): Buffer =>
+      Buffer.from(StorageObjectUpdateById.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectUpdateById =>
+      StorageObjectUpdateById.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  deleteById: {
+    path: '/storage.StorageObjectWebService/deleteById' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+} as const;
+
+export interface GrpcStorageObjectWebServiceClient extends Client {
+  getFolders(
+    request: StorageObjectGetFoldersWeb,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolders(
+    request: StorageObjectGetFoldersWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolders(
+    request: StorageObjectGetFoldersWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  isExists(
+    request: StorageObjectQueryWeb,
+    callback: (error: ServiceError | null, response: Boolean) => void,
+  ): ClientUnaryCall;
+  isExists(
+    request: StorageObjectQueryWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Boolean) => void,
+  ): ClientUnaryCall;
+  isExists(
+    request: StorageObjectQueryWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Boolean) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: StorageObjectCreateWeb,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: StorageObjectCreateWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  createOne(
+    request: StorageObjectCreateWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  updateById(
+    request: StorageObjectUpdateById,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  updateById(
+    request: StorageObjectUpdateById,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  updateById(
+    request: StorageObjectUpdateById,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+}
+
+export const GrpcStorageObjectWebServiceClient = makeGenericClientConstructor(
+  StorageObjectWebServiceService,
+  'storage.StorageObjectWebService',
+) as unknown as {
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcStorageObjectWebServiceClient;
+  service: {
+    readonly getFolders: {
+      readonly path: '/storage.StorageObjectWebService/getFolders';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectGetFoldersWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFoldersWeb;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly isExists: {
+      readonly path: '/storage.StorageObjectWebService/isExists';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectQueryWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectQueryWeb;
+      readonly responseSerialize: (value: Boolean) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Boolean;
+    };
+    readonly createOne: {
+      readonly path: '/storage.StorageObjectWebService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectCreateWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectCreateWeb;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly updateById: {
+      readonly path: '/storage.StorageObjectWebService/updateById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectUpdateById) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectUpdateById;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly deleteById: {
+      readonly path: '/storage.StorageObjectWebService/deleteById';
       readonly requestStream: false;
       readonly responseStream: false;
       readonly requestSerialize: (value: IdField) => Buffer;
@@ -367,11 +865,11 @@ export class GrpcStorageObjectRepository {
   }
 
   getMany(
-    request: StorageObjectRequest,
+    request: StorageObjectQuery,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<StorageObjectList> {
-    return new Promise<StorageObjectList>((resolve, reject) => {
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
       this.client.getMany(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -383,11 +881,11 @@ export class GrpcStorageObjectRepository {
   }
 
   getList(
-    request: GetListRequest,
+    request: GetList,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<StorageObjectGetListResponse> {
-    return new Promise<StorageObjectGetListResponse>((resolve, reject) => {
+  ): Promise<StorageObjectList> {
+    return new Promise<StorageObjectList>((resolve, reject) => {
       this.client.getList(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -399,11 +897,11 @@ export class GrpcStorageObjectRepository {
   }
 
   getFolders(
-    request: StorageObjectGetFoldersRequest,
+    request: StorageObjectGetFolders,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<StorageObjectGetFoldersResponse> {
-    return new Promise<StorageObjectGetFoldersResponse>((resolve, reject) => {
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
       this.client.getFolders(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -414,13 +912,157 @@ export class GrpcStorageObjectRepository {
     });
   }
 
-  isExistsFolder(
-    request: StorageObjectExistsFolderRequest,
+  isExists(
+    request: StorageObjectQuery,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<BooleanResult> {
-    return new Promise<BooleanResult>((resolve, reject) => {
-      this.client.isExistsFolder(request, metadata, options, (err, response) => {
+  ): Promise<Boolean> {
+    return new Promise<Boolean>((resolve, reject) => {
+      this.client.isExists(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createOne(
+    request: StorageObjectCreate,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.createOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  updateOne(
+    request: StorageObjectUpdateOne,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.updateOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deleteOne(
+    request: StorageObjectQuery,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.deleteOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}
+
+export class GrpcStorageObjectAdminRepository {
+  protected readonly client: GrpcStorageObjectAdminServiceClient;
+
+  constructor(
+    address: string,
+    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+    options?: Partial<ClientOptions>,
+  ) {
+    this.client = new GrpcStorageObjectAdminServiceClient(address, credentials, options);
+  }
+
+  getClient(): GrpcStorageObjectAdminServiceClient {
+    return this.client;
+  }
+
+  getById(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectPopulated> {
+    return new Promise<StorageObjectPopulated>((resolve, reject) => {
+      this.client.getById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getMany(
+    request: StorageObjectQuery,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.getMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getList(
+    request: GetList,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectList> {
+    return new Promise<StorageObjectList>((resolve, reject) => {
+      this.client.getList(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getFolders(
+    request: StorageObjectGetFolders,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.getFolders(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  isExists(
+    request: StorageObjectQuery,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<Boolean> {
+    return new Promise<Boolean>((resolve, reject) => {
+      this.client.isExists(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -447,7 +1089,103 @@ export class GrpcStorageObjectRepository {
   }
 
   updateById(
-    request: StorageObjectUpdateByIdRequest,
+    request: StorageObjectUpdateById,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.updateById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deleteById(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.deleteById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+}
+
+export class GrpcStorageObjectWebRepository {
+  protected readonly client: GrpcStorageObjectWebServiceClient;
+
+  constructor(
+    address: string,
+    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
+    options?: Partial<ClientOptions>,
+  ) {
+    this.client = new GrpcStorageObjectWebServiceClient(address, credentials, options);
+  }
+
+  getClient(): GrpcStorageObjectWebServiceClient {
+    return this.client;
+  }
+
+  getFolders(
+    request: StorageObjectGetFoldersWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.getFolders(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  isExists(
+    request: StorageObjectQueryWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<Boolean> {
+    return new Promise<Boolean>((resolve, reject) => {
+      this.client.isExists(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createOne(
+    request: StorageObjectCreateWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.createOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  updateById(
+    request: StorageObjectUpdateById,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<StorageObject> {

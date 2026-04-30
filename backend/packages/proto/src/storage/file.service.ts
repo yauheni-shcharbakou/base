@@ -8,66 +8,65 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { BaseQuery, GetListRequest, IdField } from '../common/service';
-import { DownloadMap, UploadRequest, UrlMap } from './messages/common.messages';
+import { IdField } from '../common/fields';
+import { GetList } from '../common/messages';
+import { StringMap } from '../common/types';
+import { DownloadMap, GetUrlMap, GetUrlMapWeb, UploadOne } from './common/common.messages';
+import { File } from './file/file';
 import {
-  FileCreateManyRequest,
-  FileCreateManyResponse,
-  FileCreateRequest,
-  FileGetListResponse,
+  FileArray,
+  FileCreateMany,
+  FileCreateManyWeb,
+  FileCreateOne,
+  FileCreateOneWeb,
+  FileList,
+  FileQuery,
   FileUploadResponse,
-} from './messages/file.messages';
-import { File } from './models/file';
+} from './file/file.messages';
 
 export interface GrpcFileServiceClient {
-  getUrlMap(request: BaseQuery, metadata?: Metadata): Observable<UrlMap>;
+  getUrlMap(request: GetUrlMap, metadata?: Metadata): Observable<StringMap>;
 
-  getDownloadMap(request: BaseQuery, metadata?: Metadata): Observable<DownloadMap>;
+  getDownloadMap(request: GetUrlMap, metadata?: Metadata): Observable<DownloadMap>;
 
   getById(request: IdField, metadata?: Metadata): Observable<File>;
 
-  getList(request: GetListRequest, metadata?: Metadata): Observable<FileGetListResponse>;
+  getList(request: GetList, metadata?: Metadata): Observable<FileList>;
 
-  createOne(request: FileCreateRequest, metadata?: Metadata): Observable<File>;
+  createOne(request: FileCreateOne, metadata?: Metadata): Observable<File>;
 
-  createMany(
-    request: FileCreateManyRequest,
-    metadata?: Metadata,
-  ): Observable<FileCreateManyResponse>;
+  createMany(request: FileCreateMany, metadata?: Metadata): Observable<FileArray>;
 
-  uploadOne(
-    request: Observable<UploadRequest>,
-    metadata?: Metadata,
-  ): Observable<FileUploadResponse>;
+  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<FileUploadResponse>;
 
-  deleteById(request: IdField, metadata?: Metadata): Observable<File>;
+  deleteOne(request: FileQuery, metadata?: Metadata): Observable<File>;
 }
 
 export interface GrpcFileServiceController {
-  getUrlMap(request: BaseQuery, ...args: any[]): Promise<UrlMap> | Observable<UrlMap> | UrlMap;
+  getUrlMap(
+    request: GetUrlMap,
+    ...args: any[]
+  ): Promise<StringMap> | Observable<StringMap> | StringMap;
 
   getDownloadMap(
-    request: BaseQuery,
+    request: GetUrlMap,
     ...args: any[]
   ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
 
   getById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
 
-  getList(
-    request: GetListRequest,
-    ...args: any[]
-  ): Promise<FileGetListResponse> | Observable<FileGetListResponse> | FileGetListResponse;
+  getList(request: GetList, ...args: any[]): Promise<FileList> | Observable<FileList> | FileList;
 
-  createOne(request: FileCreateRequest, ...args: any[]): Promise<File> | Observable<File> | File;
+  createOne(request: FileCreateOne, ...args: any[]): Promise<File> | Observable<File> | File;
 
   createMany(
-    request: FileCreateManyRequest,
+    request: FileCreateMany,
     ...args: any[]
-  ): Promise<FileCreateManyResponse> | Observable<FileCreateManyResponse> | FileCreateManyResponse;
+  ): Promise<FileArray> | Observable<FileArray> | FileArray;
 
-  uploadOne(request: Observable<UploadRequest>, ...args: any[]): Observable<FileUploadResponse>;
+  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<FileUploadResponse>;
 
-  deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
+  deleteOne(request: FileQuery, ...args: any[]): Promise<File> | Observable<File> | File;
 }
 
 function FileServiceControllerMethods() {
@@ -79,7 +78,7 @@ function FileServiceControllerMethods() {
       'getList',
       'createOne',
       'createMany',
-      'deleteById',
+      'deleteOne',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
@@ -93,6 +92,136 @@ function FileServiceControllerMethods() {
   };
 }
 
+export interface GrpcFileAdminServiceClient {
+  getUrlMap(request: GetUrlMap, metadata?: Metadata): Observable<StringMap>;
+
+  getDownloadMap(request: GetUrlMap, metadata?: Metadata): Observable<DownloadMap>;
+
+  getById(request: IdField, metadata?: Metadata): Observable<File>;
+
+  getList(request: GetList, metadata?: Metadata): Observable<FileList>;
+
+  createOne(request: FileCreateOne, metadata?: Metadata): Observable<File>;
+
+  createMany(request: FileCreateMany, metadata?: Metadata): Observable<FileArray>;
+
+  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<FileUploadResponse>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<File>;
+}
+
+export interface GrpcFileAdminServiceController {
+  getUrlMap(
+    request: GetUrlMap,
+    ...args: any[]
+  ): Promise<StringMap> | Observable<StringMap> | StringMap;
+
+  getDownloadMap(
+    request: GetUrlMap,
+    ...args: any[]
+  ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
+
+  getById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
+
+  getList(request: GetList, ...args: any[]): Promise<FileList> | Observable<FileList> | FileList;
+
+  createOne(request: FileCreateOne, ...args: any[]): Promise<File> | Observable<File> | File;
+
+  createMany(
+    request: FileCreateMany,
+    ...args: any[]
+  ): Promise<FileArray> | Observable<FileArray> | FileArray;
+
+  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<FileUploadResponse>;
+
+  deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
+}
+
+function FileAdminServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      'getUrlMap',
+      'getDownloadMap',
+      'getById',
+      'getList',
+      'createOne',
+      'createMany',
+      'deleteById',
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('FileAdminService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = ['uploadOne'];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('FileAdminService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
+export interface GrpcFileWebServiceClient {
+  getUrlMap(request: GetUrlMapWeb, metadata?: Metadata): Observable<StringMap>;
+
+  getDownloadMap(request: GetUrlMapWeb, metadata?: Metadata): Observable<DownloadMap>;
+
+  createOne(request: FileCreateOneWeb, metadata?: Metadata): Observable<File>;
+
+  createMany(request: FileCreateManyWeb, metadata?: Metadata): Observable<FileArray>;
+
+  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<FileUploadResponse>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<File>;
+}
+
+export interface GrpcFileWebServiceController {
+  getUrlMap(
+    request: GetUrlMapWeb,
+    ...args: any[]
+  ): Promise<StringMap> | Observable<StringMap> | StringMap;
+
+  getDownloadMap(
+    request: GetUrlMapWeb,
+    ...args: any[]
+  ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
+
+  createOne(request: FileCreateOneWeb, ...args: any[]): Promise<File> | Observable<File> | File;
+
+  createMany(
+    request: FileCreateManyWeb,
+    ...args: any[]
+  ): Promise<FileArray> | Observable<FileArray> | FileArray;
+
+  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<FileUploadResponse>;
+
+  deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
+}
+
+function FileWebServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      'getUrlMap',
+      'getDownloadMap',
+      'createOne',
+      'createMany',
+      'deleteById',
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('FileWebService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = ['uploadOne'];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('FileWebService', method)(constructor.prototype[method], method, descriptor);
+    }
+  };
+}
+
 export const GrpcFileTransport = {
   service: 'FileService',
   definition: {
@@ -100,4 +229,22 @@ export const GrpcFileTransport = {
     protoPath: 'storage/file.service.proto',
   },
   ControllerMethods: (): ClassDecorator => FileServiceControllerMethods(),
+} as const;
+
+export const GrpcFileAdminTransport = {
+  service: 'FileAdminService',
+  definition: {
+    package: 'storage',
+    protoPath: 'storage/file.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => FileAdminServiceControllerMethods(),
+} as const;
+
+export const GrpcFileWebTransport = {
+  service: 'FileWebService',
+  definition: {
+    package: 'storage',
+    protoPath: 'storage/file.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => FileWebServiceControllerMethods(),
 } as const;

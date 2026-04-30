@@ -8,32 +8,34 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { GetListRequest, IdField } from '../common/service';
+import { IdField } from '../common/fields';
+import { GetList } from '../common/messages';
+import { Image } from './image/image';
 import {
-  ImageCreateManyRequest,
-  ImageCreateManyResponse,
-  ImageCreateRequest,
-  ImageGetListResponse,
-  ImagePopulated,
-  ImageUpdateByIdRequest,
-} from './messages/image.messages';
-import { Image } from './models/image';
+  ImageArray,
+  ImageCreateMany,
+  ImageCreateManyWeb,
+  ImageCreateOne,
+  ImageCreateOneWeb,
+  ImageList,
+  ImageQuery,
+  ImageUpdateById,
+  ImageUpdateOne,
+} from './image/image.messages';
+import { ImagePopulated } from './image/image.populates';
 
 export interface GrpcImageServiceClient {
   getById(request: IdField, metadata?: Metadata): Observable<ImagePopulated>;
 
-  getList(request: GetListRequest, metadata?: Metadata): Observable<ImageGetListResponse>;
+  getList(request: GetList, metadata?: Metadata): Observable<ImageList>;
 
-  createOne(request: ImageCreateRequest, metadata?: Metadata): Observable<Image>;
+  createOne(request: ImageCreateOne, metadata?: Metadata): Observable<Image>;
 
-  createMany(
-    request: ImageCreateManyRequest,
-    metadata?: Metadata,
-  ): Observable<ImageCreateManyResponse>;
+  createMany(request: ImageCreateMany, metadata?: Metadata): Observable<ImageArray>;
 
-  updateById(request: ImageUpdateByIdRequest, metadata?: Metadata): Observable<Image>;
+  updateOne(request: ImageUpdateOne, metadata?: Metadata): Observable<Image>;
 
-  deleteById(request: IdField, metadata?: Metadata): Observable<Image>;
+  deleteOne(request: ImageQuery, metadata?: Metadata): Observable<Image>;
 }
 
 export interface GrpcImageServiceController {
@@ -42,30 +44,18 @@ export interface GrpcImageServiceController {
     ...args: any[]
   ): Promise<ImagePopulated> | Observable<ImagePopulated> | ImagePopulated;
 
-  getList(
-    request: GetListRequest,
-    ...args: any[]
-  ): Promise<ImageGetListResponse> | Observable<ImageGetListResponse> | ImageGetListResponse;
+  getList(request: GetList, ...args: any[]): Promise<ImageList> | Observable<ImageList> | ImageList;
 
-  createOne(
-    request: ImageCreateRequest,
-    ...args: any[]
-  ): Promise<Image> | Observable<Image> | Image;
+  createOne(request: ImageCreateOne, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 
   createMany(
-    request: ImageCreateManyRequest,
+    request: ImageCreateMany,
     ...args: any[]
-  ):
-    | Promise<ImageCreateManyResponse>
-    | Observable<ImageCreateManyResponse>
-    | ImageCreateManyResponse;
+  ): Promise<ImageArray> | Observable<ImageArray> | ImageArray;
 
-  updateById(
-    request: ImageUpdateByIdRequest,
-    ...args: any[]
-  ): Promise<Image> | Observable<Image> | Image;
+  updateOne(request: ImageUpdateOne, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 
-  deleteById(request: IdField, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+  deleteOne(request: ImageQuery, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 }
 
 function ImageServiceControllerMethods() {
@@ -75,8 +65,8 @@ function ImageServiceControllerMethods() {
       'getList',
       'createOne',
       'createMany',
-      'updateById',
-      'deleteById',
+      'updateOne',
+      'deleteOne',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
@@ -90,6 +80,108 @@ function ImageServiceControllerMethods() {
   };
 }
 
+export interface GrpcImageAdminServiceClient {
+  getById(request: IdField, metadata?: Metadata): Observable<ImagePopulated>;
+
+  getList(request: GetList, metadata?: Metadata): Observable<ImageList>;
+
+  createOne(request: ImageCreateOne, metadata?: Metadata): Observable<Image>;
+
+  createMany(request: ImageCreateMany, metadata?: Metadata): Observable<ImageArray>;
+
+  updateById(request: ImageUpdateById, metadata?: Metadata): Observable<Image>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<Image>;
+}
+
+export interface GrpcImageAdminServiceController {
+  getById(
+    request: IdField,
+    ...args: any[]
+  ): Promise<ImagePopulated> | Observable<ImagePopulated> | ImagePopulated;
+
+  getList(request: GetList, ...args: any[]): Promise<ImageList> | Observable<ImageList> | ImageList;
+
+  createOne(request: ImageCreateOne, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+
+  createMany(
+    request: ImageCreateMany,
+    ...args: any[]
+  ): Promise<ImageArray> | Observable<ImageArray> | ImageArray;
+
+  updateById(request: ImageUpdateById, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+
+  deleteById(request: IdField, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+}
+
+function ImageAdminServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      'getById',
+      'getList',
+      'createOne',
+      'createMany',
+      'updateById',
+      'deleteById',
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('ImageAdminService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('ImageAdminService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
+export interface GrpcImageWebServiceClient {
+  createOne(request: ImageCreateOneWeb, metadata?: Metadata): Observable<Image>;
+
+  createMany(request: ImageCreateManyWeb, metadata?: Metadata): Observable<ImageArray>;
+
+  updateById(request: ImageUpdateById, metadata?: Metadata): Observable<Image>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<Image>;
+}
+
+export interface GrpcImageWebServiceController {
+  createOne(request: ImageCreateOneWeb, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+
+  createMany(
+    request: ImageCreateManyWeb,
+    ...args: any[]
+  ): Promise<ImageArray> | Observable<ImageArray> | ImageArray;
+
+  updateById(request: ImageUpdateById, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+
+  deleteById(request: IdField, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+}
+
+function ImageWebServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = ['createOne', 'createMany', 'updateById', 'deleteById'];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('ImageWebService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('ImageWebService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
 export const GrpcImageTransport = {
   service: 'ImageService',
   definition: {
@@ -97,4 +189,22 @@ export const GrpcImageTransport = {
     protoPath: 'storage/image.service.proto',
   },
   ControllerMethods: (): ClassDecorator => ImageServiceControllerMethods(),
+} as const;
+
+export const GrpcImageAdminTransport = {
+  service: 'ImageAdminService',
+  definition: {
+    package: 'storage',
+    protoPath: 'storage/image.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => ImageAdminServiceControllerMethods(),
+} as const;
+
+export const GrpcImageWebTransport = {
+  service: 'ImageWebService',
+  definition: {
+    package: 'storage',
+    protoPath: 'storage/image.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => ImageWebServiceControllerMethods(),
 } as const;

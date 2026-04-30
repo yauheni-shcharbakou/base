@@ -8,7 +8,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
 
-export enum CrudLogicalOperator {
+export enum LogicalOperator {
   eq = 'eq',
   ne = 'ne',
   eqs = 'eqs',
@@ -39,351 +39,345 @@ export enum CrudLogicalOperator {
   nendswiths = 'nendswiths',
 }
 
-export function crudLogicalOperatorFromJSON(object: any): CrudLogicalOperator {
+export function logicalOperatorFromJSON(object: any): LogicalOperator {
   switch (object) {
     case 0:
     case 'eq':
-      return CrudLogicalOperator.eq;
+      return LogicalOperator.eq;
     case 1:
     case 'ne':
-      return CrudLogicalOperator.ne;
+      return LogicalOperator.ne;
     case 2:
     case 'eqs':
-      return CrudLogicalOperator.eqs;
+      return LogicalOperator.eqs;
     case 3:
     case 'nes':
-      return CrudLogicalOperator.nes;
+      return LogicalOperator.nes;
     case 4:
     case 'lt':
-      return CrudLogicalOperator.lt;
+      return LogicalOperator.lt;
     case 5:
     case 'gt':
-      return CrudLogicalOperator.gt;
+      return LogicalOperator.gt;
     case 6:
     case 'lte':
-      return CrudLogicalOperator.lte;
+      return LogicalOperator.lte;
     case 7:
     case 'gte':
-      return CrudLogicalOperator.gte;
+      return LogicalOperator.gte;
     case 8:
     case 'in':
-      return CrudLogicalOperator.in;
+      return LogicalOperator.in;
     case 9:
     case 'nin':
-      return CrudLogicalOperator.nin;
+      return LogicalOperator.nin;
     case 10:
     case 'ina':
-      return CrudLogicalOperator.ina;
+      return LogicalOperator.ina;
     case 11:
     case 'nina':
-      return CrudLogicalOperator.nina;
+      return LogicalOperator.nina;
     case 12:
     case 'contains':
-      return CrudLogicalOperator.contains;
+      return LogicalOperator.contains;
     case 13:
     case 'ncontains':
-      return CrudLogicalOperator.ncontains;
+      return LogicalOperator.ncontains;
     case 14:
     case 'containss':
-      return CrudLogicalOperator.containss;
+      return LogicalOperator.containss;
     case 15:
     case 'ncontainss':
-      return CrudLogicalOperator.ncontainss;
+      return LogicalOperator.ncontainss;
     case 16:
     case 'between':
-      return CrudLogicalOperator.between;
+      return LogicalOperator.between;
     case 17:
     case 'nbetween':
-      return CrudLogicalOperator.nbetween;
+      return LogicalOperator.nbetween;
     case 18:
     case 'null':
-      return CrudLogicalOperator.null;
+      return LogicalOperator.null;
     case 19:
     case 'nnull':
-      return CrudLogicalOperator.nnull;
+      return LogicalOperator.nnull;
     case 20:
     case 'startswith':
-      return CrudLogicalOperator.startswith;
+      return LogicalOperator.startswith;
     case 21:
     case 'nstartswith':
-      return CrudLogicalOperator.nstartswith;
+      return LogicalOperator.nstartswith;
     case 22:
     case 'startswiths':
-      return CrudLogicalOperator.startswiths;
+      return LogicalOperator.startswiths;
     case 23:
     case 'nstartswiths':
-      return CrudLogicalOperator.nstartswiths;
+      return LogicalOperator.nstartswiths;
     case 24:
     case 'endswith':
-      return CrudLogicalOperator.endswith;
+      return LogicalOperator.endswith;
     case 25:
     case 'nendswith':
-      return CrudLogicalOperator.nendswith;
+      return LogicalOperator.nendswith;
     case 26:
     case 'endswiths':
-      return CrudLogicalOperator.endswiths;
+      return LogicalOperator.endswiths;
     case 27:
     case 'nendswiths':
-      return CrudLogicalOperator.nendswiths;
+      return LogicalOperator.nendswiths;
     default:
-      throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum CrudLogicalOperator',
-      );
+      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum LogicalOperator');
   }
 }
 
-export function crudLogicalOperatorToJSON(object: CrudLogicalOperator): string {
+export function logicalOperatorToJSON(object: LogicalOperator): string {
   switch (object) {
-    case CrudLogicalOperator.eq:
+    case LogicalOperator.eq:
       return 'eq';
-    case CrudLogicalOperator.ne:
+    case LogicalOperator.ne:
       return 'ne';
-    case CrudLogicalOperator.eqs:
+    case LogicalOperator.eqs:
       return 'eqs';
-    case CrudLogicalOperator.nes:
+    case LogicalOperator.nes:
       return 'nes';
-    case CrudLogicalOperator.lt:
+    case LogicalOperator.lt:
       return 'lt';
-    case CrudLogicalOperator.gt:
+    case LogicalOperator.gt:
       return 'gt';
-    case CrudLogicalOperator.lte:
+    case LogicalOperator.lte:
       return 'lte';
-    case CrudLogicalOperator.gte:
+    case LogicalOperator.gte:
       return 'gte';
-    case CrudLogicalOperator.in:
+    case LogicalOperator.in:
       return 'in';
-    case CrudLogicalOperator.nin:
+    case LogicalOperator.nin:
       return 'nin';
-    case CrudLogicalOperator.ina:
+    case LogicalOperator.ina:
       return 'ina';
-    case CrudLogicalOperator.nina:
+    case LogicalOperator.nina:
       return 'nina';
-    case CrudLogicalOperator.contains:
+    case LogicalOperator.contains:
       return 'contains';
-    case CrudLogicalOperator.ncontains:
+    case LogicalOperator.ncontains:
       return 'ncontains';
-    case CrudLogicalOperator.containss:
+    case LogicalOperator.containss:
       return 'containss';
-    case CrudLogicalOperator.ncontainss:
+    case LogicalOperator.ncontainss:
       return 'ncontainss';
-    case CrudLogicalOperator.between:
+    case LogicalOperator.between:
       return 'between';
-    case CrudLogicalOperator.nbetween:
+    case LogicalOperator.nbetween:
       return 'nbetween';
-    case CrudLogicalOperator.null:
+    case LogicalOperator.null:
       return 'null';
-    case CrudLogicalOperator.nnull:
+    case LogicalOperator.nnull:
       return 'nnull';
-    case CrudLogicalOperator.startswith:
+    case LogicalOperator.startswith:
       return 'startswith';
-    case CrudLogicalOperator.nstartswith:
+    case LogicalOperator.nstartswith:
       return 'nstartswith';
-    case CrudLogicalOperator.startswiths:
+    case LogicalOperator.startswiths:
       return 'startswiths';
-    case CrudLogicalOperator.nstartswiths:
+    case LogicalOperator.nstartswiths:
       return 'nstartswiths';
-    case CrudLogicalOperator.endswith:
+    case LogicalOperator.endswith:
       return 'endswith';
-    case CrudLogicalOperator.nendswith:
+    case LogicalOperator.nendswith:
       return 'nendswith';
-    case CrudLogicalOperator.endswiths:
+    case LogicalOperator.endswiths:
       return 'endswiths';
-    case CrudLogicalOperator.nendswiths:
+    case LogicalOperator.nendswiths:
       return 'nendswiths';
     default:
-      throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum CrudLogicalOperator',
-      );
+      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum LogicalOperator');
   }
 }
 
-export function crudLogicalOperatorToNumber(object: CrudLogicalOperator): number {
+export function logicalOperatorToNumber(object: LogicalOperator): number {
   switch (object) {
-    case CrudLogicalOperator.eq:
+    case LogicalOperator.eq:
       return 0;
-    case CrudLogicalOperator.ne:
+    case LogicalOperator.ne:
       return 1;
-    case CrudLogicalOperator.eqs:
+    case LogicalOperator.eqs:
       return 2;
-    case CrudLogicalOperator.nes:
+    case LogicalOperator.nes:
       return 3;
-    case CrudLogicalOperator.lt:
+    case LogicalOperator.lt:
       return 4;
-    case CrudLogicalOperator.gt:
+    case LogicalOperator.gt:
       return 5;
-    case CrudLogicalOperator.lte:
+    case LogicalOperator.lte:
       return 6;
-    case CrudLogicalOperator.gte:
+    case LogicalOperator.gte:
       return 7;
-    case CrudLogicalOperator.in:
+    case LogicalOperator.in:
       return 8;
-    case CrudLogicalOperator.nin:
+    case LogicalOperator.nin:
       return 9;
-    case CrudLogicalOperator.ina:
+    case LogicalOperator.ina:
       return 10;
-    case CrudLogicalOperator.nina:
+    case LogicalOperator.nina:
       return 11;
-    case CrudLogicalOperator.contains:
+    case LogicalOperator.contains:
       return 12;
-    case CrudLogicalOperator.ncontains:
+    case LogicalOperator.ncontains:
       return 13;
-    case CrudLogicalOperator.containss:
+    case LogicalOperator.containss:
       return 14;
-    case CrudLogicalOperator.ncontainss:
+    case LogicalOperator.ncontainss:
       return 15;
-    case CrudLogicalOperator.between:
+    case LogicalOperator.between:
       return 16;
-    case CrudLogicalOperator.nbetween:
+    case LogicalOperator.nbetween:
       return 17;
-    case CrudLogicalOperator.null:
+    case LogicalOperator.null:
       return 18;
-    case CrudLogicalOperator.nnull:
+    case LogicalOperator.nnull:
       return 19;
-    case CrudLogicalOperator.startswith:
+    case LogicalOperator.startswith:
       return 20;
-    case CrudLogicalOperator.nstartswith:
+    case LogicalOperator.nstartswith:
       return 21;
-    case CrudLogicalOperator.startswiths:
+    case LogicalOperator.startswiths:
       return 22;
-    case CrudLogicalOperator.nstartswiths:
+    case LogicalOperator.nstartswiths:
       return 23;
-    case CrudLogicalOperator.endswith:
+    case LogicalOperator.endswith:
       return 24;
-    case CrudLogicalOperator.nendswith:
+    case LogicalOperator.nendswith:
       return 25;
-    case CrudLogicalOperator.endswiths:
+    case LogicalOperator.endswiths:
       return 26;
-    case CrudLogicalOperator.nendswiths:
+    case LogicalOperator.nendswiths:
       return 27;
     default:
-      throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum CrudLogicalOperator',
-      );
+      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum LogicalOperator');
   }
 }
 
-export enum CrudConditionalOperator {
+export enum ConditionalOperator {
   or = 'or',
   and = 'and',
 }
 
-export function crudConditionalOperatorFromJSON(object: any): CrudConditionalOperator {
+export function conditionalOperatorFromJSON(object: any): ConditionalOperator {
   switch (object) {
     case 0:
     case 'or':
-      return CrudConditionalOperator.or;
+      return ConditionalOperator.or;
     case 1:
     case 'and':
-      return CrudConditionalOperator.and;
+      return ConditionalOperator.and;
     default:
       throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum CrudConditionalOperator',
+        'Unrecognized enum value ' + object + ' for enum ConditionalOperator',
       );
   }
 }
 
-export function crudConditionalOperatorToJSON(object: CrudConditionalOperator): string {
+export function conditionalOperatorToJSON(object: ConditionalOperator): string {
   switch (object) {
-    case CrudConditionalOperator.or:
+    case ConditionalOperator.or:
       return 'or';
-    case CrudConditionalOperator.and:
+    case ConditionalOperator.and:
       return 'and';
     default:
       throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum CrudConditionalOperator',
+        'Unrecognized enum value ' + object + ' for enum ConditionalOperator',
       );
   }
 }
 
-export function crudConditionalOperatorToNumber(object: CrudConditionalOperator): number {
+export function conditionalOperatorToNumber(object: ConditionalOperator): number {
   switch (object) {
-    case CrudConditionalOperator.or:
+    case ConditionalOperator.or:
       return 0;
-    case CrudConditionalOperator.and:
+    case ConditionalOperator.and:
       return 1;
     default:
       throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum CrudConditionalOperator',
+        'Unrecognized enum value ' + object + ' for enum ConditionalOperator',
       );
   }
 }
 
-export enum CrudSort {
+export enum Sort {
   asc = 'asc',
   desc = 'desc',
 }
 
-export function crudSortFromJSON(object: any): CrudSort {
+export function sortFromJSON(object: any): Sort {
   switch (object) {
     case 0:
     case 'asc':
-      return CrudSort.asc;
+      return Sort.asc;
     case 1:
     case 'desc':
-      return CrudSort.desc;
+      return Sort.desc;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum CrudSort');
+      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum Sort');
   }
 }
 
-export function crudSortToJSON(object: CrudSort): string {
+export function sortToJSON(object: Sort): string {
   switch (object) {
-    case CrudSort.asc:
+    case Sort.asc:
       return 'asc';
-    case CrudSort.desc:
+    case Sort.desc:
       return 'desc';
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum CrudSort');
+      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum Sort');
   }
 }
 
-export function crudSortToNumber(object: CrudSort): number {
+export function sortToNumber(object: Sort): number {
   switch (object) {
-    case CrudSort.asc:
+    case Sort.asc:
       return 0;
-    case CrudSort.desc:
+    case Sort.desc:
       return 1;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum CrudSort');
+      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum Sort');
   }
 }
 
-export interface CrudLogicalFilter {
+export interface LogicalFilter {
   field: string;
-  operator: CrudLogicalOperator;
+  operator: LogicalOperator;
   string?: string;
   number?: number;
   boolean?: boolean;
 }
 
-export interface CrudConditionalFilter {
+export interface ConditionalFilter {
   key?: string;
-  operator: CrudConditionalOperator;
-  value: CrudLogicalFilter[];
+  operator: ConditionalOperator;
+  value: LogicalFilter[];
 }
 
-export interface CrudSorter {
+export interface Sorter {
   field: string;
-  order: CrudSort;
+  order: Sort;
 }
 
-function createBaseCrudLogicalFilter(): CrudLogicalFilter {
+function createBaseLogicalFilter(): LogicalFilter {
   return {
     field: '',
-    operator: CrudLogicalOperator.eq,
+    operator: LogicalOperator.eq,
     string: undefined,
     number: undefined,
     boolean: undefined,
   };
 }
 
-export const CrudLogicalFilter: MessageFns<CrudLogicalFilter> = {
-  encode(message: CrudLogicalFilter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const LogicalFilter: MessageFns<LogicalFilter> = {
+  encode(message: LogicalFilter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.field !== '') {
       writer.uint32(10).string(message.field);
     }
-    if (message.operator !== CrudLogicalOperator.eq) {
-      writer.uint32(16).int32(crudLogicalOperatorToNumber(message.operator));
+    if (message.operator !== LogicalOperator.eq) {
+      writer.uint32(16).int32(logicalOperatorToNumber(message.operator));
     }
     if (message.string !== undefined) {
       writer.uint32(26).string(message.string);
@@ -397,10 +391,10 @@ export const CrudLogicalFilter: MessageFns<CrudLogicalFilter> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CrudLogicalFilter {
+  decode(input: BinaryReader | Uint8Array, length?: number): LogicalFilter {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCrudLogicalFilter();
+    const message = createBaseLogicalFilter();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -417,7 +411,7 @@ export const CrudLogicalFilter: MessageFns<CrudLogicalFilter> = {
             break;
           }
 
-          message.operator = crudLogicalOperatorFromJSON(reader.int32());
+          message.operator = logicalOperatorFromJSON(reader.int32());
           continue;
         }
         case 3: {
@@ -453,25 +447,25 @@ export const CrudLogicalFilter: MessageFns<CrudLogicalFilter> = {
     return message;
   },
 
-  fromJSON(object: any): CrudLogicalFilter {
+  fromJSON(object: any): LogicalFilter {
     return {
       field: isSet(object.field) ? globalThis.String(object.field) : '',
       operator: isSet(object.operator)
-        ? crudLogicalOperatorFromJSON(object.operator)
-        : CrudLogicalOperator.eq,
+        ? logicalOperatorFromJSON(object.operator)
+        : LogicalOperator.eq,
       string: isSet(object.string) ? globalThis.String(object.string) : undefined,
       number: isSet(object.number) ? globalThis.Number(object.number) : undefined,
       boolean: isSet(object.boolean) ? globalThis.Boolean(object.boolean) : undefined,
     };
   },
 
-  toJSON(message: CrudLogicalFilter): unknown {
+  toJSON(message: LogicalFilter): unknown {
     const obj: any = {};
     if (message.field !== '') {
       obj.field = message.field;
     }
-    if (message.operator !== CrudLogicalOperator.eq) {
-      obj.operator = crudLogicalOperatorToJSON(message.operator);
+    if (message.operator !== LogicalOperator.eq) {
+      obj.operator = logicalOperatorToJSON(message.operator);
     }
     if (message.string !== undefined) {
       obj.string = message.string;
@@ -485,13 +479,13 @@ export const CrudLogicalFilter: MessageFns<CrudLogicalFilter> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CrudLogicalFilter>, I>>(base?: I): CrudLogicalFilter {
-    return CrudLogicalFilter.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<LogicalFilter>, I>>(base?: I): LogicalFilter {
+    return LogicalFilter.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CrudLogicalFilter>, I>>(object: I): CrudLogicalFilter {
-    const message = createBaseCrudLogicalFilter();
+  fromPartial<I extends Exact<DeepPartial<LogicalFilter>, I>>(object: I): LogicalFilter {
+    const message = createBaseLogicalFilter();
     message.field = object.field ?? '';
-    message.operator = object.operator ?? CrudLogicalOperator.eq;
+    message.operator = object.operator ?? LogicalOperator.eq;
     message.string = object.string ?? undefined;
     message.number = object.number ?? undefined;
     message.boolean = object.boolean ?? undefined;
@@ -499,28 +493,28 @@ export const CrudLogicalFilter: MessageFns<CrudLogicalFilter> = {
   },
 };
 
-function createBaseCrudConditionalFilter(): CrudConditionalFilter {
-  return { key: undefined, operator: CrudConditionalOperator.or, value: [] };
+function createBaseConditionalFilter(): ConditionalFilter {
+  return { key: undefined, operator: ConditionalOperator.or, value: [] };
 }
 
-export const CrudConditionalFilter: MessageFns<CrudConditionalFilter> = {
-  encode(message: CrudConditionalFilter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const ConditionalFilter: MessageFns<ConditionalFilter> = {
+  encode(message: ConditionalFilter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.key !== undefined) {
       writer.uint32(10).string(message.key);
     }
-    if (message.operator !== CrudConditionalOperator.or) {
-      writer.uint32(16).int32(crudConditionalOperatorToNumber(message.operator));
+    if (message.operator !== ConditionalOperator.or) {
+      writer.uint32(16).int32(conditionalOperatorToNumber(message.operator));
     }
     for (const v of message.value) {
-      CrudLogicalFilter.encode(v!, writer.uint32(26).fork()).join();
+      LogicalFilter.encode(v!, writer.uint32(26).fork()).join();
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CrudConditionalFilter {
+  decode(input: BinaryReader | Uint8Array, length?: number): ConditionalFilter {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCrudConditionalFilter();
+    const message = createBaseConditionalFilter();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -537,7 +531,7 @@ export const CrudConditionalFilter: MessageFns<CrudConditionalFilter> = {
             break;
           }
 
-          message.operator = crudConditionalOperatorFromJSON(reader.int32());
+          message.operator = conditionalOperatorFromJSON(reader.int32());
           continue;
         }
         case 3: {
@@ -545,7 +539,7 @@ export const CrudConditionalFilter: MessageFns<CrudConditionalFilter> = {
             break;
           }
 
-          message.value.push(CrudLogicalFilter.decode(reader, reader.uint32()));
+          message.value.push(LogicalFilter.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -557,65 +551,63 @@ export const CrudConditionalFilter: MessageFns<CrudConditionalFilter> = {
     return message;
   },
 
-  fromJSON(object: any): CrudConditionalFilter {
+  fromJSON(object: any): ConditionalFilter {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : undefined,
       operator: isSet(object.operator)
-        ? crudConditionalOperatorFromJSON(object.operator)
-        : CrudConditionalOperator.or,
+        ? conditionalOperatorFromJSON(object.operator)
+        : ConditionalOperator.or,
       value: globalThis.Array.isArray(object?.value)
-        ? object.value.map((e: any) => CrudLogicalFilter.fromJSON(e))
+        ? object.value.map((e: any) => LogicalFilter.fromJSON(e))
         : [],
     };
   },
 
-  toJSON(message: CrudConditionalFilter): unknown {
+  toJSON(message: ConditionalFilter): unknown {
     const obj: any = {};
     if (message.key !== undefined) {
       obj.key = message.key;
     }
-    if (message.operator !== CrudConditionalOperator.or) {
-      obj.operator = crudConditionalOperatorToJSON(message.operator);
+    if (message.operator !== ConditionalOperator.or) {
+      obj.operator = conditionalOperatorToJSON(message.operator);
     }
     if (message.value?.length) {
-      obj.value = message.value.map((e) => CrudLogicalFilter.toJSON(e));
+      obj.value = message.value.map((e) => LogicalFilter.toJSON(e));
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CrudConditionalFilter>, I>>(base?: I): CrudConditionalFilter {
-    return CrudConditionalFilter.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<ConditionalFilter>, I>>(base?: I): ConditionalFilter {
+    return ConditionalFilter.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CrudConditionalFilter>, I>>(
-    object: I,
-  ): CrudConditionalFilter {
-    const message = createBaseCrudConditionalFilter();
+  fromPartial<I extends Exact<DeepPartial<ConditionalFilter>, I>>(object: I): ConditionalFilter {
+    const message = createBaseConditionalFilter();
     message.key = object.key ?? undefined;
-    message.operator = object.operator ?? CrudConditionalOperator.or;
-    message.value = object.value?.map((e) => CrudLogicalFilter.fromPartial(e)) || [];
+    message.operator = object.operator ?? ConditionalOperator.or;
+    message.value = object.value?.map((e) => LogicalFilter.fromPartial(e)) || [];
     return message;
   },
 };
 
-function createBaseCrudSorter(): CrudSorter {
-  return { field: '', order: CrudSort.asc };
+function createBaseSorter(): Sorter {
+  return { field: '', order: Sort.asc };
 }
 
-export const CrudSorter: MessageFns<CrudSorter> = {
-  encode(message: CrudSorter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const Sorter: MessageFns<Sorter> = {
+  encode(message: Sorter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.field !== '') {
       writer.uint32(10).string(message.field);
     }
-    if (message.order !== CrudSort.asc) {
-      writer.uint32(16).int32(crudSortToNumber(message.order));
+    if (message.order !== Sort.asc) {
+      writer.uint32(16).int32(sortToNumber(message.order));
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): CrudSorter {
+  decode(input: BinaryReader | Uint8Array, length?: number): Sorter {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCrudSorter();
+    const message = createBaseSorter();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -632,7 +624,7 @@ export const CrudSorter: MessageFns<CrudSorter> = {
             break;
           }
 
-          message.order = crudSortFromJSON(reader.int32());
+          message.order = sortFromJSON(reader.int32());
           continue;
         }
       }
@@ -644,31 +636,31 @@ export const CrudSorter: MessageFns<CrudSorter> = {
     return message;
   },
 
-  fromJSON(object: any): CrudSorter {
+  fromJSON(object: any): Sorter {
     return {
       field: isSet(object.field) ? globalThis.String(object.field) : '',
-      order: isSet(object.order) ? crudSortFromJSON(object.order) : CrudSort.asc,
+      order: isSet(object.order) ? sortFromJSON(object.order) : Sort.asc,
     };
   },
 
-  toJSON(message: CrudSorter): unknown {
+  toJSON(message: Sorter): unknown {
     const obj: any = {};
     if (message.field !== '') {
       obj.field = message.field;
     }
-    if (message.order !== CrudSort.asc) {
-      obj.order = crudSortToJSON(message.order);
+    if (message.order !== Sort.asc) {
+      obj.order = sortToJSON(message.order);
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<CrudSorter>, I>>(base?: I): CrudSorter {
-    return CrudSorter.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<Sorter>, I>>(base?: I): Sorter {
+    return Sorter.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<CrudSorter>, I>>(object: I): CrudSorter {
-    const message = createBaseCrudSorter();
+  fromPartial<I extends Exact<DeepPartial<Sorter>, I>>(object: I): Sorter {
+    const message = createBaseSorter();
     message.field = object.field ?? '';
-    message.order = object.order ?? CrudSort.asc;
+    message.order = object.order ?? Sort.asc;
     return message;
   },
 };

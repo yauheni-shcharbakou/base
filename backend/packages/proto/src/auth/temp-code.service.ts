@@ -8,16 +8,20 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { GetListRequest, IdField } from '../common/service';
-import { TempCodeCreate, TempCodeGetListResponse } from './messages/temp-code.messages';
-import { TempCode } from './models/temp-code';
+import { IdField } from '../common/fields';
+import { GetList, Query } from '../common/messages';
+import { Empty } from '../google/protobuf/empty';
+import { TempCode } from './temp-code/temp-code';
+import { TempCodeCreate, TempCodeList } from './temp-code/temp-code.messages';
 
 export interface GrpcTempCodeServiceClient {
   getById(request: IdField, metadata?: Metadata): Observable<TempCode>;
 
-  getList(request: GetListRequest, metadata?: Metadata): Observable<TempCodeGetListResponse>;
+  getList(request: GetList, metadata?: Metadata): Observable<TempCodeList>;
 
   createOne(request: TempCodeCreate, metadata?: Metadata): Observable<TempCode>;
+
+  deactivateOne(request: Query, metadata?: Metadata): Observable<TempCode>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<TempCode>;
 }
@@ -26,15 +30,17 @@ export interface GrpcTempCodeServiceController {
   getById(request: IdField, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
 
   getList(
-    request: GetListRequest,
+    request: GetList,
     ...args: any[]
-  ):
-    | Promise<TempCodeGetListResponse>
-    | Observable<TempCodeGetListResponse>
-    | TempCodeGetListResponse;
+  ): Promise<TempCodeList> | Observable<TempCodeList> | TempCodeList;
 
   createOne(
     request: TempCodeCreate,
+    ...args: any[]
+  ): Promise<TempCode> | Observable<TempCode> | TempCode;
+
+  deactivateOne(
+    request: Query,
     ...args: any[]
   ): Promise<TempCode> | Observable<TempCode> | TempCode;
 
@@ -43,7 +49,13 @@ export interface GrpcTempCodeServiceController {
 
 function TempCodeServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ['getById', 'getList', 'createOne', 'deleteById'];
+    const grpcMethods: string[] = [
+      'getById',
+      'getList',
+      'createOne',
+      'deactivateOne',
+      'deleteById',
+    ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('TempCodeService', method)(constructor.prototype[method], method, descriptor);
@@ -60,6 +72,91 @@ function TempCodeServiceControllerMethods() {
   };
 }
 
+export interface GrpcTempCodeAdminServiceClient {
+  getById(request: IdField, metadata?: Metadata): Observable<TempCode>;
+
+  getList(request: GetList, metadata?: Metadata): Observable<TempCodeList>;
+
+  createOne(request: TempCodeCreate, metadata?: Metadata): Observable<TempCode>;
+
+  deactivateOne(request: Query, metadata?: Metadata): Observable<TempCode>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<TempCode>;
+}
+
+export interface GrpcTempCodeAdminServiceController {
+  getById(request: IdField, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
+
+  getList(
+    request: GetList,
+    ...args: any[]
+  ): Promise<TempCodeList> | Observable<TempCodeList> | TempCodeList;
+
+  createOne(
+    request: TempCodeCreate,
+    ...args: any[]
+  ): Promise<TempCode> | Observable<TempCode> | TempCode;
+
+  deactivateOne(
+    request: Query,
+    ...args: any[]
+  ): Promise<TempCode> | Observable<TempCode> | TempCode;
+
+  deleteById(request: IdField, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
+}
+
+function TempCodeAdminServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      'getById',
+      'getList',
+      'createOne',
+      'deactivateOne',
+      'deleteById',
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('TempCodeAdminService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('TempCodeAdminService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
+export interface GrpcTempCodeWebServiceClient {
+  generate(request: Empty, metadata?: Metadata): Observable<TempCode>;
+}
+
+export interface GrpcTempCodeWebServiceController {
+  generate(request: Empty, ...args: any[]): Promise<TempCode> | Observable<TempCode> | TempCode;
+}
+
+function TempCodeWebServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = ['generate'];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('TempCodeWebService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('TempCodeWebService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
 export const GrpcTempCodeTransport = {
   service: 'TempCodeService',
   definition: {
@@ -67,4 +164,22 @@ export const GrpcTempCodeTransport = {
     protoPath: 'auth/temp-code.service.proto',
   },
   ControllerMethods: (): ClassDecorator => TempCodeServiceControllerMethods(),
+} as const;
+
+export const GrpcTempCodeAdminTransport = {
+  service: 'TempCodeAdminService',
+  definition: {
+    package: 'auth',
+    protoPath: 'auth/temp-code.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => TempCodeAdminServiceControllerMethods(),
+} as const;
+
+export const GrpcTempCodeWebTransport = {
+  service: 'TempCodeWebService',
+  definition: {
+    package: 'auth',
+    protoPath: 'auth/temp-code.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => TempCodeWebServiceControllerMethods(),
 } as const;

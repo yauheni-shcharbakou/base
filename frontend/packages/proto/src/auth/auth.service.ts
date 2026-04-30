@@ -16,13 +16,12 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { AuthData, AuthLogin, AuthMe, AuthRefresh, AuthStreamCode } from './messages/auth.messages';
-import { User } from './models/user';
+import { AuthData, AuthLogin, AuthRefresh } from './auth/auth.messages';
 
-type AuthServiceService = typeof AuthServiceService;
-const AuthServiceService = {
+type AuthPublicServiceService = typeof AuthPublicServiceService;
+const AuthPublicServiceService = {
   login: {
-    path: '/auth.AuthService/login' as const,
+    path: '/auth.AuthPublicService/login' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: AuthLogin): Buffer => Buffer.from(AuthLogin.encode(value).finish()),
@@ -31,7 +30,7 @@ const AuthServiceService = {
     responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
   },
   refreshToken: {
-    path: '/auth.AuthService/refreshToken' as const,
+    path: '/auth.AuthPublicService/refreshToken' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: AuthRefresh): Buffer =>
@@ -40,18 +39,9 @@ const AuthServiceService = {
     responseSerialize: (value: AuthData): Buffer => Buffer.from(AuthData.encode(value).finish()),
     responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
   },
-  me: {
-    path: '/auth.AuthService/me' as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: AuthMe): Buffer => Buffer.from(AuthMe.encode(value).finish()),
-    requestDeserialize: (value: Buffer): AuthMe => AuthMe.decode(value),
-    responseSerialize: (value: User): Buffer => Buffer.from(User.encode(value).finish()),
-    responseDeserialize: (value: Buffer): User => User.decode(value),
-  },
 } as const;
 
-export interface GrpcAuthServiceClient extends Client {
+export interface GrpcAuthPublicServiceClient extends Client {
   login(
     request: AuthLogin,
     callback: (error: ServiceError | null, response: AuthData) => void,
@@ -81,36 +71,21 @@ export interface GrpcAuthServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  me(
-    request: AuthMe,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
-  me(
-    request: AuthMe,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
-  me(
-    request: AuthMe,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: User) => void,
   ): ClientUnaryCall;
 }
 
-export const GrpcAuthServiceClient = makeGenericClientConstructor(
-  AuthServiceService,
-  'auth.AuthService',
+export const GrpcAuthPublicServiceClient = makeGenericClientConstructor(
+  AuthPublicServiceService,
+  'auth.AuthPublicService',
 ) as unknown as {
   new (
     address: string,
     credentials: ChannelCredentials,
     options?: Partial<ClientOptions>,
-  ): GrpcAuthServiceClient;
+  ): GrpcAuthPublicServiceClient;
   service: {
     readonly login: {
-      readonly path: '/auth.AuthService/login';
+      readonly path: '/auth.AuthPublicService/login';
       readonly requestStream: false;
       readonly responseStream: false;
       readonly requestSerialize: (value: AuthLogin) => Buffer;
@@ -119,7 +94,7 @@ export const GrpcAuthServiceClient = makeGenericClientConstructor(
       readonly responseDeserialize: (value: Buffer) => AuthData;
     };
     readonly refreshToken: {
-      readonly path: '/auth.AuthService/refreshToken';
+      readonly path: '/auth.AuthPublicService/refreshToken';
       readonly requestStream: false;
       readonly responseStream: false;
       readonly requestSerialize: (value: AuthRefresh) => Buffer;
@@ -127,186 +102,22 @@ export const GrpcAuthServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: AuthData) => Buffer;
       readonly responseDeserialize: (value: Buffer) => AuthData;
     };
-    readonly me: {
-      readonly path: '/auth.AuthService/me';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: AuthMe) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => AuthMe;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
   };
   serviceName: string;
 };
 
-type AuthProxyServiceService = typeof AuthProxyServiceService;
-const AuthProxyServiceService = {
-  login: {
-    path: '/auth.AuthProxyService/login' as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: AuthLogin): Buffer => Buffer.from(AuthLogin.encode(value).finish()),
-    requestDeserialize: (value: Buffer): AuthLogin => AuthLogin.decode(value),
-    responseSerialize: (value: AuthData): Buffer => Buffer.from(AuthData.encode(value).finish()),
-    responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
-  },
-  refreshToken: {
-    path: '/auth.AuthProxyService/refreshToken' as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: AuthRefresh): Buffer =>
-      Buffer.from(AuthRefresh.encode(value).finish()),
-    requestDeserialize: (value: Buffer): AuthRefresh => AuthRefresh.decode(value),
-    responseSerialize: (value: AuthData): Buffer => Buffer.from(AuthData.encode(value).finish()),
-    responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
-  },
-  me: {
-    path: '/auth.AuthProxyService/me' as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: AuthMe): Buffer => Buffer.from(AuthMe.encode(value).finish()),
-    requestDeserialize: (value: Buffer): AuthMe => AuthMe.decode(value),
-    responseSerialize: (value: User): Buffer => Buffer.from(User.encode(value).finish()),
-    responseDeserialize: (value: Buffer): User => User.decode(value),
-  },
-  generateStreamCode: {
-    path: '/auth.AuthProxyService/generateStreamCode' as const,
-    requestStream: false as const,
-    responseStream: false as const,
-    requestSerialize: (value: AuthMe): Buffer => Buffer.from(AuthMe.encode(value).finish()),
-    requestDeserialize: (value: Buffer): AuthMe => AuthMe.decode(value),
-    responseSerialize: (value: AuthStreamCode): Buffer =>
-      Buffer.from(AuthStreamCode.encode(value).finish()),
-    responseDeserialize: (value: Buffer): AuthStreamCode => AuthStreamCode.decode(value),
-  },
-} as const;
-
-export interface GrpcAuthProxyServiceClient extends Client {
-  login(
-    request: AuthLogin,
-    callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  login(
-    request: AuthLogin,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  login(
-    request: AuthLogin,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  refreshToken(
-    request: AuthRefresh,
-    callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  refreshToken(
-    request: AuthRefresh,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  refreshToken(
-    request: AuthRefresh,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: AuthData) => void,
-  ): ClientUnaryCall;
-  me(
-    request: AuthMe,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
-  me(
-    request: AuthMe,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
-  me(
-    request: AuthMe,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: User) => void,
-  ): ClientUnaryCall;
-  generateStreamCode(
-    request: AuthMe,
-    callback: (error: ServiceError | null, response: AuthStreamCode) => void,
-  ): ClientUnaryCall;
-  generateStreamCode(
-    request: AuthMe,
-    metadata: Metadata,
-    callback: (error: ServiceError | null, response: AuthStreamCode) => void,
-  ): ClientUnaryCall;
-  generateStreamCode(
-    request: AuthMe,
-    metadata: Metadata,
-    options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: AuthStreamCode) => void,
-  ): ClientUnaryCall;
-}
-
-export const GrpcAuthProxyServiceClient = makeGenericClientConstructor(
-  AuthProxyServiceService,
-  'auth.AuthProxyService',
-) as unknown as {
-  new (
-    address: string,
-    credentials: ChannelCredentials,
-    options?: Partial<ClientOptions>,
-  ): GrpcAuthProxyServiceClient;
-  service: {
-    readonly login: {
-      readonly path: '/auth.AuthProxyService/login';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: AuthLogin) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => AuthLogin;
-      readonly responseSerialize: (value: AuthData) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => AuthData;
-    };
-    readonly refreshToken: {
-      readonly path: '/auth.AuthProxyService/refreshToken';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: AuthRefresh) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => AuthRefresh;
-      readonly responseSerialize: (value: AuthData) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => AuthData;
-    };
-    readonly me: {
-      readonly path: '/auth.AuthProxyService/me';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: AuthMe) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => AuthMe;
-      readonly responseSerialize: (value: User) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => User;
-    };
-    readonly generateStreamCode: {
-      readonly path: '/auth.AuthProxyService/generateStreamCode';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: AuthMe) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => AuthMe;
-      readonly responseSerialize: (value: AuthStreamCode) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => AuthStreamCode;
-    };
-  };
-  serviceName: string;
-};
-
-export class GrpcAuthRepository {
-  protected readonly client: GrpcAuthServiceClient;
+export class GrpcAuthPublicRepository {
+  protected readonly client: GrpcAuthPublicServiceClient;
 
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
     options?: Partial<ClientOptions>,
   ) {
-    this.client = new GrpcAuthServiceClient(address, credentials, options);
+    this.client = new GrpcAuthPublicServiceClient(address, credentials, options);
   }
 
-  getClient(): GrpcAuthServiceClient {
+  getClient(): GrpcAuthPublicServiceClient {
     return this.client;
   }
 
@@ -333,102 +144,6 @@ export class GrpcAuthRepository {
   ): Promise<AuthData> {
     return new Promise<AuthData>((resolve, reject) => {
       this.client.refreshToken(request, metadata, options, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  }
-
-  me(
-    request: AuthMe,
-    metadata: Metadata = new Metadata(),
-    options: Partial<CallOptions> = {},
-  ): Promise<User> {
-    return new Promise<User>((resolve, reject) => {
-      this.client.me(request, metadata, options, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  }
-}
-
-export class GrpcAuthProxyRepository {
-  protected readonly client: GrpcAuthProxyServiceClient;
-
-  constructor(
-    address: string,
-    credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>,
-  ) {
-    this.client = new GrpcAuthProxyServiceClient(address, credentials, options);
-  }
-
-  getClient(): GrpcAuthProxyServiceClient {
-    return this.client;
-  }
-
-  login(
-    request: AuthLogin,
-    metadata: Metadata = new Metadata(),
-    options: Partial<CallOptions> = {},
-  ): Promise<AuthData> {
-    return new Promise<AuthData>((resolve, reject) => {
-      this.client.login(request, metadata, options, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  }
-
-  refreshToken(
-    request: AuthRefresh,
-    metadata: Metadata = new Metadata(),
-    options: Partial<CallOptions> = {},
-  ): Promise<AuthData> {
-    return new Promise<AuthData>((resolve, reject) => {
-      this.client.refreshToken(request, metadata, options, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  }
-
-  me(
-    request: AuthMe,
-    metadata: Metadata = new Metadata(),
-    options: Partial<CallOptions> = {},
-  ): Promise<User> {
-    return new Promise<User>((resolve, reject) => {
-      this.client.me(request, metadata, options, (err, response) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  }
-
-  generateStreamCode(
-    request: AuthMe,
-    metadata: Metadata = new Metadata(),
-    options: Partial<CallOptions> = {},
-  ): Promise<AuthStreamCode> {
-    return new Promise<AuthStreamCode>((resolve, reject) => {
-      this.client.generateStreamCode(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

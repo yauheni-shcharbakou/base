@@ -8,45 +8,40 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { BooleanResult, GetListRequest, IdField } from '../common/service';
+import { IdField } from '../common/fields';
+import { GetList } from '../common/messages';
+import { Boolean } from '../common/types';
+import { StorageObject } from './storage-object/storage-object';
 import {
+  StorageObjectArray,
   StorageObjectCreate,
-  StorageObjectExistsFolderRequest,
-  StorageObjectGetFoldersRequest,
-  StorageObjectGetFoldersResponse,
-  StorageObjectGetListResponse,
+  StorageObjectCreateWeb,
+  StorageObjectGetFolders,
+  StorageObjectGetFoldersWeb,
   StorageObjectList,
-  StorageObjectPopulated,
-  StorageObjectRequest,
-  StorageObjectUpdateByIdRequest,
-} from './messages/storage-object.messages';
-import { StorageObject } from './models/storage-object';
+  StorageObjectQuery,
+  StorageObjectQueryWeb,
+  StorageObjectUpdateById,
+  StorageObjectUpdateOne,
+} from './storage-object/storage-object.messages';
+import { StorageObjectPopulated } from './storage-object/storage-object.populates';
 
 export interface GrpcStorageObjectServiceClient {
   getById(request: IdField, metadata?: Metadata): Observable<StorageObjectPopulated>;
 
-  getMany(request: StorageObjectRequest, metadata?: Metadata): Observable<StorageObjectList>;
+  getMany(request: StorageObjectQuery, metadata?: Metadata): Observable<StorageObjectArray>;
 
-  getList(request: GetListRequest, metadata?: Metadata): Observable<StorageObjectGetListResponse>;
+  getList(request: GetList, metadata?: Metadata): Observable<StorageObjectList>;
 
-  getFolders(
-    request: StorageObjectGetFoldersRequest,
-    metadata?: Metadata,
-  ): Observable<StorageObjectGetFoldersResponse>;
+  getFolders(request: StorageObjectGetFolders, metadata?: Metadata): Observable<StorageObjectArray>;
 
-  isExistsFolder(
-    request: StorageObjectExistsFolderRequest,
-    metadata?: Metadata,
-  ): Observable<BooleanResult>;
+  isExists(request: StorageObjectQuery, metadata?: Metadata): Observable<Boolean>;
 
   createOne(request: StorageObjectCreate, metadata?: Metadata): Observable<StorageObject>;
 
-  updateById(
-    request: StorageObjectUpdateByIdRequest,
-    metadata?: Metadata,
-  ): Observable<StorageObject>;
+  updateOne(request: StorageObjectUpdateOne, metadata?: Metadata): Observable<StorageObject>;
 
-  deleteById(request: IdField, metadata?: Metadata): Observable<StorageObject>;
+  deleteOne(request: StorageObjectQuery, metadata?: Metadata): Observable<StorageObject>;
 }
 
 export interface GrpcStorageObjectServiceController {
@@ -56,43 +51,37 @@ export interface GrpcStorageObjectServiceController {
   ): Promise<StorageObjectPopulated> | Observable<StorageObjectPopulated> | StorageObjectPopulated;
 
   getMany(
-    request: StorageObjectRequest,
+    request: StorageObjectQuery,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  getList(
+    request: GetList,
     ...args: any[]
   ): Promise<StorageObjectList> | Observable<StorageObjectList> | StorageObjectList;
 
-  getList(
-    request: GetListRequest,
-    ...args: any[]
-  ):
-    | Promise<StorageObjectGetListResponse>
-    | Observable<StorageObjectGetListResponse>
-    | StorageObjectGetListResponse;
-
   getFolders(
-    request: StorageObjectGetFoldersRequest,
+    request: StorageObjectGetFolders,
     ...args: any[]
-  ):
-    | Promise<StorageObjectGetFoldersResponse>
-    | Observable<StorageObjectGetFoldersResponse>
-    | StorageObjectGetFoldersResponse;
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 
-  isExistsFolder(
-    request: StorageObjectExistsFolderRequest,
+  isExists(
+    request: StorageObjectQuery,
     ...args: any[]
-  ): Promise<BooleanResult> | Observable<BooleanResult> | BooleanResult;
+  ): Promise<Boolean> | Observable<Boolean> | Boolean;
 
   createOne(
     request: StorageObjectCreate,
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
 
-  updateById(
-    request: StorageObjectUpdateByIdRequest,
+  updateOne(
+    request: StorageObjectUpdateOne,
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
 
-  deleteById(
-    request: IdField,
+  deleteOne(
+    request: StorageObjectQuery,
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
 }
@@ -104,10 +93,10 @@ function StorageObjectServiceControllerMethods() {
       'getMany',
       'getList',
       'getFolders',
-      'isExistsFolder',
+      'isExists',
       'createOne',
-      'updateById',
-      'deleteById',
+      'updateOne',
+      'deleteOne',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
@@ -125,6 +114,169 @@ function StorageObjectServiceControllerMethods() {
   };
 }
 
+export interface GrpcStorageObjectAdminServiceClient {
+  getById(request: IdField, metadata?: Metadata): Observable<StorageObjectPopulated>;
+
+  getMany(request: StorageObjectQuery, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  getList(request: GetList, metadata?: Metadata): Observable<StorageObjectList>;
+
+  getFolders(request: StorageObjectGetFolders, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  isExists(request: StorageObjectQuery, metadata?: Metadata): Observable<Boolean>;
+
+  createOne(request: StorageObjectCreate, metadata?: Metadata): Observable<StorageObject>;
+
+  updateById(request: StorageObjectUpdateById, metadata?: Metadata): Observable<StorageObject>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<StorageObject>;
+}
+
+export interface GrpcStorageObjectAdminServiceController {
+  getById(
+    request: IdField,
+    ...args: any[]
+  ): Promise<StorageObjectPopulated> | Observable<StorageObjectPopulated> | StorageObjectPopulated;
+
+  getMany(
+    request: StorageObjectQuery,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  getList(
+    request: GetList,
+    ...args: any[]
+  ): Promise<StorageObjectList> | Observable<StorageObjectList> | StorageObjectList;
+
+  getFolders(
+    request: StorageObjectGetFolders,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  isExists(
+    request: StorageObjectQuery,
+    ...args: any[]
+  ): Promise<Boolean> | Observable<Boolean> | Boolean;
+
+  createOne(
+    request: StorageObjectCreate,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
+  updateById(
+    request: StorageObjectUpdateById,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
+  deleteById(
+    request: IdField,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+}
+
+function StorageObjectAdminServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      'getById',
+      'getMany',
+      'getList',
+      'getFolders',
+      'isExists',
+      'createOne',
+      'updateById',
+      'deleteById',
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('StorageObjectAdminService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('StorageObjectAdminService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
+export interface GrpcStorageObjectWebServiceClient {
+  getFolders(
+    request: StorageObjectGetFoldersWeb,
+    metadata?: Metadata,
+  ): Observable<StorageObjectArray>;
+
+  isExists(request: StorageObjectQueryWeb, metadata?: Metadata): Observable<Boolean>;
+
+  createOne(request: StorageObjectCreateWeb, metadata?: Metadata): Observable<StorageObject>;
+
+  updateById(request: StorageObjectUpdateById, metadata?: Metadata): Observable<StorageObject>;
+
+  deleteById(request: IdField, metadata?: Metadata): Observable<StorageObject>;
+}
+
+export interface GrpcStorageObjectWebServiceController {
+  getFolders(
+    request: StorageObjectGetFoldersWeb,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  isExists(
+    request: StorageObjectQueryWeb,
+    ...args: any[]
+  ): Promise<Boolean> | Observable<Boolean> | Boolean;
+
+  createOne(
+    request: StorageObjectCreateWeb,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
+  updateById(
+    request: StorageObjectUpdateById,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
+  deleteById(
+    request: IdField,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+}
+
+function StorageObjectWebServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = [
+      'getFolders',
+      'isExists',
+      'createOne',
+      'updateById',
+      'deleteById',
+    ];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('StorageObjectWebService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('StorageObjectWebService', method)(
+        constructor.prototype[method],
+        method,
+        descriptor,
+      );
+    }
+  };
+}
+
 export const GrpcStorageObjectTransport = {
   service: 'StorageObjectService',
   definition: {
@@ -132,4 +284,22 @@ export const GrpcStorageObjectTransport = {
     protoPath: 'storage/storage-object.service.proto',
   },
   ControllerMethods: (): ClassDecorator => StorageObjectServiceControllerMethods(),
+} as const;
+
+export const GrpcStorageObjectAdminTransport = {
+  service: 'StorageObjectAdminService',
+  definition: {
+    package: 'storage',
+    protoPath: 'storage/storage-object.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => StorageObjectAdminServiceControllerMethods(),
+} as const;
+
+export const GrpcStorageObjectWebTransport = {
+  service: 'StorageObjectWebService',
+  definition: {
+    package: 'storage',
+    protoPath: 'storage/storage-object.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => StorageObjectWebServiceControllerMethods(),
 } as const;

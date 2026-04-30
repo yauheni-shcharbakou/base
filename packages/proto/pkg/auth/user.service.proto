@@ -2,16 +2,31 @@ syntax = "proto3";
 
 package auth;
 
-import "common/service.proto";
-import "auth/models/user.proto";
-import "auth/messages/user.messages.proto";
+import "google/protobuf/empty.proto";
+
+import "common/fields.proto";
+import "common/messages.proto";
+
+import "auth/user/user.proto";
+import "auth/user/user.messages.proto";
 
 service UserService {
-  rpc getById (common.IdField) returns (models.User) {}
-  rpc getOne (messages.UserRequest) returns (models.User) {}
-  rpc getMany (messages.UserRequest) returns (messages.UserList) {}
-  rpc getList (common.GetListRequest) returns (messages.UserGetListResponse) {}
-  rpc createOne (messages.UserCreate) returns (models.User) {}
-  rpc updateById (messages.UserUpdateByIdRequest) returns (models.User) {}
-  rpc deleteById (common.IdField) returns (models.User) {}
+  rpc getById (IdField) returns (user.User) {}
+  rpc getMany (user.UserQuery) returns (user.UserArray) {}
+  rpc getList (GetList) returns (user.UserList) {}
+  rpc createOne (user.UserCreate) returns (user.User) {}
+  rpc updateById (user.UserUpdateById) returns (user.User) {}
+  rpc deleteById (IdField) returns (user.User) {}
+}
+
+service UserAdminService {
+  rpc getById (IdField) returns (user.User) {}
+  rpc getList (GetList) returns (user.UserList) {}
+  rpc createOne (user.UserCreate) returns (user.User) {}
+  rpc updateById (user.UserUpdateById) returns (user.User) {}
+  rpc deleteById (IdField) returns (user.User) {}
+}
+
+service UserWebService {
+  rpc getOne (google.protobuf.Empty) returns (user.User) {}
 }
