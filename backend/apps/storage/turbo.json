@@ -11,9 +11,6 @@
         "tsconfig*.json"
       ],
       "outputs": ["dist/**"]
-    },
-    "reset:modules": {
-      "inputs": ["package.json"]
     }
   }
 }

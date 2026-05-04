@@ -8,9 +8,6 @@
     "compile": {
       "inputs": ["src/**/*.ts", "src/**/*.pug", "package.json", "ts-config*.json"],
       "outputs": ["src/nats_/compiler/generated/**"]
-    },
-    "reset:modules": {
-      "inputs": ["package.json"]
     }
   }
 }

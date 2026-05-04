@@ -16,6 +16,7 @@ WORKDIR /app
 FROM base AS prepare
 RUN pnpm add -g turbo@2.9.6
 COPY . .
+COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune backend.api-gateway --docker
 
 FROM base AS builder
@@ -33,8 +34,7 @@ COPY --from=prepare /app/out/full/ .
 COPY --from=prepare /app/.prettierrc ./.prettierrc
 RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/app/.turbo,target=/app/.turbo \
     pnpm build
-RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/app/.turbo,target=/app/.turbo \
-    pnpm reset:modules
+RUN pnpm reset:modules
 RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/pnpm/store,target=/pnpm/store \
     pnpm install \
     --store-dir=/pnpm/store \

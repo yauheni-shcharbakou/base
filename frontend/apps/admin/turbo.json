@@ -12,9 +12,6 @@
         "tsconfig*.json"
       ],
       "outputs": [".next/**"]
-    },
-    "reset:modules": {
-      "inputs": ["package.json"]
     }
   }
 }

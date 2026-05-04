@@ -17,6 +17,7 @@ WORKDIR /app
 FROM base AS prepare
 RUN pnpm add -g turbo@2.9.6
 COPY . .
+COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune frontend.admin --docker
 
 FROM base AS builder

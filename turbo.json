@@ -19,10 +19,14 @@
     "format": {
       "cache": false
     },
-    "lint": {},
+    "lint": {
+      "cache": false
+    },
     "reset": {
       "cache": false
     },
-    "reset:modules": {}
+    "reset:modules": {
+      "cache": false
+    }
   }
 }
