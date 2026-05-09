@@ -6,9 +6,9 @@
 // source: storage/video/video.populates.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
-import { File } from '../file/file';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
+import { File } from "../file/file";
 
 export interface VideoPopulated {
   id: string;
@@ -27,24 +27,24 @@ export interface VideoPopulated {
 
 function createBaseVideoPopulated(): VideoPopulated {
   return {
-    id: '',
+    id: "",
     createdAt: undefined,
     updatedAt: undefined,
-    title: '',
+    title: "",
     duration: 0,
     views: 0,
     description: undefined,
-    providerId: '',
-    userId: '',
-    fileId: '',
+    providerId: "",
+    userId: "",
+    fileId: "",
     file: undefined,
-    uploadId: '',
+    uploadId: "",
   };
 }
 
 export const VideoPopulated: MessageFns<VideoPopulated> = {
   encode(message: VideoPopulated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -53,7 +53,7 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(26).fork()).join();
     }
-    if (message.title !== '') {
+    if (message.title !== "") {
       writer.uint32(34).string(message.title);
     }
     if (message.duration !== 0) {
@@ -65,19 +65,19 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     if (message.description !== undefined) {
       writer.uint32(58).string(message.description);
     }
-    if (message.providerId !== '') {
+    if (message.providerId !== "") {
       writer.uint32(66).string(message.providerId);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(74).string(message.userId);
     }
-    if (message.fileId !== '') {
+    if (message.fileId !== "") {
       writer.uint32(82).string(message.fileId);
     }
     if (message.file !== undefined) {
       File.encode(message.file, writer.uint32(90).fork()).join();
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       writer.uint32(98).string(message.uploadId);
     }
     return writer;
@@ -197,24 +197,24 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
 
   fromJSON(object: any): VideoPopulated {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
-      title: isSet(object.title) ? globalThis.String(object.title) : '',
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
       duration: isSet(object.duration) ? globalThis.Number(object.duration) : 0,
       views: isSet(object.views) ? globalThis.Number(object.views) : 0,
       description: isSet(object.description) ? globalThis.String(object.description) : undefined,
-      providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : '',
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
-      fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
+      providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : "",
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+      fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : "",
       file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
     };
   },
 
   toJSON(message: VideoPopulated): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -223,7 +223,7 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
-    if (message.title !== '') {
+    if (message.title !== "") {
       obj.title = message.title;
     }
     if (message.duration !== 0) {
@@ -235,19 +235,19 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     if (message.description !== undefined) {
       obj.description = message.description;
     }
-    if (message.providerId !== '') {
+    if (message.providerId !== "") {
       obj.providerId = message.providerId;
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
-    if (message.fileId !== '') {
+    if (message.fileId !== "") {
       obj.fileId = message.fileId;
     }
     if (message.file !== undefined) {
       obj.file = File.toJSON(message.file);
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -258,38 +258,32 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoPopulated>, I>>(object: I): VideoPopulated {
     const message = createBaseVideoPopulated();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
-    message.title = object.title ?? '';
+    message.title = object.title ?? "";
     message.duration = object.duration ?? 0;
     message.views = object.views ?? 0;
     message.description = object.description ?? undefined;
-    message.providerId = object.providerId ?? '';
-    message.userId = object.userId ?? '';
-    message.fileId = object.fileId ?? '';
-    message.file =
-      object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
-    message.uploadId = object.uploadId ?? '';
+    message.providerId = object.providerId ?? "";
+    message.userId = object.userId ?? "";
+    message.fileId = object.fileId ?? "";
+    message.file = (object.file !== undefined && object.file !== null) ? File.fromPartial(object.file) : undefined;
+    message.uploadId = object.uploadId ?? "";
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -307,7 +301,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

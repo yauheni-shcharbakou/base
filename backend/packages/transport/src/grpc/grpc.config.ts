@@ -1,37 +1,42 @@
 import {
-  GrpcAuthProxyTransport,
-  GrpcAuthTransport,
+  GrpcAuthPublicTransport,
+  GrpcFileAdminTransport,
   GrpcFileTransport,
+  GrpcImageAdminTransport,
   GrpcImageTransport,
+  GrpcStorageObjectAdminTransport,
   GrpcStorageObjectTransport,
+  GrpcTempCodeAdminTransport,
   GrpcTempCodeTransport,
+  GrpcUserAdminTransport,
   GrpcUserTransport,
+  GrpcVideoAdminTransport,
   GrpcVideoTransport,
 } from '@backend/proto';
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
 import { validateEnv } from '@packages/common';
-import { PROTO_PATH } from 'grpc/constants';
-import { wrappers } from 'protobufjs';
+// import { wrappers } from 'protobufjs';
 import zod from 'zod';
+import { PROTO_PATH } from './constants';
 
-const declareProtobufWrappers = () => {
-  wrappers['.google.protobuf.Timestamp'] = {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    fromObject(value: Date) {
-      return {
-        seconds: value.getTime() / 1000,
-        nanos: (value.getTime() % 1000) * 1e6,
-      };
-    },
-    toObject(message: any) {
-      return new Date(message.seconds * 1000 + message.nanos / 1e6);
-    },
-  };
-};
+// const declareProtobufWrappers = () => {
+//   wrappers['.google.protobuf.Timestamp'] = {
+//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//     // @ts-expect-error
+//     fromObject(value: Date) {
+//       return {
+//         seconds: value.getTime() / 1000,
+//         nanos: (value.getTime() % 1000) * 1e6,
+//       };
+//     },
+//     toObject(message: any) {
+//       return new Date(message.seconds * 1000 + message.nanos / 1e6);
+//     },
+//   };
+// };
 
-declareProtobufWrappers();
+// declareProtobufWrappers();
 
 const env = validateEnv({
   API_GATEWAY_GRPC_URL: zod.string().default('0.0.0.0:8000'),
@@ -60,14 +65,14 @@ export const grpcConfig = () => {
         url: env.API_GATEWAY_GRPC_URL,
       },
       services: {
-        [GrpcAuthProxyTransport.service]: GrpcAuthProxyTransport.definition,
-        [GrpcTempCodeTransport.service]: GrpcTempCodeTransport.definition,
-        [GrpcUserTransport.service]: GrpcUserTransport.definition,
+        [GrpcAuthPublicTransport.service]: GrpcAuthPublicTransport.definition,
+        [GrpcTempCodeAdminTransport.service]: GrpcTempCodeAdminTransport.definition,
+        [GrpcUserAdminTransport.service]: GrpcUserAdminTransport.definition,
 
-        [GrpcFileTransport.service]: GrpcFileTransport.definition,
-        [GrpcImageTransport.service]: GrpcImageTransport.definition,
-        [GrpcStorageObjectTransport.service]: GrpcStorageObjectTransport.definition,
-        [GrpcVideoTransport.service]: GrpcVideoTransport.definition,
+        [GrpcFileAdminTransport.service]: GrpcFileAdminTransport.definition,
+        [GrpcImageAdminTransport.service]: GrpcImageAdminTransport.definition,
+        [GrpcStorageObjectAdminTransport.service]: GrpcStorageObjectAdminTransport.definition,
+        [GrpcVideoAdminTransport.service]: GrpcVideoAdminTransport.definition,
       },
     },
     auth: {
@@ -77,7 +82,7 @@ export const grpcConfig = () => {
         url: env.AUTH_GRPC_URL,
       },
       services: {
-        [GrpcAuthTransport.service]: GrpcAuthTransport.definition,
+        [GrpcAuthPublicTransport.service]: GrpcAuthPublicTransport.definition,
         [GrpcTempCodeTransport.service]: GrpcTempCodeTransport.definition,
         [GrpcUserTransport.service]: GrpcUserTransport.definition,
       },

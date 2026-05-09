@@ -1,6 +1,6 @@
 import { Either } from '@sweet-monads/either';
-import { GrpcExceptionMapper } from 'grpc/mappers';
 import { catchError, map, Observable, OperatorFunction, pipe, throwError } from 'rxjs';
+import { GrpcExceptionMapper } from '../mappers';
 
 export class GrpcRxPipe {
   /**

@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { BaseRpcExceptionFilter } from '@nestjs/microservices';
-import { GrpcExceptionMapper } from 'grpc/mappers';
 import { Observable } from 'rxjs';
+import { GrpcExceptionMapper } from '../mappers';
 
 @Catch()
 export class GrpcExceptionFilter extends BaseRpcExceptionFilter implements ExceptionFilter {

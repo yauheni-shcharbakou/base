@@ -6,7 +6,7 @@
 // source: common/fields.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export interface IdField {
   id: string;
@@ -25,12 +25,12 @@ export interface UserField {
 }
 
 function createBaseIdField(): IdField {
-  return { id: '' };
+  return { id: "" };
 }
 
 export const IdField: MessageFns<IdField> = {
   encode(message: IdField, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     return writer;
@@ -61,12 +61,12 @@ export const IdField: MessageFns<IdField> = {
   },
 
   fromJSON(object: any): IdField {
-    return { id: isSet(object.id) ? globalThis.String(object.id) : '' };
+    return { id: isSet(object.id) ? globalThis.String(object.id) : "" };
   },
 
   toJSON(message: IdField): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     return obj;
@@ -77,7 +77,7 @@ export const IdField: MessageFns<IdField> = {
   },
   fromPartial<I extends Exact<DeepPartial<IdField>, I>>(object: I): IdField {
     const message = createBaseIdField();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     return message;
   },
 };
@@ -119,11 +119,7 @@ export const IdsField: MessageFns<IdsField> = {
   },
 
   fromJSON(object: any): IdsField {
-    return {
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
-    };
+    return { ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [] };
   },
 
   toJSON(message: IdsField): unknown {
@@ -145,12 +141,12 @@ export const IdsField: MessageFns<IdsField> = {
 };
 
 function createBaseUserIdField(): UserIdField {
-  return { userId: '' };
+  return { userId: "" };
 }
 
 export const UserIdField: MessageFns<UserIdField> = {
   encode(message: UserIdField, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(10).string(message.userId);
     }
     return writer;
@@ -181,12 +177,12 @@ export const UserIdField: MessageFns<UserIdField> = {
   },
 
   fromJSON(object: any): UserIdField {
-    return { userId: isSet(object.userId) ? globalThis.String(object.userId) : '' };
+    return { userId: isSet(object.userId) ? globalThis.String(object.userId) : "" };
   },
 
   toJSON(message: UserIdField): unknown {
     const obj: any = {};
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     return obj;
@@ -197,18 +193,18 @@ export const UserIdField: MessageFns<UserIdField> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserIdField>, I>>(object: I): UserIdField {
     const message = createBaseUserIdField();
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? "";
     return message;
   },
 };
 
 function createBaseUserField(): UserField {
-  return { user: '' };
+  return { user: "" };
 }
 
 export const UserField: MessageFns<UserField> = {
   encode(message: UserField, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.user !== '') {
+    if (message.user !== "") {
       writer.uint32(10).string(message.user);
     }
     return writer;
@@ -239,12 +235,12 @@ export const UserField: MessageFns<UserField> = {
   },
 
   fromJSON(object: any): UserField {
-    return { user: isSet(object.user) ? globalThis.String(object.user) : '' };
+    return { user: isSet(object.user) ? globalThis.String(object.user) : "" };
   },
 
   toJSON(message: UserField): unknown {
     const obj: any = {};
-    if (message.user !== '') {
+    if (message.user !== "") {
       obj.user = message.user;
     }
     return obj;
@@ -255,26 +251,21 @@ export const UserField: MessageFns<UserField> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserField>, I>>(object: I): UserField {
     const message = createBaseUserField();
-    message.user = object.user ?? '';
+    message.user = object.user ?? "";
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

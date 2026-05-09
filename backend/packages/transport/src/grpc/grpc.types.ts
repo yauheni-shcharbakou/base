@@ -1,4 +1,4 @@
-import { GrpcConfigHost, GrpcConfigService } from 'grpc/grpc.config';
+import { GrpcConfigHost, GrpcConfigService } from './grpc.config';
 
 export type GrpcServiceDefinition = {
   package: string;

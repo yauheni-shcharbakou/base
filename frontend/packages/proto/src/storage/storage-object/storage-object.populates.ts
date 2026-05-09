@@ -6,17 +6,17 @@
 // source: storage/storage-object/storage-object.populates.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { Timestamp } from '../../google/protobuf/timestamp';
-import { File } from '../file/file';
-import { Image } from '../image/image';
-import { Video } from '../video/video';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { Timestamp } from "../../google/protobuf/timestamp";
+import { File } from "../file/file";
+import { Image } from "../image/image";
+import { Video } from "../video/video";
 import {
-  StorageObjectType,
-  storageObjectTypeFromJSON,
-  storageObjectTypeToJSON,
-  storageObjectTypeToNumber,
-} from './storage-object';
+    StorageObjectType,
+    storageObjectTypeFromJSON,
+    storageObjectTypeToJSON,
+    storageObjectTypeToNumber,
+} from "./storage-object";
 
 export interface StorageObjectPopulated {
   id: string;
@@ -39,14 +39,14 @@ export interface StorageObjectPopulated {
 
 function createBaseStorageObjectPopulated(): StorageObjectPopulated {
   return {
-    id: '',
+    id: "",
     createdAt: undefined,
     updatedAt: undefined,
-    name: '',
+    name: "",
     isPublic: false,
     isFolder: false,
     type: StorageObjectType.FOLDER,
-    userId: '',
+    userId: "",
     fileId: undefined,
     parentId: undefined,
     file: undefined,
@@ -60,7 +60,7 @@ function createBaseStorageObjectPopulated(): StorageObjectPopulated {
 
 export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
   encode(message: StorageObjectPopulated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.createdAt !== undefined) {
@@ -69,7 +69,7 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     if (message.updatedAt !== undefined) {
       Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(26).fork()).join();
     }
-    if (message.name !== '') {
+    if (message.name !== "") {
       writer.uint32(34).string(message.name);
     }
     if (message.isPublic !== false) {
@@ -81,7 +81,7 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     if (message.type !== StorageObjectType.FOLDER) {
       writer.uint32(56).int32(storageObjectTypeToNumber(message.type));
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(66).string(message.userId);
     }
     if (message.fileId !== undefined) {
@@ -257,14 +257,14 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
 
   fromJSON(object: any): StorageObjectPopulated {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       createdAt: isSet(object.createdAt) ? fromJsonTimestamp(object.createdAt) : undefined,
       updatedAt: isSet(object.updatedAt) ? fromJsonTimestamp(object.updatedAt) : undefined,
-      name: isSet(object.name) ? globalThis.String(object.name) : '',
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
       isFolder: isSet(object.isFolder) ? globalThis.Boolean(object.isFolder) : false,
       type: isSet(object.type) ? storageObjectTypeFromJSON(object.type) : StorageObjectType.FOLDER,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : undefined,
       parentId: isSet(object.parentId) ? globalThis.String(object.parentId) : undefined,
       file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
@@ -278,7 +278,7 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
 
   toJSON(message: StorageObjectPopulated): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.createdAt !== undefined) {
@@ -287,7 +287,7 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     if (message.updatedAt !== undefined) {
       obj.updatedAt = message.updatedAt.toISOString();
     }
-    if (message.name !== '') {
+    if (message.name !== "") {
       obj.name = message.name;
     }
     if (message.isPublic !== false) {
@@ -299,7 +299,7 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     if (message.type !== StorageObjectType.FOLDER) {
       obj.type = storageObjectTypeToJSON(message.type);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     if (message.fileId !== undefined) {
@@ -329,57 +329,41 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectPopulated>, I>>(
-    base?: I,
-  ): StorageObjectPopulated {
+  create<I extends Exact<DeepPartial<StorageObjectPopulated>, I>>(base?: I): StorageObjectPopulated {
     return StorageObjectPopulated.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectPopulated>, I>>(
-    object: I,
-  ): StorageObjectPopulated {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectPopulated>, I>>(object: I): StorageObjectPopulated {
     const message = createBaseStorageObjectPopulated();
-    message.id = object.id ?? '';
+    message.id = object.id ?? "";
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
-    message.name = object.name ?? '';
+    message.name = object.name ?? "";
     message.isPublic = object.isPublic ?? false;
     message.isFolder = object.isFolder ?? false;
     message.type = object.type ?? StorageObjectType.FOLDER;
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? "";
     message.fileId = object.fileId ?? undefined;
     message.parentId = object.parentId ?? undefined;
-    message.file =
-      object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
+    message.file = (object.file !== undefined && object.file !== null) ? File.fromPartial(object.file) : undefined;
     message.folderPath = object.folderPath ?? undefined;
     message.imageId = object.imageId ?? undefined;
     message.videoId = object.videoId ?? undefined;
-    message.image =
-      object.image !== undefined && object.image !== null
-        ? Image.fromPartial(object.image)
-        : undefined;
-    message.video =
-      object.video !== undefined && object.video !== null
-        ? Video.fromPartial(object.video)
-        : undefined;
+    message.image = (object.image !== undefined && object.image !== null) ? Image.fromPartial(object.image) : undefined;
+    message.video = (object.video !== undefined && object.video !== null) ? Video.fromPartial(object.video) : undefined;
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function toTimestamp(date: Date): Timestamp {
@@ -397,7 +381,7 @@ function fromTimestamp(t: Timestamp): Date {
 function fromJsonTimestamp(o: any): Date {
   if (o instanceof globalThis.Date) {
     return o;
-  } else if (typeof o === 'string') {
+  } else if (typeof o === "string") {
     return new globalThis.Date(o);
   } else {
     return fromTimestamp(Timestamp.fromJSON(o));

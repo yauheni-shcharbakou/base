@@ -7,7 +7,7 @@
   "files.autoSave": "onFocusChange",
   "editor.tabSize": 2,
   "editor.formatOnPaste": true,
-  "js/ts.preferences.preferTypeOnlyAutoImports": true,
+  "js/ts.preferences.preferTypeOnlyAutoImports": false,
   "js/ts.preferences.quoteStyle": "single",
   "editor.fontSize": 14,
   "editor.formatOnType": true,
@@ -15,5 +15,24 @@
   "prettier.requireConfig": true,
   "prettier.singleQuote": true,
   "prettier.useEditorConfig": false,
-  "tooltitude.pb.inspection.namesEnabled": false
+  "tooltitude.pb.inspection.namesEnabled": false,
+  "editor.foldingImportsByDefault": true,
+  "js/ts.preferences.includePackageJsonAutoImports": "on",
+  "js/ts.updateImportsOnFileMove.enabled": "always",
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports.ts": "always",
+    "source.organizeImports": "always"
+  },
+  // "auto-run-command.rules": [
+  //   {
+  //     "condition": "always",
+  //     "command": "nvm use 22"
+  //   }
+  // ],
+  "terminal.integrated.profiles.osx": {
+    "zsh": {
+      "path": "zsh",
+      "args": ["-l", "-i", "-c", "nvm use 22; exec zsh"]
+    }
+  }
 }

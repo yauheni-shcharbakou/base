@@ -1,12 +1,12 @@
 import { DynamicModule, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
-import { grpcConfig, GrpcConfig, GrpcConfigHost } from 'grpc/grpc.config';
-import { GrpcStrategy } from 'grpc/grpc.types';
-import { getServiceDefinitions } from 'grpc/helpers';
-import { GrpcClientRegistry } from 'grpc/utils';
 import _ from 'lodash';
-import { GRPC_CONFIG_SERVICE, GRPC_MICROSERVICE_OPTIONS } from 'grpc/grpc.constants';
+import { grpcConfig, GrpcConfig, GrpcConfigHost } from './grpc.config';
+import { GRPC_CONFIG_SERVICE, GRPC_MICROSERVICE_OPTIONS } from './grpc.constants';
+import { GrpcStrategy } from './grpc.types';
+import { getServiceDefinitions } from './helpers';
+import { GrpcClientRegistry } from './utils';
 
 export type GrpcModuleForFeatureParams = {
   strategy: GrpcStrategy;

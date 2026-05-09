@@ -1,12 +1,13 @@
 {
   "extends": "@packages/configs/tsconfig/package/nest.tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src",
-    "baseUrl": "./src"
+    // "rootDir": "./src",
+    // "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@compiler/*": ["./compiler/*"]
+    }
   },
-  "ts-node": {
-    "require": ["tsconfig-paths/register"]
-  },
-  "include": ["src"],
+  "include": ["src", "compiler"],
   "exclude": ["node_modules", "dist"]
 }

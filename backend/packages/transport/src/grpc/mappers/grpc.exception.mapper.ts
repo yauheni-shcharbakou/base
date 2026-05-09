@@ -3,7 +3,7 @@ import { status as GrpcStatus } from '@grpc/grpc-js';
 import { HttpException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import _ from 'lodash';
-import { GrpcStatusCodeMapper } from 'grpc/mappers/grpc.status-code.mapper';
+import type { GrpcStatusCodeMapper } from './grpc.status-code.mapper';
 
 export class GrpcExceptionMapper {
   static getMessage(exception: RpcException): string {

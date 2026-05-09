@@ -1,11 +1,11 @@
 import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientGrpc, ClientsModule, ClientsProviderAsyncOptions } from '@nestjs/microservices';
-import { GrpcConfig, GrpcConfigHost } from 'grpc/grpc.config';
-import { GRPC_CONFIG_SERVICE } from 'grpc/grpc.constants';
-import { GrpcStrategy } from 'grpc/grpc.types';
-import { getGrpcClientToken, getGrpcServiceToken, getServiceDefinitions } from 'grpc/helpers';
 import _ from 'lodash';
+import type { GrpcConfigHost, GrpcConfig } from '../grpc.config';
+import { GRPC_CONFIG_SERVICE } from '../grpc.constants';
+import type { GrpcStrategy } from '../grpc.types';
+import { getGrpcClientToken, getServiceDefinitions, getGrpcServiceToken } from '../helpers';
 
 export class GrpcClientRegistry {
   private readonly strategy = new Map<GrpcConfigHost, Set<string>>();

@@ -6,7 +6,7 @@
 // source: common/types.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export interface Boolean {
   value: boolean;
@@ -126,12 +126,12 @@ export const StringMap: MessageFns<StringMap> = {
     return {
       value: isObject(object.value)
         ? (globalThis.Object.entries(object.value) as [string, any][]).reduce(
-            (acc: Map<string, string>, [key, value]: [string, any]) => {
-              acc.set(key, globalThis.String(value));
-              return acc;
-            },
-            new Map(),
-          )
+          (acc: Map<string, string>, [key, value]: [string, any]) => {
+            acc.set(key, globalThis.String(value));
+            return acc;
+          },
+          new Map(),
+        )
         : new Map(),
     };
   },
@@ -154,7 +154,7 @@ export const StringMap: MessageFns<StringMap> = {
     const message = createBaseStringMap();
     message.value = (() => {
       const m = new Map();
-      ((object.value as Map<string, string>) ?? new Map()).forEach((value, key) => {
+      (object.value as Map<string, string> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
           m.set(key, globalThis.String(value));
         }
@@ -166,15 +166,15 @@ export const StringMap: MessageFns<StringMap> = {
 };
 
 function createBaseStringMap_ValueEntry(): StringMap_ValueEntry {
-  return { key: '', value: '' };
+  return { key: "", value: "" };
 }
 
 export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
   encode(message: StringMap_ValueEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.key !== '') {
+    if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
-    if (message.value !== '') {
+    if (message.value !== "") {
       writer.uint32(18).string(message.value);
     }
     return writer;
@@ -214,17 +214,17 @@ export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
 
   fromJSON(object: any): StringMap_ValueEntry {
     return {
-      key: isSet(object.key) ? globalThis.String(object.key) : '',
-      value: isSet(object.value) ? globalThis.String(object.value) : '',
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
+      value: isSet(object.value) ? globalThis.String(object.value) : "",
     };
   },
 
   toJSON(message: StringMap_ValueEntry): unknown {
     const obj: any = {};
-    if (message.key !== '') {
+    if (message.key !== "") {
       obj.key = message.key;
     }
-    if (message.value !== '') {
+    if (message.value !== "") {
       obj.value = message.value;
     }
     return obj;
@@ -233,12 +233,10 @@ export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
   create<I extends Exact<DeepPartial<StringMap_ValueEntry>, I>>(base?: I): StringMap_ValueEntry {
     return StringMap_ValueEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StringMap_ValueEntry>, I>>(
-    object: I,
-  ): StringMap_ValueEntry {
+  fromPartial<I extends Exact<DeepPartial<StringMap_ValueEntry>, I>>(object: I): StringMap_ValueEntry {
     const message = createBaseStringMap_ValueEntry();
-    message.key = object.key ?? '';
-    message.value = object.value ?? '';
+    message.key = object.key ?? "";
+    message.value = object.value ?? "";
     return message;
   },
 };
@@ -280,11 +278,7 @@ export const StringArray: MessageFns<StringArray> = {
   },
 
   fromJSON(object: any): StringArray {
-    return {
-      value: globalThis.Array.isArray(object?.value)
-        ? object.value.map((e: any) => globalThis.String(e))
-        : [],
-    };
+    return { value: globalThis.Array.isArray(object?.value) ? object.value.map((e: any) => globalThis.String(e)) : [] };
   },
 
   toJSON(message: StringArray): unknown {
@@ -307,23 +301,18 @@ export const StringArray: MessageFns<StringArray> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {
