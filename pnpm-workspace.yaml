@@ -1,6 +1,14 @@
 packages:
-  - 'backend/apps/*'
-  - 'backend/packages/*'
-  - 'frontend/apps/*'
-  - 'frontend/packages/*'
-  - 'packages/*'
+  - './backend/apps/*'
+  - './backend/packages/*'
+  - './frontend/apps/*'
+  - './frontend/packages/*'
+  - './packages/*'
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': false
+  bcrypt: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true

@@ -10,7 +10,7 @@
     "format": "prettier src --write --config ../../../.prettierrc",
     "dev": "pnpm build --watch",
     "build": "pnpm format --log-level error && tsdown src/index.ts --format cjs --dts",
-    "reset": "rm -rf .turbo dist src node_modules",
+    "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
@@ -18,7 +18,7 @@
     "@nestjs/common": "11.1.19",
     "@nestjs/microservices": "11.1.19",
     "@packages/proto": "workspace:*",
-    "protobufjs": "7.5.5",
+    "protobufjs": "7.5.8",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },

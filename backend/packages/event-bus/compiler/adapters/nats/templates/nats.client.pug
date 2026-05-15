@@ -1,0 +1,36 @@
+each service in data.services
+    - const serviceClientName = `Nats${pascalCase(service.eventBusName)}Client`
+    |
+    |class #{serviceClientName}Impl implements #{service.eventBusName} {
+    |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+    |
+    each method in service.methods
+        - const eventPattern = kebabCase(method.eventId)
+        |
+        |   #{method.fullName}(data: #{method.type}): Observable<any> {
+        |       return this.client.emit('#{eventPattern}', data);
+        |   }
+        |
+    |}
+    |
+
+|
+|export class NatsClientFactory {
+|   private static clientsMap = new Map<EventBusService, Type>([
+|
+each service in data.services
+    |     ['#{service.hostName}.#{service.name}', Nats#{pascalCase(service.eventBusName)}ClientImpl],
+    |
+|   ]);
+|
+|   static create(client: NatsJetStreamClientProxy, service: EventBusService): Type {
+|       const Client = this.clientsMap.get(service);
+|
+|       if (!Client) {
+|           throw new Error(`Nats client for ${service} identifier not found`);
+|       }
+|
+|       return new Client(client);
+|   }
+|}
+|

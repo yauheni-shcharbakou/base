@@ -1,5 +1,5 @@
-import { FRONTEND_PACKAGES_DIR_ROOT } from 'compiler/constants';
-import { CommonTask, RemoveOptionalityTask } from 'compiler/tasks';
+import { CommonTask, RemoveOptionalityTask } from '@compiler/tasks';
+import { FRONTEND_PACKAGES_DIR_ROOT } from '@packages/compiler-utils';
 import { join } from 'node:path';
 import { FixClientExportsTask } from './tasks/fix-client-exports.task';
 import { AddClientRepositoriesTask } from './tasks/add-client-repositories.task';

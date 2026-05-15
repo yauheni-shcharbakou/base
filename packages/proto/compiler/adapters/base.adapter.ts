@@ -1,12 +1,11 @@
-import { PUG_EXT_REG_EXP } from 'compiler/constants';
-import { ContextService } from 'compiler/services';
-import { TransformTaskClass } from 'compiler/tasks';
-import { CompilerContext, OnFilePayload, OnFolderPayload, ProtoContext } from 'compiler/types';
-import Pug from 'pug';
-import { mkdir, rm, writeFile, readdir, readFile } from 'node:fs/promises';
+import { ContextService } from '@compiler/services';
+import { TransformTaskClass } from '@compiler/tasks';
+import { CompilerContext, OnFilePayload, OnFolderPayload, ProtoContext } from '@compiler/types';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { Project, SourceFile, type ImportSpecifierStructure, type OptionalKind } from 'ts-morph';
 import { join } from 'node:path';
 import { dotCase, pascalCase } from 'change-case-all';
+import { TemplateService } from '@packages/compiler-utils';
 
 export type AdapterParams = {
   name: string;
@@ -31,8 +30,8 @@ export type AdapterFactory = (contextService: ContextService) => BaseAdapter;
 
 export abstract class BaseAdapter {
   protected readonly project: Project;
-  protected readonly templateByName = new Map<string, Pug.compileTemplate>();
   protected readonly entryExportsMap = new Map<string, Map<string, ImportSpecifierStructure>>();
+  protected readonly templateService: TemplateService;
 
   protected constructor(
     protected readonly contextService: ContextService,
@@ -43,6 +42,7 @@ export abstract class BaseAdapter {
     protected readonly restrictedContexts: CompilerContext[] = [],
   ) {
     this.project = this.getProject();
+    this.templateService = new TemplateService(this.templatePath);
   }
 
   protected getProject(): Project {
@@ -58,9 +58,9 @@ export abstract class BaseAdapter {
       const transformer = new Task(
         sourceFile,
         protoContext,
+        this.templateService,
         relativePath,
         this.targetRoot,
-        this.templateByName,
         this.entryExportsMap,
       );
 
@@ -76,7 +76,7 @@ export abstract class BaseAdapter {
       return `export * as ${exportAlias} from './${item}';`;
     });
 
-    this.entryExportsMap.entries().forEach(([moduleSpecifier, items]) => {
+    Array.from(this.entryExportsMap.entries()).forEach(([moduleSpecifier, items]) => {
       let content = '*';
 
       if (items.size) {
@@ -91,32 +91,6 @@ export abstract class BaseAdapter {
     });
 
     return rows;
-  }
-
-  protected async compileTemplates() {
-    if (!this.templatePath) {
-      return;
-    }
-
-    try {
-      const templateFiles = await readdir(this.templatePath, { recursive: true });
-
-      await Promise.all(
-        templateFiles.map(async (templateFile) => {
-          if (!templateFile.endsWith('.pug')) {
-            return;
-          }
-
-          const pathToTemplate = join(this.templatePath!, templateFile);
-          const templateContent = await readFile(pathToTemplate, { encoding: 'utf-8' });
-
-          this.templateByName.set(
-            templateFile.replace(PUG_EXT_REG_EXP, ''),
-            Pug.compile(templateContent, { pretty: false }),
-          );
-        }),
-      );
-    } catch (error) {}
   }
 
   protected addSideEffects(sourceFile: SourceFile): void | Promise<void> {}
@@ -146,7 +120,11 @@ export abstract class BaseAdapter {
   async onInit(): Promise<void> {
     await rm(this.targetRoot, { recursive: true, force: true });
     await mkdir(this.targetRoot, { recursive: true });
-    await this.compileTemplates();
+
+    if (this.templatePath) {
+      await this.templateService.parse();
+    }
+
     console.info(`[grpc.${this.name}] Initialization completed`);
   }
 

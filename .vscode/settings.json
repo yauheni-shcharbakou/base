@@ -1,7 +1,7 @@
 {
   "js/ts.tsdk.path": "./node_modules/typescript/lib",
   "prettier.configPath": ".prettierrc",
-  "prettier.ignorePath": ".vscode-prettierignore",
+  "prettier.ignorePath": ".editorignore",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "files.autoSave": "onFocusChange",
@@ -21,18 +21,6 @@
   "js/ts.updateImportsOnFileMove.enabled": "always",
   "editor.codeActionsOnSave": {
     "source.addMissingImports.ts": "always",
-    "source.organizeImports": "always"
+    "source.organizeImports": "always",
   },
-  // "auto-run-command.rules": [
-  //   {
-  //     "condition": "always",
-  //     "command": "nvm use 22"
-  //   }
-  // ],
-  "terminal.integrated.profiles.osx": {
-    "zsh": {
-      "path": "zsh",
-      "args": ["-l", "-i", "-c", "nvm use 22; exec zsh"]
-    }
-  }
 }

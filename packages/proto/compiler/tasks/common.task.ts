@@ -1,4 +1,4 @@
-import { TransformTask } from 'compiler/tasks/transform.task';
+import { TransformTask } from '@compiler/tasks/transform.task';
 import { SyntaxKind, TypedNode } from 'ts-morph';
 
 export class CommonTask extends TransformTask {

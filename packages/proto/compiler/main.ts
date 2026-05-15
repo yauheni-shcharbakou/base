@@ -1,10 +1,11 @@
-import { AdapterFactory, BaseAdapter } from 'compiler/adapters/base.adapter';
-import { Browser } from 'compiler/adapters/browser';
-import { Nest } from 'compiler/adapters/nest';
-import { PROTO_EXT_REG_EXP, PROTO_SRC_ROOT } from 'compiler/constants';
-import { ContextService } from 'compiler/services';
-import { OnFilePayload, OnFolderPayload } from 'compiler/types';
-import { parseProtoTree } from 'compiler/utils';
+import { AdapterFactory, BaseAdapter } from '@compiler/adapters/base.adapter';
+import { Browser } from '@compiler/adapters/browser';
+import { Nest } from '@compiler/adapters/nest';
+import { PROTO_SRC_ROOT } from '@compiler/constants';
+import { ContextService } from '@compiler/services';
+import { OnFilePayload, OnFolderPayload } from '@compiler/types';
+import { parseProtoTree } from '@compiler/utils';
+import { PROTO_EXT_REG_EXP } from '@packages/compiler-utils';
 import { EventEmitter } from 'node:events';
 import { readdir } from 'node:fs/promises';
 import { Client } from './adapters/client';
@@ -124,7 +125,7 @@ const startCompiler = async (adapterFactories: AdapterFactory[]) => {
       return;
     }
 
-    console.error('Grpc compiler error');
+    console.error('Proto compiler error');
   }
 };
 

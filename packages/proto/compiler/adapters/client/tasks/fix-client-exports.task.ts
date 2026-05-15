@@ -1,5 +1,5 @@
 import { pascalCase } from 'change-case-all';
-import { TransformTask } from 'compiler/tasks';
+import { TransformTask } from '@compiler/tasks';
 
 export class FixClientExportsTask extends TransformTask {
   transform(): void {

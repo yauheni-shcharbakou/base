@@ -1,5 +1,5 @@
 import { constantCase, pascalCase } from 'change-case-all';
-import { TransformTask } from 'compiler/tasks';
+import { TransformTask } from '@compiler/tasks';
 
 export class FixNestExportsTask extends TransformTask {
   canTransform(): boolean | Promise<boolean> {

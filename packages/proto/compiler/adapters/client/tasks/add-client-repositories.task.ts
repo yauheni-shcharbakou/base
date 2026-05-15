@@ -1,6 +1,6 @@
 import { pascalCase } from 'change-case-all';
-import { TransformTask } from 'compiler/tasks';
-import { ProtoContextService } from 'compiler/types';
+import { TransformTask } from '@compiler/tasks';
+import { ProtoContextService } from '@compiler/types';
 import { MethodSignature, Node } from 'ts-morph';
 
 type MethodData = {
@@ -16,7 +16,7 @@ type TemplateData = {
 
 export class AddClientRepositoriesTask extends TransformTask {
   private declareImports() {
-    this.addOrUpdateImport('@grpc/grpc-js', [
+    this.importService.addOrUpdate('@grpc/grpc-js', [
       'CallOptions',
       'ClientOptions',
       'ChannelCredentials',
@@ -72,7 +72,7 @@ export class AddClientRepositoriesTask extends TransformTask {
       return acc;
     }, []);
 
-    const repositoryDeclaration = this.renderTemplate('client.repository', {
+    const repositoryDeclaration = this.templateService.render('client.repository', {
       data: {
         services: templateData,
       },

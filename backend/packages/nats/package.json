@@ -1,0 +1,36 @@
+{
+  "name": "@backend/nats",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "format:generated": "prettier src/generated --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "dev": "pnpm build --watch",
+    "build": "pnpm format:generated --log-level error && tsdown src/index.ts --format cjs --dts",
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "@backend/common": "workspace:*",
+    "@backend/event-bus": "workspace:*",
+    "@backend/proto": "workspace:*",
+    "@nestjs-plugins/nestjs-nats-jetstream-transport": "2.2.6",
+    "@nestjs/common": "11.1.19",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/microservices": "11.1.19",
+    "@packages/common": "workspace:*",
+    "@sweet-monads/either": "3.3.1",
+    "class-validator": "0.14.3",
+    "nats": "2.29.3",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@packages/configs": "workspace:*"
+  }
+}

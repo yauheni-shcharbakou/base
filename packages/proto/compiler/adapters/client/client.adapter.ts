@@ -1,7 +1,7 @@
-import { BaseAdapter } from 'compiler/adapters/base.adapter';
-import { PROTO_SRC_ROOT, PROTOC_PATH, PROTOC_PLUGIN_PATH } from 'compiler/constants';
-import { OnFilePayload } from 'compiler/types';
-import { runCommand } from 'compiler/utils';
+import { BaseAdapter } from '@compiler/adapters/base.adapter';
+import { PROTO_SRC_ROOT, PROTOC_PATH, PROTOC_PLUGIN_PATH } from '@compiler/constants';
+import { OnFilePayload } from '@compiler/types';
+import { runCommand } from '@compiler/utils';
 import { SourceFile } from 'ts-morph';
 
 export class ClientAdapter extends BaseAdapter {

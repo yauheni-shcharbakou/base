@@ -1,12 +1,10 @@
 import { constantCase, pascalCase } from 'change-case-all';
-import { TransformTask } from 'compiler/tasks';
-import { ProtoContextService } from 'compiler/types';
+import { TransformTask } from '@compiler/tasks';
+import { ProtoContextService } from '@compiler/types';
 
 export class AddNestServiceSchemasTask extends TransformTask {
-  private packageName: string | undefined;
-
   private declareImports() {
-    this.addOrUpdateImport('@grpc/grpc-js', [{ name: 'Metadata', isTypeOnly: true }]);
+    this.importService.addOrUpdate('@grpc/grpc-js', [{ name: 'Metadata', isTypeOnly: true }]);
   }
 
   private declareSchemas(services: ProtoContextService[]) {
@@ -50,10 +48,10 @@ export class AddNestServiceSchemasTask extends TransformTask {
       });
     });
 
-    const schemaDeclaration = this.renderTemplate('nest.service-schema', {
+    const schemaDeclaration = this.templateService.render('nest.service-schema', {
       data: {
         services,
-        package: this.packageName,
+        package: this.getPackageNameValue(),
         protoPath: this.protoContext.protoPath,
       },
       pascalCase,
@@ -62,19 +60,12 @@ export class AddNestServiceSchemasTask extends TransformTask {
     this.sourceFile.addStatements(schemaDeclaration);
   }
 
-  protected onInit() {
-    this.packageName = this.getPackageNameValue();
-  }
-
   canTransform(): boolean | Promise<boolean> {
-    return !!(this.protoContext.services.length && this.protoContext.packageId);
+    const packageValue = this.getPackageNameValue();
+    return !!(packageValue && this.protoContext.services.length);
   }
 
   transform(): void | Promise<void> {
-    if (!this.packageName) {
-      return;
-    }
-
     this.declareImports();
     this.declareSchemas(this.protoContext.services);
   }

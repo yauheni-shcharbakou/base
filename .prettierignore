@@ -1,0 +1,12 @@
+.git
+.idea
+.next
+.turbo
+.zed
+dist
+node_modules
+pnpm-lock.yaml
+packages/proto/src/**/*.ts
+*/packages/proto/src/**/*.ts
+backend/packages/event-bus/src/generated.ts
+backend/packages/*/src/generated/*.ts

@@ -1,0 +1,32 @@
+{
+  "name": "@backend/event-bus",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "format:generated": "prettier src/generated.ts --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "dev": "pnpm build --watch",
+    "compile": "tsx compiler/main.ts && pnpm format:generated --log-level error",
+    "build": "tsdown src/index.ts --format cjs --dts",
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "@backend/proto": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@packages/compiler-utils": "workspace:*",
+    "@packages/configs": "workspace:*",
+    "@types/pug": "2.0.10",
+    "pug": "3.0.4",
+    "ts-morph": "28.0.0",
+    "tsx": "4.21.0"
+  }
+}

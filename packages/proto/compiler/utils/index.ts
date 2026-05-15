@@ -1,5 +1,5 @@
-import { PROTO_EXT_REG_EXP, TS_EXT_REG_EXP } from 'compiler/constants';
-import { OnFilePayload, OnFolderPayload } from 'compiler/types';
+import { OnFilePayload, OnFolderPayload } from '@compiler/types';
+import { PROTO_EXT_REG_EXP, TS_EXT_REG_EXP } from '@packages/compiler-utils';
 import { EventEmitter } from 'node:events';
 import { stat } from 'node:fs/promises';
 import { exec } from 'node:child_process';
