@@ -1,7 +1,5 @@
-import { ImportService } from '@packages/compiler-utils';
 import { dotCase, pascalCase } from 'change-case-all';
-import { writeFile } from 'fs/promises';
-import { Node, Project } from 'ts-morph';
+import { Node } from 'ts-morph';
 import { ContextService } from './context.service';
 
 type EventBusMethod = {
@@ -15,33 +13,27 @@ export type ServiceEventBus = {
   id: string;
   name: string;
   hostName: string;
+  pattern: string;
   eventBusName: string;
   methods: EventBusMethod[];
 };
 
 export class ParseStrategyService {
-  constructor(
-    // protected readonly project: Project,
-    protected readonly contextService: ContextService,
-    // protected readonly strategyDirPath: string,
-    // protected readonly eventBusOutputPath: string,
-  ) {}
+  constructor(protected readonly contextService: ContextService) {}
 
-  // private async declareImports() {
-  //   await writeFile(this.eventBusOutputPath, '/* eslint-disable */\n', { encoding: 'utf-8' });
-  //   const outputFile = this.project.addSourceFileAtPath(this.eventBusOutputPath);
+  protected getServicePattern(hostName: string, serviceName: string): string {
+    return `${hostName}.${serviceName}`;
+  }
 
-  //   const importService = new ImportService(outputFile);
-  //   importService.addOrUpdate('rxjs', [{ name: 'Observable', isTypeOnly: true }]);
+  protected getServiceEventBusName(serviceId: string): string {
+    return pascalCase(`${serviceId}.event.bus`);
+  }
 
-  //   outputFile.addImportDeclarations(this.contextService.getStrategyImportStructures());
-  //   return outputFile;
-  // }
+  protected getMethodFullName(eventName: string): string {
+    return `on${pascalCase(eventName)}`;
+  }
 
   getServices() {
-    // const outputFile = await this.declareImports();
-    // this.project.addSourceFilesAtPaths(`${this.strategyDirPath}/**/*.ts`);
-
     const strategyFile = this.contextService.getStrategyFile();
     const strategy = strategyFile.getInterfaceOrThrow('EventBusStrategy');
 
@@ -69,35 +61,29 @@ export class ParseStrategyService {
               continue;
             }
 
-            const interfaceMap = new Map<string, { event: string; type: string }>();
             const methods: EventBusMethod[] = [];
 
             for (const event of serviceProperties) {
               const eventName = event.getName();
               const eventType = event.getType().getText(strategyFile);
-
-              const fullEventName = dotCase(`${hostName}_${serviceName}_${eventName}`);
-
-              interfaceMap.set(eventName, {
-                event: fullEventName,
-                type: eventType,
-              });
+              const eventId = dotCase(`${hostName}_${serviceName}_${eventName}`);
 
               methods.push({
-                fullName: `on${pascalCase(eventName)}`,
+                fullName: this.getMethodFullName(eventName),
                 name: eventName,
-                eventId: fullEventName,
+                eventId,
                 type: eventType,
               });
             }
 
-            const serviceId = dotCase(host.getName() + '.' + service.getName());
+            const serviceId = dotCase(`${hostName}_${serviceName}`);
 
             const serviceEventBus: ServiceEventBus = {
               id: serviceId,
               name: serviceName,
               hostName,
-              eventBusName: pascalCase(`${serviceId}.event.bus`),
+              pattern: this.getServicePattern(hostName, serviceName),
+              eventBusName: this.getServiceEventBusName(serviceId),
               methods,
             };
 

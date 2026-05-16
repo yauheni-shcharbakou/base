@@ -6,7 +6,7 @@ import {
 import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CustomStrategy } from '@nestjs/microservices';
-import { NATS_CONFIG_SERVICE, NATS_CLIENT, NATS_MICROSERVICE_OPTIONS } from './infrastructure';
+import { NATS_CONFIG_SERVICE, NATS_MICROSERVICE_OPTIONS } from './infrastructure';
 import { NatsConfig, natsConfig } from './infrastructure/configs';
 import { globalStreamRegistry } from './infrastructure/utils';
 import { EventBusHost, EventBusService } from '@backend/event-bus';
@@ -29,13 +29,9 @@ export class NatsModule {
         provide: NATS_CONFIG_SERVICE,
         useClass: ConfigService,
       },
-      {
-        provide: NATS_CLIENT,
-        useClass: NatsJetStreamClientProxy,
-      },
     ];
 
-    const exports: DynamicModule['exports'] = [NATS_CONFIG_SERVICE, NATS_CLIENT];
+    const exports: DynamicModule['exports'] = [NATS_CONFIG_SERVICE, NatsJetStreamClientProxy];
 
     if (!params.onlyEmitting) {
       providers.push({
@@ -80,7 +76,7 @@ export class NatsModule {
       providers: [
         {
           provide: params.name,
-          inject: [NATS_CLIENT],
+          inject: [NatsJetStreamClientProxy],
           useFactory: (client: NatsJetStreamClientProxy): Type => {
             return NatsClientFactory.create(client, params.service);
           },

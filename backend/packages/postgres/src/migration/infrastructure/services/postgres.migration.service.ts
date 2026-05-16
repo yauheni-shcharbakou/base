@@ -5,7 +5,7 @@ import { Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import _ from 'lodash';
 import { PostgresMigrationEntity } from '../entities/postgres.migration.entity';
-import { POSTGRES_MIGRATION_TASKS } from '../constants';
+import { POSTGRES_MIGRATION_TASKS } from '../constants/postgres.migration.tokens';
 
 @Injectable()
 export class PostgresMigrationService implements MigrationService {

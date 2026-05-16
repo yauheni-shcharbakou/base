@@ -20,7 +20,11 @@ export interface StorageVideoEventBus {
   onUpdateOne(event: VideoUpdateOneEvent): Observable<any>;
 }
 
-export type EventBusHost = 'auth' | 'storage';
+export enum EventBusHost {
+  AUTH = 'auth',
+  STORAGE = 'storage',
+}
+
 export type EventBusService =
   | 'auth.user'
   | 'storage.file'

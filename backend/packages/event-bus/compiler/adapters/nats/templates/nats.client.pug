@@ -1,7 +1,6 @@
 each service in data.services
-    - const serviceClientName = `Nats${pascalCase(service.eventBusName)}Client`
     |
-    |class #{serviceClientName}Impl implements #{service.eventBusName} {
+    |class Nats#{pascalCase(service.eventBusName)}ClientImpl implements #{service.eventBusName} {
     |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
     |
     each method in service.methods
@@ -19,7 +18,7 @@ each service in data.services
 |   private static clientsMap = new Map<EventBusService, Type>([
 |
 each service in data.services
-    |     ['#{service.hostName}.#{service.name}', Nats#{pascalCase(service.eventBusName)}ClientImpl],
+    |     ['#{service.pattern}', Nats#{pascalCase(service.eventBusName)}ClientImpl],
     |
 |   ]);
 |
