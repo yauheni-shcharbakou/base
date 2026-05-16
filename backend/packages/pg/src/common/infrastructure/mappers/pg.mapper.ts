@@ -1,10 +1,9 @@
-import { QueryOf, DatabaseRepositoryGetList } from '@backend/common';
+import { DatabaseRepositoryGetList, QueryOf } from '@backend/common';
 import { NestCommon } from '@backend/proto';
-import { FilterObject, ObjectQuery, wrap } from '@mikro-orm/core';
+import { ObjectQuery, wrap } from '@mikro-orm/core';
 import _ from 'lodash';
 import { PgEntity } from '../entities';
 import { PgSorting } from '../types';
-import { OperatorMap } from '@mikro-orm/core/typings';
 
 interface ParsedLogicalFilter extends Omit<
   NestCommon.LogicalFilter,
@@ -13,9 +12,7 @@ interface ParsedLogicalFilter extends Omit<
   value?: any;
 }
 
-type FilterConverter = (
-  filter: ParsedLogicalFilter,
-) => Partial<OperatorMap<any>> | FilterObject<any>[string];
+type FilterConverter = (filter: ParsedLogicalFilter) => ObjectQuery<any>[string];
 
 export class PgMapper<
   Doc extends PgEntity<any>,
