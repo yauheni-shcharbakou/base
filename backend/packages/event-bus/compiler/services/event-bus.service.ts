@@ -2,14 +2,14 @@ import { ImportService } from '@packages/compiler-utils';
 import { constantCase } from 'change-case-all';
 import { writeFile } from 'fs/promises';
 import {
-  InterfaceDeclarationStructure,
-  MethodSignatureStructure,
+  ClassDeclarationStructure,
+  MethodDeclarationStructure,
   OptionalKind,
   Project,
   SourceFile,
 } from 'ts-morph';
-import { ServiceEventBus } from './parse-strategy.service';
 import { ContextService } from './context.service';
+import { ServiceEventBus } from './parse-strategy.service';
 
 export class EventBusService {
   constructor(
@@ -33,28 +33,36 @@ export class EventBusService {
 
     this.declareImports(outputFile);
 
-    const interfaces: OptionalKind<InterfaceDeclarationStructure>[] = [];
+    const classes: OptionalKind<ClassDeclarationStructure>[] = [
+      {
+        name: 'EventBus',
+        isExported: true,
+        isAbstract: true,
+      },
+    ];
+
     const hostNames = new Set<string>();
-    const serviceNames = new Set<string>();
 
     for (const service of services) {
-      interfaces.push({
+      classes.push({
         name: service.eventBusName,
         isExported: true,
-        methods: service.methods.map((method): OptionalKind<MethodSignatureStructure> => {
+        isAbstract: true,
+        methods: service.methods.map((method): OptionalKind<MethodDeclarationStructure> => {
           return {
             name: method.fullName,
+            isAbstract: true,
             parameters: [{ name: 'event', type: method.type }],
             returnType: 'Observable<any>',
           };
         }),
+        extends: 'EventBus',
       });
 
       hostNames.add(service.hostName);
-      serviceNames.add(`'${service.pattern}'`);
     }
 
-    outputFile.addInterfaces(interfaces);
+    outputFile.addClasses(classes);
 
     outputFile.addEnum({
       isExported: true,
@@ -63,12 +71,6 @@ export class EventBusService {
         name: constantCase(hostName),
         value: hostName,
       })),
-    });
-
-    outputFile.addTypeAlias({
-      isExported: true,
-      name: 'EventBusService',
-      type: Array.from(serviceNames).join(' | '),
     });
 
     outputFile.organizeImports();

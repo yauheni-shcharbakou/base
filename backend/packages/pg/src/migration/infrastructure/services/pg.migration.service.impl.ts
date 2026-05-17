@@ -1,15 +1,15 @@
-import { MigrationService, MigrationTask, MigrationStatus } from '@backend/common';
+import { MigrationService, MigrationStatus, MigrationTask } from '@backend/common';
 import { MikroORM, RequestContext, wrap } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import _ from 'lodash';
-import { PgMigrationEntity } from '../entities/pg.migration.entity';
 import { PG_MIGRATION_TASKS } from '../constants/pg.migration.tokens';
+import { PgMigrationEntity } from '../entities/pg.migration.entity';
 
 @Injectable()
-export class PgMigrationService implements MigrationService {
-  private readonly logger = new Logger(PgMigrationService.name);
+export class PgMigrationServiceImpl implements MigrationService {
+  private readonly logger = new Logger(PgMigrationServiceImpl.name);
 
   constructor(
     @Inject(ModuleRef) private readonly moduleRef: ModuleRef,

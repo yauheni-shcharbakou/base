@@ -1,5 +1,3 @@
-export const MIGRATION_SERVICE = Symbol('MigrationService');
-
-export interface MigrationService {
-  runTasks(): Promise<void>;
+export abstract class MigrationService {
+  abstract runTasks(): Promise<void>;
 }

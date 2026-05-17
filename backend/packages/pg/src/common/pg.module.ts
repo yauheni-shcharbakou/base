@@ -1,11 +1,11 @@
+import { DatabaseRunnerService } from '@backend/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DynamicModule, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Database } from '@packages/common';
-import { PgRequestInterceptor, PgEntity, PgDatabaseRunnerServiceImpl } from './infrastructure';
-import { DATABASE_RUNNER_SERVICE } from '@backend/common';
+import { PgDatabaseRunnerServiceImpl, PgEntity, PgRequestInterceptor } from './infrastructure';
 import { PgConfig, pgConfig } from './infrastructure/configs';
 
 type PgModuleForRootParams = {
@@ -28,7 +28,7 @@ export class PgModule {
       ],
       providers: [
         {
-          provide: DATABASE_RUNNER_SERVICE,
+          provide: DatabaseRunnerService,
           useClass: PgDatabaseRunnerServiceImpl,
         },
         {
@@ -36,7 +36,7 @@ export class PgModule {
           useClass: PgRequestInterceptor,
         },
       ],
-      exports: [DATABASE_RUNNER_SERVICE],
+      exports: [DatabaseRunnerService],
       global: true,
       module: PgModule,
     };

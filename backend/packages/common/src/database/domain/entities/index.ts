@@ -1,1 +1,1 @@
-export * from './migration.interfaces';
+export * from './migration.interface';

@@ -1,16 +1,16 @@
+import { EventBus, EventBusHost } from '@backend/event-bus';
 import {
   NatsJetStreamClientProxy,
   NatsJetStreamServer,
   NatsJetStreamTransport,
 } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
-import { DynamicModule, Provider, Type } from '@nestjs/common';
+import { Abstract, DynamicModule, Provider, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CustomStrategy } from '@nestjs/microservices';
+import { NatsClientFactory } from './generated';
 import { NATS_CONFIG_SERVICE, NATS_MICROSERVICE_OPTIONS } from './infrastructure';
 import { NatsConfig, natsConfig } from './infrastructure/configs';
 import { globalStreamRegistry } from './infrastructure/utils';
-import { EventBusHost, EventBusService } from '@backend/event-bus';
-import { NatsClientFactory } from './generated';
 
 type NatsModuleForRootParams = {
   host: EventBusHost;
@@ -18,8 +18,7 @@ type NatsModuleForRootParams = {
 };
 
 type NatsModuleForFeatureParams = {
-  name: string | symbol;
-  service: EventBusService;
+  EventBus: Abstract<EventBus>;
 };
 
 export class NatsModule {
@@ -75,14 +74,14 @@ export class NatsModule {
       module: NatsModule,
       providers: [
         {
-          provide: params.name,
+          provide: params.EventBus,
           inject: [NatsJetStreamClientProxy],
           useFactory: (client: NatsJetStreamClientProxy): Type => {
-            return NatsClientFactory.create(client, params.service);
+            return NatsClientFactory.create(client, params.EventBus);
           },
         },
       ],
-      exports: [params.name],
+      exports: [params.EventBus],
     };
   }
 }

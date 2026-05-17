@@ -1,6 +1,6 @@
+import { MigrationService } from '@backend/common';
 import { Inject, Logger } from '@nestjs/common';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { MIGRATION_SERVICE, type MigrationService } from '@backend/common';
 
 type Options = {
   tasks?: boolean;
@@ -10,7 +10,7 @@ type Options = {
 export class MongoMigrationCommand extends CommandRunner {
   private readonly logger = new Logger(MongoMigrationCommand.name);
 
-  constructor(@Inject(MIGRATION_SERVICE) private readonly migrationService: MigrationService) {
+  constructor(@Inject(MigrationService) private readonly migrationService: MigrationService) {
     super();
   }
 

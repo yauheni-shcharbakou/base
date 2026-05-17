@@ -1,10 +1,10 @@
+import { DatabaseRunnerService, EmptyDatabaseRunnerServiceImpl } from '@backend/common';
 import { DynamicModule, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ModelDefinition, MongooseModule } from '@nestjs/mongoose';
 import { Database } from '@packages/common';
 import { Connection } from 'mongoose';
-import { DATABASE_RUNNER_SERVICE, EmptyDatabaseRunnerServiceImpl } from '@backend/common';
-import { MongoEntity, convertEntitiesToMongoDefinitions } from './infrastructure';
+import { convertEntitiesToMongoDefinitions, MongoEntity } from './infrastructure';
 import { mongoConfig, MongoConfig } from './infrastructure/configs';
 import { MongoIdPlugin } from './infrastructure/plugins';
 
@@ -37,11 +37,11 @@ export class MongoModule {
       ],
       providers: [
         {
-          provide: DATABASE_RUNNER_SERVICE,
+          provide: DatabaseRunnerService,
           useClass: EmptyDatabaseRunnerServiceImpl,
         },
       ],
-      exports: [DATABASE_RUNNER_SERVICE],
+      exports: [DatabaseRunnerService],
       global: true,
       module: MongoModule,
     };

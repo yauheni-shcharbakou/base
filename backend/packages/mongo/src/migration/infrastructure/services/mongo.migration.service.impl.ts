@@ -4,12 +4,12 @@ import { ModuleRef } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
 import { CommonDatabaseEntity } from '@packages/common';
 import { Model } from 'mongoose';
-import { MongoMigrationEntity } from '../entities/mongo.migration.entity';
 import { MONGO_MIGRATION_TASKS } from '../constants/mongo.migration.tokens';
+import { MongoMigrationEntity } from '../entities/mongo.migration.entity';
 
 @Injectable()
-export class MongoMigrationService implements MigrationService {
-  private readonly logger = new Logger(MongoMigrationService.name);
+export class MongoMigrationServiceImpl implements MigrationService {
+  private readonly logger = new Logger(MongoMigrationServiceImpl.name);
 
   constructor(
     @Inject(ModuleRef) private readonly moduleRef: ModuleRef,

@@ -1,7 +1,6 @@
 - const service = pascalCase(data.service.id)
 - const streamName = `${kebabCase(data.service.id)}-stream`
 - const pattern = `Nats${service}EventPattern`
-
 |
 |const #{pattern} = {
 |
@@ -35,7 +34,7 @@ each method in data.service.methods
 |       };
 |       return applyDecorators(Controller(), UseInterceptors(NatsControllerInterceptor), methodsDecorator);
 |   },
-|   service: '#{data.service.pattern}',
+|   service: #{data.service.eventBusName},
 |} as const;
 |
 |export interface Nats#{service}EventController {

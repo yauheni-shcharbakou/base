@@ -1,8 +1,8 @@
+import { MigrationService } from '@backend/common';
 import { MikroORM } from '@mikro-orm/postgresql';
 import { Inject, Logger } from '@nestjs/common';
 import _ from 'lodash';
 import { Command, CommandRunner, Option } from 'nest-commander';
-import { MIGRATION_SERVICE, type MigrationService } from '@backend/common';
 
 type Options = {
   up?: boolean;
@@ -17,7 +17,7 @@ export class PgMigrationCommand extends CommandRunner {
 
   constructor(
     @Inject(MikroORM) private readonly orm: MikroORM,
-    @Inject(MIGRATION_SERVICE) private readonly migrationService: MigrationService,
+    @Inject(MigrationService) private readonly migrationService: MigrationService,
   ) {
     super();
   }

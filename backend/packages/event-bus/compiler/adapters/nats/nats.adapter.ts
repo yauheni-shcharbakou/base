@@ -1,9 +1,10 @@
 import { BaseAdapter } from '@compiler/adapters/base.adapter';
-import { pascalCase, kebabCase, constantCase } from 'change-case-all';
+import { constantCase, kebabCase, pascalCase } from 'change-case-all';
 
 export class NatsAdapter extends BaseAdapter {
   private declareImports() {
     this.importService.addOrUpdate('@nestjs/common', [
+      'Abstract',
       'applyDecorators',
       'Controller',
       'Type',
@@ -24,7 +25,7 @@ export class NatsAdapter extends BaseAdapter {
 
     this.importService.addOrUpdate(
       this.contextService.getEventBusImportSpecifier(),
-      this.services.map((service) => service.eventBusName).concat(['EventBusService']),
+      this.services.map((service) => service.eventBusName).concat(['EventBus']),
     );
   }
 

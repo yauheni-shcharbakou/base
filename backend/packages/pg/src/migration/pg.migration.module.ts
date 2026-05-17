@@ -1,13 +1,13 @@
 import { PgEntity, PgModule } from '@/common';
-import { MIGRATION_SERVICE, MigrationTask } from '@backend/common';
+import { MigrationService, MigrationTask } from '@backend/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { DynamicModule, Type } from '@nestjs/common';
 import { Database } from '@packages/common';
 import _ from 'lodash';
 import { PgMigrationCommand } from './infrastructure/cli/pg.migration.command';
-import { PgMigrationEntity } from './infrastructure/entities/pg.migration.entity';
-import { PgMigrationService } from './infrastructure/services/pg.migration.service';
 import { PG_MIGRATION_TASKS } from './infrastructure/constants/pg.migration.tokens';
+import { PgMigrationEntity } from './infrastructure/entities/pg.migration.entity';
+import { PgMigrationServiceImpl } from './infrastructure/services/pg.migration.service.impl';
 
 type PgMigrationModuleParams = {
   database: Database;
@@ -38,8 +38,8 @@ export class PgMigrationModule {
           useClass: MigrationTask,
         })),
         {
-          provide: MIGRATION_SERVICE,
-          useClass: PgMigrationService,
+          provide: MigrationService,
+          useClass: PgMigrationServiceImpl,
         },
         PgMigrationCommand,
       ],

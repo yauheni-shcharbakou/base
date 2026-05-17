@@ -3,7 +3,7 @@ import { globalStreamRegistry } from '@/infrastructure/utils';
 import { NatsControllerInterceptor } from '@/interface/interceptors';
 import {
   AuthUserEventBus,
-  EventBusService,
+  EventBus,
   ProviderIdEvent,
   StorageFileEventBus,
   StorageObjectUpdateParentEvent,
@@ -16,7 +16,7 @@ import {
   NatsJetStreamClientProxy,
   NatsJetStreamContext,
 } from '@nestjs-plugins/nestjs-nats-jetstream-transport';
-import { applyDecorators, Controller, Type, UseInterceptors } from '@nestjs/common';
+import { Abstract, applyDecorators, Controller, Type, UseInterceptors } from '@nestjs/common';
 import { EventPattern } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
 
@@ -46,7 +46,7 @@ export const NatsAuthUserTransport = {
       methodsDecorator,
     );
   },
-  service: 'auth.user',
+  service: AuthUserEventBus,
 } as const;
 
 export interface NatsAuthUserEventController {
@@ -91,7 +91,7 @@ export const NatsStorageFileTransport = {
       methodsDecorator,
     );
   },
-  service: 'storage.file',
+  service: StorageFileEventBus,
 } as const;
 
 export interface NatsStorageFileEventController {
@@ -136,7 +136,7 @@ export const NatsStorageStorageObjectTransport = {
       methodsDecorator,
     );
   },
-  service: 'storage.storageObject',
+  service: StorageStorageObjectEventBus,
 } as const;
 
 export interface NatsStorageStorageObjectEventController {
@@ -196,7 +196,7 @@ export const NatsStorageVideoTransport = {
       methodsDecorator,
     );
   },
-  service: 'storage.video',
+  service: StorageVideoEventBus,
 } as const;
 
 export interface NatsStorageVideoEventController {
@@ -259,18 +259,18 @@ class NatsStorageVideoEventBusClientImpl implements StorageVideoEventBus {
 }
 
 export class NatsClientFactory {
-  private static clientsMap = new Map<EventBusService, Type>([
-    ['auth.user', NatsAuthUserEventBusClientImpl],
-    ['storage.file', NatsStorageFileEventBusClientImpl],
-    ['storage.storageObject', NatsStorageStorageObjectEventBusClientImpl],
-    ['storage.video', NatsStorageVideoEventBusClientImpl],
+  private static clientsMap = new Map<Abstract<EventBus>, Type>([
+    [AuthUserEventBus, NatsAuthUserEventBusClientImpl],
+    [StorageFileEventBus, NatsStorageFileEventBusClientImpl],
+    [StorageStorageObjectEventBus, NatsStorageStorageObjectEventBusClientImpl],
+    [StorageVideoEventBus, NatsStorageVideoEventBusClientImpl],
   ]);
 
-  static create(client: NatsJetStreamClientProxy, service: EventBusService): Type {
-    const Client = this.clientsMap.get(service);
+  static create(client: NatsJetStreamClientProxy, EventBusClass: Abstract<EventBus>): Type {
+    const Client = this.clientsMap.get(EventBusClass);
 
     if (!Client) {
-      throw new Error(`Nats client for ${service} identifier not found`);
+      throw new Error(`Nats client for ${EventBusClass} not found`);
     }
 
     return new Client(client);

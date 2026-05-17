@@ -1,12 +1,12 @@
 import {
-  QueryOf,
+  BulkUpdate,
   CreateOf,
-  UpdateOf,
   DatabaseRepository,
-  OptionsOf,
   DatabaseRepositoryGetList,
   DatabaseRepositoryGetListRes,
-  BulkUpdate,
+  OptionsOf,
+  QueryOf,
+  UpdateOf,
 } from '@backend/common';
 import type { NestCommon } from '@backend/proto';
 import { FilterQuery, Populate, RequiredEntityData, wrap } from '@mikro-orm/core';

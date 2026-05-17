@@ -12,21 +12,20 @@ each service in data.services
         |
     |}
     |
-
 |
 |export class NatsClientFactory {
-|   private static clientsMap = new Map<EventBusService, Type>([
+|   private static clientsMap = new Map<Abstract<EventBus>, Type>([
 |
 each service in data.services
-    |     ['#{service.pattern}', Nats#{pascalCase(service.eventBusName)}ClientImpl],
+    |     [#{service.eventBusName}, Nats#{pascalCase(service.eventBusName)}ClientImpl],
     |
 |   ]);
 |
-|   static create(client: NatsJetStreamClientProxy, service: EventBusService): Type {
-|       const Client = this.clientsMap.get(service);
+|   static create(client: NatsJetStreamClientProxy, EventBusClass: Abstract<EventBus>): Type {
+|       const Client = this.clientsMap.get(EventBusClass);
 |
 |       if (!Client) {
-|           throw new Error(`Nats client for ${service} identifier not found`);
+|           throw new Error(`Nats client for ${EventBusClass} not found`);
 |       }
 |
 |       return new Client(client);

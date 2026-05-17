@@ -1,11 +1,11 @@
-import { DATABASE_RUNNER_SERVICE, type DatabaseRunnerService } from '@backend/common';
+import { DatabaseRunnerService } from '@backend/common';
 import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor } from '@nestjs/common';
 import { from, isObservable, lastValueFrom, Observable } from 'rxjs';
 
 @Injectable()
 export class PgRequestInterceptor implements NestInterceptor {
   constructor(
-    @Inject(DATABASE_RUNNER_SERVICE) private readonly persistenceService: DatabaseRunnerService,
+    @Inject(DatabaseRunnerService) private readonly databaseRunnerService: DatabaseRunnerService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -14,7 +14,7 @@ export class PgRequestInterceptor implements NestInterceptor {
     }
 
     return from(
-      this.persistenceService.isolatedRun(async () => {
+      this.databaseRunnerService.isolatedRun(async () => {
         return lastValueFrom(next.handle());
       }),
     );
