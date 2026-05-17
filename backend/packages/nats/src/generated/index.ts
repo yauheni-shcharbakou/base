@@ -46,7 +46,7 @@ export const NatsAuthUserTransport = {
       methodsDecorator,
     );
   },
-  service: AuthUserEventBus,
+  EventBus: AuthUserEventBus,
 } as const;
 
 export interface NatsAuthUserEventController {
@@ -91,7 +91,7 @@ export const NatsStorageFileTransport = {
       methodsDecorator,
     );
   },
-  service: StorageFileEventBus,
+  EventBus: StorageFileEventBus,
 } as const;
 
 export interface NatsStorageFileEventController {
@@ -136,7 +136,7 @@ export const NatsStorageStorageObjectTransport = {
       methodsDecorator,
     );
   },
-  service: StorageStorageObjectEventBus,
+  EventBus: StorageStorageObjectEventBus,
 } as const;
 
 export interface NatsStorageStorageObjectEventController {
@@ -196,7 +196,7 @@ export const NatsStorageVideoTransport = {
       methodsDecorator,
     );
   },
-  service: StorageVideoEventBus,
+  EventBus: StorageVideoEventBus,
 } as const;
 
 export interface NatsStorageVideoEventController {

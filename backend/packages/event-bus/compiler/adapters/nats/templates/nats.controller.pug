@@ -34,7 +34,7 @@ each method in data.service.methods
 |       };
 |       return applyDecorators(Controller(), UseInterceptors(NatsControllerInterceptor), methodsDecorator);
 |   },
-|   service: #{data.service.eventBusName},
+|   EventBus: #{data.service.eventBusName},
 |} as const;
 |
 |export interface Nats#{service}EventController {
