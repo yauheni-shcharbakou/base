@@ -1,16 +1,9 @@
 import { BaseAdapter } from '@compiler/adapters/base.adapter';
-import { constantCase, kebabCase, pascalCase } from 'change-case-all';
+import { kebabCase, pascalCase } from 'change-case-all';
 
 export class NatsAdapter extends BaseAdapter {
   private declareImports() {
-    this.importService.addOrUpdate('@nestjs/common', [
-      'Abstract',
-      'applyDecorators',
-      'Controller',
-      'Type',
-      'UseInterceptors',
-    ]);
-
+    this.importService.addOrUpdate('@nestjs/common', ['Abstract', 'applyDecorators', 'Type']);
     this.importService.addOrUpdate('@nestjs/microservices', ['EventPattern']);
 
     this.importService.addOrUpdate('@nestjs-plugins/nestjs-nats-jetstream-transport', [
@@ -18,10 +11,15 @@ export class NatsAdapter extends BaseAdapter {
       'NatsJetStreamClientProxy',
     ]);
 
-    this.importService.addOrUpdate('rxjs', ['Observable']);
+    this.importService.addOrUpdate('rxjs', [
+      'concat',
+      'firstValueFrom',
+      'lastValueFrom',
+      'Observable',
+      'toArray',
+    ]);
 
     this.importService.addOrUpdate('@/infrastructure/utils', ['globalStreamRegistry']);
-    this.importService.addOrUpdate('@/interface/interceptors', ['NatsControllerInterceptor']);
 
     this.importService.addOrUpdate(
       this.contextService.getEventBusImportSpecifier(),
@@ -36,9 +34,7 @@ export class NatsAdapter extends BaseAdapter {
       this.outputFile.addStatements(
         this.templateService.render('nats.controller', {
           data: { service },
-          pascalCase,
           kebabCase,
-          constantCase,
         }),
       );
     });

@@ -2,7 +2,12 @@ import { AdapterFactory } from '@compiler/adapters/base.adapter';
 import { Nats } from '@compiler/adapters/nats';
 import { ContextService, EventBusService, ParseStrategyService } from '@compiler/services';
 import { Project } from 'ts-morph';
-import { EVENT_BUS_OUTPUT_PATH, EVENT_BUS_IMPORT_SPECIFIER, PACKAGE_SRC_ROOT } from './constants';
+import {
+  EVENT_BUS_IMPORT_SPECIFIER,
+  EVENT_BUS_OUTPUT_PATH,
+  STRATEGY_FILE_PATH,
+  STRATEGY_ROOT,
+} from './constants';
 
 const compile = async (adapterFactories: AdapterFactory[]) => {
   try {
@@ -15,7 +20,8 @@ const compile = async (adapterFactories: AdapterFactory[]) => {
 
     const contextService = new ContextService(
       project,
-      PACKAGE_SRC_ROOT,
+      STRATEGY_ROOT,
+      STRATEGY_FILE_PATH,
       EVENT_BUS_IMPORT_SPECIFIER,
     );
 

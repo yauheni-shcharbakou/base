@@ -1,13 +1,29 @@
+|
+|class NatsClientImpl {
+|   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+|
+|   protected emitMany<T>(pattern: string, events: T[]): Observable<any[]> {
+|       const observables = events.map(event => this.client.emit(pattern, event));
+|       return concat(...observables).pipe(toArray());
+|   }
+|}
+|
 each service in data.services
     |
-    |class Nats#{pascalCase(service.eventBusName)}ClientImpl implements #{service.eventBusName} {
-    |   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+    |class Nats#{pascalCase(service.eventBusName)}ClientImpl extends NatsClientImpl implements #{service.eventBusName} {
+    |   constructor(protected readonly client: NatsJetStreamClientProxy) {
+    |       super(client);
+    |   }
     |
     each method in service.methods
         - const eventPattern = kebabCase(method.eventId)
         |
-        |   #{method.fullName}(data: #{method.type}): Observable<any> {
-        |       return this.client.emit('#{eventPattern}', data);
+        |   #{method.emitterName}(event: #{method.type}): Promise<any> {
+        |       return firstValueFrom(this.client.emit('#{eventPattern}', event));
+        |   }
+        |
+        |   #{method.emitterManyName}(events: #{method.type}[]): Promise<any[]> {
+        |       return lastValueFrom(this.emitMany('#{eventPattern}', events));
         |   }
         |
     |}

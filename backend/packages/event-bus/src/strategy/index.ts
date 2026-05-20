@@ -1,5 +1,5 @@
-import type { NestCommon } from '@backend/proto';
-import { ProviderIdEvent, StorageObjectUpdateParentEvent, VideoUpdateOneEvent } from './events';
+import type { NestAuth, NestStorage } from '@backend/proto';
+import { StorageObjectUpdateParentEvent, VideoUpdateOneEvent } from './events';
 
 /**
  * @description Add new events with their types here
@@ -15,19 +15,19 @@ import { ProviderIdEvent, StorageObjectUpdateParentEvent, VideoUpdateOneEvent } 
 export interface EventBusStrategy {
   auth: {
     user: {
-      createOne: NestCommon.IdField;
+      create: NestAuth.User;
     };
   };
   storage: {
     file: {
-      deleteOne: ProviderIdEvent;
+      delete: NestStorage.File;
     };
     storageObject: {
       updateParent: StorageObjectUpdateParentEvent;
     };
     video: {
-      deleteOne: ProviderIdEvent;
-      updateOne: VideoUpdateOneEvent;
+      delete: NestStorage.Video;
+      update: VideoUpdateOneEvent;
     };
   };
 }

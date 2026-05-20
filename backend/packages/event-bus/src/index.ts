@@ -1,2 +1,2 @@
-export * from './events';
 export * from './generated';
+export * from './strategy/events';

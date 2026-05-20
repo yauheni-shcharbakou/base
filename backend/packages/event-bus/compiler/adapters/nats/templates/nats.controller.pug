@@ -1,13 +1,13 @@
-- const service = pascalCase(data.service.id)
 - const streamName = `${kebabCase(data.service.id)}-stream`
-- const pattern = `Nats${service}EventPattern`
+- const pattern = `Nats${data.service.patternName}`
+- const controller = `Nats${data.service.controllerName}`
+- const transport = `Nats${data.service.transportName}`
 |
 |const #{pattern} = {
 |
 each method in data.service.methods
     - const eventPattern = kebabCase(method.eventId)
-
-    |   #{constantCase(method.name)}: {
+    |   #{method.constantName}: {
     |       pattern: '#{eventPattern}',
     |       registerStream: (): void => {
     |           globalStreamRegistry.append({ name: '#{streamName}', subjects: ['#{eventPattern}'] });
@@ -16,31 +16,31 @@ each method in data.service.methods
     |
 |};
 |
-|export const Nats#{service}Transport = {
+|export const #{transport} = {
 |   ...#{pattern},
-|   Controller: (): ClassDecorator => {
+|   ControllerMethods: (): ClassDecorator => {
 |       const methodsDecorator = function(constructor: Function) {
 |
 each method in data.service.methods
     - const eventPattern = kebabCase(method.eventId)
 
     |           EventPattern('#{eventPattern}')(
-    |               constructor.prototype['#{method.fullName}'],
-    |               '#{method.fullName}',
-    |               Reflect.getOwnPropertyDescriptor(constructor.prototype, '#{method.fullName}')
+    |               constructor.prototype['#{method.handlerName}'],
+    |               '#{method.handlerName}',
+    |               Reflect.getOwnPropertyDescriptor(constructor.prototype, '#{method.handlerName}')
     |           );
-    |           #{pattern}.#{constantCase(method.name)}.registerStream();
+    |           #{pattern}.#{method.constantName}.registerStream();
     |
 |       };
-|       return applyDecorators(Controller(), UseInterceptors(NatsControllerInterceptor), methodsDecorator);
+|       return applyDecorators(methodsDecorator);
 |   },
 |   EventBus: #{data.service.eventBusName},
 |} as const;
 |
-|export interface Nats#{service}EventController {
+|export interface #{controller} {
 |
 each method in data.service.methods
-    |   #{method.fullName}(
+    |   #{method.handlerName}(
     |       event: #{method.type},
     |       context?: NatsJetStreamContext,
     |   ): void | Promise<void> | Observable<void>;
@@ -48,8 +48,9 @@ each method in data.service.methods
 |}
 |
 each method in data.service.methods
-    |export interface Nats#{service + pascalCase(method.name)}EventHandler {
-    |   on#{service + pascalCase(method.name)}(
+    |
+    |export interface Nats#{method.externalInterfaceName} {
+    |   #{method.externalHandlerName}(
     |       event: #{method.type},
     |       context?: NatsJetStreamContext,
     |   ): void | Promise<void> | Observable<void>;

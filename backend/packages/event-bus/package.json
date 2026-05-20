@@ -8,7 +8,7 @@
   "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
-    "format:generated": "prettier src/generated.ts --write --config ../../../.prettierrc",
+    "format:generated": "prettier src/generated --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
     "compile": "tsx compiler/main.ts && pnpm format:generated --log-level error",
@@ -18,8 +18,7 @@
   },
   "dependencies": {
     "@backend/proto": "workspace:*",
-    "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
     "@packages/compiler-utils": "workspace:*",

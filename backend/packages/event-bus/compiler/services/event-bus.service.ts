@@ -1,4 +1,3 @@
-import { ImportService } from '@packages/compiler-utils';
 import { constantCase } from 'change-case-all';
 import { writeFile } from 'fs/promises';
 import {
@@ -19,8 +18,6 @@ export class EventBusService {
   ) {}
 
   private declareImports(outputFile: SourceFile) {
-    const importService = new ImportService(outputFile);
-    importService.addOrUpdate('rxjs', [{ name: 'Observable', isTypeOnly: true }]);
     outputFile.addImportDeclarations(this.contextService.getStrategyImportStructures());
     return outputFile;
   }
@@ -48,14 +45,30 @@ export class EventBusService {
         name: service.eventBusName,
         isExported: true,
         isAbstract: true,
-        methods: service.methods.map((method): OptionalKind<MethodDeclarationStructure> => {
-          return {
-            name: method.fullName,
-            isAbstract: true,
-            parameters: [{ name: 'event', type: method.type }],
-            returnType: 'Observable<any>',
-          };
-        }),
+        methods: service.methods.reduce(
+          (
+            acc: OptionalKind<MethodDeclarationStructure>[],
+            method,
+          ): OptionalKind<MethodDeclarationStructure>[] => {
+            acc.push(
+              {
+                name: method.emitterName,
+                isAbstract: true,
+                parameters: [{ name: 'event', type: method.type }],
+                returnType: 'Promise<any>',
+              },
+              {
+                name: method.emitterManyName,
+                isAbstract: true,
+                parameters: [{ name: 'events', type: `${method.type}[]` }],
+                returnType: 'Promise<any[]>',
+              },
+            );
+
+            return acc;
+          },
+          [],
+        ),
         extends: 'EventBus',
       });
 

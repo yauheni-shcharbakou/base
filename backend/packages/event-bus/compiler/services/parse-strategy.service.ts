@@ -1,19 +1,24 @@
-import { dotCase, pascalCase } from 'change-case-all';
+import { camelCase, constantCase, dotCase, pascalCase } from 'change-case-all';
 import { Node } from 'ts-morph';
 import { ContextService } from './context.service';
 
 type EventBusMethod = {
-  name: string;
-  fullName: string;
+  emitterName: string;
+  emitterManyName: string;
+  handlerName: string;
+  externalHandlerName: string;
+  externalInterfaceName: string;
+  constantName: string;
   type: string;
   eventId: string;
 };
 
 export type ServiceEventBus = {
   id: string;
-  name: string;
   hostName: string;
-  pattern: string;
+  transportName: string;
+  patternName: string;
+  controllerName: string;
   eventBusName: string;
   methods: EventBusMethod[];
 };
@@ -21,16 +26,44 @@ export type ServiceEventBus = {
 export class ParseStrategyService {
   constructor(protected readonly contextService: ContextService) {}
 
-  protected getServicePattern(hostName: string, serviceName: string): string {
-    return `${hostName}.${serviceName}`;
+  protected getServiceTransportName(serviceId: string): string {
+    return pascalCase(`${serviceId}.transport`);
+  }
+
+  protected getServicePatternName(serviceId: string): string {
+    return pascalCase(`${serviceId}.event.pattern`);
+  }
+
+  protected getServiceControllerName(serviceId: string): string {
+    return pascalCase(`${serviceId}.event.controller`);
   }
 
   protected getServiceEventBusName(serviceId: string): string {
     return pascalCase(`${serviceId}.event.bus`);
   }
 
-  protected getMethodFullName(eventName: string): string {
-    return `on${pascalCase(eventName)}`;
+  protected getMethodHandlerName(eventName: string): string {
+    return camelCase(`on.${eventName}`);
+  }
+
+  protected getMethodExternalHandlerName(serviceId: string, eventName: string): string {
+    return camelCase(`on.${serviceId}.${eventName}`);
+  }
+
+  protected getMethodExternalInterfaceName(serviceId: string, eventName: string): string {
+    return pascalCase(`${serviceId}.${eventName}.event.handler`);
+  }
+
+  protected getMethodEmitterName(eventName: string): string {
+    return camelCase(`emit.${eventName}`);
+  }
+
+  protected getMethodEmitterManyName(eventName: string): string {
+    return camelCase(`emit.many.${eventName}`);
+  }
+
+  protected getMethodConstantName(eventName: string): string {
+    return constantCase(eventName);
   }
 
   getServices() {
@@ -61,6 +94,7 @@ export class ParseStrategyService {
               continue;
             }
 
+            const serviceId = dotCase(`${hostName}_${serviceName}`);
             const methods: EventBusMethod[] = [];
 
             for (const event of serviceProperties) {
@@ -69,20 +103,23 @@ export class ParseStrategyService {
               const eventId = dotCase(`${hostName}_${serviceName}_${eventName}`);
 
               methods.push({
-                fullName: this.getMethodFullName(eventName),
-                name: eventName,
+                emitterName: this.getMethodEmitterName(eventName),
+                emitterManyName: this.getMethodEmitterManyName(eventName),
+                handlerName: this.getMethodHandlerName(eventName),
+                externalHandlerName: this.getMethodExternalHandlerName(serviceId, eventName),
+                externalInterfaceName: this.getMethodExternalInterfaceName(serviceId, eventName),
+                constantName: this.getMethodConstantName(eventName),
                 eventId,
                 type: eventType,
               });
             }
 
-            const serviceId = dotCase(`${hostName}_${serviceName}`);
-
             const serviceEventBus: ServiceEventBus = {
               id: serviceId,
-              name: serviceName,
+              transportName: this.getServiceTransportName(serviceId),
+              patternName: this.getServicePatternName(serviceId),
+              controllerName: this.getServiceControllerName(serviceId),
               hostName,
-              pattern: this.getServicePattern(hostName, serviceName),
               eventBusName: this.getServiceEventBusName(serviceId),
               methods,
             };

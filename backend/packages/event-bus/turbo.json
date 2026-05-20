@@ -7,7 +7,7 @@
     },
     "compile": {
       "inputs": ["src/**/*.ts", "compiler/**", "package.json", "ts-config*.json"],
-      "outputs": ["src/generated.ts"]
+      "outputs": ["src/generated/**"]
     }
   }
 }

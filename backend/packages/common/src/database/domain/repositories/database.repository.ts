@@ -33,7 +33,7 @@ export interface DatabaseRepositoryGetListRes<Entity> {
   total: number;
 }
 
-export type JoinField<Entity extends NestCommon.Entity> = keyof Entity | string;
+export type JoinField<Entity extends NestCommon.Entity> = keyof Entity; // | string;
 
 export type OptionsOf<Entity extends NestCommon.Entity> = {
   populate?: JoinField<Entity>[];

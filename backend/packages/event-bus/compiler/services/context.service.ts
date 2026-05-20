@@ -16,17 +16,23 @@ export class ContextService {
   constructor(
     protected readonly project: Project,
     protected readonly strategyDirPath: string,
+    protected readonly strategyFilePath: string,
     protected readonly eventBusImportSpecifier: string,
   ) {
     this.project.addSourceFilesAtPaths(`${this.strategyDirPath}/**/*.ts`);
-
-    const strategyFilePath = join(this.strategyDirPath, 'strategy.ts');
-    this.strategyFile = this.project.getSourceFileOrThrow(strategyFilePath);
+    this.strategyFile = this.project.getSourceFileOrThrow(this.strategyFilePath);
 
     this.strategyFile.getImportDeclarations().forEach((declaration) => {
       const struct = declaration.getStructure();
 
-      this.strategyImportStructures.push(struct);
+      const isRelativePath =
+        struct.moduleSpecifier.startsWith('./') || struct.moduleSpecifier.startsWith('../');
+
+      const moduleSpecifier = isRelativePath
+        ? join('@/strategy', struct.moduleSpecifier)
+        : struct.moduleSpecifier;
+
+      this.strategyImportStructures.push({ ...struct, moduleSpecifier });
 
       if (/^@(packages|backend)\//g.test(struct.moduleSpecifier)) {
         this.externalImportStructures.push(struct);
