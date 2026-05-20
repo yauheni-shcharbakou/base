@@ -1,14 +1,14 @@
-import { PostgresModule } from '@backend/persistence';
-import { GrpcModule, NatsModule } from '@backend/transport';
+import { EventBusHost } from '@backend/event-bus';
+import { GrpcModule } from '@backend/grpc';
+import { NatsModule } from '@backend/nats';
+import { PgModule } from '@backend/pg';
+import { FileModule } from '@modules/file/file.module';
+import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Database } from '@packages/common';
-import { config } from 'config';
-import { FileModule } from 'modules/file/file.module';
-import { ImageModule } from 'modules/image/image.module';
-import { StorageObjectModule } from 'modules/storage-object/storage-object.module';
-import { VideoModule } from 'modules/video/video.module';
+import { config } from './config';
 
 // TODO: implement deletion for folders with files
 
@@ -16,13 +16,11 @@ import { VideoModule } from 'modules/video/video.module';
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    PostgresModule.forRoot({ database: Database.STORAGE }),
+    PgModule.forRoot({ database: Database.STORAGE }),
     GrpcModule.forRoot({ host: 'storage' }),
-    NatsModule.forRoot({ host: 'storage' }),
+    NatsModule.forRoot({ host: EventBusHost.STORAGE }),
     FileModule,
-    ImageModule,
     StorageObjectModule,
-    VideoModule,
   ],
 })
 export class AppModule {}
