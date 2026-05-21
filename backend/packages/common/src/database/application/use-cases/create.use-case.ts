@@ -5,10 +5,11 @@ import { Either } from '@sweet-monads/either';
 export abstract class CreateUseCase<
   Entity extends NestCommon.Entity,
   Create = CreateOf<Entity>,
-  Repository extends DatabaseRepository<Entity, any, Create> = DatabaseRepository<
+  Repository extends DatabaseRepository<Entity, any, Create, any> = DatabaseRepository<
     Entity,
     any,
-    Create
+    Create,
+    any
   >,
 > {
   protected constructor(protected readonly repository: Repository) {}

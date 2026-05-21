@@ -3,7 +3,12 @@ import { NestCommon } from '@backend/proto';
 
 export abstract class IsExistsUseCase<
   Query extends QueryOf<NestCommon.Entity> = QueryOf<NestCommon.Entity>,
-  Repository extends DatabaseRepository<any, Query> = DatabaseRepository<any, Query>,
+  Repository extends DatabaseRepository<any, Query, any, any> = DatabaseRepository<
+    any,
+    Query,
+    any,
+    any
+  >,
 > {
   constructor(protected readonly repository: Repository) {}
 

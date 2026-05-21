@@ -12,7 +12,12 @@ import { Either } from '@sweet-monads/either';
 export abstract class GetUseCase<
   Entity extends NestCommon.Entity,
   Query extends QueryOf<Entity> = QueryOf<Entity>,
-  Repository extends DatabaseRepository<Entity, Query> = DatabaseRepository<Entity, Query>,
+  Repository extends DatabaseRepository<Entity, Query, any, any> = DatabaseRepository<
+    Entity,
+    Query,
+    any,
+    any
+  >,
 > {
   protected constructor(protected readonly repository: Repository) {}
 

@@ -3,6 +3,7 @@ import { GrpcModule } from '@backend/grpc';
 import { NatsModule } from '@backend/nats';
 import { PgModule } from '@backend/pg';
 import { FileModule } from '@modules/file/file.module';
+import { ImageModule } from '@modules/image/image.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -21,6 +22,7 @@ import { config } from './config';
     NatsModule.forRoot({ host: EventBusHost.STORAGE }),
     FileModule,
     StorageObjectModule,
+    ImageModule,
   ],
 })
 export class AppModule {}

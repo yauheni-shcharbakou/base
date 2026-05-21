@@ -3,6 +3,7 @@ import { NestStorage } from '@backend/proto';
 import { Collection, Ref } from '@mikro-orm/core';
 import { ManyToOne, OneToMany, OneToOne, Property } from '@mikro-orm/decorators/legacy';
 import { PgFileEntity } from '@modules/file/infrastructure/pg/entities/pg.file.entity';
+import { PgImageEntity } from '@modules/image/infrastructure/pg/entities/pg.image.entity';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageDatabaseEntity } from '@packages/common';
 
@@ -66,7 +67,7 @@ export class PgStorageObjectEntity
   folderPath?: string;
 
   @OneToOne({
-    entity: () => ImageEntity,
+    entity: () => PgImageEntity,
     mappedBy: 'storageObject',
     owner: true,
     nullable: true,

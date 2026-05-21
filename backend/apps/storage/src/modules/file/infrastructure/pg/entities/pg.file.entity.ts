@@ -2,6 +2,7 @@ import { PgEntity, PgProp, PgSchema } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { Cascade, Ref } from '@mikro-orm/core';
 import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
+import { PgImageEntity } from '@modules/image/infrastructure/pg/entities/pg.image.entity';
 import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageDatabaseEntity } from '@packages/common';
 
@@ -36,7 +37,7 @@ export class PgFileEntity extends PgEntity implements NestStorage.File {
   uploadId: string;
 
   @OneToOne({
-    entity: () => ImageEntity,
+    entity: () => PgImageEntity,
     mappedBy: 'file',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,
