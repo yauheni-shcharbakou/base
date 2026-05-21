@@ -16,7 +16,7 @@ message UserQuery {
 // types
 
 message UserArray {
-  repeated User users = 1;
+  repeated User items = 1;
 }
 
 message UserList {

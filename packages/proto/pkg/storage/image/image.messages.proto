@@ -24,7 +24,7 @@ message ImageList {
 }
 
 message ImageArray {
-  repeated Image images = 1;
+  repeated Image items = 1;
 }
 
 // create

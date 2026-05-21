@@ -8,7 +8,7 @@ message DownloadData {
 }
 
 message DownloadMap {
-  map<string, DownloadData> items = 1;
+  map<string, DownloadData> entries = 1;
 }
 
 message UploadOne {

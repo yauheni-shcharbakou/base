@@ -15,7 +15,7 @@ export interface UserQuery {
 }
 
 export interface UserArray {
-  users: User[];
+  items: User[];
 }
 
 export interface UserList {

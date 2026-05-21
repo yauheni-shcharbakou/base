@@ -1,4 +1,4 @@
-import { SchemaTypeOf } from 'validation/types';
+import { SchemaTypeOf } from '@/validation/types';
 import zod from 'zod';
 
 export const NodeValidationSchema = {

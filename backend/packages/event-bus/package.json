@@ -12,7 +12,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
     "compile": "tsx compiler/main.ts && pnpm format:generated --log-level error",
-    "build": "tsdown src/index.ts --format cjs --dts",
+    "build": "tsdown",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },

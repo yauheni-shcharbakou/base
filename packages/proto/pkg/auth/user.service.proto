@@ -2,13 +2,11 @@ syntax = "proto3";
 
 package auth;
 
-import "google/protobuf/empty.proto";
-
+import "auth/user/user.messages.proto";
+import "auth/user/user.proto";
 import "common/fields.proto";
 import "common/messages.proto";
-
-import "auth/user/user.proto";
-import "auth/user/user.messages.proto";
+import "google/protobuf/empty.proto";
 
 service UserService {
   rpc getById (IdField) returns (user.User) {}

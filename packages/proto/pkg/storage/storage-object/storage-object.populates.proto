@@ -3,7 +3,6 @@ syntax = "proto3";
 package storage.storage_object;
 
 import "google/protobuf/timestamp.proto";
-
 import "storage/file/file.proto";
 import "storage/image/image.proto";
 import "storage/storage-object/storage-object.proto";

@@ -34,7 +34,7 @@ export interface StorageObjectList {
 }
 
 export interface StorageObjectArray {
-  storageObjects: StorageObjectPopulated[];
+  items: StorageObjectPopulated[];
 }
 
 export interface StorageObjectGet {

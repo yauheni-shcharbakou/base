@@ -3,7 +3,6 @@ syntax = "proto3";
 package storage.image;
 
 import "google/protobuf/timestamp.proto";
-
 import "storage/file/file.proto";
 
 message ImagePopulated {

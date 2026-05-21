@@ -2,13 +2,11 @@ syntax = "proto3";
 
 package auth;
 
-import "google/protobuf/empty.proto";
-
+import "auth/temp-code/temp-code.messages.proto";
+import "auth/temp-code/temp-code.proto";
 import "common/fields.proto";
 import "common/messages.proto";
-
-import "auth/temp-code/temp-code.proto";
-import "auth/temp-code/temp-code.messages.proto";
+import "google/protobuf/empty.proto";
 
 service TempCodeService {
   rpc getById (IdField) returns (temp_code.TempCode) {}

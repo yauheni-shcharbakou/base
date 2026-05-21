@@ -2,10 +2,8 @@ syntax = "proto3";
 
 package storage.storage_object;
 
-import "google/protobuf/timestamp.proto";
-
-import "storage/storage-object/storage-object.proto";
 import "storage/storage-object/storage-object.populates.proto";
+import "storage/storage-object/storage-object.proto";
 
 // query
 
@@ -37,7 +35,7 @@ message StorageObjectList {
 }
 
 message StorageObjectArray {
-  repeated StorageObjectPopulated storageObjects = 1;
+  repeated StorageObjectPopulated items = 1;
 }
 
 // get

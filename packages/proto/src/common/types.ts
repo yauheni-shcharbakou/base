@@ -11,14 +11,14 @@ export interface Boolean {
 }
 
 export interface StringMap {
-  value: Map<string, string>;
+  entries: Map<string, string>;
 }
 
-export interface StringMap_ValueEntry {
+export interface StringMap_EntriesEntry {
   key: string;
   value: string;
 }
 
 export interface StringArray {
-  value: string[];
+  items: string[];
 }

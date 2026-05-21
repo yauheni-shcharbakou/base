@@ -4,10 +4,9 @@ package storage;
 
 import "common/fields.proto";
 import "common/messages.proto";
-
-import "storage/image/image.proto";
-import "storage/image/image.populates.proto";
 import "storage/image/image.messages.proto";
+import "storage/image/image.populates.proto";
+import "storage/image/image.proto";
 
 service ImageService {
   rpc getById (IdField) returns (image.ImagePopulated) {}

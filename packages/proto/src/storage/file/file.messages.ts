@@ -27,7 +27,7 @@ export interface FileList {
 }
 
 export interface FileArray {
-  files: File[];
+  items: File[];
 }
 
 export interface FileCreate {

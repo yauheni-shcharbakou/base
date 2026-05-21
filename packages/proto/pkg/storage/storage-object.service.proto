@@ -5,10 +5,9 @@ package storage;
 import "common/fields.proto";
 import "common/messages.proto";
 import "common/types.proto";
-
-import "storage/storage-object/storage-object.proto";
-import "storage/storage-object/storage-object.populates.proto";
 import "storage/storage-object/storage-object.messages.proto";
+import "storage/storage-object/storage-object.populates.proto";
+import "storage/storage-object/storage-object.proto";
 
 service StorageObjectService {
   rpc getById (IdField) returns (storage_object.StorageObjectPopulated) {}

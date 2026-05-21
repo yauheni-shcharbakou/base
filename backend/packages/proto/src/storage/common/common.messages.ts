@@ -12,10 +12,10 @@ export interface DownloadData {
 }
 
 export interface DownloadMap {
-  items: { [key: string]: DownloadData };
+  entries: { [key: string]: DownloadData };
 }
 
-export interface DownloadMapItemsEntry {
+export interface DownloadMapEntriesEntry {
   key: string;
   value: DownloadData;
 }

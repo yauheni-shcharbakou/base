@@ -11,16 +11,16 @@ export interface Boolean {
 }
 
 export interface StringMap {
-  value: { [key: string]: string };
+  entries: { [key: string]: string };
 }
 
-export interface StringMapValueEntry {
+export interface StringMapEntriesEntry {
   key: string;
   value: string;
 }
 
 export interface StringArray {
-  value: string[];
+  items: string[];
 }
 
 export const _PACKAGE_NAME = '';

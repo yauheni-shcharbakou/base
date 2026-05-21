@@ -5,11 +5,10 @@ package storage;
 import "common/fields.proto";
 import "common/messages.proto";
 import "common/types.proto";
-
-import "storage/video/video.proto";
-import "storage/video/video.populates.proto";
-import "storage/video/video.messages.proto";
 import "storage/common/common.messages.proto";
+import "storage/video/video.messages.proto";
+import "storage/video/video.populates.proto";
+import "storage/video/video.proto";
 
 service VideoService {
   rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}

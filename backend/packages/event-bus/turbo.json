@@ -2,11 +2,11 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": ["src/**/*.ts", "package.json", "ts-config*.json"],
+      "inputs": ["src/**/*.ts", "package.json", "tsconfig*.json", "tsdown.config.mts"],
       "outputs": ["dist/**"]
     },
     "compile": {
-      "inputs": ["src/**/*.ts", "compiler/**", "package.json", "ts-config*.json"],
+      "inputs": ["src/strategy/**/*.ts", "compiler/**", "package.json", "tsconfig*.json"],
       "outputs": ["src/generated/**"]
     }
   }

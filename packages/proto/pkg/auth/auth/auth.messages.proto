@@ -2,9 +2,8 @@ syntax = "proto3";
 
 package auth.auth;
 
-import "google/protobuf/timestamp.proto";
-
 import "auth/user/user.proto";
+import "google/protobuf/timestamp.proto";
 
 message AuthLogin {
   string login = 1;

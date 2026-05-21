@@ -3,10 +3,8 @@ syntax = "proto3";
 package storage.file;
 
 import "google/protobuf/timestamp.proto";
-
 import "storage/common/common.messages.proto";
 import "storage/file/file.proto";
-import "storage/storage-object/storage-object.messages.proto";
 
 // query
 
@@ -31,7 +29,7 @@ message FileList {
 }
 
 message FileArray {
-  repeated File files = 1;
+  repeated File items = 1;
 }
 
 // create

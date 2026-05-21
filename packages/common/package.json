@@ -10,7 +10,7 @@
   "scripts": {
     "format": "prettier src --write --config ../../.prettierrc",
     "dev": "pnpm build --watch",
-    "build": "tsdown src/index.ts --format cjs,esm --dts",
+    "build": "tsdown",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },

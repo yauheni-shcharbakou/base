@@ -2,12 +2,10 @@ syntax = "proto3";
 
 package storage.video;
 
-import "google/protobuf/timestamp.proto";
-
-import "storage/video/video.proto";
-import "storage/video/video.populates.proto";
-import "storage/file/file.messages.proto";
 import "storage/common/common.messages.proto";
+import "storage/file/file.messages.proto";
+import "storage/video/video.populates.proto";
+import "storage/video/video.proto";
 
 // query
 
@@ -23,7 +21,7 @@ message VideoQuery {
 // types
 
 message VideoArray {
-  repeated Video videos = 1;
+  repeated Video items = 1;
 }
 
 message VideoList {

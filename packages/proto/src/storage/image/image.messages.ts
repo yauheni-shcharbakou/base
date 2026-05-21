@@ -23,7 +23,7 @@ export interface ImageList {
 }
 
 export interface ImageArray {
-  images: Image[];
+  items: Image[];
 }
 
 export interface ImageCreate {

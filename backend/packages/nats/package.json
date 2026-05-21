@@ -11,7 +11,7 @@
     "format:generated": "prettier src/generated --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
-    "build": "pnpm format:generated --log-level error && tsdown src/index.ts --format cjs --dts",
+    "build": "pnpm format:generated --log-level error && tsdown",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },

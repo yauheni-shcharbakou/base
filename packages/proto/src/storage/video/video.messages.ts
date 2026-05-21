@@ -20,7 +20,7 @@ export interface VideoQuery {
 }
 
 export interface VideoArray {
-  videos: Video[];
+  items: Video[];
 }
 
 export interface VideoList {
