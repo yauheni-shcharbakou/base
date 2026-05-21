@@ -1,3 +1,4 @@
+import { RxPipe } from '@backend/common';
 import { GrpcController, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcStorageObjectServiceController,
@@ -46,7 +47,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
       ),
     );
 
-    return stream$.pipe(map((storageObjects) => ({ storageObjects })));
+    return stream$.pipe(RxPipe.toArrayItems);
   }
 
   getList(request: NestCommon.GetList): Observable<NestStorage.StorageObjectList> {
@@ -62,7 +63,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     request: NestStorage.StorageObjectGetFolders,
   ): Observable<NestStorage.StorageObjectArray> {
     const stream$ = from(this.getFoldersUseCase.execute(request));
-    return stream$.pipe(map((storageObjects) => ({ storageObjects })));
+    return stream$.pipe(RxPipe.toArrayItems);
   }
 
   isExists(request: NestStorage.StorageObjectQuery): Observable<NestCommon.Boolean> {

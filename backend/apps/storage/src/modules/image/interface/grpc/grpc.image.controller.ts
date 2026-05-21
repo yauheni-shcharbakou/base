@@ -1,3 +1,4 @@
+import { RxPipe } from '@backend/common';
 import { GrpcController, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcImageServiceController,
@@ -10,7 +11,7 @@ import { ImageCreateOneUseCase } from '@modules/image/application/use-cases/imag
 import { ImageDeleteOneUseCase } from '@modules/image/application/use-cases/image.delete-one.use-case';
 import { ImageGetUseCase } from '@modules/image/application/use-cases/image.get.use-case';
 import { ImageUpdateUseCase } from '@modules/image/application/use-cases/image.update.use-case';
-import { from, map, Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 
 @GrpcController()
 @GrpcImageTransport.ControllerMethods()
@@ -43,11 +44,7 @@ export class GrpcImageController implements GrpcImageServiceController {
 
   createMany(request: NestStorage.ImageCreateMany): Observable<NestStorage.ImageArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
-
-    return stream$.pipe(
-      GrpcRxPipe.unwrapEither,
-      map((images) => ({ images })),
-    );
+    return stream$.pipe(GrpcRxPipe.unwrapEither, RxPipe.toArrayItems);
   }
 
   updateOne(request: NestStorage.ImageUpdateOne): Observable<NestStorage.Image> {

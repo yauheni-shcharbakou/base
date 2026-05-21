@@ -1,4 +1,4 @@
-import { NestCommon, NestStorage } from '@backend/proto';
+import { NestStorage } from '@backend/proto';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { Injectable } from '@nestjs/common';
@@ -11,9 +11,9 @@ export class FileGetUrlMapUseCase {
     private readonly storageFileService: StorageFileService,
   ) {}
 
-  async execute(request: NestStorage.GetUrlMap): Promise<NestCommon.StringMap> {
-    const files = await this.fileRepository.getMany(_.omit(request, ['ip']));
-    const value: NestCommon.StringMap['value'] = {};
+  async execute(query: Partial<NestStorage.FileQuery>, ip?: string): Promise<Map<string, string>> {
+    const files = await this.fileRepository.getMany(query);
+    const urlMap = new Map<string, string>();
 
     await Promise.all(
       _.map(files, async (file) => {
@@ -21,14 +21,14 @@ export class FileGetUrlMapUseCase {
           return;
         }
 
-        const url = await this.storageFileService.getFileSignedUrl(file.providerId, request.ip);
+        const url = await this.storageFileService.getFileSignedUrl(file.providerId, ip);
 
         if (url.isRight()) {
-          value[file.id] = url.value;
+          urlMap.set(file.id, url.value);
         }
       }),
     );
 
-    return { value };
+    return urlMap;
   }
 }

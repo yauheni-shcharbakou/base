@@ -1,3 +1,4 @@
+import { RxPipe } from '@backend/common';
 import { GrpcController, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcFileServiceController,
@@ -12,7 +13,7 @@ import { FileGetDownloadMapUseCase } from '@modules/file/application/use-cases/f
 import { FileGetUrlMapUseCase } from '@modules/file/application/use-cases/file.get-url-map.use-case';
 import { FileGetUseCase } from '@modules/file/application/use-cases/file.get.use-case';
 import { FileUploadOneUseCase } from '@modules/file/application/use-cases/file.upload-one.use-case';
-import { from, map, Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 
 @GrpcController()
 @GrpcFileTransport.ControllerMethods()
@@ -27,12 +28,12 @@ export class GrpcFileController implements GrpcFileServiceController {
     private readonly deleteUseCase: FileDeleteUseCase,
   ) {}
 
-  getUrlMap(request: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
-    return from(this.getUrlMapUseCase.execute(request));
+  getUrlMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
+    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(RxPipe.toMapEntries);
   }
 
-  getDownloadMap(request: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
-    return from(this.getDownloadMapUseCase.execute(request));
+  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
+    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(RxPipe.toMapEntries);
   }
 
   getById(request: NestCommon.IdField): Observable<NestStorage.File> {
@@ -49,11 +50,7 @@ export class GrpcFileController implements GrpcFileServiceController {
 
   createMany(request: NestStorage.FileCreateMany): Observable<NestStorage.FileArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
-
-    return stream$.pipe(
-      GrpcRxPipe.unwrapEither,
-      map((files) => ({ files })),
-    );
+    return stream$.pipe(GrpcRxPipe.unwrapEither, RxPipe.toArrayItems);
   }
 
   uploadOne(

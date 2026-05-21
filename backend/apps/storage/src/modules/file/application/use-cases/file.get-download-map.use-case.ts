@@ -11,9 +11,12 @@ export class FileGetDownloadMapUseCase {
     private readonly storageFileService: StorageFileService,
   ) {}
 
-  async execute(request: NestStorage.GetUrlMap): Promise<NestStorage.DownloadMap> {
-    const files = await this.fileRepository.getMany(_.omit(request, ['ip']));
-    const items: NestStorage.DownloadMap['items'] = {};
+  async execute(
+    query: Partial<NestStorage.FileQuery>,
+    ip?: string,
+  ): Promise<Map<string, NestStorage.DownloadData>> {
+    const files = await this.fileRepository.getMany(query);
+    const urlMap = new Map<string, NestStorage.DownloadData>();
 
     await Promise.all(
       _.map(files, async (file) => {
@@ -21,17 +24,17 @@ export class FileGetDownloadMapUseCase {
           return;
         }
 
-        const url = await this.storageFileService.getFileSignedUrl(file.providerId, request.ip);
+        const url = await this.storageFileService.getFileSignedUrl(file.providerId, ip);
 
         if (url.isRight()) {
-          items[file.id] = {
+          urlMap.set(file.id, {
             url: url.value,
             fileName: `${file.id}.${file.extension}`,
-          };
+          });
         }
       }),
     );
 
-    return { items };
+    return urlMap;
   }
 }
