@@ -3,25 +3,25 @@ import {
   FileCreate,
   FileCreateService,
 } from '@modules/file/application/services/file.create.service';
-import { ImageCreate, ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import { StorageObjectCreateService } from '@modules/storage-object/application/services/storage-object.create.service';
-import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
+import { VideoCreate, VideoRepository } from '@modules/video/domain/repositories/video.repository';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 
 @Injectable()
-export class ImageCreateManyUseCase {
+export class VideoCreateManyUseCase {
   constructor(
-    private readonly imageRepository: ImageRepository,
-    private readonly storageFileService: StorageFileService,
+    private readonly videoRepository: VideoRepository,
+    private readonly storageVideoService: StorageVideoService,
     private readonly fileCreateService: FileCreateService,
     private readonly storageObjectCreateService: StorageObjectCreateService,
   ) {}
 
   async execute(
-    createData: NestStorage.ImageCreateMany,
-  ): Promise<Either<Error, NestStorage.Image[]>> {
+    createData: NestStorage.VideoCreateMany,
+  ): Promise<Either<Error, NestStorage.Video[]>> {
     const fileNames = new Set(_.map(createData.items, 'file.originalName'));
 
     if (fileNames.size !== createData.items.length) {
@@ -31,14 +31,15 @@ export class ImageCreateManyUseCase {
     const revertHooks: (() => Promise<any>)[] = [];
 
     try {
-      const dataByUploadId = new Map<string, NestStorage.ImageCreateManyItem>();
+      const dataByUploadId = new Map<string, NestStorage.VideoCreateManyItem>();
+      const providerIdByUploadId = new Map<string, string>();
 
       const fileData: FileCreate[] = await Promise.all(
         _.map(createData.items, async (item) => {
           dataByUploadId.set(item.uploadId, item);
 
-          const providerId = await this.storageFileService.createFile({
-            ...item.file,
+          const providerId = await this.storageVideoService.createVideo({
+            ...item.video,
             userId: createData.userId,
           });
 
@@ -46,10 +47,11 @@ export class ImageCreateManyUseCase {
             throw providerId.value;
           }
 
+          providerIdByUploadId.set(item.uploadId, providerId.value);
+
           return {
             ...item.file,
             userId: createData.userId,
-            providerId: providerId.value,
             uploadId: item.uploadId,
           };
         }),
@@ -61,26 +63,28 @@ export class ImageCreateManyUseCase {
         return left(files.value);
       }
 
-      const imageData: ImageCreate[] = _.map(files.value, (file) => {
+      const videoData: VideoCreate[] = _.map(files.value, (file) => {
         const data = dataByUploadId.get(file.uploadId);
+        const providerId = providerIdByUploadId.get(file.uploadId);
 
         return {
-          ...data.image,
+          ...data.video,
           file: file.id,
           userId: createData.userId,
-          uploadId: data.uploadId,
+          providerId,
+          uploadId: file.uploadId,
         };
       });
 
-      const images = await this.imageRepository.saveMany(imageData);
+      const videos = await this.videoRepository.saveMany(videoData);
 
-      if (images.isLeft()) {
-        return left(images.value);
+      if (videos.isLeft()) {
+        return left(videos.value);
       }
 
-      const imageByFileId = new Map(_.map(images.value, (image) => [image.fileId, image]));
+      const videoByFileId = new Map(_.map(videos.value, (video) => [video.fileId, video]));
 
-      revertHooks.push(() => this.imageRepository.deleteMany({ ids: _.map(images.value, 'id') }));
+      revertHooks.push(() => this.videoRepository.deleteMany({ ids: _.map(videos.value, 'id') }));
 
       if (createData.storage) {
         const storage = await this.storageObjectCreateService.createManyFiles({
@@ -89,9 +93,9 @@ export class ImageCreateManyUseCase {
           files: _.map(files.value, (file) => {
             return {
               file: file.id,
-              image: imageByFileId.get(file.id)?.id,
+              video: videoByFileId.get(file.id)?.id,
               name: file.originalName,
-              type: NestStorage.StorageObjectType.IMAGE,
+              type: NestStorage.StorageObjectType.VIDEO,
             };
           }),
         });
@@ -102,7 +106,7 @@ export class ImageCreateManyUseCase {
         }
       }
 
-      return right(images.value);
+      return right(videos.value);
     } catch (error) {
       await Promise.all(_.map(revertHooks, (hook) => hook()));
       return left(error);

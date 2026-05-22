@@ -16,12 +16,21 @@ export abstract class UpdateUseCase<
 > {
   protected constructor(protected readonly repository: Repository) {}
 
-  updateById(id: string, updateData: Update): Promise<Either<NotFoundException, Entity>> {
-    return this.repository.updateById(id, updateData);
+  protected afterSingleUpdate(result: Either<NotFoundException, Entity>): void | Promise<void> {}
+
+  async updateById(id: string, updateData: Update): Promise<Either<NotFoundException, Entity>> {
+    const result = await this.repository.updateById(id, updateData);
+    await this.afterSingleUpdate(result);
+    return result;
   }
 
-  updateOne(query: Partial<Query>, updateData: Update): Promise<Either<NotFoundException, Entity>> {
-    return this.repository.updateOne(query, updateData);
+  async updateOne(
+    query: Partial<Query>,
+    updateData: Update,
+  ): Promise<Either<NotFoundException, Entity>> {
+    const result = await this.repository.updateOne(query, updateData);
+    await this.afterSingleUpdate(result);
+    return result;
   }
 
   updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {

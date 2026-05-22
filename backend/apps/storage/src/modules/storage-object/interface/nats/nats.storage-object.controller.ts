@@ -1,18 +1,18 @@
-import { StorageObjectUpdateParentEvent } from '@backend/event-bus';
+import { StorageObjectParentUpdateEvent } from '@backend/event-bus';
 import {
   NatsAuthUserCreateEventHandler,
   NatsAuthUserTransport,
   NatsController,
   NatsEvent,
-  NatsStorageFileTransport,
   NatsStorageStorageObjectEventController,
+  NatsStorageStorageObjectTransport,
 } from '@backend/nats';
 import { NestAuth } from '@backend/proto';
 import { StorageObjectCreateRootFolderUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-root-folder.use-case';
 import { StorageObjectUpdateFolderChildrenUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-folder-children.use-case';
 
 @NatsController()
-@NatsStorageFileTransport.ControllerMethods()
+@NatsStorageStorageObjectTransport.ControllerMethods()
 export class NatsStorageObjectController
   implements NatsStorageStorageObjectEventController, NatsAuthUserCreateEventHandler
 {
@@ -21,7 +21,7 @@ export class NatsStorageObjectController
     private readonly updateFolderChildrenUseCase: StorageObjectUpdateFolderChildrenUseCase,
   ) {}
 
-  async onUpdateParent(event: StorageObjectUpdateParentEvent): Promise<void> {
+  async onParentUpdate(event: StorageObjectParentUpdateEvent): Promise<void> {
     await this.updateFolderChildrenUseCase.execute(event.parent, event.update);
   }
 

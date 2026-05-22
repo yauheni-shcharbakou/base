@@ -1,5 +1,5 @@
 import type { NestAuth, NestStorage } from '@backend/proto';
-import { StorageObjectUpdateParentEvent, VideoUpdateOneEvent } from './events';
+import { StorageObjectParentUpdateEvent } from './events';
 
 /**
  * @description Add new events with their types here
@@ -19,15 +19,15 @@ export interface EventBusStrategy {
     };
   };
   storage: {
-    file: {
-      delete: NestStorage.File;
+    image: {
+      delete: NestStorage.Image;
     };
     storageObject: {
-      updateParent: StorageObjectUpdateParentEvent;
+      parentUpdate: StorageObjectParentUpdateEvent;
     };
     video: {
-      delete: NestStorage.Video;
-      update: VideoUpdateOneEvent;
+      uploadFinish: NestStorage.Video;
+      uploadFail: NestStorage.Video;
     };
   };
 }

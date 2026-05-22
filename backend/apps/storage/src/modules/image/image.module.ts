@@ -1,3 +1,4 @@
+import { NatsModule, NatsStorageImageTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
 import { FileModule } from '@modules/file/file.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
@@ -14,7 +15,13 @@ import { PgImageRepositoryImpl } from './infrastructure/pg/repositories/pg.image
 import { GrpcImageController } from './interface/grpc/grpc.image.controller';
 
 @Module({
-  imports: [PgModule.forFeature(PgImageEntity), StorageModule, FileModule, StorageObjectModule],
+  imports: [
+    PgModule.forFeature(PgImageEntity),
+    NatsModule.forFeature({ EventBus: NatsStorageImageTransport.EventBus }),
+    StorageModule,
+    FileModule,
+    StorageObjectModule,
+  ],
   providers: [
     {
       provide: ImageRepository,

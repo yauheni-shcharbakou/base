@@ -5,6 +5,7 @@ import { ManyToOne, OneToMany, OneToOne, Property } from '@mikro-orm/decorators/
 import { PgFileEntity } from '@modules/file/infrastructure/pg/entities/pg.file.entity';
 import { PgImageEntity } from '@modules/image/infrastructure/pg/entities/pg.image.entity';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
+import { PgVideoEntity } from '@modules/video/infrastructure/pg/entities/pg.video.entity';
 import { StorageDatabaseEntity } from '@packages/common';
 
 @PgSchema({ tableName: StorageDatabaseEntity.STORAGE_OBJECT })
@@ -82,7 +83,7 @@ export class PgStorageObjectEntity
   }
 
   @OneToOne({
-    entity: () => VideoEntity,
+    entity: () => PgVideoEntity,
     mappedBy: 'storageObject',
     owner: true,
     nullable: true,

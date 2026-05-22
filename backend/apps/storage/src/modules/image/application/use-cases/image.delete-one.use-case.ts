@@ -1,3 +1,4 @@
+import { StorageImageEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
@@ -9,6 +10,7 @@ export class ImageDeleteOneUseCase {
   constructor(
     private readonly imageRepository: ImageRepository,
     private readonly storageFileService: StorageFileService,
+    private readonly eventBus: StorageImageEventBus,
   ) {}
 
   async execute(
@@ -23,14 +25,20 @@ export class ImageDeleteOneUseCase {
     }
 
     const deletedImage = await this.imageRepository.deleteById(image.value.id);
-    const isFileReady = image.value.file.uploadStatus === NestStorage.FileUploadStatus.READY;
-    const providerId = image.value.file.providerId;
 
-    if (deletedImage.isLeft() || !isFileReady || !providerId) {
+    if (deletedImage.isLeft()) {
       return deletedImage;
     }
 
-    await this.storageFileService.deleteFile(providerId);
+    const hooks: Promise<any>[] = [this.eventBus.emitDelete(deletedImage.value)];
+    const isFileReady = image.value.file.uploadStatus === NestStorage.FileUploadStatus.READY;
+    const providerId = image.value.file.providerId;
+
+    if (isFileReady && providerId) {
+      hooks.push(this.storageFileService.deleteFile(providerId));
+    }
+
+    await Promise.allSettled(hooks);
     return image;
   }
 }

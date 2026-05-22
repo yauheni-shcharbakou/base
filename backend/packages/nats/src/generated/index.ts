@@ -3,11 +3,10 @@ import { globalStreamRegistry } from '@/infrastructure/utils';
 import {
   AuthUserEventBus,
   EventBus,
-  StorageFileEventBus,
-  StorageObjectUpdateParentEvent,
+  StorageImageEventBus,
+  StorageObjectParentUpdateEvent,
   StorageStorageObjectEventBus,
   StorageVideoEventBus,
-  VideoUpdateOneEvent,
 } from '@backend/event-bus';
 import type { NestAuth, NestStorage } from '@backend/proto';
 import {
@@ -57,55 +56,55 @@ export interface NatsAuthUserCreateEventHandler {
   ): void | Promise<void> | Observable<void>;
 }
 
-const NatsStorageFileEventPattern = {
+const NatsStorageImageEventPattern = {
   DELETE: {
-    pattern: 'storage-file-delete',
+    pattern: 'storage-image-delete',
     registerStream: (): void => {
       globalStreamRegistry.append({
-        name: 'storage-file-stream',
-        subjects: ['storage-file-delete'],
+        name: 'storage-image-stream',
+        subjects: ['storage-image-delete'],
       });
     },
   },
 };
 
-export const NatsStorageFileTransport = {
-  ...NatsStorageFileEventPattern,
+export const NatsStorageImageTransport = {
+  ...NatsStorageImageEventPattern,
   ControllerMethods: (): ClassDecorator => {
     const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage-file-delete')(
+      EventPattern('storage-image-delete')(
         constructor.prototype['onDelete'],
         'onDelete',
         Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onDelete'),
       );
-      NatsStorageFileEventPattern.DELETE.registerStream();
+      NatsStorageImageEventPattern.DELETE.registerStream();
     };
     return applyDecorators(methodsDecorator);
   },
-  EventBus: StorageFileEventBus,
+  EventBus: StorageImageEventBus,
 } as const;
 
-export interface NatsStorageFileEventController {
+export interface NatsStorageImageEventController {
   onDelete(
-    event: NestStorage.File,
+    event: NestStorage.Image,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 
-export interface NatsStorageFileDeleteEventHandler {
-  onStorageFileDelete(
-    event: NestStorage.File,
+export interface NatsStorageImageDeleteEventHandler {
+  onStorageImageDelete(
+    event: NestStorage.Image,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 
 const NatsStorageStorageObjectEventPattern = {
-  UPDATE_PARENT: {
-    pattern: 'storage-storage-object-update-parent',
+  PARENT_UPDATE: {
+    pattern: 'storage-storage-object-parent-update',
     registerStream: (): void => {
       globalStreamRegistry.append({
         name: 'storage-storage-object-stream',
-        subjects: ['storage-storage-object-update-parent'],
+        subjects: ['storage-storage-object-parent-update'],
       });
     },
   },
@@ -115,12 +114,12 @@ export const NatsStorageStorageObjectTransport = {
   ...NatsStorageStorageObjectEventPattern,
   ControllerMethods: (): ClassDecorator => {
     const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage-storage-object-update-parent')(
-        constructor.prototype['onUpdateParent'],
-        'onUpdateParent',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onUpdateParent'),
+      EventPattern('storage-storage-object-parent-update')(
+        constructor.prototype['onParentUpdate'],
+        'onParentUpdate',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onParentUpdate'),
       );
-      NatsStorageStorageObjectEventPattern.UPDATE_PARENT.registerStream();
+      NatsStorageStorageObjectEventPattern.PARENT_UPDATE.registerStream();
     };
     return applyDecorators(methodsDecorator);
   },
@@ -128,35 +127,35 @@ export const NatsStorageStorageObjectTransport = {
 } as const;
 
 export interface NatsStorageStorageObjectEventController {
-  onUpdateParent(
-    event: StorageObjectUpdateParentEvent,
+  onParentUpdate(
+    event: StorageObjectParentUpdateEvent,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 
-export interface NatsStorageStorageObjectUpdateParentEventHandler {
-  onStorageStorageObjectUpdateParent(
-    event: StorageObjectUpdateParentEvent,
+export interface NatsStorageStorageObjectParentUpdateEventHandler {
+  onStorageStorageObjectParentUpdate(
+    event: StorageObjectParentUpdateEvent,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 
 const NatsStorageVideoEventPattern = {
-  DELETE: {
-    pattern: 'storage-video-delete',
+  UPLOAD_FINISH: {
+    pattern: 'storage-video-upload-finish',
     registerStream: (): void => {
       globalStreamRegistry.append({
         name: 'storage-video-stream',
-        subjects: ['storage-video-delete'],
+        subjects: ['storage-video-upload-finish'],
       });
     },
   },
-  UPDATE: {
-    pattern: 'storage-video-update',
+  UPLOAD_FAIL: {
+    pattern: 'storage-video-upload-fail',
     registerStream: (): void => {
       globalStreamRegistry.append({
         name: 'storage-video-stream',
-        subjects: ['storage-video-update'],
+        subjects: ['storage-video-upload-fail'],
       });
     },
   },
@@ -166,18 +165,18 @@ export const NatsStorageVideoTransport = {
   ...NatsStorageVideoEventPattern,
   ControllerMethods: (): ClassDecorator => {
     const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage-video-delete')(
-        constructor.prototype['onDelete'],
-        'onDelete',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onDelete'),
+      EventPattern('storage-video-upload-finish')(
+        constructor.prototype['onUploadFinish'],
+        'onUploadFinish',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onUploadFinish'),
       );
-      NatsStorageVideoEventPattern.DELETE.registerStream();
-      EventPattern('storage-video-update')(
-        constructor.prototype['onUpdate'],
-        'onUpdate',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onUpdate'),
+      NatsStorageVideoEventPattern.UPLOAD_FINISH.registerStream();
+      EventPattern('storage-video-upload-fail')(
+        constructor.prototype['onUploadFail'],
+        'onUploadFail',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onUploadFail'),
       );
-      NatsStorageVideoEventPattern.UPDATE.registerStream();
+      NatsStorageVideoEventPattern.UPLOAD_FAIL.registerStream();
     };
     return applyDecorators(methodsDecorator);
   },
@@ -185,26 +184,26 @@ export const NatsStorageVideoTransport = {
 } as const;
 
 export interface NatsStorageVideoEventController {
-  onDelete(
+  onUploadFinish(
     event: NestStorage.Video,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
-  onUpdate(
-    event: VideoUpdateOneEvent,
-    context?: NatsJetStreamContext,
-  ): void | Promise<void> | Observable<void>;
-}
-
-export interface NatsStorageVideoDeleteEventHandler {
-  onStorageVideoDelete(
+  onUploadFail(
     event: NestStorage.Video,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
 
-export interface NatsStorageVideoUpdateEventHandler {
-  onStorageVideoUpdate(
-    event: VideoUpdateOneEvent,
+export interface NatsStorageVideoUploadFinishEventHandler {
+  onStorageVideoUploadFinish(
+    event: NestStorage.Video,
+    context?: NatsJetStreamContext,
+  ): void | Promise<void> | Observable<void>;
+}
+
+export interface NatsStorageVideoUploadFailEventHandler {
+  onStorageVideoUploadFail(
+    event: NestStorage.Video,
     context?: NatsJetStreamContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -232,17 +231,17 @@ class NatsAuthUserEventBusClientImpl extends NatsClientImpl implements AuthUserE
   }
 }
 
-class NatsStorageFileEventBusClientImpl extends NatsClientImpl implements StorageFileEventBus {
+class NatsStorageImageEventBusClientImpl extends NatsClientImpl implements StorageImageEventBus {
   constructor(protected readonly client: NatsJetStreamClientProxy) {
     super(client);
   }
 
-  emitDelete(event: NestStorage.File): Promise<any> {
-    return firstValueFrom(this.client.emit('storage-file-delete', event));
+  emitDelete(event: NestStorage.Image): Promise<any> {
+    return firstValueFrom(this.client.emit('storage-image-delete', event));
   }
 
-  emitManyDelete(events: NestStorage.File[]): Promise<any[]> {
-    return lastValueFrom(this.emitMany('storage-file-delete', events));
+  emitManyDelete(events: NestStorage.Image[]): Promise<any[]> {
+    return lastValueFrom(this.emitMany('storage-image-delete', events));
   }
 }
 
@@ -254,12 +253,12 @@ class NatsStorageStorageObjectEventBusClientImpl
     super(client);
   }
 
-  emitUpdateParent(event: StorageObjectUpdateParentEvent): Promise<any> {
-    return firstValueFrom(this.client.emit('storage-storage-object-update-parent', event));
+  emitParentUpdate(event: StorageObjectParentUpdateEvent): Promise<any> {
+    return firstValueFrom(this.client.emit('storage-storage-object-parent-update', event));
   }
 
-  emitManyUpdateParent(events: StorageObjectUpdateParentEvent[]): Promise<any[]> {
-    return lastValueFrom(this.emitMany('storage-storage-object-update-parent', events));
+  emitManyParentUpdate(events: StorageObjectParentUpdateEvent[]): Promise<any[]> {
+    return lastValueFrom(this.emitMany('storage-storage-object-parent-update', events));
   }
 }
 
@@ -268,27 +267,27 @@ class NatsStorageVideoEventBusClientImpl extends NatsClientImpl implements Stora
     super(client);
   }
 
-  emitDelete(event: NestStorage.Video): Promise<any> {
-    return firstValueFrom(this.client.emit('storage-video-delete', event));
+  emitUploadFinish(event: NestStorage.Video): Promise<any> {
+    return firstValueFrom(this.client.emit('storage-video-upload-finish', event));
   }
 
-  emitManyDelete(events: NestStorage.Video[]): Promise<any[]> {
-    return lastValueFrom(this.emitMany('storage-video-delete', events));
+  emitManyUploadFinish(events: NestStorage.Video[]): Promise<any[]> {
+    return lastValueFrom(this.emitMany('storage-video-upload-finish', events));
   }
 
-  emitUpdate(event: VideoUpdateOneEvent): Promise<any> {
-    return firstValueFrom(this.client.emit('storage-video-update', event));
+  emitUploadFail(event: NestStorage.Video): Promise<any> {
+    return firstValueFrom(this.client.emit('storage-video-upload-fail', event));
   }
 
-  emitManyUpdate(events: VideoUpdateOneEvent[]): Promise<any[]> {
-    return lastValueFrom(this.emitMany('storage-video-update', events));
+  emitManyUploadFail(events: NestStorage.Video[]): Promise<any[]> {
+    return lastValueFrom(this.emitMany('storage-video-upload-fail', events));
   }
 }
 
 export class NatsClientFactory {
   private static clientsMap = new Map<Abstract<EventBus>, Type>([
     [AuthUserEventBus, NatsAuthUserEventBusClientImpl],
-    [StorageFileEventBus, NatsStorageFileEventBusClientImpl],
+    [StorageImageEventBus, NatsStorageImageEventBusClientImpl],
     [StorageStorageObjectEventBus, NatsStorageStorageObjectEventBusClientImpl],
     [StorageVideoEventBus, NatsStorageVideoEventBusClientImpl],
   ]);

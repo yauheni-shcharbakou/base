@@ -1,4 +1,4 @@
-import { StorageObjectUpdateParentEvent, StorageStorageObjectEventBus } from '@backend/event-bus';
+import { StorageObjectParentUpdateEvent, StorageStorageObjectEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
@@ -87,7 +87,7 @@ export class StorageObjectUpdateOneUseCase {
     );
 
     if (entity.isRight() && entity.value.isFolder) {
-      const sideEffectUpdate: StorageObjectUpdateParentEvent['update'] = {};
+      const sideEffectUpdate: StorageObjectParentUpdateEvent['update'] = {};
 
       const isPublicChanged = storageObject.value.isPublic !== entity.value.isPublic;
       const isFolderPathChanged = storageObject.value.folderPath !== entity.value.folderPath;
@@ -101,7 +101,7 @@ export class StorageObjectUpdateOneUseCase {
       }
 
       if (!_.isEmpty(sideEffectUpdate)) {
-        await this.eventBus.emitUpdateParent({ parent: entity.value.id, update: sideEffectUpdate });
+        await this.eventBus.emitParentUpdate({ parent: entity.value.id, update: sideEffectUpdate });
       }
     }
 

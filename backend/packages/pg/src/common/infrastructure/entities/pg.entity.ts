@@ -1,12 +1,12 @@
+import type { NestCommon } from '@backend/proto';
 import { OptionalProps } from '@mikro-orm/core';
 import { Entity, PrimaryKey } from '@mikro-orm/decorators/legacy';
-import type { NestCommon } from '@backend/proto';
-import { pgId } from '../utils';
 import { PgProp } from '../decorators';
+import { pgId } from '../utils';
 
 @Entity({ abstract: true })
-export abstract class PgEntity<OptionalProps = never> implements NestCommon.Entity {
-  [OptionalProps]?: 'createdAt' | 'updatedAt' | OptionalProps;
+export abstract class PgEntity<OptProps = never> implements NestCommon.Entity {
+  [OptionalProps]?: 'createdAt' | 'updatedAt' | OptProps;
 
   @PrimaryKey({ type: 'string' })
   readonly id: string = pgId();

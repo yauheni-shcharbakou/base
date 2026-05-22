@@ -4,6 +4,7 @@ import { Cascade, Ref } from '@mikro-orm/core';
 import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
 import { PgImageEntity } from '@modules/image/infrastructure/pg/entities/pg.image.entity';
 import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
+import { PgVideoEntity } from '@modules/video/infrastructure/pg/entities/pg.video.entity';
 import { StorageDatabaseEntity } from '@packages/common';
 
 @PgSchema({ tableName: StorageDatabaseEntity.FILE })
@@ -47,7 +48,7 @@ export class PgFileEntity extends PgEntity implements NestStorage.File {
   image?: Ref<NestStorage.Image>;
 
   @OneToOne({
-    entity: () => VideoEntity,
+    entity: () => PgVideoEntity,
     mappedBy: 'file',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,

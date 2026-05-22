@@ -77,7 +77,7 @@ export class StorageObjectUpdateFolderChildrenUseCase {
       page += 1;
     } while (hasNext);
 
-    await this.eventBus.emitManyUpdateParent(
+    await this.eventBus.emitManyParentUpdate(
       _.map(folderData, ({ id, folderPath }) => {
         return {
           parent: id,

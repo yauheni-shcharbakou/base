@@ -1,23 +1,23 @@
 import { NestStorage } from '@backend/proto';
 import { FileCreateService } from '@modules/file/application/services/file.create.service';
-import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import { StorageObjectCreateService } from '@modules/storage-object/application/services/storage-object.create.service';
-import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
+import { VideoRepository } from '@modules/video/domain/repositories/video.repository';
 import { Injectable } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
 
 @Injectable()
-export class ImageCreateOneUseCase {
+export class VideoCreateOneUseCase {
   constructor(
-    private readonly imageRepository: ImageRepository,
-    private readonly storageFileService: StorageFileService,
+    private readonly videoRepository: VideoRepository,
+    private readonly storageVideoService: StorageVideoService,
     private readonly fileCreateService: FileCreateService,
     private readonly storageObjectCreateService: StorageObjectCreateService,
   ) {}
 
-  async execute(createData: NestStorage.ImageCreateOne): Promise<Either<Error, NestStorage.Image>> {
-    const providerId = await this.storageFileService.createFile({
-      ...createData.file,
+  async execute(createData: NestStorage.VideoCreateOne): Promise<Either<Error, NestStorage.Video>> {
+    const providerId = await this.storageVideoService.createVideo({
+      ...createData.video,
       userId: createData.userId,
     });
 
@@ -28,7 +28,6 @@ export class ImageCreateOneUseCase {
     const file = await this.fileCreateService.createOne({
       ...createData.file,
       userId: createData.userId,
-      providerId: providerId.value,
       uploadId: providerId.value,
     });
 
@@ -36,30 +35,31 @@ export class ImageCreateOneUseCase {
       return left(file.value);
     }
 
-    const image = await this.imageRepository.saveOne({
-      ...createData.image,
+    const video = await this.videoRepository.saveOne({
+      ...createData.video,
       userId: createData.userId,
       file: file.value.id,
+      providerId: providerId.value,
       uploadId: providerId.value,
     });
 
-    if (image.isLeft() || !createData.storage) {
-      return image;
+    if (video.isLeft() || !createData.storage) {
+      return video;
     }
 
     const storage = await this.storageObjectCreateService.createOne({
       ...createData.storage,
-      type: NestStorage.StorageObjectType.IMAGE,
-      file: image.value.fileId,
-      image: image.value.id,
+      type: NestStorage.StorageObjectType.VIDEO,
+      file: video.value.fileId,
+      video: video.value.id,
       userId: createData.userId,
     });
 
     if (storage.isLeft()) {
-      await this.imageRepository.deleteById(image.value.id);
+      await this.videoRepository.deleteById(video.value.id);
       return left(storage.value);
     }
 
-    return image;
+    return video;
   }
 }
