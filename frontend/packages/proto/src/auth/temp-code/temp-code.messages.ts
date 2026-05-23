@@ -6,8 +6,8 @@
 // source: auth/temp-code/temp-code.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
-import { TempCode } from "./temp-code";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { TempCode } from './temp-code';
 
 export interface TempCodeQuery {
   id?: string;
@@ -85,7 +85,9 @@ export const TempCodeQuery: MessageFns<TempCodeQuery> = {
   fromJSON(object: any): TempCodeQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
       user: isSet(object.user) ? globalThis.String(object.user) : undefined,
     };
   },
@@ -165,7 +167,9 @@ export const TempCodeList: MessageFns<TempCodeList> = {
 
   fromJSON(object: any): TempCodeList {
     return {
-      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => TempCode.fromJSON(e)) : [],
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => TempCode.fromJSON(e))
+        : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
   },
@@ -193,12 +197,12 @@ export const TempCodeList: MessageFns<TempCodeList> = {
 };
 
 function createBaseTempCodeCreate(): TempCodeCreate {
-  return { user: "" };
+  return { user: '' };
 }
 
 export const TempCodeCreate: MessageFns<TempCodeCreate> = {
   encode(message: TempCodeCreate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.user !== "") {
+    if (message.user !== '') {
       writer.uint32(10).string(message.user);
     }
     return writer;
@@ -229,12 +233,12 @@ export const TempCodeCreate: MessageFns<TempCodeCreate> = {
   },
 
   fromJSON(object: any): TempCodeCreate {
-    return { user: isSet(object.user) ? globalThis.String(object.user) : "" };
+    return { user: isSet(object.user) ? globalThis.String(object.user) : '' };
   },
 
   toJSON(message: TempCodeCreate): unknown {
     const obj: any = {};
-    if (message.user !== "") {
+    if (message.user !== '') {
       obj.user = message.user;
     }
     return obj;
@@ -245,21 +249,26 @@ export const TempCodeCreate: MessageFns<TempCodeCreate> = {
   },
   fromPartial<I extends Exact<DeepPartial<TempCodeCreate>, I>>(object: I): TempCodeCreate {
     const message = createBaseTempCodeCreate();
-    message.user = object.user ?? "";
+    message.user = object.user ?? '';
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin ? P
+type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

@@ -6,13 +6,22 @@
 // source: auth/auth.service.proto
 
 /* eslint-disable */
-import { CallOptions, ChannelCredentials, Client, ClientOptions, ClientUnaryCall, makeGenericClientConstructor, Metadata, ServiceError } from "@grpc/grpc-js";
-import { AuthData, AuthLogin, AuthRefresh } from "./auth/auth.messages";
+import {
+  CallOptions,
+  ChannelCredentials,
+  Client,
+  ClientOptions,
+  ClientUnaryCall,
+  makeGenericClientConstructor,
+  Metadata,
+  ServiceError,
+} from '@grpc/grpc-js';
+import { AuthData, AuthLogin, AuthRefresh } from './auth/auth.messages';
 
 type AuthPublicServiceService = typeof AuthPublicServiceService;
 const AuthPublicServiceService = {
   login: {
-    path: "/auth.AuthPublicService/login" as const,
+    path: '/auth.AuthPublicService/login' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: AuthLogin): Buffer => Buffer.from(AuthLogin.encode(value).finish()),
@@ -21,19 +30,22 @@ const AuthPublicServiceService = {
     responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
   },
   refreshToken: {
-    path: "/auth.AuthPublicService/refreshToken" as const,
+    path: '/auth.AuthPublicService/refreshToken' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: AuthRefresh): Buffer => Buffer.from(AuthRefresh.encode(value).finish()),
+    requestSerialize: (value: AuthRefresh): Buffer =>
+      Buffer.from(AuthRefresh.encode(value).finish()),
     requestDeserialize: (value: Buffer): AuthRefresh => AuthRefresh.decode(value),
     responseSerialize: (value: AuthData): Buffer => Buffer.from(AuthData.encode(value).finish()),
     responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
   },
 } as const;
 
-
 export interface GrpcAuthPublicServiceClient extends Client {
-  login(request: AuthLogin, callback: (error: ServiceError | null, response: AuthData) => void): ClientUnaryCall;
+  login(
+    request: AuthLogin,
+    callback: (error: ServiceError | null, response: AuthData) => void,
+  ): ClientUnaryCall;
   login(
     request: AuthLogin,
     metadata: Metadata,
@@ -64,10 +76,33 @@ export interface GrpcAuthPublicServiceClient extends Client {
 
 export const GrpcAuthPublicServiceClient = makeGenericClientConstructor(
   AuthPublicServiceService,
-  "auth.AuthPublicService",
+  'auth.AuthPublicService',
 ) as unknown as {
-  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcAuthPublicServiceClient;
-  service: { readonly login: { readonly path: "/auth.AuthPublicService/login"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: AuthLogin) => Buffer; readonly requestDeserialize: (value: Buffer) => AuthLogin; readonly responseSerialize: (value: AuthData) => Buffer; readonly responseDeserialize: (value: Buffer) => AuthData; }; readonly refreshToken: { readonly path: "/auth.AuthPublicService/refreshToken"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: AuthRefresh) => Buffer; readonly requestDeserialize: (value: Buffer) => AuthRefresh; readonly responseSerialize: (value: AuthData) => Buffer; readonly responseDeserialize: (value: Buffer) => AuthData; }; };
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcAuthPublicServiceClient;
+  service: {
+    readonly login: {
+      readonly path: '/auth.AuthPublicService/login';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: AuthLogin) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => AuthLogin;
+      readonly responseSerialize: (value: AuthData) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => AuthData;
+    };
+    readonly refreshToken: {
+      readonly path: '/auth.AuthPublicService/refreshToken';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: AuthRefresh) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => AuthRefresh;
+      readonly responseSerialize: (value: AuthData) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => AuthData;
+    };
+  };
   serviceName: string;
 };
 
@@ -77,7 +112,7 @@ export class GrpcAuthPublicRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>
+    options?: Partial<ClientOptions>,
   ) {
     this.client = new GrpcAuthPublicServiceClient(address, credentials, options);
   }
@@ -118,4 +153,3 @@ export class GrpcAuthPublicRepository {
     });
   }
 }
-
