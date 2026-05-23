@@ -9,5 +9,4 @@ pnpm-lock.yaml
 packages/proto/pkg/**/*.proto
 packages/proto/src/**/*.ts
 */packages/proto/src/**/*.ts
-backend/packages/event-bus/src/generated.ts
 backend/packages/*/src/generated/*.ts
