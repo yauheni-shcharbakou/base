@@ -22,7 +22,7 @@ export interface VideoQuery {
 }
 
 export interface VideoArray {
-  videos: Video[];
+  items: Video[];
 }
 
 export interface VideoList {
@@ -233,12 +233,12 @@ export const VideoQuery: MessageFns<VideoQuery> = {
 };
 
 function createBaseVideoArray(): VideoArray {
-  return { videos: [] };
+  return { items: [] };
 }
 
 export const VideoArray: MessageFns<VideoArray> = {
   encode(message: VideoArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.videos) {
+    for (const v of message.items) {
       Video.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
@@ -256,7 +256,7 @@ export const VideoArray: MessageFns<VideoArray> = {
             break;
           }
 
-          message.videos.push(Video.decode(reader, reader.uint32()));
+          message.items.push(Video.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -269,13 +269,13 @@ export const VideoArray: MessageFns<VideoArray> = {
   },
 
   fromJSON(object: any): VideoArray {
-    return { videos: globalThis.Array.isArray(object?.videos) ? object.videos.map((e: any) => Video.fromJSON(e)) : [] };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => Video.fromJSON(e)) : [] };
   },
 
   toJSON(message: VideoArray): unknown {
     const obj: any = {};
-    if (message.videos?.length) {
-      obj.videos = message.videos.map((e) => Video.toJSON(e));
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => Video.toJSON(e));
     }
     return obj;
   },
@@ -285,7 +285,7 @@ export const VideoArray: MessageFns<VideoArray> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoArray>, I>>(object: I): VideoArray {
     const message = createBaseVideoArray();
-    message.videos = object.videos?.map((e) => Video.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => Video.fromPartial(e)) || [];
     return message;
   },
 };

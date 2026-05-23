@@ -41,7 +41,7 @@ export interface StorageObjectList {
 }
 
 export interface StorageObjectArray {
-  storageObjects: StorageObjectPopulated[];
+  items: StorageObjectPopulated[];
 }
 
 export interface StorageObjectGet {
@@ -498,12 +498,12 @@ export const StorageObjectList: MessageFns<StorageObjectList> = {
 };
 
 function createBaseStorageObjectArray(): StorageObjectArray {
-  return { storageObjects: [] };
+  return { items: [] };
 }
 
 export const StorageObjectArray: MessageFns<StorageObjectArray> = {
   encode(message: StorageObjectArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.storageObjects) {
+    for (const v of message.items) {
       StorageObjectPopulated.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
@@ -521,7 +521,7 @@ export const StorageObjectArray: MessageFns<StorageObjectArray> = {
             break;
           }
 
-          message.storageObjects.push(StorageObjectPopulated.decode(reader, reader.uint32()));
+          message.items.push(StorageObjectPopulated.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -535,16 +535,16 @@ export const StorageObjectArray: MessageFns<StorageObjectArray> = {
 
   fromJSON(object: any): StorageObjectArray {
     return {
-      storageObjects: globalThis.Array.isArray(object?.storageObjects)
-        ? object.storageObjects.map((e: any) => StorageObjectPopulated.fromJSON(e))
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => StorageObjectPopulated.fromJSON(e))
         : [],
     };
   },
 
   toJSON(message: StorageObjectArray): unknown {
     const obj: any = {};
-    if (message.storageObjects?.length) {
-      obj.storageObjects = message.storageObjects.map((e) => StorageObjectPopulated.toJSON(e));
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => StorageObjectPopulated.toJSON(e));
     }
     return obj;
   },
@@ -554,7 +554,7 @@ export const StorageObjectArray: MessageFns<StorageObjectArray> = {
   },
   fromPartial<I extends Exact<DeepPartial<StorageObjectArray>, I>>(object: I): StorageObjectArray {
     const message = createBaseStorageObjectArray();
-    message.storageObjects = object.storageObjects?.map((e) => StorageObjectPopulated.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => StorageObjectPopulated.fromPartial(e)) || [];
     return message;
   },
 };

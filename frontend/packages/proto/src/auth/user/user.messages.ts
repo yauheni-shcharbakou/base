@@ -17,7 +17,7 @@ export interface UserQuery {
 }
 
 export interface UserArray {
-  users: User[];
+  items: User[];
 }
 
 export interface UserList {
@@ -171,12 +171,12 @@ export const UserQuery: MessageFns<UserQuery> = {
 };
 
 function createBaseUserArray(): UserArray {
-  return { users: [] };
+  return { items: [] };
 }
 
 export const UserArray: MessageFns<UserArray> = {
   encode(message: UserArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.users) {
+    for (const v of message.items) {
       User.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
@@ -194,7 +194,7 @@ export const UserArray: MessageFns<UserArray> = {
             break;
           }
 
-          message.users.push(User.decode(reader, reader.uint32()));
+          message.items.push(User.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -207,13 +207,13 @@ export const UserArray: MessageFns<UserArray> = {
   },
 
   fromJSON(object: any): UserArray {
-    return { users: globalThis.Array.isArray(object?.users) ? object.users.map((e: any) => User.fromJSON(e)) : [] };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => User.fromJSON(e)) : [] };
   },
 
   toJSON(message: UserArray): unknown {
     const obj: any = {};
-    if (message.users?.length) {
-      obj.users = message.users.map((e) => User.toJSON(e));
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => User.toJSON(e));
     }
     return obj;
   },
@@ -223,7 +223,7 @@ export const UserArray: MessageFns<UserArray> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserArray>, I>>(object: I): UserArray {
     const message = createBaseUserArray();
-    message.users = object.users?.map((e) => User.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => User.fromPartial(e)) || [];
     return message;
   },
 };

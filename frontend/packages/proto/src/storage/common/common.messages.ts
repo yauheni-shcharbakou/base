@@ -14,10 +14,10 @@ export interface DownloadData {
 }
 
 export interface DownloadMap {
-  items: Map<string, DownloadData>;
+  entries: Map<string, DownloadData>;
 }
 
-export interface DownloadMap_ItemsEntry {
+export interface DownloadMap_EntriesEntry {
   key: string;
   value: DownloadData;
 }
@@ -128,13 +128,13 @@ export const DownloadData: MessageFns<DownloadData> = {
 };
 
 function createBaseDownloadMap(): DownloadMap {
-  return { items: new Map() };
+  return { entries: new Map() };
 }
 
 export const DownloadMap: MessageFns<DownloadMap> = {
   encode(message: DownloadMap, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    message.items.forEach((value, key) => {
-      DownloadMap_ItemsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
+    message.entries.forEach((value, key) => {
+      DownloadMap_EntriesEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
     });
     return writer;
   },
@@ -151,9 +151,9 @@ export const DownloadMap: MessageFns<DownloadMap> = {
             break;
           }
 
-          const entry1 = DownloadMap_ItemsEntry.decode(reader, reader.uint32());
+          const entry1 = DownloadMap_EntriesEntry.decode(reader, reader.uint32());
           if (entry1.value !== undefined) {
-            message.items.set(entry1.key, entry1.value);
+            message.entries.set(entry1.key, entry1.value);
           }
           continue;
         }
@@ -168,8 +168,8 @@ export const DownloadMap: MessageFns<DownloadMap> = {
 
   fromJSON(object: any): DownloadMap {
     return {
-      items: isObject(object.items)
-        ? (globalThis.Object.entries(object.items) as [string, any][]).reduce(
+      entries: isObject(object.entries)
+        ? (globalThis.Object.entries(object.entries) as [string, any][]).reduce(
           (acc: Map<string, DownloadData>, [key, value]: [string, any]) => {
             acc.set(key, DownloadData.fromJSON(value));
             return acc;
@@ -182,10 +182,10 @@ export const DownloadMap: MessageFns<DownloadMap> = {
 
   toJSON(message: DownloadMap): unknown {
     const obj: any = {};
-    if (message.items?.size) {
-      obj.items = {};
-      message.items.forEach((v, k) => {
-        obj.items[k] = DownloadData.toJSON(v);
+    if (message.entries?.size) {
+      obj.entries = {};
+      message.entries.forEach((v, k) => {
+        obj.entries[k] = DownloadData.toJSON(v);
       });
     }
     return obj;
@@ -196,9 +196,9 @@ export const DownloadMap: MessageFns<DownloadMap> = {
   },
   fromPartial<I extends Exact<DeepPartial<DownloadMap>, I>>(object: I): DownloadMap {
     const message = createBaseDownloadMap();
-    message.items = (() => {
+    message.entries = (() => {
       const m = new Map();
-      (object.items as Map<string, DownloadData> ?? new Map()).forEach((value, key) => {
+      (object.entries as Map<string, DownloadData> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
           m.set(key, DownloadData.fromPartial(value));
         }
@@ -209,12 +209,12 @@ export const DownloadMap: MessageFns<DownloadMap> = {
   },
 };
 
-function createBaseDownloadMap_ItemsEntry(): DownloadMap_ItemsEntry {
+function createBaseDownloadMap_EntriesEntry(): DownloadMap_EntriesEntry {
   return { key: "", value: undefined };
 }
 
-export const DownloadMap_ItemsEntry: MessageFns<DownloadMap_ItemsEntry> = {
-  encode(message: DownloadMap_ItemsEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const DownloadMap_EntriesEntry: MessageFns<DownloadMap_EntriesEntry> = {
+  encode(message: DownloadMap_EntriesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -224,10 +224,10 @@ export const DownloadMap_ItemsEntry: MessageFns<DownloadMap_ItemsEntry> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): DownloadMap_ItemsEntry {
+  decode(input: BinaryReader | Uint8Array, length?: number): DownloadMap_EntriesEntry {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDownloadMap_ItemsEntry();
+    const message = createBaseDownloadMap_EntriesEntry();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -256,14 +256,14 @@ export const DownloadMap_ItemsEntry: MessageFns<DownloadMap_ItemsEntry> = {
     return message;
   },
 
-  fromJSON(object: any): DownloadMap_ItemsEntry {
+  fromJSON(object: any): DownloadMap_EntriesEntry {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : "",
       value: isSet(object.value) ? DownloadData.fromJSON(object.value) : undefined,
     };
   },
 
-  toJSON(message: DownloadMap_ItemsEntry): unknown {
+  toJSON(message: DownloadMap_EntriesEntry): unknown {
     const obj: any = {};
     if (message.key !== "") {
       obj.key = message.key;
@@ -274,11 +274,11 @@ export const DownloadMap_ItemsEntry: MessageFns<DownloadMap_ItemsEntry> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<DownloadMap_ItemsEntry>, I>>(base?: I): DownloadMap_ItemsEntry {
-    return DownloadMap_ItemsEntry.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<DownloadMap_EntriesEntry>, I>>(base?: I): DownloadMap_EntriesEntry {
+    return DownloadMap_EntriesEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<DownloadMap_ItemsEntry>, I>>(object: I): DownloadMap_ItemsEntry {
-    const message = createBaseDownloadMap_ItemsEntry();
+  fromPartial<I extends Exact<DeepPartial<DownloadMap_EntriesEntry>, I>>(object: I): DownloadMap_EntriesEntry {
+    const message = createBaseDownloadMap_EntriesEntry();
     message.key = object.key ?? "";
     message.value = (object.value !== undefined && object.value !== null)
       ? DownloadData.fromPartial(object.value)

@@ -13,16 +13,16 @@ export interface Boolean {
 }
 
 export interface StringMap {
-  value: Map<string, string>;
+  entries: Map<string, string>;
 }
 
-export interface StringMap_ValueEntry {
+export interface StringMap_EntriesEntry {
   key: string;
   value: string;
 }
 
 export interface StringArray {
-  value: string[];
+  items: string[];
 }
 
 function createBaseBoolean(): Boolean {
@@ -84,13 +84,13 @@ export const Boolean: MessageFns<Boolean> = {
 };
 
 function createBaseStringMap(): StringMap {
-  return { value: new Map() };
+  return { entries: new Map() };
 }
 
 export const StringMap: MessageFns<StringMap> = {
   encode(message: StringMap, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    message.value.forEach((value, key) => {
-      StringMap_ValueEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
+    message.entries.forEach((value, key) => {
+      StringMap_EntriesEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).join();
     });
     return writer;
   },
@@ -107,9 +107,9 @@ export const StringMap: MessageFns<StringMap> = {
             break;
           }
 
-          const entry1 = StringMap_ValueEntry.decode(reader, reader.uint32());
+          const entry1 = StringMap_EntriesEntry.decode(reader, reader.uint32());
           if (entry1.value !== undefined) {
-            message.value.set(entry1.key, entry1.value);
+            message.entries.set(entry1.key, entry1.value);
           }
           continue;
         }
@@ -124,8 +124,8 @@ export const StringMap: MessageFns<StringMap> = {
 
   fromJSON(object: any): StringMap {
     return {
-      value: isObject(object.value)
-        ? (globalThis.Object.entries(object.value) as [string, any][]).reduce(
+      entries: isObject(object.entries)
+        ? (globalThis.Object.entries(object.entries) as [string, any][]).reduce(
           (acc: Map<string, string>, [key, value]: [string, any]) => {
             acc.set(key, globalThis.String(value));
             return acc;
@@ -138,10 +138,10 @@ export const StringMap: MessageFns<StringMap> = {
 
   toJSON(message: StringMap): unknown {
     const obj: any = {};
-    if (message.value?.size) {
-      obj.value = {};
-      message.value.forEach((v, k) => {
-        obj.value[k] = v;
+    if (message.entries?.size) {
+      obj.entries = {};
+      message.entries.forEach((v, k) => {
+        obj.entries[k] = v;
       });
     }
     return obj;
@@ -152,9 +152,9 @@ export const StringMap: MessageFns<StringMap> = {
   },
   fromPartial<I extends Exact<DeepPartial<StringMap>, I>>(object: I): StringMap {
     const message = createBaseStringMap();
-    message.value = (() => {
+    message.entries = (() => {
       const m = new Map();
-      (object.value as Map<string, string> ?? new Map()).forEach((value, key) => {
+      (object.entries as Map<string, string> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
           m.set(key, globalThis.String(value));
         }
@@ -165,12 +165,12 @@ export const StringMap: MessageFns<StringMap> = {
   },
 };
 
-function createBaseStringMap_ValueEntry(): StringMap_ValueEntry {
+function createBaseStringMap_EntriesEntry(): StringMap_EntriesEntry {
   return { key: "", value: "" };
 }
 
-export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
-  encode(message: StringMap_ValueEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const StringMap_EntriesEntry: MessageFns<StringMap_EntriesEntry> = {
+  encode(message: StringMap_EntriesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
@@ -180,10 +180,10 @@ export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): StringMap_ValueEntry {
+  decode(input: BinaryReader | Uint8Array, length?: number): StringMap_EntriesEntry {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseStringMap_ValueEntry();
+    const message = createBaseStringMap_EntriesEntry();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -212,14 +212,14 @@ export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
     return message;
   },
 
-  fromJSON(object: any): StringMap_ValueEntry {
+  fromJSON(object: any): StringMap_EntriesEntry {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : "",
       value: isSet(object.value) ? globalThis.String(object.value) : "",
     };
   },
 
-  toJSON(message: StringMap_ValueEntry): unknown {
+  toJSON(message: StringMap_EntriesEntry): unknown {
     const obj: any = {};
     if (message.key !== "") {
       obj.key = message.key;
@@ -230,11 +230,11 @@ export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StringMap_ValueEntry>, I>>(base?: I): StringMap_ValueEntry {
-    return StringMap_ValueEntry.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<StringMap_EntriesEntry>, I>>(base?: I): StringMap_EntriesEntry {
+    return StringMap_EntriesEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StringMap_ValueEntry>, I>>(object: I): StringMap_ValueEntry {
-    const message = createBaseStringMap_ValueEntry();
+  fromPartial<I extends Exact<DeepPartial<StringMap_EntriesEntry>, I>>(object: I): StringMap_EntriesEntry {
+    const message = createBaseStringMap_EntriesEntry();
     message.key = object.key ?? "";
     message.value = object.value ?? "";
     return message;
@@ -242,12 +242,12 @@ export const StringMap_ValueEntry: MessageFns<StringMap_ValueEntry> = {
 };
 
 function createBaseStringArray(): StringArray {
-  return { value: [] };
+  return { items: [] };
 }
 
 export const StringArray: MessageFns<StringArray> = {
   encode(message: StringArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.value) {
+    for (const v of message.items) {
       writer.uint32(10).string(v!);
     }
     return writer;
@@ -265,7 +265,7 @@ export const StringArray: MessageFns<StringArray> = {
             break;
           }
 
-          message.value.push(reader.string());
+          message.items.push(reader.string());
           continue;
         }
       }
@@ -278,13 +278,13 @@ export const StringArray: MessageFns<StringArray> = {
   },
 
   fromJSON(object: any): StringArray {
-    return { value: globalThis.Array.isArray(object?.value) ? object.value.map((e: any) => globalThis.String(e)) : [] };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => globalThis.String(e)) : [] };
   },
 
   toJSON(message: StringArray): unknown {
     const obj: any = {};
-    if (message.value?.length) {
-      obj.value = message.value;
+    if (message.items?.length) {
+      obj.items = message.items;
     }
     return obj;
   },
@@ -294,7 +294,7 @@ export const StringArray: MessageFns<StringArray> = {
   },
   fromPartial<I extends Exact<DeepPartial<StringArray>, I>>(object: I): StringArray {
     const message = createBaseStringArray();
-    message.value = object.value?.map((e) => e) || [];
+    message.items = object.items?.map((e) => e) || [];
     return message;
   },
 };

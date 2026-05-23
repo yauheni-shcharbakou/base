@@ -36,7 +36,7 @@ export interface FileList {
 }
 
 export interface FileArray {
-  files: File[];
+  items: File[];
 }
 
 export interface FileCreate {
@@ -386,12 +386,12 @@ export const FileList: MessageFns<FileList> = {
 };
 
 function createBaseFileArray(): FileArray {
-  return { files: [] };
+  return { items: [] };
 }
 
 export const FileArray: MessageFns<FileArray> = {
   encode(message: FileArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.files) {
+    for (const v of message.items) {
       File.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
@@ -409,7 +409,7 @@ export const FileArray: MessageFns<FileArray> = {
             break;
           }
 
-          message.files.push(File.decode(reader, reader.uint32()));
+          message.items.push(File.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -422,13 +422,13 @@ export const FileArray: MessageFns<FileArray> = {
   },
 
   fromJSON(object: any): FileArray {
-    return { files: globalThis.Array.isArray(object?.files) ? object.files.map((e: any) => File.fromJSON(e)) : [] };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => File.fromJSON(e)) : [] };
   },
 
   toJSON(message: FileArray): unknown {
     const obj: any = {};
-    if (message.files?.length) {
-      obj.files = message.files.map((e) => File.toJSON(e));
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => File.toJSON(e));
     }
     return obj;
   },
@@ -438,7 +438,7 @@ export const FileArray: MessageFns<FileArray> = {
   },
   fromPartial<I extends Exact<DeepPartial<FileArray>, I>>(object: I): FileArray {
     const message = createBaseFileArray();
-    message.files = object.files?.map((e) => File.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => File.fromPartial(e)) || [];
     return message;
   },
 };

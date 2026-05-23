@@ -25,7 +25,7 @@ export interface ImageList {
 }
 
 export interface ImageArray {
-  images: Image[];
+  items: Image[];
 }
 
 export interface ImageCreate {
@@ -267,12 +267,12 @@ export const ImageList: MessageFns<ImageList> = {
 };
 
 function createBaseImageArray(): ImageArray {
-  return { images: [] };
+  return { items: [] };
 }
 
 export const ImageArray: MessageFns<ImageArray> = {
   encode(message: ImageArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.images) {
+    for (const v of message.items) {
       Image.encode(v!, writer.uint32(10).fork()).join();
     }
     return writer;
@@ -290,7 +290,7 @@ export const ImageArray: MessageFns<ImageArray> = {
             break;
           }
 
-          message.images.push(Image.decode(reader, reader.uint32()));
+          message.items.push(Image.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -303,13 +303,13 @@ export const ImageArray: MessageFns<ImageArray> = {
   },
 
   fromJSON(object: any): ImageArray {
-    return { images: globalThis.Array.isArray(object?.images) ? object.images.map((e: any) => Image.fromJSON(e)) : [] };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => Image.fromJSON(e)) : [] };
   },
 
   toJSON(message: ImageArray): unknown {
     const obj: any = {};
-    if (message.images?.length) {
-      obj.images = message.images.map((e) => Image.toJSON(e));
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => Image.toJSON(e));
     }
     return obj;
   },
@@ -319,7 +319,7 @@ export const ImageArray: MessageFns<ImageArray> = {
   },
   fromPartial<I extends Exact<DeepPartial<ImageArray>, I>>(object: I): ImageArray {
     const message = createBaseImageArray();
-    message.images = object.images?.map((e) => Image.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => Image.fromPartial(e)) || [];
     return message;
   },
 };
