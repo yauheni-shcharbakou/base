@@ -2,10 +2,10 @@ import { DynamicModule, Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule } from '@nestjs/microservices';
 import _ from 'lodash';
-import { GrpcConfigHost, grpcConfig, GrpcConfig } from './infrastructure/configs';
+import { GRPC_CONFIG_SERVICE, GRPC_MICROSERVICE_OPTIONS } from './infrastructure';
+import { GrpcConfig, GrpcConfigHost, grpcConfig } from './infrastructure/configs';
 import { GrpcStrategy } from './infrastructure/types';
 import { GrpcClientRegistry, getServiceDefinitions } from './infrastructure/utils';
-import { GRPC_CONFIG_SERVICE, GRPC_MICROSERVICE_OPTIONS } from './infrastructure';
 
 export type GrpcModuleForFeatureParams = {
   strategy: GrpcStrategy;
@@ -34,12 +34,12 @@ export class GrpcModule {
     const providers: Provider[] = [
       {
         provide: GRPC_CONFIG_SERVICE,
-        useClass: ConfigService,
+        useExisting: ConfigService,
       },
       ...clientParams.providers,
     ];
 
-    const exports: DynamicModule['exports'] = [...clientParams.exports];
+    const exports: DynamicModule['exports'] = [GRPC_CONFIG_SERVICE, ...clientParams.exports];
 
     if (params.host) {
       providers.push({

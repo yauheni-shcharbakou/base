@@ -323,6 +323,9 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
+      '@packages/proto':
+        specifier: workspace:*
+        version: link:../../../packages/proto
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
