@@ -2,11 +2,14 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": ["src/**/*.ts", "src/**/*.tsx", "package.json", "ts-config*.json"],
+      "inputs": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "package.json",
+        "tsconfig*.json",
+        "tsdown.config.mts"
+      ],
       "outputs": ["dist/**"]
-    },
-    "reset:modules": {
-      "inputs": ["package.json"]
     }
   }
 }
