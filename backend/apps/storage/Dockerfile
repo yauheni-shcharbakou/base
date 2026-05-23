@@ -8,7 +8,7 @@ ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-RUN corepack prepare pnpm@10.33.2 --activate
+RUN corepack prepare pnpm@11.0.9 --activate
 RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -50,4 +50,4 @@ USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
 WORKDIR /app/backend/apps/storage
-CMD ["sh", "-c", "node dist/migrator/main.js -- postgres-migration && node dist/main.js"]
+CMD ["sh", "-c", "node dist/migrator/main.js -- pg-migration && node dist/main.js"]
