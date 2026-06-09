@@ -1,8 +1,11 @@
 import { NestStorage } from '@backend/proto';
-import { FileCreateService } from '@modules/file/application/services/file.create.service';
-import { StorageObjectCreateService } from '@modules/storage-object/application/services/storage-object.create.service';
+import { FileMapper } from '@modules/file/application/mappers/file.mapper';
+import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
-import { VideoRepository } from '@modules/video/domain/repositories/video.repository';
+import {
+  VideoRepository,
+  VideoSaveAndPlace,
+} from '@modules/video/domain/repositories/video.repository';
 import { Injectable } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
 
@@ -11,8 +14,8 @@ export class VideoCreateOneUseCase {
   constructor(
     private readonly videoRepository: VideoRepository,
     private readonly storageVideoService: StorageVideoService,
-    private readonly fileCreateService: FileCreateService,
-    private readonly storageObjectCreateService: StorageObjectCreateService,
+    private readonly fileMapper: FileMapper,
+    private readonly storageObjectValidationService: StorageObjectValidationService,
   ) {}
 
   async execute(createData: NestStorage.VideoCreateOne): Promise<Either<Error, NestStorage.Video>> {
@@ -25,41 +28,30 @@ export class VideoCreateOneUseCase {
       return left(providerId.value);
     }
 
-    const file = await this.fileCreateService.createOne({
-      ...createData.file,
-      userId: createData.userId,
-      uploadId: providerId.value,
-    });
+    const saveData: VideoSaveAndPlace = {
+      video: {
+        ...createData.video,
+        userId: createData.userId,
+        uploadId: providerId.value,
+        providerId: providerId.value,
+      },
+      file: this.fileMapper.toCreateData(createData.file),
+    };
 
-    if (file.isLeft()) {
-      return left(file.value);
+    if (createData.storage) {
+      const validationResult = await this.storageObjectValidationService.validateCreateData({
+        ...createData.storage,
+        type: NestStorage.StorageObjectType.VIDEO,
+        userId: createData.userId,
+      });
+
+      if (validationResult.isLeft()) {
+        return left(validationResult.value);
+      }
+
+      saveData.storageObject = validationResult.value;
     }
 
-    const video = await this.videoRepository.saveOne({
-      ...createData.video,
-      userId: createData.userId,
-      file: file.value.id,
-      providerId: providerId.value,
-      uploadId: providerId.value,
-    });
-
-    if (video.isLeft() || !createData.storage) {
-      return video;
-    }
-
-    const storage = await this.storageObjectCreateService.createOne({
-      ...createData.storage,
-      type: NestStorage.StorageObjectType.VIDEO,
-      file: video.value.fileId,
-      video: video.value.id,
-      userId: createData.userId,
-    });
-
-    if (storage.isLeft()) {
-      await this.videoRepository.deleteById(video.value.id);
-      return left(storage.value);
-    }
-
-    return video;
+    return this.videoRepository.saveAndPlaceOne(saveData);
   }
 }

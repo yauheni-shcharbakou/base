@@ -8,7 +8,10 @@ import { PgVideoEntity } from '@modules/video/infrastructure/pg/entities/pg.vide
 import { StorageDatabaseEntity } from '@packages/common';
 
 @PgSchema({ tableName: StorageDatabaseEntity.FILE })
-export class PgFileEntity extends PgEntity implements NestStorage.File {
+export class PgFileEntity
+  extends PgEntity<'image' | 'video' | 'storageObject'>
+  implements NestStorage.File
+{
   @Property({ index: true })
   userId: string;
 

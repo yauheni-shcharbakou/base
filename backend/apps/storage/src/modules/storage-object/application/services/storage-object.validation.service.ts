@@ -1,12 +1,20 @@
 import { NestStorage } from '@backend/proto';
-import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
+import {
+  StorageObjectCreate,
+  StorageObjectRepository,
+} from '@modules/storage-object/domain/repositories/storage-object.repository';
 import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
+import _ from 'lodash';
 import path from 'path';
 
 export type StorageObjectPlacement = {
   folderPath: string | null;
   isPublic: boolean;
+};
+
+export type StorageObjectCreateValidated = Omit<StorageObjectCreate, 'parent'> & {
+  parent: string;
 };
 
 @Injectable()
@@ -97,5 +105,35 @@ export class StorageObjectValidationService {
     }
 
     return right(`${parsedName.name} (${maxNum + 1})${parsedName.ext}`);
+  }
+
+  async validateCreateData(
+    createData: NestStorage.StorageObjectCreate,
+  ): Promise<Either<Error, StorageObjectCreateValidated>> {
+    if (!createData.parent) {
+      return left(new BadRequestException('Parent is required'));
+    }
+
+    const [name, placement] = await Promise.all([
+      this.validateObjectName(_.pick(createData, ['name', 'type', 'parent'])),
+      this.validatePlacement(createData.parent, _.pick(createData, ['name', 'type'])),
+    ]);
+
+    if (name.isLeft()) {
+      return left(name.value);
+    }
+
+    if (placement.isLeft()) {
+      return left(placement.value);
+    }
+
+    return right({
+      ...createData,
+      parent: createData.parent,
+      folderPath: placement.value.folderPath,
+      isPublic: placement.value.isPublic,
+      name: name.value,
+      isFolder: createData.type === NestStorage.StorageObjectType.FOLDER,
+    });
   }
 }

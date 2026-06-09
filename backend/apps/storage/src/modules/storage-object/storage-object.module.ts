@@ -2,8 +2,8 @@ import { NatsModule, NatsStorageStorageObjectTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
 import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
-import { StorageObjectCreateService } from './application/services/storage-object.create.service';
 import { StorageObjectValidationService } from './application/services/storage-object.validation.service';
+import { StorageObjectCreateOneUseCase } from './application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectCreateRootFolderUseCase } from './application/use-cases/storage-object.create-root-folder.use-case';
 import { StorageObjectDeleteOneUseCase } from './application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectGetFoldersUseCase } from './application/use-cases/storage-object.get-folders.use-case';
@@ -29,7 +29,6 @@ import { NatsStorageObjectController } from './interface/nats/nats.storage-objec
       useClass: PgStorageObjectRepositoryImpl,
     },
     StorageObjectValidationService,
-    StorageObjectCreateService,
     StorageObjectIsExistsUseCase,
     StorageObjectGetUseCase,
     StorageObjectGetFoldersUseCase,
@@ -37,8 +36,9 @@ import { NatsStorageObjectController } from './interface/nats/nats.storage-objec
     StorageObjectUpdateOneUseCase,
     StorageObjectCreateRootFolderUseCase,
     StorageObjectUpdateFolderChildrenUseCase,
+    StorageObjectCreateOneUseCase,
   ],
   controllers: [GrpcStorageObjectController, NatsStorageObjectController],
-  exports: [StorageObjectValidationService, StorageObjectCreateService],
+  exports: [StorageObjectValidationService],
 })
 export class StorageObjectModule {}

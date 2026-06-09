@@ -2,7 +2,14 @@ import { PgRepositoryImpl } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
-import { VideoCreate, VideoRepository } from '@modules/video/domain/repositories/video.repository';
+import { PgFileEntity } from '@modules/file/infrastructure/pg/entities/pg.file.entity';
+import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
+import {
+  VideoCreate,
+  VideoRepository,
+  VideoSaveAndPlace,
+} from '@modules/video/domain/repositories/video.repository';
+import { Either, left, right } from '@sweet-monads/either';
 import { PgVideoEntity } from '../entities/pg.video.entity';
 import { PgVideoMapper } from '../mappers/pg.video.mapper';
 
@@ -14,5 +21,88 @@ export class PgVideoRepositoryImpl
     @InjectRepository(PgVideoEntity) protected readonly repository: EntityRepository<PgVideoEntity>,
   ) {
     super(repository, new PgVideoMapper());
+  }
+
+  async saveAndPlaceOne(createData: VideoSaveAndPlace): Promise<Either<Error, NestStorage.Video>> {
+    try {
+      const video = await this.em.transactional(async (em) => {
+        const fileEntity = em.create(PgFileEntity, {
+          ...createData.file,
+          userId: createData.video.userId,
+          uploadId: createData.video.uploadId,
+        });
+
+        const videoEntity = em.create(PgVideoEntity, {
+          ...createData.video,
+          file: fileEntity.id,
+        });
+
+        em.persist([fileEntity, videoEntity]);
+
+        if (createData.storageObject) {
+          const storageObjectEntity = em.create(PgStorageObjectEntity, {
+            ...createData.storageObject,
+            file: fileEntity.id,
+            video: videoEntity.id,
+            userId: fileEntity.userId,
+            type: NestStorage.StorageObjectType.VIDEO,
+            isFolder: false,
+          });
+
+          em.persist(storageObjectEntity);
+        }
+
+        await em.flush();
+        return this.mapper.stringify(videoEntity);
+      });
+
+      return right(video);
+    } catch (error) {
+      return left(error);
+    }
+  }
+
+  async saveAndPlaceMany(items: VideoSaveAndPlace[]): Promise<Either<Error, NestStorage.Video[]>> {
+    try {
+      const videos = await this.em.transactional(async (em) => {
+        const videoEntities: PgVideoEntity[] = [];
+
+        for (const item of items) {
+          const fileEntity = em.create(PgFileEntity, {
+            ...item.file,
+            userId: item.video.userId,
+            uploadId: item.video.uploadId,
+          });
+
+          const videoEntity = em.create(PgVideoEntity, {
+            ...item.video,
+            file: fileEntity.id,
+          });
+
+          em.persist([fileEntity, videoEntity]);
+          videoEntities.push(videoEntity);
+
+          if (item.storageObject) {
+            const storageObjectEntity = em.create(PgStorageObjectEntity, {
+              ...item.storageObject,
+              file: fileEntity.id,
+              video: videoEntity.id,
+              userId: fileEntity.userId,
+              type: NestStorage.StorageObjectType.VIDEO,
+              isFolder: false,
+            });
+
+            em.persist(storageObjectEntity);
+          }
+        }
+
+        await em.flush();
+        return this.mapper.stringifyMany(videoEntities);
+      });
+
+      return right(videos);
+    } catch (error) {
+      return left(error);
+    }
   }
 }

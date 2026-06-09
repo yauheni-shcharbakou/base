@@ -6,7 +6,7 @@ import {
   NestCommon,
   NestStorage,
 } from '@backend/proto';
-import { StorageObjectCreateService } from '@modules/storage-object/application/services/storage-object.create.service';
+import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectGetFoldersUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folders.use-case';
 import { StorageObjectGetUseCase } from '@modules/storage-object/application/use-cases/storage-object.get.use-case';
@@ -18,12 +18,12 @@ import { from, map, Observable } from 'rxjs';
 @GrpcStorageObjectTransport.ControllerMethods()
 export class GrpcStorageObjectController implements GrpcStorageObjectServiceController {
   constructor(
-    private readonly storageObjectCreateService: StorageObjectCreateService,
     private readonly getUseCase: StorageObjectGetUseCase,
     private readonly getFoldersUseCase: StorageObjectGetFoldersUseCase,
     private readonly isExistsUseCase: StorageObjectIsExistsUseCase,
     private readonly deleteOneUseCase: StorageObjectDeleteOneUseCase,
     private readonly updateOneUseCase: StorageObjectUpdateOneUseCase,
+    private readonly createOneUseCase: StorageObjectCreateOneUseCase,
   ) {}
 
   getById(request: NestCommon.IdField): Observable<NestStorage.StorageObjectPopulated> {
@@ -72,7 +72,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
   }
 
   createOne(request: NestStorage.StorageObjectCreate): Observable<NestStorage.StorageObject> {
-    return from(this.storageObjectCreateService.createOne(request)).pipe(GrpcRxPipe.unwrapEither);
+    return from(this.createOneUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 
   updateOne(request: NestStorage.StorageObjectUpdateOne): Observable<NestStorage.StorageObject> {

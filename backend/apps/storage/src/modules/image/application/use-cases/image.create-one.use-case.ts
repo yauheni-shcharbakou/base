@@ -1,7 +1,10 @@
 import { NestStorage } from '@backend/proto';
-import { FileCreateService } from '@modules/file/application/services/file.create.service';
-import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
-import { StorageObjectCreateService } from '@modules/storage-object/application/services/storage-object.create.service';
+import { FileMapper } from '@modules/file/application/mappers/file.mapper';
+import {
+  ImageRepository,
+  ImageSaveAndPlace,
+} from '@modules/image/domain/repositories/image.repository';
+import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { Injectable } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
@@ -11,8 +14,8 @@ export class ImageCreateOneUseCase {
   constructor(
     private readonly imageRepository: ImageRepository,
     private readonly storageFileService: StorageFileService,
-    private readonly fileCreateService: FileCreateService,
-    private readonly storageObjectCreateService: StorageObjectCreateService,
+    private readonly fileMapper: FileMapper,
+    private readonly storageObjectValidationService: StorageObjectValidationService,
   ) {}
 
   async execute(createData: NestStorage.ImageCreateOne): Promise<Either<Error, NestStorage.Image>> {
@@ -25,41 +28,32 @@ export class ImageCreateOneUseCase {
       return left(providerId.value);
     }
 
-    const file = await this.fileCreateService.createOne({
-      ...createData.file,
-      userId: createData.userId,
-      providerId: providerId.value,
-      uploadId: providerId.value,
-    });
+    const saveData: ImageSaveAndPlace = {
+      image: {
+        ...createData.image,
+        userId: createData.userId,
+        uploadId: providerId.value,
+      },
+      file: this.fileMapper.toCreateData({
+        ...createData.file,
+        providerId: providerId.value,
+      }),
+    };
 
-    if (file.isLeft()) {
-      return left(file.value);
+    if (createData.storage) {
+      const validationResult = await this.storageObjectValidationService.validateCreateData({
+        ...createData.storage,
+        type: NestStorage.StorageObjectType.IMAGE,
+        userId: createData.userId,
+      });
+
+      if (validationResult.isLeft()) {
+        return left(validationResult.value);
+      }
+
+      saveData.storageObject = validationResult.value;
     }
 
-    const image = await this.imageRepository.saveOne({
-      ...createData.image,
-      userId: createData.userId,
-      file: file.value.id,
-      uploadId: providerId.value,
-    });
-
-    if (image.isLeft() || !createData.storage) {
-      return image;
-    }
-
-    const storage = await this.storageObjectCreateService.createOne({
-      ...createData.storage,
-      type: NestStorage.StorageObjectType.IMAGE,
-      file: image.value.fileId,
-      image: image.value.id,
-      userId: createData.userId,
-    });
-
-    if (storage.isLeft()) {
-      await this.imageRepository.deleteById(image.value.id);
-      return left(storage.value);
-    }
-
-    return image;
+    return this.imageRepository.saveAndPlaceOne(saveData);
   }
 }

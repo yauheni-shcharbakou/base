@@ -1,8 +1,9 @@
 import { PgModule } from '@backend/pg';
+import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
-import { FileCreateService } from './application/services/file.create.service';
+import { FileMapper } from './application/mappers/file.mapper';
 import { FileCleanupUseCase } from './application/use-cases/file.cleanup.use-case';
 import { FileCreateManyUseCase } from './application/use-cases/file.create-many.use-case';
 import { FileCreateOneUseCase } from './application/use-cases/file.create-one.use-case';
@@ -20,13 +21,17 @@ import { GrpcFileController } from './interface/grpc/grpc.file.controller';
 import { NatsFileController } from './interface/nats/nats.file.controller';
 
 @Module({
-  imports: [PgModule.forFeature(PgFileEntity), StorageModule, StorageObjectModule],
+  imports: [
+    PgModule.forFeature(PgFileEntity, PgStorageObjectEntity),
+    StorageModule,
+    StorageObjectModule,
+  ],
   providers: [
     {
       provide: FileRepository,
       useClass: PgFileRepositoryImpl,
     },
-    FileCreateService,
+    FileMapper,
     FileGetUrlMapUseCase,
     FileGetDownloadMapUseCase,
     FileGetUseCase,
@@ -39,6 +44,6 @@ import { NatsFileController } from './interface/nats/nats.file.controller';
     FileCronService,
   ],
   controllers: [GrpcFileController, NatsFileController],
-  exports: [FileCreateService],
+  exports: [FileMapper],
 })
 export class FileModule {}
