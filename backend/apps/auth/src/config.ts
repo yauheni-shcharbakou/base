@@ -5,7 +5,6 @@ import zod from 'zod';
 const env = validateEnv({
   ACCESS_JWT_SECRET: zod.string(),
   REFRESH_JWT_SECRET: zod.string(),
-  SALT_ROUNDS: zod.number().default(10),
   ADMIN_EMAIL: zod.email(),
   ADMIN_PASSWORD: zod.string(),
   TEMP_TOKEN_EXPIRES_IN_MINUTES: zod.coerce.number().default(1),
@@ -28,9 +27,6 @@ export const config = () => {
         expiresIn: common.isDevelopment ? '7d' : '1h',
         issuer,
       },
-    },
-    hashing: {
-      saltRounds: env.SALT_ROUNDS,
     },
     admin: {
       email: env.ADMIN_EMAIL,

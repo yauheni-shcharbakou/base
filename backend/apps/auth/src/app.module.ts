@@ -1,13 +1,14 @@
-import { PostgresModule } from '@backend/persistence';
-import { GrpcModule, NatsModule } from '@backend/transport';
+import { EventBusHost } from '@backend/event-bus';
+import { GrpcModule } from '@backend/grpc';
+import { NatsModule } from '@backend/nats';
+import { PgModule } from '@backend/pg';
+import { TempCodeModule } from '@modules/temp-code/temp-code.module';
+import { UserModule } from '@modules/user/user.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { Database } from '@packages/common';
-import { config } from 'config';
-import { AuthModule } from 'modules/auth/auth.module';
-import { TempCodeModule } from 'modules/temp-code/temp-code.module';
-import { UserModule } from 'modules/user/user.module';
+import { config } from './config';
 
 // TODO: add user.avatarUrl
 
@@ -15,10 +16,10 @@ import { UserModule } from 'modules/user/user.module';
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    PostgresModule.forRoot({ database: Database.AUTH }),
+    PgModule.forRoot({ database: Database.AUTH }),
     GrpcModule.forRoot({ host: 'auth' }),
-    NatsModule.forRoot({ host: 'auth' }),
-    AuthModule,
+    NatsModule.forRoot({ host: EventBusHost.AUTH }),
+    // AuthModule,
     TempCodeModule,
     UserModule,
   ],
