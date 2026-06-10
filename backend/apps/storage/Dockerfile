@@ -6,7 +6,7 @@ ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
 ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 RUN corepack prepare pnpm@11.0.9 --activate
 RUN apk update

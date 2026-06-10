@@ -8,7 +8,42 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { AuthData, AuthLogin, AuthRefresh } from './auth/auth.messages';
+import { AuthData, AuthLogin, AuthMe, AuthRefresh } from './auth/auth.messages';
+import { User } from './user/user';
+
+export interface GrpcAuthServiceClient {
+  login(request: AuthLogin, metadata?: Metadata): Observable<AuthData>;
+
+  refreshToken(request: AuthRefresh, metadata?: Metadata): Observable<AuthData>;
+
+  me(request: AuthMe, metadata?: Metadata): Observable<User>;
+}
+
+export interface GrpcAuthServiceController {
+  login(request: AuthLogin, ...args: any[]): Promise<AuthData> | Observable<AuthData> | AuthData;
+
+  refreshToken(
+    request: AuthRefresh,
+    ...args: any[]
+  ): Promise<AuthData> | Observable<AuthData> | AuthData;
+
+  me(request: AuthMe, ...args: any[]): Promise<User> | Observable<User> | User;
+}
+
+function AuthServiceControllerMethods() {
+  return function (constructor: Function) {
+    const grpcMethods: string[] = ['login', 'refreshToken', 'me'];
+    for (const method of grpcMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcMethod('AuthService', method)(constructor.prototype[method], method, descriptor);
+    }
+    const grpcStreamMethods: string[] = [];
+    for (const method of grpcStreamMethods) {
+      const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
+      GrpcStreamMethod('AuthService', method)(constructor.prototype[method], method, descriptor);
+    }
+  };
+}
 
 export interface GrpcAuthPublicServiceClient {
   login(request: AuthLogin, metadata?: Metadata): Observable<AuthData>;
@@ -43,6 +78,15 @@ function AuthPublicServiceControllerMethods() {
     }
   };
 }
+
+export const GrpcAuthTransport = {
+  service: 'AuthService',
+  definition: {
+    package: 'auth',
+    protoPath: 'auth/auth.service.proto',
+  },
+  ControllerMethods: (): ClassDecorator => AuthServiceControllerMethods(),
+} as const;
 
 export const GrpcAuthPublicTransport = {
   service: 'AuthPublicService',

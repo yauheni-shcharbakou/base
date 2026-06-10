@@ -1,5 +1,6 @@
 import {
   GrpcAuthPublicTransport,
+  GrpcAuthTransport,
   GrpcFileAdminTransport,
   GrpcFileTransport,
   GrpcImageAdminTransport,
@@ -82,7 +83,7 @@ export const grpcConfig = () => {
         url: env.AUTH_GRPC_URL,
       },
       services: {
-        [GrpcAuthPublicTransport.service]: GrpcAuthPublicTransport.definition,
+        [GrpcAuthTransport.service]: GrpcAuthTransport.definition,
         [GrpcTempCodeTransport.service]: GrpcTempCodeTransport.definition,
         [GrpcUserTransport.service]: GrpcUserTransport.definition,
       },

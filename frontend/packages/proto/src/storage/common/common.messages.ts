@@ -6,7 +6,7 @@
 // source: storage/common/common.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export interface DownloadData {
   url: string;
@@ -52,15 +52,15 @@ export interface GetUrlMapWeb {
 }
 
 function createBaseDownloadData(): DownloadData {
-  return { url: '', fileName: '' };
+  return { url: "", fileName: "" };
 }
 
 export const DownloadData: MessageFns<DownloadData> = {
   encode(message: DownloadData, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.url !== '') {
+    if (message.url !== "") {
       writer.uint32(10).string(message.url);
     }
-    if (message.fileName !== '') {
+    if (message.fileName !== "") {
       writer.uint32(18).string(message.fileName);
     }
     return writer;
@@ -100,17 +100,17 @@ export const DownloadData: MessageFns<DownloadData> = {
 
   fromJSON(object: any): DownloadData {
     return {
-      url: isSet(object.url) ? globalThis.String(object.url) : '',
-      fileName: isSet(object.fileName) ? globalThis.String(object.fileName) : '',
+      url: isSet(object.url) ? globalThis.String(object.url) : "",
+      fileName: isSet(object.fileName) ? globalThis.String(object.fileName) : "",
     };
   },
 
   toJSON(message: DownloadData): unknown {
     const obj: any = {};
-    if (message.url !== '') {
+    if (message.url !== "") {
       obj.url = message.url;
     }
-    if (message.fileName !== '') {
+    if (message.fileName !== "") {
       obj.fileName = message.fileName;
     }
     return obj;
@@ -121,8 +121,8 @@ export const DownloadData: MessageFns<DownloadData> = {
   },
   fromPartial<I extends Exact<DeepPartial<DownloadData>, I>>(object: I): DownloadData {
     const message = createBaseDownloadData();
-    message.url = object.url ?? '';
-    message.fileName = object.fileName ?? '';
+    message.url = object.url ?? "";
+    message.fileName = object.fileName ?? "";
     return message;
   },
 };
@@ -170,12 +170,12 @@ export const DownloadMap: MessageFns<DownloadMap> = {
     return {
       entries: isObject(object.entries)
         ? (globalThis.Object.entries(object.entries) as [string, any][]).reduce(
-            (acc: Map<string, DownloadData>, [key, value]: [string, any]) => {
-              acc.set(key, DownloadData.fromJSON(value));
-              return acc;
-            },
-            new Map(),
-          )
+          (acc: Map<string, DownloadData>, [key, value]: [string, any]) => {
+            acc.set(key, DownloadData.fromJSON(value));
+            return acc;
+          },
+          new Map(),
+        )
         : new Map(),
     };
   },
@@ -198,7 +198,7 @@ export const DownloadMap: MessageFns<DownloadMap> = {
     const message = createBaseDownloadMap();
     message.entries = (() => {
       const m = new Map();
-      ((object.entries as Map<string, DownloadData>) ?? new Map()).forEach((value, key) => {
+      (object.entries as Map<string, DownloadData> ?? new Map()).forEach((value, key) => {
         if (value !== undefined) {
           m.set(key, DownloadData.fromPartial(value));
         }
@@ -210,15 +210,12 @@ export const DownloadMap: MessageFns<DownloadMap> = {
 };
 
 function createBaseDownloadMap_EntriesEntry(): DownloadMap_EntriesEntry {
-  return { key: '', value: undefined };
+  return { key: "", value: undefined };
 }
 
 export const DownloadMap_EntriesEntry: MessageFns<DownloadMap_EntriesEntry> = {
-  encode(
-    message: DownloadMap_EntriesEntry,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
-    if (message.key !== '') {
+  encode(message: DownloadMap_EntriesEntry, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.key !== "") {
       writer.uint32(10).string(message.key);
     }
     if (message.value !== undefined) {
@@ -261,14 +258,14 @@ export const DownloadMap_EntriesEntry: MessageFns<DownloadMap_EntriesEntry> = {
 
   fromJSON(object: any): DownloadMap_EntriesEntry {
     return {
-      key: isSet(object.key) ? globalThis.String(object.key) : '',
+      key: isSet(object.key) ? globalThis.String(object.key) : "",
       value: isSet(object.value) ? DownloadData.fromJSON(object.value) : undefined,
     };
   },
 
   toJSON(message: DownloadMap_EntriesEntry): unknown {
     const obj: any = {};
-    if (message.key !== '') {
+    if (message.key !== "") {
       obj.key = message.key;
     }
     if (message.value !== undefined) {
@@ -277,20 +274,15 @@ export const DownloadMap_EntriesEntry: MessageFns<DownloadMap_EntriesEntry> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<DownloadMap_EntriesEntry>, I>>(
-    base?: I,
-  ): DownloadMap_EntriesEntry {
+  create<I extends Exact<DeepPartial<DownloadMap_EntriesEntry>, I>>(base?: I): DownloadMap_EntriesEntry {
     return DownloadMap_EntriesEntry.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<DownloadMap_EntriesEntry>, I>>(
-    object: I,
-  ): DownloadMap_EntriesEntry {
+  fromPartial<I extends Exact<DeepPartial<DownloadMap_EntriesEntry>, I>>(object: I): DownloadMap_EntriesEntry {
     const message = createBaseDownloadMap_EntriesEntry();
-    message.key = object.key ?? '';
-    message.value =
-      object.value !== undefined && object.value !== null
-        ? DownloadData.fromPartial(object.value)
-        : undefined;
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? DownloadData.fromPartial(object.value)
+      : undefined;
     return message;
   },
 };
@@ -372,18 +364,18 @@ export const UploadOne: MessageFns<UploadOne> = {
 };
 
 function createBaseStorageMeta(): StorageMeta {
-  return { name: '', isPublic: false, parent: '' };
+  return { name: "", isPublic: false, parent: "" };
 }
 
 export const StorageMeta: MessageFns<StorageMeta> = {
   encode(message: StorageMeta, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.name !== '') {
+    if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
     if (message.isPublic !== false) {
       writer.uint32(16).bool(message.isPublic);
     }
-    if (message.parent !== '') {
+    if (message.parent !== "") {
       writer.uint32(26).string(message.parent);
     }
     return writer;
@@ -431,21 +423,21 @@ export const StorageMeta: MessageFns<StorageMeta> = {
 
   fromJSON(object: any): StorageMeta {
     return {
-      name: isSet(object.name) ? globalThis.String(object.name) : '',
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
-      parent: isSet(object.parent) ? globalThis.String(object.parent) : '',
+      parent: isSet(object.parent) ? globalThis.String(object.parent) : "",
     };
   },
 
   toJSON(message: StorageMeta): unknown {
     const obj: any = {};
-    if (message.name !== '') {
+    if (message.name !== "") {
       obj.name = message.name;
     }
     if (message.isPublic !== false) {
       obj.isPublic = message.isPublic;
     }
-    if (message.parent !== '') {
+    if (message.parent !== "") {
       obj.parent = message.parent;
     }
     return obj;
@@ -456,15 +448,15 @@ export const StorageMeta: MessageFns<StorageMeta> = {
   },
   fromPartial<I extends Exact<DeepPartial<StorageMeta>, I>>(object: I): StorageMeta {
     const message = createBaseStorageMeta();
-    message.name = object.name ?? '';
+    message.name = object.name ?? "";
     message.isPublic = object.isPublic ?? false;
-    message.parent = object.parent ?? '';
+    message.parent = object.parent ?? "";
     return message;
   },
 };
 
 function createBaseStorageManyMeta(): StorageManyMeta {
-  return { isPublic: false, parent: '' };
+  return { isPublic: false, parent: "" };
 }
 
 export const StorageManyMeta: MessageFns<StorageManyMeta> = {
@@ -472,7 +464,7 @@ export const StorageManyMeta: MessageFns<StorageManyMeta> = {
     if (message.isPublic !== false) {
       writer.uint32(8).bool(message.isPublic);
     }
-    if (message.parent !== '') {
+    if (message.parent !== "") {
       writer.uint32(18).string(message.parent);
     }
     return writer;
@@ -513,7 +505,7 @@ export const StorageManyMeta: MessageFns<StorageManyMeta> = {
   fromJSON(object: any): StorageManyMeta {
     return {
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
-      parent: isSet(object.parent) ? globalThis.String(object.parent) : '',
+      parent: isSet(object.parent) ? globalThis.String(object.parent) : "",
     };
   },
 
@@ -522,7 +514,7 @@ export const StorageManyMeta: MessageFns<StorageManyMeta> = {
     if (message.isPublic !== false) {
       obj.isPublic = message.isPublic;
     }
-    if (message.parent !== '') {
+    if (message.parent !== "") {
       obj.parent = message.parent;
     }
     return obj;
@@ -534,13 +526,13 @@ export const StorageManyMeta: MessageFns<StorageManyMeta> = {
   fromPartial<I extends Exact<DeepPartial<StorageManyMeta>, I>>(object: I): StorageManyMeta {
     const message = createBaseStorageManyMeta();
     message.isPublic = object.isPublic ?? false;
-    message.parent = object.parent ?? '';
+    message.parent = object.parent ?? "";
     return message;
   },
 };
 
 function createBaseGetUrlMap(): GetUrlMap {
-  return { id: undefined, ids: [], ip: undefined, userId: '' };
+  return { id: undefined, ids: [], ip: undefined, userId: "" };
 }
 
 export const GetUrlMap: MessageFns<GetUrlMap> = {
@@ -554,7 +546,7 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     if (message.ip !== undefined) {
       writer.uint32(26).string(message.ip);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(34).string(message.userId);
     }
     return writer;
@@ -611,11 +603,9 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
   fromJSON(object: any): GetUrlMap {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       ip: isSet(object.ip) ? globalThis.String(object.ip) : undefined,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
     };
   },
 
@@ -630,7 +620,7 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     if (message.ip !== undefined) {
       obj.ip = message.ip;
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     return obj;
@@ -644,7 +634,7 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     message.id = object.id ?? undefined;
     message.ids = object.ids?.map((e) => e) || [];
     message.ip = object.ip ?? undefined;
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? "";
     return message;
   },
 };
@@ -710,9 +700,7 @@ export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
   fromJSON(object: any): GetUrlMapWeb {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       ip: isSet(object.ip) ? globalThis.String(object.ip) : undefined,
     };
   },
@@ -745,7 +733,7 @@ export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
 
 function bytesFromBase64(b64: string): Uint8Array {
   if ((globalThis as any).Buffer) {
-    return Uint8Array.from((globalThis as any).Buffer.from(b64, 'base64'));
+    return Uint8Array.from((globalThis as any).Buffer.from(b64, "base64"));
   } else {
     const bin = globalThis.atob(b64);
     const arr = new Uint8Array(bin.length);
@@ -758,35 +746,30 @@ function bytesFromBase64(b64: string): Uint8Array {
 
 function base64FromBytes(arr: Uint8Array): string {
   if ((globalThis as any).Buffer) {
-    return (globalThis as any).Buffer.from(arr).toString('base64');
+    return (globalThis as any).Buffer.from(arr).toString("base64");
   } else {
     const bin: string[] = [];
     arr.forEach((byte) => {
       bin.push(globalThis.String.fromCharCode(byte));
     });
-    return globalThis.btoa(bin.join(''));
+    return globalThis.btoa(bin.join(""));
   }
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isObject(value: any): boolean {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
 }
 
 function isSet(value: any): boolean {

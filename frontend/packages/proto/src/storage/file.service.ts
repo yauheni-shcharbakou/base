@@ -6,37 +6,27 @@
 // source: storage/file.service.proto
 
 /* eslint-disable */
+import { CallOptions, ChannelCredentials, Client, ClientDuplexStream, ClientOptions, ClientUnaryCall, makeGenericClientConstructor, Metadata, ServiceError } from "@grpc/grpc-js";
+import { IdField } from "../common/fields";
+import { GetList } from "../common/messages";
+import { StringMap } from "../common/types";
+import { DownloadMap, GetUrlMap, GetUrlMapWeb, UploadOne } from "./common/common.messages";
+import { File } from "./file/file";
 import {
-  CallOptions,
-  ChannelCredentials,
-  Client,
-  ClientDuplexStream,
-  ClientOptions,
-  ClientUnaryCall,
-  makeGenericClientConstructor,
-  Metadata,
-  ServiceError,
-} from '@grpc/grpc-js';
-import { IdField } from '../common/fields';
-import { GetList } from '../common/messages';
-import { StringMap } from '../common/types';
-import { DownloadMap, GetUrlMap, GetUrlMapWeb, UploadOne } from './common/common.messages';
-import { File } from './file/file';
-import {
-  FileArray,
-  FileCreateMany,
-  FileCreateManyWeb,
-  FileCreateOne,
-  FileCreateOneWeb,
-  FileList,
-  FileQuery,
-  FileUploadResponse,
-} from './file/file.messages';
+    FileArray,
+    FileCreateMany,
+    FileCreateManyWeb,
+    FileCreateOne,
+    FileCreateOneWeb,
+    FileList,
+    FileQuery,
+    FileUploadResponse,
+} from "./file/file.messages";
 
 type FileServiceService = typeof FileServiceService;
 const FileServiceService = {
   getUrlMap: {
-    path: '/storage.FileService/getUrlMap' as const,
+    path: "/storage.FileService/getUrlMap" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
@@ -45,17 +35,16 @@ const FileServiceService = {
     responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
   },
   getDownloadMap: {
-    path: '/storage.FileService/getDownloadMap' as const,
+    path: "/storage.FileService/getDownloadMap" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
     requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
-    responseSerialize: (value: DownloadMap): Buffer =>
-      Buffer.from(DownloadMap.encode(value).finish()),
+    responseSerialize: (value: DownloadMap): Buffer => Buffer.from(DownloadMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
   },
   getById: {
-    path: '/storage.FileService/getById' as const,
+    path: "/storage.FileService/getById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -64,7 +53,7 @@ const FileServiceService = {
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   getList: {
-    path: '/storage.FileService/getList' as const,
+    path: "/storage.FileService/getList" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
@@ -73,37 +62,34 @@ const FileServiceService = {
     responseDeserialize: (value: Buffer): FileList => FileList.decode(value),
   },
   createOne: {
-    path: '/storage.FileService/createOne' as const,
+    path: "/storage.FileService/createOne" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateOne): Buffer =>
-      Buffer.from(FileCreateOne.encode(value).finish()),
+    requestSerialize: (value: FileCreateOne): Buffer => Buffer.from(FileCreateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateOne => FileCreateOne.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   createMany: {
-    path: '/storage.FileService/createMany' as const,
+    path: "/storage.FileService/createMany" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateMany): Buffer =>
-      Buffer.from(FileCreateMany.encode(value).finish()),
+    requestSerialize: (value: FileCreateMany): Buffer => Buffer.from(FileCreateMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateMany => FileCreateMany.decode(value),
     responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
   },
   uploadOne: {
-    path: '/storage.FileService/uploadOne' as const,
+    path: "/storage.FileService/uploadOne" as const,
     requestStream: true as const,
     responseStream: true as const,
     requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
-    responseSerialize: (value: FileUploadResponse): Buffer =>
-      Buffer.from(FileUploadResponse.encode(value).finish()),
+    responseSerialize: (value: FileUploadResponse): Buffer => Buffer.from(FileUploadResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
   },
   deleteOne: {
-    path: '/storage.FileService/deleteOne' as const,
+    path: "/storage.FileService/deleteOne" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: FileQuery): Buffer => Buffer.from(FileQuery.encode(value).finish()),
@@ -113,11 +99,9 @@ const FileServiceService = {
   },
 } as const;
 
+
 export interface GrpcFileServiceClient extends Client {
-  getUrlMap(
-    request: GetUrlMap,
-    callback: (error: ServiceError | null, response: StringMap) => void,
-  ): ClientUnaryCall;
+  getUrlMap(request: GetUrlMap, callback: (error: ServiceError | null, response: StringMap) => void): ClientUnaryCall;
   getUrlMap(
     request: GetUrlMap,
     metadata: Metadata,
@@ -144,10 +128,7 @@ export interface GrpcFileServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
-  getById(
-    request: IdField,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  getById(request: IdField, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   getById(
     request: IdField,
     metadata: Metadata,
@@ -159,10 +140,7 @@ export interface GrpcFileServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
-  getList(
-    request: GetList,
-    callback: (error: ServiceError | null, response: FileList) => void,
-  ): ClientUnaryCall;
+  getList(request: GetList, callback: (error: ServiceError | null, response: FileList) => void): ClientUnaryCall;
   getList(
     request: GetList,
     metadata: Metadata,
@@ -174,10 +152,7 @@ export interface GrpcFileServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: FileList) => void,
   ): ClientUnaryCall;
-  createOne(
-    request: FileCreateOne,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  createOne(request: FileCreateOne, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
     metadata: Metadata,
@@ -206,14 +181,8 @@ export interface GrpcFileServiceClient extends Client {
   ): ClientUnaryCall;
   uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
   uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  uploadOne(
-    metadata: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  deleteOne(
-    request: FileQuery,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  uploadOne(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  deleteOne(request: FileQuery, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   deleteOne(
     request: FileQuery,
     metadata: Metadata,
@@ -227,96 +196,16 @@ export interface GrpcFileServiceClient extends Client {
   ): ClientUnaryCall;
 }
 
-export const GrpcFileServiceClient = makeGenericClientConstructor(
-  FileServiceService,
-  'storage.FileService',
-) as unknown as {
-  new (
-    address: string,
-    credentials: ChannelCredentials,
-    options?: Partial<ClientOptions>,
-  ): GrpcFileServiceClient;
-  service: {
-    readonly getUrlMap: {
-      readonly path: '/storage.FileService/getUrlMap';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMap) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
-      readonly responseSerialize: (value: StringMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => StringMap;
-    };
-    readonly getDownloadMap: {
-      readonly path: '/storage.FileService/getDownloadMap';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMap) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
-      readonly responseSerialize: (value: DownloadMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => DownloadMap;
-    };
-    readonly getById: {
-      readonly path: '/storage.FileService/getById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: IdField) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => IdField;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-    readonly getList: {
-      readonly path: '/storage.FileService/getList';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetList) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetList;
-      readonly responseSerialize: (value: FileList) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileList;
-    };
-    readonly createOne: {
-      readonly path: '/storage.FileService/createOne';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateOne;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-    readonly createMany: {
-      readonly path: '/storage.FileService/createMany';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateMany) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateMany;
-      readonly responseSerialize: (value: FileArray) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileArray;
-    };
-    readonly uploadOne: {
-      readonly path: '/storage.FileService/uploadOne';
-      readonly requestStream: true;
-      readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOne;
-      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
-    };
-    readonly deleteOne: {
-      readonly path: '/storage.FileService/deleteOne';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileQuery) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileQuery;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-  };
+export const GrpcFileServiceClient = makeGenericClientConstructor(FileServiceService, "storage.FileService") as unknown as {
+  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcFileServiceClient;
+  service: { readonly getUrlMap: { readonly path: "/storage.FileService/getUrlMap"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetUrlMap) => Buffer; readonly requestDeserialize: (value: Buffer) => GetUrlMap; readonly responseSerialize: (value: StringMap) => Buffer; readonly responseDeserialize: (value: Buffer) => StringMap; }; readonly getDownloadMap: { readonly path: "/storage.FileService/getDownloadMap"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetUrlMap) => Buffer; readonly requestDeserialize: (value: Buffer) => GetUrlMap; readonly responseSerialize: (value: DownloadMap) => Buffer; readonly responseDeserialize: (value: Buffer) => DownloadMap; }; readonly getById: { readonly path: "/storage.FileService/getById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; readonly getList: { readonly path: "/storage.FileService/getList"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetList) => Buffer; readonly requestDeserialize: (value: Buffer) => GetList; readonly responseSerialize: (value: FileList) => Buffer; readonly responseDeserialize: (value: Buffer) => FileList; }; readonly createOne: { readonly path: "/storage.FileService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileCreateOne) => Buffer; readonly requestDeserialize: (value: Buffer) => FileCreateOne; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; readonly createMany: { readonly path: "/storage.FileService/createMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileCreateMany) => Buffer; readonly requestDeserialize: (value: Buffer) => FileCreateMany; readonly responseSerialize: (value: FileArray) => Buffer; readonly responseDeserialize: (value: Buffer) => FileArray; }; readonly uploadOne: { readonly path: "/storage.FileService/uploadOne"; readonly requestStream: true; readonly responseStream: true; readonly requestSerialize: (value: UploadOne) => Buffer; readonly requestDeserialize: (value: Buffer) => UploadOne; readonly responseSerialize: (value: FileUploadResponse) => Buffer; readonly responseDeserialize: (value: Buffer) => FileUploadResponse; }; readonly deleteOne: { readonly path: "/storage.FileService/deleteOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileQuery) => Buffer; readonly requestDeserialize: (value: Buffer) => FileQuery; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; };
   serviceName: string;
 };
 
 type FileAdminServiceService = typeof FileAdminServiceService;
 const FileAdminServiceService = {
   getUrlMap: {
-    path: '/storage.FileAdminService/getUrlMap' as const,
+    path: "/storage.FileAdminService/getUrlMap" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
@@ -325,17 +214,16 @@ const FileAdminServiceService = {
     responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
   },
   getDownloadMap: {
-    path: '/storage.FileAdminService/getDownloadMap' as const,
+    path: "/storage.FileAdminService/getDownloadMap" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
     requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
-    responseSerialize: (value: DownloadMap): Buffer =>
-      Buffer.from(DownloadMap.encode(value).finish()),
+    responseSerialize: (value: DownloadMap): Buffer => Buffer.from(DownloadMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
   },
   getById: {
-    path: '/storage.FileAdminService/getById' as const,
+    path: "/storage.FileAdminService/getById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -344,7 +232,7 @@ const FileAdminServiceService = {
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   getList: {
-    path: '/storage.FileAdminService/getList' as const,
+    path: "/storage.FileAdminService/getList" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
@@ -353,37 +241,34 @@ const FileAdminServiceService = {
     responseDeserialize: (value: Buffer): FileList => FileList.decode(value),
   },
   createOne: {
-    path: '/storage.FileAdminService/createOne' as const,
+    path: "/storage.FileAdminService/createOne" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateOne): Buffer =>
-      Buffer.from(FileCreateOne.encode(value).finish()),
+    requestSerialize: (value: FileCreateOne): Buffer => Buffer.from(FileCreateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateOne => FileCreateOne.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   createMany: {
-    path: '/storage.FileAdminService/createMany' as const,
+    path: "/storage.FileAdminService/createMany" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateMany): Buffer =>
-      Buffer.from(FileCreateMany.encode(value).finish()),
+    requestSerialize: (value: FileCreateMany): Buffer => Buffer.from(FileCreateMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateMany => FileCreateMany.decode(value),
     responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
   },
   uploadOne: {
-    path: '/storage.FileAdminService/uploadOne' as const,
+    path: "/storage.FileAdminService/uploadOne" as const,
     requestStream: true as const,
     responseStream: true as const,
     requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
-    responseSerialize: (value: FileUploadResponse): Buffer =>
-      Buffer.from(FileUploadResponse.encode(value).finish()),
+    responseSerialize: (value: FileUploadResponse): Buffer => Buffer.from(FileUploadResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
   },
   deleteById: {
-    path: '/storage.FileAdminService/deleteById' as const,
+    path: "/storage.FileAdminService/deleteById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -393,11 +278,9 @@ const FileAdminServiceService = {
   },
 } as const;
 
+
 export interface GrpcFileAdminServiceClient extends Client {
-  getUrlMap(
-    request: GetUrlMap,
-    callback: (error: ServiceError | null, response: StringMap) => void,
-  ): ClientUnaryCall;
+  getUrlMap(request: GetUrlMap, callback: (error: ServiceError | null, response: StringMap) => void): ClientUnaryCall;
   getUrlMap(
     request: GetUrlMap,
     metadata: Metadata,
@@ -424,10 +307,7 @@ export interface GrpcFileAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
-  getById(
-    request: IdField,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  getById(request: IdField, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   getById(
     request: IdField,
     metadata: Metadata,
@@ -439,10 +319,7 @@ export interface GrpcFileAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
-  getList(
-    request: GetList,
-    callback: (error: ServiceError | null, response: FileList) => void,
-  ): ClientUnaryCall;
+  getList(request: GetList, callback: (error: ServiceError | null, response: FileList) => void): ClientUnaryCall;
   getList(
     request: GetList,
     metadata: Metadata,
@@ -454,10 +331,7 @@ export interface GrpcFileAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: FileList) => void,
   ): ClientUnaryCall;
-  createOne(
-    request: FileCreateOne,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  createOne(request: FileCreateOne, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
     metadata: Metadata,
@@ -486,14 +360,8 @@ export interface GrpcFileAdminServiceClient extends Client {
   ): ClientUnaryCall;
   uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
   uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  uploadOne(
-    metadata: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  deleteById(
-    request: IdField,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  uploadOne(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  deleteById(request: IdField, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   deleteById(
     request: IdField,
     metadata: Metadata,
@@ -509,145 +377,62 @@ export interface GrpcFileAdminServiceClient extends Client {
 
 export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
   FileAdminServiceService,
-  'storage.FileAdminService',
+  "storage.FileAdminService",
 ) as unknown as {
-  new (
-    address: string,
-    credentials: ChannelCredentials,
-    options?: Partial<ClientOptions>,
-  ): GrpcFileAdminServiceClient;
-  service: {
-    readonly getUrlMap: {
-      readonly path: '/storage.FileAdminService/getUrlMap';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMap) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
-      readonly responseSerialize: (value: StringMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => StringMap;
-    };
-    readonly getDownloadMap: {
-      readonly path: '/storage.FileAdminService/getDownloadMap';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMap) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
-      readonly responseSerialize: (value: DownloadMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => DownloadMap;
-    };
-    readonly getById: {
-      readonly path: '/storage.FileAdminService/getById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: IdField) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => IdField;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-    readonly getList: {
-      readonly path: '/storage.FileAdminService/getList';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetList) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetList;
-      readonly responseSerialize: (value: FileList) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileList;
-    };
-    readonly createOne: {
-      readonly path: '/storage.FileAdminService/createOne';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateOne;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-    readonly createMany: {
-      readonly path: '/storage.FileAdminService/createMany';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateMany) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateMany;
-      readonly responseSerialize: (value: FileArray) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileArray;
-    };
-    readonly uploadOne: {
-      readonly path: '/storage.FileAdminService/uploadOne';
-      readonly requestStream: true;
-      readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOne;
-      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
-    };
-    readonly deleteById: {
-      readonly path: '/storage.FileAdminService/deleteById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: IdField) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => IdField;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-  };
+  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcFileAdminServiceClient;
+  service: { readonly getUrlMap: { readonly path: "/storage.FileAdminService/getUrlMap"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetUrlMap) => Buffer; readonly requestDeserialize: (value: Buffer) => GetUrlMap; readonly responseSerialize: (value: StringMap) => Buffer; readonly responseDeserialize: (value: Buffer) => StringMap; }; readonly getDownloadMap: { readonly path: "/storage.FileAdminService/getDownloadMap"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetUrlMap) => Buffer; readonly requestDeserialize: (value: Buffer) => GetUrlMap; readonly responseSerialize: (value: DownloadMap) => Buffer; readonly responseDeserialize: (value: Buffer) => DownloadMap; }; readonly getById: { readonly path: "/storage.FileAdminService/getById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; readonly getList: { readonly path: "/storage.FileAdminService/getList"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetList) => Buffer; readonly requestDeserialize: (value: Buffer) => GetList; readonly responseSerialize: (value: FileList) => Buffer; readonly responseDeserialize: (value: Buffer) => FileList; }; readonly createOne: { readonly path: "/storage.FileAdminService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileCreateOne) => Buffer; readonly requestDeserialize: (value: Buffer) => FileCreateOne; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; readonly createMany: { readonly path: "/storage.FileAdminService/createMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileCreateMany) => Buffer; readonly requestDeserialize: (value: Buffer) => FileCreateMany; readonly responseSerialize: (value: FileArray) => Buffer; readonly responseDeserialize: (value: Buffer) => FileArray; }; readonly uploadOne: { readonly path: "/storage.FileAdminService/uploadOne"; readonly requestStream: true; readonly responseStream: true; readonly requestSerialize: (value: UploadOne) => Buffer; readonly requestDeserialize: (value: Buffer) => UploadOne; readonly responseSerialize: (value: FileUploadResponse) => Buffer; readonly responseDeserialize: (value: Buffer) => FileUploadResponse; }; readonly deleteById: { readonly path: "/storage.FileAdminService/deleteById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; };
   serviceName: string;
 };
 
 type FileWebServiceService = typeof FileWebServiceService;
 const FileWebServiceService = {
   getUrlMap: {
-    path: '/storage.FileWebService/getUrlMap' as const,
+    path: "/storage.FileWebService/getUrlMap" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetUrlMapWeb): Buffer =>
-      Buffer.from(GetUrlMapWeb.encode(value).finish()),
+    requestSerialize: (value: GetUrlMapWeb): Buffer => Buffer.from(GetUrlMapWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): GetUrlMapWeb => GetUrlMapWeb.decode(value),
     responseSerialize: (value: StringMap): Buffer => Buffer.from(StringMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
   },
   getDownloadMap: {
-    path: '/storage.FileWebService/getDownloadMap' as const,
+    path: "/storage.FileWebService/getDownloadMap" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetUrlMapWeb): Buffer =>
-      Buffer.from(GetUrlMapWeb.encode(value).finish()),
+    requestSerialize: (value: GetUrlMapWeb): Buffer => Buffer.from(GetUrlMapWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): GetUrlMapWeb => GetUrlMapWeb.decode(value),
-    responseSerialize: (value: DownloadMap): Buffer =>
-      Buffer.from(DownloadMap.encode(value).finish()),
+    responseSerialize: (value: DownloadMap): Buffer => Buffer.from(DownloadMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
   },
   createOne: {
-    path: '/storage.FileWebService/createOne' as const,
+    path: "/storage.FileWebService/createOne" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateOneWeb): Buffer =>
-      Buffer.from(FileCreateOneWeb.encode(value).finish()),
+    requestSerialize: (value: FileCreateOneWeb): Buffer => Buffer.from(FileCreateOneWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateOneWeb => FileCreateOneWeb.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   createMany: {
-    path: '/storage.FileWebService/createMany' as const,
+    path: "/storage.FileWebService/createMany" as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: FileCreateManyWeb): Buffer =>
-      Buffer.from(FileCreateManyWeb.encode(value).finish()),
+    requestSerialize: (value: FileCreateManyWeb): Buffer => Buffer.from(FileCreateManyWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateManyWeb => FileCreateManyWeb.decode(value),
     responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
   },
   uploadOne: {
-    path: '/storage.FileWebService/uploadOne' as const,
+    path: "/storage.FileWebService/uploadOne" as const,
     requestStream: true as const,
     responseStream: true as const,
     requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
-    responseSerialize: (value: FileUploadResponse): Buffer =>
-      Buffer.from(FileUploadResponse.encode(value).finish()),
+    responseSerialize: (value: FileUploadResponse): Buffer => Buffer.from(FileUploadResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
   },
   deleteById: {
-    path: '/storage.FileWebService/deleteById' as const,
+    path: "/storage.FileWebService/deleteById" as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -656,6 +441,7 @@ const FileWebServiceService = {
     responseDeserialize: (value: Buffer): File => File.decode(value),
   },
 } as const;
+
 
 export interface GrpcFileWebServiceClient extends Client {
   getUrlMap(
@@ -688,10 +474,7 @@ export interface GrpcFileWebServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
-  createOne(
-    request: FileCreateOneWeb,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  createOne(request: FileCreateOneWeb, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   createOne(
     request: FileCreateOneWeb,
     metadata: Metadata,
@@ -720,14 +503,8 @@ export interface GrpcFileWebServiceClient extends Client {
   ): ClientUnaryCall;
   uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
   uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  uploadOne(
-    metadata: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  deleteById(
-    request: IdField,
-    callback: (error: ServiceError | null, response: File) => void,
-  ): ClientUnaryCall;
+  uploadOne(metadata: Metadata, options?: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  deleteById(request: IdField, callback: (error: ServiceError | null, response: File) => void): ClientUnaryCall;
   deleteById(
     request: IdField,
     metadata: Metadata,
@@ -743,69 +520,10 @@ export interface GrpcFileWebServiceClient extends Client {
 
 export const GrpcFileWebServiceClient = makeGenericClientConstructor(
   FileWebServiceService,
-  'storage.FileWebService',
+  "storage.FileWebService",
 ) as unknown as {
-  new (
-    address: string,
-    credentials: ChannelCredentials,
-    options?: Partial<ClientOptions>,
-  ): GrpcFileWebServiceClient;
-  service: {
-    readonly getUrlMap: {
-      readonly path: '/storage.FileWebService/getUrlMap';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMapWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb;
-      readonly responseSerialize: (value: StringMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => StringMap;
-    };
-    readonly getDownloadMap: {
-      readonly path: '/storage.FileWebService/getDownloadMap';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMapWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb;
-      readonly responseSerialize: (value: DownloadMap) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => DownloadMap;
-    };
-    readonly createOne: {
-      readonly path: '/storage.FileWebService/createOne';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateOneWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateOneWeb;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-    readonly createMany: {
-      readonly path: '/storage.FileWebService/createMany';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: FileCreateManyWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => FileCreateManyWeb;
-      readonly responseSerialize: (value: FileArray) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileArray;
-    };
-    readonly uploadOne: {
-      readonly path: '/storage.FileWebService/uploadOne';
-      readonly requestStream: true;
-      readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOne;
-      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
-    };
-    readonly deleteById: {
-      readonly path: '/storage.FileWebService/deleteById';
-      readonly requestStream: false;
-      readonly responseStream: false;
-      readonly requestSerialize: (value: IdField) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => IdField;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
-    };
-  };
+  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcFileWebServiceClient;
+  service: { readonly getUrlMap: { readonly path: "/storage.FileWebService/getUrlMap"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetUrlMapWeb) => Buffer; readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb; readonly responseSerialize: (value: StringMap) => Buffer; readonly responseDeserialize: (value: Buffer) => StringMap; }; readonly getDownloadMap: { readonly path: "/storage.FileWebService/getDownloadMap"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetUrlMapWeb) => Buffer; readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb; readonly responseSerialize: (value: DownloadMap) => Buffer; readonly responseDeserialize: (value: Buffer) => DownloadMap; }; readonly createOne: { readonly path: "/storage.FileWebService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileCreateOneWeb) => Buffer; readonly requestDeserialize: (value: Buffer) => FileCreateOneWeb; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; readonly createMany: { readonly path: "/storage.FileWebService/createMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: FileCreateManyWeb) => Buffer; readonly requestDeserialize: (value: Buffer) => FileCreateManyWeb; readonly responseSerialize: (value: FileArray) => Buffer; readonly responseDeserialize: (value: Buffer) => FileArray; }; readonly uploadOne: { readonly path: "/storage.FileWebService/uploadOne"; readonly requestStream: true; readonly responseStream: true; readonly requestSerialize: (value: UploadOne) => Buffer; readonly requestDeserialize: (value: Buffer) => UploadOne; readonly responseSerialize: (value: FileUploadResponse) => Buffer; readonly responseDeserialize: (value: Buffer) => FileUploadResponse; }; readonly deleteById: { readonly path: "/storage.FileWebService/deleteById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: File) => Buffer; readonly responseDeserialize: (value: Buffer) => File; }; };
   serviceName: string;
 };
 
@@ -815,7 +533,7 @@ export class GrpcFileRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>,
+    options?: Partial<ClientOptions>
   ) {
     this.client = new GrpcFileServiceClient(address, credentials, options);
   }
@@ -943,7 +661,7 @@ export class GrpcFileAdminRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>,
+    options?: Partial<ClientOptions>
   ) {
     this.client = new GrpcFileAdminServiceClient(address, credentials, options);
   }
@@ -1071,7 +789,7 @@ export class GrpcFileWebRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>,
+    options?: Partial<ClientOptions>
   ) {
     this.client = new GrpcFileWebServiceClient(address, credentials, options);
   }
@@ -1160,3 +878,4 @@ export class GrpcFileWebRepository {
     });
   }
 }
+

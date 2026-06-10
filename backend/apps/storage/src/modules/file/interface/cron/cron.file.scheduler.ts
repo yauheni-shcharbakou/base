@@ -4,8 +4,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
-export class FileCronService {
-  private readonly logger = new Logger(FileCronService.name);
+export class CronFileScheduler {
+  private readonly logger = new Logger(CronFileScheduler.name);
 
   constructor(
     private readonly cleanupUseCase: FileCleanupUseCase,

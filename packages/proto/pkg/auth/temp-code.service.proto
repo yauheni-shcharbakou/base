@@ -25,5 +25,5 @@ service TempCodeAdminService {
 }
 
 service TempCodeWebService {
-  rpc generate (google.protobuf.Empty) returns (auth.temp_code.TempCode) {}
+  rpc generate (google.protobuf.Empty) returns (temp_code.TempCode) {}
 }

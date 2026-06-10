@@ -1,4 +1,3 @@
-import { RxPipe } from '@backend/common';
 import { GrpcController, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcImageServiceController,
@@ -44,7 +43,7 @@ export class GrpcImageController implements GrpcImageServiceController {
 
   createMany(request: NestStorage.ImageCreateMany): Observable<NestStorage.ImageArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
-    return stream$.pipe(GrpcRxPipe.unwrapEither, RxPipe.toArrayItems);
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
   updateOne(request: NestStorage.ImageUpdateOne): Observable<NestStorage.Image> {

@@ -14,9 +14,9 @@ import { FileGetUseCase } from './application/use-cases/file.get.use-case';
 import { FileUpdateUseCase } from './application/use-cases/file.update.use-case';
 import { FileUploadOneUseCase } from './application/use-cases/file.upload-one.use-case';
 import { FileRepository } from './domain/repositories/file.repository';
-import { FileCronService } from './infrastructure/cron/services/file.cron.service';
 import { PgFileEntity } from './infrastructure/pg/entities/pg.file.entity';
 import { PgFileRepositoryImpl } from './infrastructure/pg/repositories/pg.file.repository.impl';
+import { CronFileScheduler } from './interface/cron/cron.file.scheduler';
 import { GrpcFileController } from './interface/grpc/grpc.file.controller';
 import { NatsFileController } from './interface/nats/nats.file.controller';
 
@@ -41,7 +41,7 @@ import { NatsFileController } from './interface/nats/nats.file.controller';
     FileDeleteUseCase,
     FileCleanupUseCase,
     FileUpdateUseCase,
-    FileCronService,
+    CronFileScheduler,
   ],
   controllers: [GrpcFileController, NatsFileController],
   exports: [FileMapper],

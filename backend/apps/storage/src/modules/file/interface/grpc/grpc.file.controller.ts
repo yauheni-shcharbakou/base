@@ -1,4 +1,3 @@
-import { RxPipe } from '@backend/common';
 import { GrpcController, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcFileServiceController,
@@ -29,11 +28,11 @@ export class GrpcFileController implements GrpcFileServiceController {
   ) {}
 
   getUrlMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
-    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(RxPipe.toMapEntries);
+    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getDownloadMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
-    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(RxPipe.toMapEntries);
+    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getById(request: NestCommon.IdField): Observable<NestStorage.File> {
@@ -50,7 +49,7 @@ export class GrpcFileController implements GrpcFileServiceController {
 
   createMany(request: NestStorage.FileCreateMany): Observable<NestStorage.FileArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
-    return stream$.pipe(GrpcRxPipe.unwrapEither, RxPipe.toArrayItems);
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
   uploadOne(

@@ -4,8 +4,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
-export class VideoCronService {
-  private readonly logger = new Logger(VideoCronService.name);
+export class CronVideoScheduler {
+  private readonly logger = new Logger(CronVideoScheduler.name);
 
   constructor(
     private readonly syncWithProviderUseCase: VideoSyncWithProviderUseCase,
@@ -13,7 +13,7 @@ export class VideoCronService {
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
-  async cleanupFiles() {
+  async syncVideos() {
     try {
       await this.databaseRunnerService.isolatedRun(async () => {
         await this.syncWithProviderUseCase.execute();

@@ -3,6 +3,9 @@ export * as NestCommon from './common';
 export * as NestStorage from './storage';
 export * as NestGoogle from './google';
 export {
+  type GrpcAuthServiceController,
+  type GrpcAuthServiceClient,
+  GrpcAuthTransport,
   type GrpcAuthPublicServiceController,
   type GrpcAuthPublicServiceClient,
   GrpcAuthPublicTransport,

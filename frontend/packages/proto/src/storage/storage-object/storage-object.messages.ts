@@ -6,14 +6,14 @@
 // source: storage/storage-object/storage-object.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 import {
-  StorageObjectType,
-  storageObjectTypeFromJSON,
-  storageObjectTypeToJSON,
-  storageObjectTypeToNumber,
-} from './storage-object';
-import { StorageObjectPopulated } from './storage-object.populates';
+    StorageObjectType,
+    storageObjectTypeFromJSON,
+    storageObjectTypeToJSON,
+    storageObjectTypeToNumber,
+} from "./storage-object";
+import { StorageObjectPopulated } from "./storage-object.populates";
 
 export interface StorageObjectQuery {
   id?: string;
@@ -223,9 +223,7 @@ export const StorageObjectQuery: MessageFns<StorageObjectQuery> = {
   fromJSON(object: any): StorageObjectQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       type: isSet(object.type) ? storageObjectTypeFromJSON(object.type) : undefined,
       userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : undefined,
@@ -282,14 +280,7 @@ export const StorageObjectQuery: MessageFns<StorageObjectQuery> = {
 };
 
 function createBaseStorageObjectQueryWeb(): StorageObjectQueryWeb {
-  return {
-    id: undefined,
-    ids: [],
-    type: undefined,
-    isPublic: undefined,
-    parent: undefined,
-    name: undefined,
-  };
+  return { id: undefined, ids: [], type: undefined, isPublic: undefined, parent: undefined, name: undefined };
 }
 
 export const StorageObjectQueryWeb: MessageFns<StorageObjectQueryWeb> = {
@@ -382,9 +373,7 @@ export const StorageObjectQueryWeb: MessageFns<StorageObjectQueryWeb> = {
   fromJSON(object: any): StorageObjectQueryWeb {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       type: isSet(object.type) ? storageObjectTypeFromJSON(object.type) : undefined,
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : undefined,
       parent: isSet(object.parent) ? globalThis.String(object.parent) : undefined,
@@ -418,9 +407,7 @@ export const StorageObjectQueryWeb: MessageFns<StorageObjectQueryWeb> = {
   create<I extends Exact<DeepPartial<StorageObjectQueryWeb>, I>>(base?: I): StorageObjectQueryWeb {
     return StorageObjectQueryWeb.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectQueryWeb>, I>>(
-    object: I,
-  ): StorageObjectQueryWeb {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectQueryWeb>, I>>(object: I): StorageObjectQueryWeb {
     const message = createBaseStorageObjectQueryWeb();
     message.id = object.id ?? undefined;
     message.ids = object.ids?.map((e) => e) || [];
@@ -625,27 +612,23 @@ export const StorageObjectGet: MessageFns<StorageObjectGet> = {
   },
   fromPartial<I extends Exact<DeepPartial<StorageObjectGet>, I>>(object: I): StorageObjectGet {
     const message = createBaseStorageObjectGet();
-    message.query =
-      object.query !== undefined && object.query !== null
-        ? StorageObjectQuery.fromPartial(object.query)
-        : undefined;
+    message.query = (object.query !== undefined && object.query !== null)
+      ? StorageObjectQuery.fromPartial(object.query)
+      : undefined;
     return message;
   },
 };
 
 function createBaseStorageObjectGetFolders(): StorageObjectGetFolders {
-  return { excludeChildrenOf: undefined, userId: '' };
+  return { excludeChildrenOf: undefined, userId: "" };
 }
 
 export const StorageObjectGetFolders: MessageFns<StorageObjectGetFolders> = {
-  encode(
-    message: StorageObjectGetFolders,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: StorageObjectGetFolders, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.excludeChildrenOf !== undefined) {
       writer.uint32(10).string(message.excludeChildrenOf);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(18).string(message.userId);
     }
     return writer;
@@ -685,10 +668,8 @@ export const StorageObjectGetFolders: MessageFns<StorageObjectGetFolders> = {
 
   fromJSON(object: any): StorageObjectGetFolders {
     return {
-      excludeChildrenOf: isSet(object.excludeChildrenOf)
-        ? globalThis.String(object.excludeChildrenOf)
-        : undefined,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      excludeChildrenOf: isSet(object.excludeChildrenOf) ? globalThis.String(object.excludeChildrenOf) : undefined,
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
     };
   },
 
@@ -697,23 +678,19 @@ export const StorageObjectGetFolders: MessageFns<StorageObjectGetFolders> = {
     if (message.excludeChildrenOf !== undefined) {
       obj.excludeChildrenOf = message.excludeChildrenOf;
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectGetFolders>, I>>(
-    base?: I,
-  ): StorageObjectGetFolders {
+  create<I extends Exact<DeepPartial<StorageObjectGetFolders>, I>>(base?: I): StorageObjectGetFolders {
     return StorageObjectGetFolders.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectGetFolders>, I>>(
-    object: I,
-  ): StorageObjectGetFolders {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectGetFolders>, I>>(object: I): StorageObjectGetFolders {
     const message = createBaseStorageObjectGetFolders();
     message.excludeChildrenOf = object.excludeChildrenOf ?? undefined;
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? "";
     return message;
   },
 };
@@ -723,10 +700,7 @@ function createBaseStorageObjectGetFoldersWeb(): StorageObjectGetFoldersWeb {
 }
 
 export const StorageObjectGetFoldersWeb: MessageFns<StorageObjectGetFoldersWeb> = {
-  encode(
-    message: StorageObjectGetFoldersWeb,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
+  encode(message: StorageObjectGetFoldersWeb, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.excludeChildrenOf !== undefined) {
       writer.uint32(10).string(message.excludeChildrenOf);
     }
@@ -759,9 +733,7 @@ export const StorageObjectGetFoldersWeb: MessageFns<StorageObjectGetFoldersWeb> 
 
   fromJSON(object: any): StorageObjectGetFoldersWeb {
     return {
-      excludeChildrenOf: isSet(object.excludeChildrenOf)
-        ? globalThis.String(object.excludeChildrenOf)
-        : undefined,
+      excludeChildrenOf: isSet(object.excludeChildrenOf) ? globalThis.String(object.excludeChildrenOf) : undefined,
     };
   },
 
@@ -773,14 +745,10 @@ export const StorageObjectGetFoldersWeb: MessageFns<StorageObjectGetFoldersWeb> 
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectGetFoldersWeb>, I>>(
-    base?: I,
-  ): StorageObjectGetFoldersWeb {
+  create<I extends Exact<DeepPartial<StorageObjectGetFoldersWeb>, I>>(base?: I): StorageObjectGetFoldersWeb {
     return StorageObjectGetFoldersWeb.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectGetFoldersWeb>, I>>(
-    object: I,
-  ): StorageObjectGetFoldersWeb {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectGetFoldersWeb>, I>>(object: I): StorageObjectGetFoldersWeb {
     const message = createBaseStorageObjectGetFoldersWeb();
     message.excludeChildrenOf = object.excludeChildrenOf ?? undefined;
     return message;
@@ -789,11 +757,11 @@ export const StorageObjectGetFoldersWeb: MessageFns<StorageObjectGetFoldersWeb> 
 
 function createBaseStorageObjectCreate(): StorageObjectCreate {
   return {
-    name: '',
+    name: "",
     isPublic: false,
     parent: undefined,
     type: StorageObjectType.FOLDER,
-    userId: '',
+    userId: "",
     file: undefined,
     image: undefined,
     video: undefined,
@@ -802,7 +770,7 @@ function createBaseStorageObjectCreate(): StorageObjectCreate {
 
 export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
   encode(message: StorageObjectCreate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.name !== '') {
+    if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
     if (message.isPublic !== false) {
@@ -814,7 +782,7 @@ export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
     if (message.type !== StorageObjectType.FOLDER) {
       writer.uint32(32).int32(storageObjectTypeToNumber(message.type));
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(42).string(message.userId);
     }
     if (message.file !== undefined) {
@@ -911,11 +879,11 @@ export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
 
   fromJSON(object: any): StorageObjectCreate {
     return {
-      name: isSet(object.name) ? globalThis.String(object.name) : '',
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
       parent: isSet(object.parent) ? globalThis.String(object.parent) : undefined,
       type: isSet(object.type) ? storageObjectTypeFromJSON(object.type) : StorageObjectType.FOLDER,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
       file: isSet(object.file) ? globalThis.String(object.file) : undefined,
       image: isSet(object.image) ? globalThis.String(object.image) : undefined,
       video: isSet(object.video) ? globalThis.String(object.video) : undefined,
@@ -924,7 +892,7 @@ export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
 
   toJSON(message: StorageObjectCreate): unknown {
     const obj: any = {};
-    if (message.name !== '') {
+    if (message.name !== "") {
       obj.name = message.name;
     }
     if (message.isPublic !== false) {
@@ -936,7 +904,7 @@ export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
     if (message.type !== StorageObjectType.FOLDER) {
       obj.type = storageObjectTypeToJSON(message.type);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     if (message.file !== undefined) {
@@ -954,15 +922,13 @@ export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
   create<I extends Exact<DeepPartial<StorageObjectCreate>, I>>(base?: I): StorageObjectCreate {
     return StorageObjectCreate.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectCreate>, I>>(
-    object: I,
-  ): StorageObjectCreate {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectCreate>, I>>(object: I): StorageObjectCreate {
     const message = createBaseStorageObjectCreate();
-    message.name = object.name ?? '';
+    message.name = object.name ?? "";
     message.isPublic = object.isPublic ?? false;
     message.parent = object.parent ?? undefined;
     message.type = object.type ?? StorageObjectType.FOLDER;
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? "";
     message.file = object.file ?? undefined;
     message.image = object.image ?? undefined;
     message.video = object.video ?? undefined;
@@ -972,7 +938,7 @@ export const StorageObjectCreate: MessageFns<StorageObjectCreate> = {
 
 function createBaseStorageObjectCreateWeb(): StorageObjectCreateWeb {
   return {
-    name: '',
+    name: "",
     isPublic: false,
     parent: undefined,
     type: StorageObjectType.FOLDER,
@@ -984,7 +950,7 @@ function createBaseStorageObjectCreateWeb(): StorageObjectCreateWeb {
 
 export const StorageObjectCreateWeb: MessageFns<StorageObjectCreateWeb> = {
   encode(message: StorageObjectCreateWeb, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.name !== '') {
+    if (message.name !== "") {
       writer.uint32(10).string(message.name);
     }
     if (message.isPublic !== false) {
@@ -1082,7 +1048,7 @@ export const StorageObjectCreateWeb: MessageFns<StorageObjectCreateWeb> = {
 
   fromJSON(object: any): StorageObjectCreateWeb {
     return {
-      name: isSet(object.name) ? globalThis.String(object.name) : '',
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
       isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
       parent: isSet(object.parent) ? globalThis.String(object.parent) : undefined,
       type: isSet(object.type) ? storageObjectTypeFromJSON(object.type) : StorageObjectType.FOLDER,
@@ -1094,7 +1060,7 @@ export const StorageObjectCreateWeb: MessageFns<StorageObjectCreateWeb> = {
 
   toJSON(message: StorageObjectCreateWeb): unknown {
     const obj: any = {};
-    if (message.name !== '') {
+    if (message.name !== "") {
       obj.name = message.name;
     }
     if (message.isPublic !== false) {
@@ -1118,16 +1084,12 @@ export const StorageObjectCreateWeb: MessageFns<StorageObjectCreateWeb> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectCreateWeb>, I>>(
-    base?: I,
-  ): StorageObjectCreateWeb {
+  create<I extends Exact<DeepPartial<StorageObjectCreateWeb>, I>>(base?: I): StorageObjectCreateWeb {
     return StorageObjectCreateWeb.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectCreateWeb>, I>>(
-    object: I,
-  ): StorageObjectCreateWeb {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectCreateWeb>, I>>(object: I): StorageObjectCreateWeb {
     const message = createBaseStorageObjectCreateWeb();
-    message.name = object.name ?? '';
+    message.name = object.name ?? "";
     message.isPublic = object.isPublic ?? false;
     message.parent = object.parent ?? undefined;
     message.type = object.type ?? StorageObjectType.FOLDER;
@@ -1218,14 +1180,10 @@ export const StorageObjectUpdateSet: MessageFns<StorageObjectUpdateSet> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectUpdateSet>, I>>(
-    base?: I,
-  ): StorageObjectUpdateSet {
+  create<I extends Exact<DeepPartial<StorageObjectUpdateSet>, I>>(base?: I): StorageObjectUpdateSet {
     return StorageObjectUpdateSet.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdateSet>, I>>(
-    object: I,
-  ): StorageObjectUpdateSet {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdateSet>, I>>(object: I): StorageObjectUpdateSet {
     const message = createBaseStorageObjectUpdateSet();
     message.name = object.name ?? undefined;
     message.isPublic = object.isPublic ?? undefined;
@@ -1285,14 +1243,11 @@ export const StorageObjectUpdate: MessageFns<StorageObjectUpdate> = {
   create<I extends Exact<DeepPartial<StorageObjectUpdate>, I>>(base?: I): StorageObjectUpdate {
     return StorageObjectUpdate.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdate>, I>>(
-    object: I,
-  ): StorageObjectUpdate {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdate>, I>>(object: I): StorageObjectUpdate {
     const message = createBaseStorageObjectUpdate();
-    message.set =
-      object.set !== undefined && object.set !== null
-        ? StorageObjectUpdateSet.fromPartial(object.set)
-        : undefined;
+    message.set = (object.set !== undefined && object.set !== null)
+      ? StorageObjectUpdateSet.fromPartial(object.set)
+      : undefined;
     return message;
   },
 };
@@ -1362,37 +1317,28 @@ export const StorageObjectUpdateOne: MessageFns<StorageObjectUpdateOne> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectUpdateOne>, I>>(
-    base?: I,
-  ): StorageObjectUpdateOne {
+  create<I extends Exact<DeepPartial<StorageObjectUpdateOne>, I>>(base?: I): StorageObjectUpdateOne {
     return StorageObjectUpdateOne.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdateOne>, I>>(
-    object: I,
-  ): StorageObjectUpdateOne {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdateOne>, I>>(object: I): StorageObjectUpdateOne {
     const message = createBaseStorageObjectUpdateOne();
-    message.query =
-      object.query !== undefined && object.query !== null
-        ? StorageObjectQuery.fromPartial(object.query)
-        : undefined;
-    message.update =
-      object.update !== undefined && object.update !== null
-        ? StorageObjectUpdate.fromPartial(object.update)
-        : undefined;
+    message.query = (object.query !== undefined && object.query !== null)
+      ? StorageObjectQuery.fromPartial(object.query)
+      : undefined;
+    message.update = (object.update !== undefined && object.update !== null)
+      ? StorageObjectUpdate.fromPartial(object.update)
+      : undefined;
     return message;
   },
 };
 
 function createBaseStorageObjectUpdateById(): StorageObjectUpdateById {
-  return { id: '', update: undefined };
+  return { id: "", update: undefined };
 }
 
 export const StorageObjectUpdateById: MessageFns<StorageObjectUpdateById> = {
-  encode(
-    message: StorageObjectUpdateById,
-    writer: BinaryWriter = new BinaryWriter(),
-  ): BinaryWriter {
-    if (message.id !== '') {
+  encode(message: StorageObjectUpdateById, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.update !== undefined) {
@@ -1435,14 +1381,14 @@ export const StorageObjectUpdateById: MessageFns<StorageObjectUpdateById> = {
 
   fromJSON(object: any): StorageObjectUpdateById {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       update: isSet(object.update) ? StorageObjectUpdate.fromJSON(object.update) : undefined,
     };
   },
 
   toJSON(message: StorageObjectUpdateById): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.update !== undefined) {
@@ -1451,39 +1397,29 @@ export const StorageObjectUpdateById: MessageFns<StorageObjectUpdateById> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<StorageObjectUpdateById>, I>>(
-    base?: I,
-  ): StorageObjectUpdateById {
+  create<I extends Exact<DeepPartial<StorageObjectUpdateById>, I>>(base?: I): StorageObjectUpdateById {
     return StorageObjectUpdateById.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdateById>, I>>(
-    object: I,
-  ): StorageObjectUpdateById {
+  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdateById>, I>>(object: I): StorageObjectUpdateById {
     const message = createBaseStorageObjectUpdateById();
-    message.id = object.id ?? '';
-    message.update =
-      object.update !== undefined && object.update !== null
-        ? StorageObjectUpdate.fromPartial(object.update)
-        : undefined;
+    message.id = object.id ?? "";
+    message.update = (object.update !== undefined && object.update !== null)
+      ? StorageObjectUpdate.fromPartial(object.update)
+      : undefined;
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

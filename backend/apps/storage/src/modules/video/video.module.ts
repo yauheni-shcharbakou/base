@@ -14,10 +14,10 @@ import { VideoSyncWithProviderUseCase } from './application/use-cases/video.sync
 import { VideoUpdateUseCase } from './application/use-cases/video.update.use-case';
 import { VideoUploadOneUseCase } from './application/use-cases/video.upload-one.use-case';
 import { VideoRepository } from './domain/repositories/video.repository';
-import { VideoCronService } from './infrastructure/cron/services/video.cron.service';
 import { PgVideoEntity } from './infrastructure/pg/entities/pg.video.entity';
 import { PgVideoRepositoryImpl } from './infrastructure/pg/repositories/pg.video.repository.impl';
-import { GrpcVideoRepository } from './interface/grpc/grpc.video.repository';
+import { CronVideoScheduler } from './interface/cron/cron.video.scheduler';
+import { GrpcVideoController } from './interface/grpc/grpc.video.controller';
 
 @Module({
   imports: [
@@ -41,8 +41,8 @@ import { GrpcVideoRepository } from './interface/grpc/grpc.video.repository';
     VideoCreateManyUseCase,
     VideoUploadOneUseCase,
     VideoSyncWithProviderUseCase,
-    VideoCronService,
+    CronVideoScheduler,
   ],
-  controllers: [GrpcVideoRepository],
+  controllers: [GrpcVideoController],
 })
 export class VideoModule {}

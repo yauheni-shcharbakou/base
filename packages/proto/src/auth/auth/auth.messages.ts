@@ -12,6 +12,10 @@ export interface AuthLogin {
   password: string;
 }
 
+export interface AuthMe {
+  accessToken: string;
+}
+
 export interface AuthRefresh {
   refreshToken: string;
 }

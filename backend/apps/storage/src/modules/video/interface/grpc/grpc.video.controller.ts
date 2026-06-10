@@ -1,4 +1,3 @@
-import { RxPipe } from '@backend/common';
 import { GrpcController, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcVideoServiceController,
@@ -18,7 +17,7 @@ import { from, Observable } from 'rxjs';
 
 @GrpcController()
 @GrpcVideoTransport.ControllerMethods()
-export class GrpcVideoRepository implements GrpcVideoServiceController {
+export class GrpcVideoController implements GrpcVideoServiceController {
   constructor(
     private readonly getUseCase: VideoGetUseCase,
     private readonly getUrlMapUseCase: VideoGetUrlMapUseCase,
@@ -31,11 +30,11 @@ export class GrpcVideoRepository implements GrpcVideoServiceController {
   ) {}
 
   getUrlMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
-    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(RxPipe.toMapEntries);
+    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getDownloadMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
-    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(RxPipe.toMapEntries);
+    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getOne(request: NestStorage.VideoQuery): Observable<NestStorage.VideoPopulated> {
@@ -58,7 +57,7 @@ export class GrpcVideoRepository implements GrpcVideoServiceController {
 
   createMany(request: NestStorage.VideoCreateMany): Observable<NestStorage.VideoArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
-    return stream$.pipe(GrpcRxPipe.unwrapEither, RxPipe.toArrayItems);
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
   updateOne(request: NestStorage.VideoUpdateOne): Observable<NestStorage.Video> {

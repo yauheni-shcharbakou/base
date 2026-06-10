@@ -6,8 +6,8 @@
 // source: auth/user/user.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { User, UserRole, userRoleFromJSON, userRoleToJSON, userRoleToNumber } from './user';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { User, UserRole, userRoleFromJSON, userRoleToJSON, userRoleToNumber } from "./user";
 
 export interface UserQuery {
   id?: string;
@@ -134,13 +134,9 @@ export const UserQuery: MessageFns<UserQuery> = {
   fromJSON(object: any): UserQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       email: isSet(object.email) ? globalThis.String(object.email) : undefined,
-      roles: globalThis.Array.isArray(object?.roles)
-        ? object.roles.map((e: any) => userRoleFromJSON(e))
-        : [],
+      roles: globalThis.Array.isArray(object?.roles) ? object.roles.map((e: any) => userRoleFromJSON(e)) : [],
     };
   },
 
@@ -211,11 +207,7 @@ export const UserArray: MessageFns<UserArray> = {
   },
 
   fromJSON(object: any): UserArray {
-    return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => User.fromJSON(e))
-        : [],
-    };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => User.fromJSON(e)) : [] };
   },
 
   toJSON(message: UserArray): unknown {
@@ -285,9 +277,7 @@ export const UserList: MessageFns<UserList> = {
 
   fromJSON(object: any): UserList {
     return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => User.fromJSON(e))
-        : [],
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => User.fromJSON(e)) : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
   },
@@ -367,24 +357,23 @@ export const UserGet: MessageFns<UserGet> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserGet>, I>>(object: I): UserGet {
     const message = createBaseUserGet();
-    message.query =
-      object.query !== undefined && object.query !== null
-        ? UserQuery.fromPartial(object.query)
-        : undefined;
+    message.query = (object.query !== undefined && object.query !== null)
+      ? UserQuery.fromPartial(object.query)
+      : undefined;
     return message;
   },
 };
 
 function createBaseUserCreate(): UserCreate {
-  return { email: '', password: '', role: undefined };
+  return { email: "", password: "", role: undefined };
 }
 
 export const UserCreate: MessageFns<UserCreate> = {
   encode(message: UserCreate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.email !== '') {
+    if (message.email !== "") {
       writer.uint32(10).string(message.email);
     }
-    if (message.password !== '') {
+    if (message.password !== "") {
       writer.uint32(18).string(message.password);
     }
     if (message.role !== undefined) {
@@ -435,18 +424,18 @@ export const UserCreate: MessageFns<UserCreate> = {
 
   fromJSON(object: any): UserCreate {
     return {
-      email: isSet(object.email) ? globalThis.String(object.email) : '',
-      password: isSet(object.password) ? globalThis.String(object.password) : '',
+      email: isSet(object.email) ? globalThis.String(object.email) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
       role: isSet(object.role) ? userRoleFromJSON(object.role) : undefined,
     };
   },
 
   toJSON(message: UserCreate): unknown {
     const obj: any = {};
-    if (message.email !== '') {
+    if (message.email !== "") {
       obj.email = message.email;
     }
-    if (message.password !== '') {
+    if (message.password !== "") {
       obj.password = message.password;
     }
     if (message.role !== undefined) {
@@ -460,8 +449,8 @@ export const UserCreate: MessageFns<UserCreate> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserCreate>, I>>(object: I): UserCreate {
     const message = createBaseUserCreate();
-    message.email = object.email ?? '';
-    message.password = object.password ?? '';
+    message.email = object.email ?? "";
+    message.password = object.password ?? "";
     message.role = object.role ?? undefined;
     return message;
   },
@@ -612,21 +601,18 @@ export const UserUpdate: MessageFns<UserUpdate> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserUpdate>, I>>(object: I): UserUpdate {
     const message = createBaseUserUpdate();
-    message.set =
-      object.set !== undefined && object.set !== null
-        ? UserUpdateSet.fromPartial(object.set)
-        : undefined;
+    message.set = (object.set !== undefined && object.set !== null) ? UserUpdateSet.fromPartial(object.set) : undefined;
     return message;
   },
 };
 
 function createBaseUserUpdateById(): UserUpdateById {
-  return { id: '', update: undefined };
+  return { id: "", update: undefined };
 }
 
 export const UserUpdateById: MessageFns<UserUpdateById> = {
   encode(message: UserUpdateById, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.update !== undefined) {
@@ -669,14 +655,14 @@ export const UserUpdateById: MessageFns<UserUpdateById> = {
 
   fromJSON(object: any): UserUpdateById {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       update: isSet(object.update) ? UserUpdate.fromJSON(object.update) : undefined,
     };
   },
 
   toJSON(message: UserUpdateById): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.update !== undefined) {
@@ -690,30 +676,24 @@ export const UserUpdateById: MessageFns<UserUpdateById> = {
   },
   fromPartial<I extends Exact<DeepPartial<UserUpdateById>, I>>(object: I): UserUpdateById {
     const message = createBaseUserUpdateById();
-    message.id = object.id ?? '';
-    message.update =
-      object.update !== undefined && object.update !== null
-        ? UserUpdate.fromPartial(object.update)
-        : undefined;
+    message.id = object.id ?? "";
+    message.update = (object.update !== undefined && object.update !== null)
+      ? UserUpdate.fromPartial(object.update)
+      : undefined;
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

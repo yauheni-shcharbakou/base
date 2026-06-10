@@ -6,190 +6,190 @@
 // source: common/crud.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
 
 export enum LogicalOperator {
-  eq = 'eq',
-  ne = 'ne',
-  eqs = 'eqs',
-  nes = 'nes',
-  lt = 'lt',
-  gt = 'gt',
-  lte = 'lte',
-  gte = 'gte',
-  in = 'in',
-  nin = 'nin',
-  ina = 'ina',
-  nina = 'nina',
-  contains = 'contains',
-  ncontains = 'ncontains',
-  containss = 'containss',
-  ncontainss = 'ncontainss',
-  between = 'between',
-  nbetween = 'nbetween',
-  null = 'null',
-  nnull = 'nnull',
-  startswith = 'startswith',
-  nstartswith = 'nstartswith',
-  startswiths = 'startswiths',
-  nstartswiths = 'nstartswiths',
-  endswith = 'endswith',
-  nendswith = 'nendswith',
-  endswiths = 'endswiths',
-  nendswiths = 'nendswiths',
+  eq = "eq",
+  ne = "ne",
+  eqs = "eqs",
+  nes = "nes",
+  lt = "lt",
+  gt = "gt",
+  lte = "lte",
+  gte = "gte",
+  in = "in",
+  nin = "nin",
+  ina = "ina",
+  nina = "nina",
+  contains = "contains",
+  ncontains = "ncontains",
+  containss = "containss",
+  ncontainss = "ncontainss",
+  between = "between",
+  nbetween = "nbetween",
+  null = "null",
+  nnull = "nnull",
+  startswith = "startswith",
+  nstartswith = "nstartswith",
+  startswiths = "startswiths",
+  nstartswiths = "nstartswiths",
+  endswith = "endswith",
+  nendswith = "nendswith",
+  endswiths = "endswiths",
+  nendswiths = "nendswiths",
 }
 
 export function logicalOperatorFromJSON(object: any): LogicalOperator {
   switch (object) {
     case 0:
-    case 'eq':
+    case "eq":
       return LogicalOperator.eq;
     case 1:
-    case 'ne':
+    case "ne":
       return LogicalOperator.ne;
     case 2:
-    case 'eqs':
+    case "eqs":
       return LogicalOperator.eqs;
     case 3:
-    case 'nes':
+    case "nes":
       return LogicalOperator.nes;
     case 4:
-    case 'lt':
+    case "lt":
       return LogicalOperator.lt;
     case 5:
-    case 'gt':
+    case "gt":
       return LogicalOperator.gt;
     case 6:
-    case 'lte':
+    case "lte":
       return LogicalOperator.lte;
     case 7:
-    case 'gte':
+    case "gte":
       return LogicalOperator.gte;
     case 8:
-    case 'in':
+    case "in":
       return LogicalOperator.in;
     case 9:
-    case 'nin':
+    case "nin":
       return LogicalOperator.nin;
     case 10:
-    case 'ina':
+    case "ina":
       return LogicalOperator.ina;
     case 11:
-    case 'nina':
+    case "nina":
       return LogicalOperator.nina;
     case 12:
-    case 'contains':
+    case "contains":
       return LogicalOperator.contains;
     case 13:
-    case 'ncontains':
+    case "ncontains":
       return LogicalOperator.ncontains;
     case 14:
-    case 'containss':
+    case "containss":
       return LogicalOperator.containss;
     case 15:
-    case 'ncontainss':
+    case "ncontainss":
       return LogicalOperator.ncontainss;
     case 16:
-    case 'between':
+    case "between":
       return LogicalOperator.between;
     case 17:
-    case 'nbetween':
+    case "nbetween":
       return LogicalOperator.nbetween;
     case 18:
-    case 'null':
+    case "null":
       return LogicalOperator.null;
     case 19:
-    case 'nnull':
+    case "nnull":
       return LogicalOperator.nnull;
     case 20:
-    case 'startswith':
+    case "startswith":
       return LogicalOperator.startswith;
     case 21:
-    case 'nstartswith':
+    case "nstartswith":
       return LogicalOperator.nstartswith;
     case 22:
-    case 'startswiths':
+    case "startswiths":
       return LogicalOperator.startswiths;
     case 23:
-    case 'nstartswiths':
+    case "nstartswiths":
       return LogicalOperator.nstartswiths;
     case 24:
-    case 'endswith':
+    case "endswith":
       return LogicalOperator.endswith;
     case 25:
-    case 'nendswith':
+    case "nendswith":
       return LogicalOperator.nendswith;
     case 26:
-    case 'endswiths':
+    case "endswiths":
       return LogicalOperator.endswiths;
     case 27:
-    case 'nendswiths':
+    case "nendswiths":
       return LogicalOperator.nendswiths;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum LogicalOperator');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum LogicalOperator");
   }
 }
 
 export function logicalOperatorToJSON(object: LogicalOperator): string {
   switch (object) {
     case LogicalOperator.eq:
-      return 'eq';
+      return "eq";
     case LogicalOperator.ne:
-      return 'ne';
+      return "ne";
     case LogicalOperator.eqs:
-      return 'eqs';
+      return "eqs";
     case LogicalOperator.nes:
-      return 'nes';
+      return "nes";
     case LogicalOperator.lt:
-      return 'lt';
+      return "lt";
     case LogicalOperator.gt:
-      return 'gt';
+      return "gt";
     case LogicalOperator.lte:
-      return 'lte';
+      return "lte";
     case LogicalOperator.gte:
-      return 'gte';
+      return "gte";
     case LogicalOperator.in:
-      return 'in';
+      return "in";
     case LogicalOperator.nin:
-      return 'nin';
+      return "nin";
     case LogicalOperator.ina:
-      return 'ina';
+      return "ina";
     case LogicalOperator.nina:
-      return 'nina';
+      return "nina";
     case LogicalOperator.contains:
-      return 'contains';
+      return "contains";
     case LogicalOperator.ncontains:
-      return 'ncontains';
+      return "ncontains";
     case LogicalOperator.containss:
-      return 'containss';
+      return "containss";
     case LogicalOperator.ncontainss:
-      return 'ncontainss';
+      return "ncontainss";
     case LogicalOperator.between:
-      return 'between';
+      return "between";
     case LogicalOperator.nbetween:
-      return 'nbetween';
+      return "nbetween";
     case LogicalOperator.null:
-      return 'null';
+      return "null";
     case LogicalOperator.nnull:
-      return 'nnull';
+      return "nnull";
     case LogicalOperator.startswith:
-      return 'startswith';
+      return "startswith";
     case LogicalOperator.nstartswith:
-      return 'nstartswith';
+      return "nstartswith";
     case LogicalOperator.startswiths:
-      return 'startswiths';
+      return "startswiths";
     case LogicalOperator.nstartswiths:
-      return 'nstartswiths';
+      return "nstartswiths";
     case LogicalOperator.endswith:
-      return 'endswith';
+      return "endswith";
     case LogicalOperator.nendswith:
-      return 'nendswith';
+      return "nendswith";
     case LogicalOperator.endswiths:
-      return 'endswiths';
+      return "endswiths";
     case LogicalOperator.nendswiths:
-      return 'nendswiths';
+      return "nendswiths";
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum LogicalOperator');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum LogicalOperator");
   }
 }
 
@@ -252,40 +252,36 @@ export function logicalOperatorToNumber(object: LogicalOperator): number {
     case LogicalOperator.nendswiths:
       return 27;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum LogicalOperator');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum LogicalOperator");
   }
 }
 
 export enum ConditionalOperator {
-  or = 'or',
-  and = 'and',
+  or = "or",
+  and = "and",
 }
 
 export function conditionalOperatorFromJSON(object: any): ConditionalOperator {
   switch (object) {
     case 0:
-    case 'or':
+    case "or":
       return ConditionalOperator.or;
     case 1:
-    case 'and':
+    case "and":
       return ConditionalOperator.and;
     default:
-      throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum ConditionalOperator',
-      );
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum ConditionalOperator");
   }
 }
 
 export function conditionalOperatorToJSON(object: ConditionalOperator): string {
   switch (object) {
     case ConditionalOperator.or:
-      return 'or';
+      return "or";
     case ConditionalOperator.and:
-      return 'and';
+      return "and";
     default:
-      throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum ConditionalOperator',
-      );
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum ConditionalOperator");
   }
 }
 
@@ -296,38 +292,36 @@ export function conditionalOperatorToNumber(object: ConditionalOperator): number
     case ConditionalOperator.and:
       return 1;
     default:
-      throw new globalThis.Error(
-        'Unrecognized enum value ' + object + ' for enum ConditionalOperator',
-      );
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum ConditionalOperator");
   }
 }
 
 export enum Sort {
-  asc = 'asc',
-  desc = 'desc',
+  asc = "asc",
+  desc = "desc",
 }
 
 export function sortFromJSON(object: any): Sort {
   switch (object) {
     case 0:
-    case 'asc':
+    case "asc":
       return Sort.asc;
     case 1:
-    case 'desc':
+    case "desc":
       return Sort.desc;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum Sort');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Sort");
   }
 }
 
 export function sortToJSON(object: Sort): string {
   switch (object) {
     case Sort.asc:
-      return 'asc';
+      return "asc";
     case Sort.desc:
-      return 'desc';
+      return "desc";
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum Sort');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Sort");
   }
 }
 
@@ -338,7 +332,7 @@ export function sortToNumber(object: Sort): number {
     case Sort.desc:
       return 1;
     default:
-      throw new globalThis.Error('Unrecognized enum value ' + object + ' for enum Sort');
+      throw new globalThis.Error("Unrecognized enum value " + object + " for enum Sort");
   }
 }
 
@@ -362,18 +356,12 @@ export interface Sorter {
 }
 
 function createBaseLogicalFilter(): LogicalFilter {
-  return {
-    field: '',
-    operator: LogicalOperator.eq,
-    string: undefined,
-    number: undefined,
-    boolean: undefined,
-  };
+  return { field: "", operator: LogicalOperator.eq, string: undefined, number: undefined, boolean: undefined };
 }
 
 export const LogicalFilter: MessageFns<LogicalFilter> = {
   encode(message: LogicalFilter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.field !== '') {
+    if (message.field !== "") {
       writer.uint32(10).string(message.field);
     }
     if (message.operator !== LogicalOperator.eq) {
@@ -449,10 +437,8 @@ export const LogicalFilter: MessageFns<LogicalFilter> = {
 
   fromJSON(object: any): LogicalFilter {
     return {
-      field: isSet(object.field) ? globalThis.String(object.field) : '',
-      operator: isSet(object.operator)
-        ? logicalOperatorFromJSON(object.operator)
-        : LogicalOperator.eq,
+      field: isSet(object.field) ? globalThis.String(object.field) : "",
+      operator: isSet(object.operator) ? logicalOperatorFromJSON(object.operator) : LogicalOperator.eq,
       string: isSet(object.string) ? globalThis.String(object.string) : undefined,
       number: isSet(object.number) ? globalThis.Number(object.number) : undefined,
       boolean: isSet(object.boolean) ? globalThis.Boolean(object.boolean) : undefined,
@@ -461,7 +447,7 @@ export const LogicalFilter: MessageFns<LogicalFilter> = {
 
   toJSON(message: LogicalFilter): unknown {
     const obj: any = {};
-    if (message.field !== '') {
+    if (message.field !== "") {
       obj.field = message.field;
     }
     if (message.operator !== LogicalOperator.eq) {
@@ -484,7 +470,7 @@ export const LogicalFilter: MessageFns<LogicalFilter> = {
   },
   fromPartial<I extends Exact<DeepPartial<LogicalFilter>, I>>(object: I): LogicalFilter {
     const message = createBaseLogicalFilter();
-    message.field = object.field ?? '';
+    message.field = object.field ?? "";
     message.operator = object.operator ?? LogicalOperator.eq;
     message.string = object.string ?? undefined;
     message.number = object.number ?? undefined;
@@ -554,12 +540,8 @@ export const ConditionalFilter: MessageFns<ConditionalFilter> = {
   fromJSON(object: any): ConditionalFilter {
     return {
       key: isSet(object.key) ? globalThis.String(object.key) : undefined,
-      operator: isSet(object.operator)
-        ? conditionalOperatorFromJSON(object.operator)
-        : ConditionalOperator.or,
-      value: globalThis.Array.isArray(object?.value)
-        ? object.value.map((e: any) => LogicalFilter.fromJSON(e))
-        : [],
+      operator: isSet(object.operator) ? conditionalOperatorFromJSON(object.operator) : ConditionalOperator.or,
+      value: globalThis.Array.isArray(object?.value) ? object.value.map((e: any) => LogicalFilter.fromJSON(e)) : [],
     };
   },
 
@@ -590,12 +572,12 @@ export const ConditionalFilter: MessageFns<ConditionalFilter> = {
 };
 
 function createBaseSorter(): Sorter {
-  return { field: '', order: Sort.asc };
+  return { field: "", order: Sort.asc };
 }
 
 export const Sorter: MessageFns<Sorter> = {
   encode(message: Sorter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.field !== '') {
+    if (message.field !== "") {
       writer.uint32(10).string(message.field);
     }
     if (message.order !== Sort.asc) {
@@ -638,14 +620,14 @@ export const Sorter: MessageFns<Sorter> = {
 
   fromJSON(object: any): Sorter {
     return {
-      field: isSet(object.field) ? globalThis.String(object.field) : '',
+      field: isSet(object.field) ? globalThis.String(object.field) : "",
       order: isSet(object.order) ? sortFromJSON(object.order) : Sort.asc,
     };
   },
 
   toJSON(message: Sorter): unknown {
     const obj: any = {};
-    if (message.field !== '') {
+    if (message.field !== "") {
       obj.field = message.field;
     }
     if (message.order !== Sort.asc) {
@@ -659,7 +641,7 @@ export const Sorter: MessageFns<Sorter> = {
   },
   fromPartial<I extends Exact<DeepPartial<Sorter>, I>>(object: I): Sorter {
     const message = createBaseSorter();
-    message.field = object.field ?? '';
+    message.field = object.field ?? "";
     message.order = object.order ?? Sort.asc;
     return message;
   },
@@ -667,19 +649,14 @@ export const Sorter: MessageFns<Sorter> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {

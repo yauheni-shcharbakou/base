@@ -6,11 +6,11 @@
 // source: storage/video/video.messages.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
-import { StorageManyMeta, StorageMeta } from '../common/common.messages';
-import { FileCreate } from '../file/file.messages';
-import { Video } from './video';
-import { VideoPopulated } from './video.populates';
+import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { StorageManyMeta, StorageMeta } from "../common/common.messages";
+import { FileCreate } from "../file/file.messages";
+import { Video } from "./video";
+import { VideoPopulated } from "./video.populates";
 
 export interface VideoQuery {
   id?: string;
@@ -91,14 +91,7 @@ export interface VideoUpdateById {
 }
 
 function createBaseVideoQuery(): VideoQuery {
-  return {
-    id: undefined,
-    ids: [],
-    file: undefined,
-    providerId: undefined,
-    providerIds: [],
-    userId: undefined,
-  };
+  return { id: undefined, ids: [], file: undefined, providerId: undefined, providerIds: [], userId: undefined };
 }
 
 export const VideoQuery: MessageFns<VideoQuery> = {
@@ -191,9 +184,7 @@ export const VideoQuery: MessageFns<VideoQuery> = {
   fromJSON(object: any): VideoQuery {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
-      ids: globalThis.Array.isArray(object?.ids)
-        ? object.ids.map((e: any) => globalThis.String(e))
-        : [],
+      ids: globalThis.Array.isArray(object?.ids) ? object.ids.map((e: any) => globalThis.String(e)) : [],
       file: isSet(object.file) ? globalThis.String(object.file) : undefined,
       providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : undefined,
       providerIds: globalThis.Array.isArray(object?.providerIds)
@@ -278,11 +269,7 @@ export const VideoArray: MessageFns<VideoArray> = {
   },
 
   fromJSON(object: any): VideoArray {
-    return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => Video.fromJSON(e))
-        : [],
-    };
+    return { items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => Video.fromJSON(e)) : [] };
   },
 
   toJSON(message: VideoArray): unknown {
@@ -352,9 +339,7 @@ export const VideoList: MessageFns<VideoList> = {
 
   fromJSON(object: any): VideoList {
     return {
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => VideoPopulated.fromJSON(e))
-        : [],
+      items: globalThis.Array.isArray(object?.items) ? object.items.map((e: any) => VideoPopulated.fromJSON(e)) : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
   },
@@ -382,12 +367,12 @@ export const VideoList: MessageFns<VideoList> = {
 };
 
 function createBaseVideoCreate(): VideoCreate {
-  return { title: '', description: undefined };
+  return { title: "", description: undefined };
 }
 
 export const VideoCreate: MessageFns<VideoCreate> = {
   encode(message: VideoCreate, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.title !== '') {
+    if (message.title !== "") {
       writer.uint32(10).string(message.title);
     }
     if (message.description !== undefined) {
@@ -430,14 +415,14 @@ export const VideoCreate: MessageFns<VideoCreate> = {
 
   fromJSON(object: any): VideoCreate {
     return {
-      title: isSet(object.title) ? globalThis.String(object.title) : '',
+      title: isSet(object.title) ? globalThis.String(object.title) : "",
       description: isSet(object.description) ? globalThis.String(object.description) : undefined,
     };
   },
 
   toJSON(message: VideoCreate): unknown {
     const obj: any = {};
-    if (message.title !== '') {
+    if (message.title !== "") {
       obj.title = message.title;
     }
     if (message.description !== undefined) {
@@ -451,14 +436,14 @@ export const VideoCreate: MessageFns<VideoCreate> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoCreate>, I>>(object: I): VideoCreate {
     const message = createBaseVideoCreate();
-    message.title = object.title ?? '';
+    message.title = object.title ?? "";
     message.description = object.description ?? undefined;
     return message;
   },
 };
 
 function createBaseVideoCreateOne(): VideoCreateOne {
-  return { video: undefined, file: undefined, storage: undefined, userId: '' };
+  return { video: undefined, file: undefined, storage: undefined, userId: "" };
 }
 
 export const VideoCreateOne: MessageFns<VideoCreateOne> = {
@@ -472,7 +457,7 @@ export const VideoCreateOne: MessageFns<VideoCreateOne> = {
     if (message.storage !== undefined) {
       StorageMeta.encode(message.storage, writer.uint32(26).fork()).join();
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(34).string(message.userId);
     }
     return writer;
@@ -531,7 +516,7 @@ export const VideoCreateOne: MessageFns<VideoCreateOne> = {
       video: isSet(object.video) ? VideoCreate.fromJSON(object.video) : undefined,
       file: isSet(object.file) ? FileCreate.fromJSON(object.file) : undefined,
       storage: isSet(object.storage) ? StorageMeta.fromJSON(object.storage) : undefined,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
     };
   },
 
@@ -546,7 +531,7 @@ export const VideoCreateOne: MessageFns<VideoCreateOne> = {
     if (message.storage !== undefined) {
       obj.storage = StorageMeta.toJSON(message.storage);
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     return obj;
@@ -557,19 +542,16 @@ export const VideoCreateOne: MessageFns<VideoCreateOne> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoCreateOne>, I>>(object: I): VideoCreateOne {
     const message = createBaseVideoCreateOne();
-    message.video =
-      object.video !== undefined && object.video !== null
-        ? VideoCreate.fromPartial(object.video)
-        : undefined;
-    message.file =
-      object.file !== undefined && object.file !== null
-        ? FileCreate.fromPartial(object.file)
-        : undefined;
-    message.storage =
-      object.storage !== undefined && object.storage !== null
-        ? StorageMeta.fromPartial(object.storage)
-        : undefined;
-    message.userId = object.userId ?? '';
+    message.video = (object.video !== undefined && object.video !== null)
+      ? VideoCreate.fromPartial(object.video)
+      : undefined;
+    message.file = (object.file !== undefined && object.file !== null)
+      ? FileCreate.fromPartial(object.file)
+      : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? StorageMeta.fromPartial(object.storage)
+      : undefined;
+    message.userId = object.userId ?? "";
     return message;
   },
 };
@@ -659,24 +641,21 @@ export const VideoCreateOneWeb: MessageFns<VideoCreateOneWeb> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoCreateOneWeb>, I>>(object: I): VideoCreateOneWeb {
     const message = createBaseVideoCreateOneWeb();
-    message.video =
-      object.video !== undefined && object.video !== null
-        ? VideoCreate.fromPartial(object.video)
-        : undefined;
-    message.file =
-      object.file !== undefined && object.file !== null
-        ? FileCreate.fromPartial(object.file)
-        : undefined;
-    message.storage =
-      object.storage !== undefined && object.storage !== null
-        ? StorageMeta.fromPartial(object.storage)
-        : undefined;
+    message.video = (object.video !== undefined && object.video !== null)
+      ? VideoCreate.fromPartial(object.video)
+      : undefined;
+    message.file = (object.file !== undefined && object.file !== null)
+      ? FileCreate.fromPartial(object.file)
+      : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? StorageMeta.fromPartial(object.storage)
+      : undefined;
     return message;
   },
 };
 
 function createBaseVideoCreateManyItem(): VideoCreateManyItem {
-  return { video: undefined, file: undefined, uploadId: '' };
+  return { video: undefined, file: undefined, uploadId: "" };
 }
 
 export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
@@ -687,7 +666,7 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
     if (message.file !== undefined) {
       FileCreate.encode(message.file, writer.uint32(18).fork()).join();
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       writer.uint32(26).string(message.uploadId);
     }
     return writer;
@@ -737,7 +716,7 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
     return {
       video: isSet(object.video) ? VideoCreate.fromJSON(object.video) : undefined,
       file: isSet(object.file) ? FileCreate.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
+      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : "",
     };
   },
 
@@ -749,7 +728,7 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
     if (message.file !== undefined) {
       obj.file = FileCreate.toJSON(message.file);
     }
-    if (message.uploadId !== '') {
+    if (message.uploadId !== "") {
       obj.uploadId = message.uploadId;
     }
     return obj;
@@ -758,25 +737,21 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
   create<I extends Exact<DeepPartial<VideoCreateManyItem>, I>>(base?: I): VideoCreateManyItem {
     return VideoCreateManyItem.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<VideoCreateManyItem>, I>>(
-    object: I,
-  ): VideoCreateManyItem {
+  fromPartial<I extends Exact<DeepPartial<VideoCreateManyItem>, I>>(object: I): VideoCreateManyItem {
     const message = createBaseVideoCreateManyItem();
-    message.video =
-      object.video !== undefined && object.video !== null
-        ? VideoCreate.fromPartial(object.video)
-        : undefined;
-    message.file =
-      object.file !== undefined && object.file !== null
-        ? FileCreate.fromPartial(object.file)
-        : undefined;
-    message.uploadId = object.uploadId ?? '';
+    message.video = (object.video !== undefined && object.video !== null)
+      ? VideoCreate.fromPartial(object.video)
+      : undefined;
+    message.file = (object.file !== undefined && object.file !== null)
+      ? FileCreate.fromPartial(object.file)
+      : undefined;
+    message.uploadId = object.uploadId ?? "";
     return message;
   },
 };
 
 function createBaseVideoCreateMany(): VideoCreateMany {
-  return { storage: undefined, items: [], userId: '' };
+  return { storage: undefined, items: [], userId: "" };
 }
 
 export const VideoCreateMany: MessageFns<VideoCreateMany> = {
@@ -787,7 +762,7 @@ export const VideoCreateMany: MessageFns<VideoCreateMany> = {
     for (const v of message.items) {
       VideoCreateManyItem.encode(v!, writer.uint32(18).fork()).join();
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       writer.uint32(26).string(message.userId);
     }
     return writer;
@@ -839,7 +814,7 @@ export const VideoCreateMany: MessageFns<VideoCreateMany> = {
       items: globalThis.Array.isArray(object?.items)
         ? object.items.map((e: any) => VideoCreateManyItem.fromJSON(e))
         : [],
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
     };
   },
 
@@ -851,7 +826,7 @@ export const VideoCreateMany: MessageFns<VideoCreateMany> = {
     if (message.items?.length) {
       obj.items = message.items.map((e) => VideoCreateManyItem.toJSON(e));
     }
-    if (message.userId !== '') {
+    if (message.userId !== "") {
       obj.userId = message.userId;
     }
     return obj;
@@ -862,12 +837,11 @@ export const VideoCreateMany: MessageFns<VideoCreateMany> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoCreateMany>, I>>(object: I): VideoCreateMany {
     const message = createBaseVideoCreateMany();
-    message.storage =
-      object.storage !== undefined && object.storage !== null
-        ? StorageManyMeta.fromPartial(object.storage)
-        : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? StorageManyMeta.fromPartial(object.storage)
+      : undefined;
     message.items = object.items?.map((e) => VideoCreateManyItem.fromPartial(e)) || [];
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? "";
     return message;
   },
 };
@@ -944,10 +918,9 @@ export const VideoCreateManyWeb: MessageFns<VideoCreateManyWeb> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoCreateManyWeb>, I>>(object: I): VideoCreateManyWeb {
     const message = createBaseVideoCreateManyWeb();
-    message.storage =
-      object.storage !== undefined && object.storage !== null
-        ? StorageManyMeta.fromPartial(object.storage)
-        : undefined;
+    message.storage = (object.storage !== undefined && object.storage !== null)
+      ? StorageManyMeta.fromPartial(object.storage)
+      : undefined;
     message.items = object.items?.map((e) => VideoCreateManyItem.fromPartial(e)) || [];
     return message;
   },
@@ -1014,9 +987,7 @@ export const VideoUploadResponse: MessageFns<VideoUploadResponse> = {
   fromJSON(object: any): VideoUploadResponse {
     return {
       entity: isSet(object.entity) ? Video.fromJSON(object.entity) : undefined,
-      canSendChunks: isSet(object.canSendChunks)
-        ? globalThis.Boolean(object.canSendChunks)
-        : undefined,
+      canSendChunks: isSet(object.canSendChunks) ? globalThis.Boolean(object.canSendChunks) : undefined,
       ack: isSet(object.ack) ? globalThis.Boolean(object.ack) : undefined,
     };
   },
@@ -1038,14 +1009,11 @@ export const VideoUploadResponse: MessageFns<VideoUploadResponse> = {
   create<I extends Exact<DeepPartial<VideoUploadResponse>, I>>(base?: I): VideoUploadResponse {
     return VideoUploadResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<VideoUploadResponse>, I>>(
-    object: I,
-  ): VideoUploadResponse {
+  fromPartial<I extends Exact<DeepPartial<VideoUploadResponse>, I>>(object: I): VideoUploadResponse {
     const message = createBaseVideoUploadResponse();
-    message.entity =
-      object.entity !== undefined && object.entity !== null
-        ? Video.fromPartial(object.entity)
-        : undefined;
+    message.entity = (object.entity !== undefined && object.entity !== null)
+      ? Video.fromPartial(object.entity)
+      : undefined;
     message.canSendChunks = object.canSendChunks ?? undefined;
     message.ack = object.ack ?? undefined;
     return message;
@@ -1181,10 +1149,9 @@ export const VideoUpdate: MessageFns<VideoUpdate> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoUpdate>, I>>(object: I): VideoUpdate {
     const message = createBaseVideoUpdate();
-    message.set =
-      object.set !== undefined && object.set !== null
-        ? VideoUpdateSet.fromPartial(object.set)
-        : undefined;
+    message.set = (object.set !== undefined && object.set !== null)
+      ? VideoUpdateSet.fromPartial(object.set)
+      : undefined;
     return message;
   },
 };
@@ -1259,25 +1226,23 @@ export const VideoUpdateOne: MessageFns<VideoUpdateOne> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoUpdateOne>, I>>(object: I): VideoUpdateOne {
     const message = createBaseVideoUpdateOne();
-    message.query =
-      object.query !== undefined && object.query !== null
-        ? VideoQuery.fromPartial(object.query)
-        : undefined;
-    message.update =
-      object.update !== undefined && object.update !== null
-        ? VideoUpdate.fromPartial(object.update)
-        : undefined;
+    message.query = (object.query !== undefined && object.query !== null)
+      ? VideoQuery.fromPartial(object.query)
+      : undefined;
+    message.update = (object.update !== undefined && object.update !== null)
+      ? VideoUpdate.fromPartial(object.update)
+      : undefined;
     return message;
   },
 };
 
 function createBaseVideoUpdateById(): VideoUpdateById {
-  return { id: '', update: undefined };
+  return { id: "", update: undefined };
 }
 
 export const VideoUpdateById: MessageFns<VideoUpdateById> = {
   encode(message: VideoUpdateById, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.id !== '') {
+    if (message.id !== "") {
       writer.uint32(10).string(message.id);
     }
     if (message.update !== undefined) {
@@ -1320,14 +1285,14 @@ export const VideoUpdateById: MessageFns<VideoUpdateById> = {
 
   fromJSON(object: any): VideoUpdateById {
     return {
-      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      id: isSet(object.id) ? globalThis.String(object.id) : "",
       update: isSet(object.update) ? VideoUpdate.fromJSON(object.update) : undefined,
     };
   },
 
   toJSON(message: VideoUpdateById): unknown {
     const obj: any = {};
-    if (message.id !== '') {
+    if (message.id !== "") {
       obj.id = message.id;
     }
     if (message.update !== undefined) {
@@ -1341,30 +1306,24 @@ export const VideoUpdateById: MessageFns<VideoUpdateById> = {
   },
   fromPartial<I extends Exact<DeepPartial<VideoUpdateById>, I>>(object: I): VideoUpdateById {
     const message = createBaseVideoUpdateById();
-    message.id = object.id ?? '';
-    message.update =
-      object.update !== undefined && object.update !== null
-        ? VideoUpdate.fromPartial(object.update)
-        : undefined;
+    message.id = object.id ?? "";
+    message.update = (object.update !== undefined && object.update !== null)
+      ? VideoUpdate.fromPartial(object.update)
+      : undefined;
     return message;
   },
 };
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-    ? globalThis.Array<DeepPartial<U>>
-    : T extends ReadonlyArray<infer U>
-      ? ReadonlyArray<DeepPartial<U>>
-      : T extends {}
-        ? { [K in keyof T]?: DeepPartial<T[K]> }
-        : Partial<T>;
+type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin
-  ? P
+type Exact<P, I extends P> = P extends Builtin ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {
