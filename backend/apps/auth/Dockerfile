@@ -14,7 +14,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS prepare
-RUN pnpm add -g turbo@2.9.6
+RUN pnpm add -g turbo@2.9.14
 COPY . .
 COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune backend.auth --docker
@@ -50,4 +50,4 @@ USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
 WORKDIR /app/backend/apps/auth
-CMD ["sh", "-c", "node dist/migrator/main.js -- postgres-migration && node dist/main.js"]
+CMD ["sh", "-c", "node dist/migrator/main.js -- pg-migration && node dist/main.js"]

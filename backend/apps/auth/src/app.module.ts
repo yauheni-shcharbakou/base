@@ -2,6 +2,7 @@ import { EventBusHost } from '@backend/event-bus';
 import { GrpcModule } from '@backend/grpc';
 import { NatsModule } from '@backend/nats';
 import { PgModule } from '@backend/pg';
+import { AuthModule } from '@modules/auth/auth.module';
 import { TempCodeModule } from '@modules/temp-code/temp-code.module';
 import { UserModule } from '@modules/user/user.module';
 import { Module } from '@nestjs/common';
@@ -19,7 +20,7 @@ import { config } from './config';
     PgModule.forRoot({ database: Database.AUTH }),
     GrpcModule.forRoot({ host: 'auth' }),
     NatsModule.forRoot({ host: EventBusHost.AUTH }),
-    // AuthModule,
+    AuthModule,
     TempCodeModule,
     UserModule,
   ],

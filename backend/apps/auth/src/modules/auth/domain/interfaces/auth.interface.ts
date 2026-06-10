@@ -1,9 +1,9 @@
-export interface AuthJwtPayload {
+export interface AuthTokenPayload {
   id: string;
   login: string;
 }
 
-export interface AuthJwtPayloadParsed extends AuthJwtPayload {
+export interface AuthTokenPayloadParsed extends AuthTokenPayload {
   id: string;
   login: string;
   refresh?: true;

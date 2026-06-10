@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      change-case-all:
+        specifier: 2.1.0
+        version: 2.1.0
       lodash:
         specifier: 4.18.1
         version: 4.18.1
@@ -30,9 +33,6 @@ importers:
       '@types/node':
         specifier: 22.19.17
         version: 22.19.17
-      change-case-all:
-        specifier: 2.1.0
-        version: 2.1.0
       dotenv-cli:
         specifier: 11.0.0
         version: 11.0.0
@@ -217,6 +217,9 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
+      '@packages/proto':
+        specifier: workspace:*
+        version: link:../../../packages/proto
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1

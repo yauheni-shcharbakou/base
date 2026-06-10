@@ -39,6 +39,7 @@
     "docker": "docker compose -f docker-compose.yml --profile all up --build"
   },
   "dependencies": {
+    "change-case-all": "2.1.0",
     "lodash": "4.18.1",
     "moment": "2.30.1",
     "ulid": "3.0.2",
@@ -48,7 +49,6 @@
     "@turbo/gen": "2.9.14",
     "@types/lodash": "4.17.23",
     "@types/node": "22.19.17",
-    "change-case-all": "2.1.0",
     "dotenv-cli": "11.0.0",
     "eslint": "9.39.2",
     "minimatch": "10.2.5",

@@ -3,8 +3,6 @@ import { validateEnv } from '@packages/common';
 import zod from 'zod';
 
 const env = validateEnv({
-  ACCESS_JWT_SECRET: zod.string(),
-  REFRESH_JWT_SECRET: zod.string(),
   ADMIN_EMAIL: zod.email(),
   ADMIN_PASSWORD: zod.string(),
   TEMP_TOKEN_EXPIRES_IN_MINUTES: zod.coerce.number().default(1),
@@ -12,22 +10,9 @@ const env = validateEnv({
 
 export const config = () => {
   const common = commonConfig();
-  const issuer = common.isDevelopment ? 'Rayan Hosling' : 'Tyler Durden';
 
   return {
     ...common,
-    jwt: {
-      accessToken: {
-        secret: env.ACCESS_JWT_SECRET,
-        expiresIn: common.isDevelopment ? '1d' : '10m',
-        issuer,
-      },
-      refreshToken: {
-        secret: env.REFRESH_JWT_SECRET,
-        expiresIn: common.isDevelopment ? '7d' : '1h',
-        issuer,
-      },
-    },
     admin: {
       email: env.ADMIN_EMAIL,
       password: env.ADMIN_PASSWORD,

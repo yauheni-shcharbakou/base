@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -28,13 +28,13 @@ services:
       PGPASSWORD: password123
     command: >
       bash -c "
-        until pg_isready -h postgres -p 5432 -U $$POSTGRES_USER; do 
-          sleep 2; 
+        until pg_isready -h postgres -p 5432 -U $$POSTGRES_USER; do
+          sleep 2;
         done;
-      
+
         for db in auth storage; do
           chk=$$(psql -h postgres -U $$POSTGRES_USER -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='$$db'\")
-      
+
           if [ \"$$chk\" != \"1\" ]; then
             echo \"Create database $$db...\"
             psql -h postgres -U $$POSTGRES_USER -d postgres -c \"CREATE DATABASE $$db;\"
@@ -56,14 +56,9 @@ services:
     restart: unless-stopped
     container_name: base-nats
     ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: [
-      "-js",
-      "-m", "8222",
-      "-sd", "/data",
-      "--name", "nats-node"
-    ]
+      - '4222:4222'
+      - '8222:8222'
+    command: ['-js', '-m', '8222', '-sd', '/data', '--name', 'nats-node']
     volumes:
       - nats_data:/data
     networks:
@@ -133,54 +128,54 @@ services:
     profiles:
       - all
 
-  backend.api-gateway:
-    build:
-      context: .
-      dockerfile: ./backend/apps/api-gateway/Dockerfile
-    restart: unless-stopped
-    container_name: base-backend-api-gateway
-    ports:
-      - '${BACKEND_PORT:-5555}:5555'
-    environment:
-      PORT: 5555
-      NODE_ENV: production
-      API_GATEWAY_GRPC_URL: 0.0.0.0:8000
-      AUTH_GRPC_URL: backend.auth:8001
-      STORAGE_GRPC_URL: backend.storage:8002
-      NATS_URL: nats://nats:4222
-    networks:
-      - private_network
-      - public_network
-    depends_on:
-      - nats
-      - backend.auth
-      - backend.storage
-    profiles:
-      - all
+  # backend.api-gateway:
+  #   build:
+  #     context: .
+  #     dockerfile: ./backend/apps/api-gateway/Dockerfile
+  #   restart: unless-stopped
+  #   container_name: base-backend-api-gateway
+  #   ports:
+  #     - '${BACKEND_PORT:-5555}:5555'
+  #   environment:
+  #     PORT: 5555
+  #     NODE_ENV: production
+  #     API_GATEWAY_GRPC_URL: 0.0.0.0:8000
+  #     AUTH_GRPC_URL: backend.auth:8001
+  #     STORAGE_GRPC_URL: backend.storage:8002
+  #     NATS_URL: nats://nats:4222
+  #   networks:
+  #     - private_network
+  #     - public_network
+  #   depends_on:
+  #     - nats
+  #     - backend.auth
+  #     - backend.storage
+  #   profiles:
+  #     - all
 
-  frontend.admin:
-    build:
-      context: .
-      dockerfile: ./frontend/apps/admin/Dockerfile
-    restart: unless-stopped
-    container_name: base-frontend-admin
-    ports:
-      - '${ADMIN_PORT:-3336}:3336'
-    environment:
-      PORT: 3336
-      HOSTNAME: 0.0.0.0
-      NODE_ENV: production
-      BACKEND_GRPC_URL: backend.api-gateway:8000
-      DEFAULT_EMAIL: admin@gmail.com
-      DEFAULT_PASSWORD: string123
-      CHUNK_SIZE_MB: 1
-    networks:
-      - private_network
-      - public_network
-    depends_on:
-      - backend.api-gateway
-    profiles:
-      - all
+  # frontend.admin:
+  #   build:
+  #     context: .
+  #     dockerfile: ./frontend/apps/admin/Dockerfile
+  #   restart: unless-stopped
+  #   container_name: base-frontend-admin
+  #   ports:
+  #     - '${ADMIN_PORT:-3336}:3336'
+  #   environment:
+  #     PORT: 3336
+  #     HOSTNAME: 0.0.0.0
+  #     NODE_ENV: production
+  #     BACKEND_GRPC_URL: backend.api-gateway:8000
+  #     DEFAULT_EMAIL: admin@gmail.com
+  #     DEFAULT_PASSWORD: string123
+  #     CHUNK_SIZE_MB: 1
+  #   networks:
+  #     - private_network
+  #     - public_network
+  #   depends_on:
+  #     - backend.api-gateway
+  #   profiles:
+  #     - all
 
 networks:
   private_network:
