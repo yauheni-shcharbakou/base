@@ -30,7 +30,7 @@
     "prod:backend.storage": "turbo run prod --filter=backend.storage",
     "format": "turbo run format",
     "lint": "turbo run lint",
-    "gen:package": "turbo gen package && yarn",
+    "gen:package": "turbo gen package && pnpm install",
     "reset": "turbo run reset && rm -rf .turbo node_modules pnpm-lock.yaml",
     "reset:backend": "turbo run reset --filter=\"backend.*\"",
     "reset:frontend": "turbo run reset --filter=\"frontend.*\"",
