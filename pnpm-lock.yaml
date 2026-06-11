@@ -509,6 +509,9 @@ importers:
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1
       protobufjs:
         specifier: 7.5.8
         version: 7.5.8
@@ -522,6 +525,9 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
+      '@types/lodash':
+        specifier: 4.17.23
+        version: 4.17.23
 
   backend/packages/mongo:
     dependencies:
@@ -549,6 +555,9 @@ importers:
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1
       mongodb:
         specifier: 7.2.0
         version: 7.2.0
@@ -565,6 +574,9 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
+      '@types/lodash':
+        specifier: 4.17.23
+        version: 4.17.23
 
   backend/packages/nats:
     dependencies:
@@ -592,6 +604,9 @@ importers:
       '@packages/common':
         specifier: workspace:*
         version: link:../../../packages/common
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -602,6 +617,9 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
+      '@types/lodash':
+        specifier: 4.17.23
+        version: 4.17.23
 
   backend/packages/pg:
     dependencies:
@@ -641,6 +659,9 @@ importers:
       '@sweet-monads/either':
         specifier: 3.3.1
         version: 3.3.1
+      lodash:
+        specifier: 4.18.1
+        version: 4.18.1
       nest-commander:
         specifier: 3.20.1
         version: 3.20.1(@nestjs/common@11.1.21(class-transformer@0.5.1)(class-validator@0.14.3)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.21)(@types/inquirer@8.2.12)(@types/node@22.19.17)(typescript@5.9.3)
@@ -654,6 +675,9 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
+      '@types/lodash':
+        specifier: 4.17.23
+        version: 4.17.23
 
   backend/packages/proto:
     dependencies:

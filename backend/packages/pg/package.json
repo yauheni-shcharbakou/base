@@ -27,11 +27,13 @@
     "@nestjs/core": "11.1.21",
     "@packages/common": "workspace:*",
     "@sweet-monads/either": "3.3.1",
+    "lodash": "4.18.1",
     "nest-commander": "3.20.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@packages/configs": "workspace:*"
+    "@packages/configs": "workspace:*",
+    "@types/lodash": "4.17.23"
   }
 }

@@ -30,5 +30,5 @@ The **active** data layer: a MikroORM + PostgreSQL implementation of the `@backe
 ```bash
 pnpm build / dev / lint / format / reset
 ```
-- `lodash` is used but not declared in deps (resolves via workspace hoist — fragile).
+- `lodash` is declared in this package's deps, with `@types/lodash` in devDeps.
 - cjs-only; consumers resolve `dist/`, rebuild after changes (turbo `^build`).
