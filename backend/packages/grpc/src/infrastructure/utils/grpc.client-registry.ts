@@ -1,4 +1,4 @@
-import { getGrpcClientToken, getGrpcServiceToken } from '@/interface/utils';
+import { getGrpcClientToken, getGrpcServiceToken } from './grpc.token-utils';
 import { DynamicModule, Provider, Type } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientGrpc, ClientsModule, ClientsProviderAsyncOptions } from '@nestjs/microservices';

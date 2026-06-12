@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { getGrpcClientToken, getGrpcServiceToken } from '../utils';
+import { getGrpcClientToken, getGrpcServiceToken } from '@/infrastructure/utils';
 
 export const InjectGrpcClient = (client: string): PropertyDecorator & ParameterDecorator => {
   return Inject(getGrpcClientToken(client));
