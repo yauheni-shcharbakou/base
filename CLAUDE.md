@@ -76,6 +76,13 @@ pnpm migrate:tasks            # run only the data-seeding tasks (migrator/tasks/
 
 **Tests, lint & strictness:** Jest is configured per backend app (`pnpm test`, `pnpm test:watch`, single file: `pnpm test -- path/to/file.spec.ts`), but **no `*.spec.ts` files exist yet** — there is currently no test suite. The backend ESLint preset is deliberately loose (off: `no-floating-promises`, `no-unsafe-*`, `no-unused-vars`, `no-explicit-any`), so the linter won't catch those. TypeScript `strict` is **on** for `@packages/*` / `@frontend/*` / admin but **off** for backend apps and `@backend/packages/*`.
 
+## Code navigation (LSP vs grep)
+
+A TypeScript LSP (the `typescript-lsp` plugin) may be available in a session. Two rules specific to this monorepo:
+
+- **LSP within a package, grep across packages.** Cross-package imports (`@backend/*`, `@packages/*`) resolve to the built `dist/*.d.cts`, not source, so `findReferences` / `goToImplementation` on a *source* symbol only cover the same package — they miss consumers in sibling packages (e.g. pg/mongo/auth/storage that consume a `@backend/common` contract). For "who across the repo uses this shared symbol", use grep/Explore; use the LSP for within-package definition / hover / references / diagnostics, where it is precise.
+- **Warm up with a repeat query.** tsserver indexes lazily, so the first `findReferences` / `workspaceSymbol` right after the server connects under-reports (can return just the declaration). Run the query a second time for the complete result.
+
 ## Protobuf codegen pipeline (the backbone)
 
 `.proto` files in `packages/proto/pkg/` are the single source of truth for all cross-service contracts. The custom compiler in `packages/proto/compiler/` (run by `pnpm compile:proto`) parses them and emits three flavors via separate adapters:
