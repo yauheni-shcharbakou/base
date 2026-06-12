@@ -1,10 +1,10 @@
-import { MongoEntity, MongoModule, convertEntitiesToMongoDefinitions } from '@/common';
+import { MongoEntity, MongoModule, convertEntitiesToMongoDefinitions } from '@/core';
 import { MigrationService, MigrationTask } from '@backend/common';
 import { DynamicModule, Type } from '@nestjs/common';
 import { ModelDefinition, MongooseModule } from '@nestjs/mongoose';
 import { CommonDatabaseEntity, Database } from '@packages/common';
 import _ from 'lodash';
-import { MongoMigrationCommand } from './infrastructure/cli/mongo.migration.command';
+import { MongoMigrationCommand } from './interface/cli/mongo.migration.command';
 import { MONGO_MIGRATION_TASKS } from './infrastructure/constants/mongo.migration.tokens';
 import { MongoMigrationSchema } from './infrastructure/entities/mongo.migration.entity';
 import { MongoMigrationServiceImpl } from './infrastructure/services/mongo.migration.service.impl';

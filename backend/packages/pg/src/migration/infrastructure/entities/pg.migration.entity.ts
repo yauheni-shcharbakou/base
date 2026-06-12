@@ -1,4 +1,4 @@
-import { PgSchema, PgEntity, PgProp } from '@/common';
+import { PgSchema, PgEntity, PgProp } from '@/core';
 import { MigrationStatus } from '@backend/common';
 import { Property } from '@mikro-orm/decorators/legacy';
 import { CommonDatabaseEntity } from '@packages/common';

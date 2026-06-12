@@ -5,8 +5,9 @@ import { DynamicModule, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Database } from '@packages/common';
-import { PgDatabaseRunnerServiceImpl, PgEntity, PgRequestInterceptor } from './infrastructure';
+import { PgDatabaseRunnerServiceImpl, PgEntity } from './infrastructure';
 import { PgConfig, pgConfig } from './infrastructure/configs';
+import { PgRequestInterceptor } from './interface';
 
 type PgModuleForRootParams = {
   database: Database;

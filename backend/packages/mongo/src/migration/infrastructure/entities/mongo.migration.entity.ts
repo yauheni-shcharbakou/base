@@ -1,6 +1,6 @@
 import { SchemaFactory } from '@nestjs/mongoose';
 import { CommonDatabaseEntity } from '@packages/common';
-import { MongoEntity, MongoProp, MongoSchema } from '@/common';
+import { MongoEntity, MongoProp, MongoSchema } from '@/core';
 import { Migration, MigrationStatus } from '@backend/common';
 
 @MongoSchema({ collection: CommonDatabaseEntity.MIGRATION })

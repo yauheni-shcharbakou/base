@@ -6,6 +6,24 @@ Guidance for working inside `backend/packages/mongo`. The data-layer contracts i
 
 This is a complete **Mongoose** implementation of the `@backend/common` data-layer contracts — the sibling of `@backend/pg`. **No service consumes it today**: `auth` and `storage` both use `@backend/pg` (PostgreSQL). Treat it as a maintained-but-dormant alternative engine; if you wire it into a service, mirror how `@backend/pg` is used there.
 
+## Layout (hexagonal adapter)
+
+Structurally mirrors `@backend/pg`: a pure **infrastructure adapter**, so the domain/application layers (the contracts, CRUD use-cases, and `QueryOf`/`CreateOf`/`UpdateOf` DTOs) stay in `@backend/common` and are **not** duplicated here.
+
+```
+src/
+  core/                       # generic Mongo building blocks (was `common`)
+    infrastructure/           # driven/outbound: configs, decorators, entities,
+                              #   mappers, plugins, repositories, types, utils
+    mongo.module.ts
+  migration/                  # migration sub-feature
+    infrastructure/           # driven: entities, services, constants
+    interface/cli/            # driving: MongoMigrationCommand (nest-commander)
+    mongo.migration.module.ts
+```
+
+Unlike `@backend/pg`, `core/` has **no `interface/` layer** — Mongo has no per-request interceptor (no transactional isolation), so there is no inbound adapter at the core level; the only driving adapter is the migration CLI. Put concrete impls of `@backend/common` contracts and Mongoose-bound code in `infrastructure/`; put inbound entrypoints (CLI commands) in `interface/`. Consumers import flat symbols from `@backend/mongo` via the root `src/index.ts` barrel, never deep paths. Inside the package, `@/core` aliases `core/`.
+
 ## What it provides
 
 - `MongoModule.forRoot({ database })` — connects Mongoose (`DATABASE_URL`, `dbName` from the `Database` enum), installs `MongoIdPlugin` globally, and binds `DatabaseRunnerService` → `EmptyDatabaseRunnerServiceImpl` (Mongo path has **no transactional isolation**).
