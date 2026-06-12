@@ -5,6 +5,7 @@
       "Read(./**/build/**)",
       "Read(./**/.next/**)",
       "Read(./**/dist/**/*.cjs)",
+      "Read(./**/dist/**/*.mjs)",
       "Read(./**/dist/**/*.js)",
       "Read(./**/dist/**/*.map)",
       "Read(./**/src/generated/**)",
