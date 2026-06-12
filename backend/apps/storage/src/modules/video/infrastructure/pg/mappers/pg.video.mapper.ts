@@ -1,7 +1,7 @@
 import { PgMapper } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { ObjectQuery } from '@mikro-orm/core';
-import { PgVideoEntity } from '../entities/pg.video.entity';
 
 export class PgVideoMapper extends PgMapper<
   PgVideoEntity,

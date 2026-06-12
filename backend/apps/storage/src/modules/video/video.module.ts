@@ -1,5 +1,6 @@
 import { NatsModule, NatsStorageVideoTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
+import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { FileModule } from '@modules/file/file.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { StorageModule } from '@modules/storage/storage.module';
@@ -14,7 +15,6 @@ import { VideoSyncWithProviderUseCase } from './application/use-cases/video.sync
 import { VideoUpdateUseCase } from './application/use-cases/video.update.use-case';
 import { VideoUploadOneUseCase } from './application/use-cases/video.upload-one.use-case';
 import { VideoRepository } from './domain/repositories/video.repository';
-import { PgVideoEntity } from './infrastructure/pg/entities/pg.video.entity';
 import { PgVideoRepositoryImpl } from './infrastructure/pg/repositories/pg.video.repository.impl';
 import { CronVideoScheduler } from './interface/cron/cron.video.scheduler';
 import { GrpcVideoController } from './interface/grpc/grpc.video.controller';

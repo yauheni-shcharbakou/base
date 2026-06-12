@@ -1,5 +1,6 @@
 import { NatsModule, NatsStorageStorageObjectTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { StorageObjectValidationService } from './application/services/storage-object.validation.service';
@@ -12,7 +13,6 @@ import { StorageObjectIsExistsUseCase } from './application/use-cases/storage-ob
 import { StorageObjectUpdateFolderChildrenUseCase } from './application/use-cases/storage-object.update-folder-children.use-case';
 import { StorageObjectUpdateOneUseCase } from './application/use-cases/storage-object.update-one.use-case';
 import { StorageObjectRepository } from './domain/repositories/storage-object.repository';
-import { PgStorageObjectEntity } from './infrastructure/pg/entities/pg.storage-object.entity';
 import { PgStorageObjectRepositoryImpl } from './infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { GrpcStorageObjectController } from './interface/grpc/grpc.storage-object.controller';
 import { NatsStorageObjectController } from './interface/nats/nats.storage-object.controller';

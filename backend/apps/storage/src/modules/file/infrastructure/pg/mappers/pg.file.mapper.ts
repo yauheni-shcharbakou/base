@@ -1,7 +1,7 @@
 import { PgMapper } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { ObjectQuery } from '@mikro-orm/core';
-import { PgFileEntity } from '../entities/pg.file.entity';
 
 export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestStorage.FileQuery> {
   transformQuery({

@@ -1,9 +1,9 @@
 import { PgMapper } from '@backend/pg';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { ObjectQuery, wrap } from '@mikro-orm/core';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageObjectQuery } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import _ from 'lodash';
-import { PgStorageObjectEntity } from '../entities/pg.storage-object.entity';
 
 export class PgStorageObjectMapper extends PgMapper<
   PgStorageObjectEntity,

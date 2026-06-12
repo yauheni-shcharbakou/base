@@ -1,5 +1,6 @@
 import { PgModule } from '@backend/pg';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
@@ -14,7 +15,6 @@ import { FileGetUseCase } from './application/use-cases/file.get.use-case';
 import { FileUpdateUseCase } from './application/use-cases/file.update.use-case';
 import { FileUploadOneUseCase } from './application/use-cases/file.upload-one.use-case';
 import { FileRepository } from './domain/repositories/file.repository';
-import { PgFileEntity } from './infrastructure/pg/entities/pg.file.entity';
 import { PgFileRepositoryImpl } from './infrastructure/pg/repositories/pg.file.repository.impl';
 import { CronFileScheduler } from './interface/cron/cron.file.scheduler';
 import { GrpcFileController } from './interface/grpc/grpc.file.controller';

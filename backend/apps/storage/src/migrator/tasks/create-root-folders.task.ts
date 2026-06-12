@@ -1,8 +1,8 @@
 import { MigrationTask } from '@backend/common';
 import { InjectGrpcService } from '@backend/grpc';
 import { GrpcUserServiceClient, GrpcUserTransport, NestStorage } from '@backend/proto';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { EntityManager } from '@mikro-orm/postgresql';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { firstValueFrom } from 'rxjs';

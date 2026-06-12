@@ -1,14 +1,14 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import {
   FileRepository,
   FileSaveAndPlace,
 } from '@modules/file/domain/repositories/file.repository';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import { Either, left, right } from '@sweet-monads/either';
-import { PgFileEntity } from '../entities/pg.file.entity';
 import { PgFileMapper } from '../mappers/pg.file.mapper';
 
 export class PgFileRepositoryImpl

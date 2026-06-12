@@ -1,5 +1,6 @@
 import { NatsModule, NatsStorageImageTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
+import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
 import { FileModule } from '@modules/file/file.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { StorageModule } from '@modules/storage/storage.module';
@@ -10,7 +11,6 @@ import { ImageDeleteOneUseCase } from './application/use-cases/image.delete-one.
 import { ImageGetUseCase } from './application/use-cases/image.get.use-case';
 import { ImageUpdateUseCase } from './application/use-cases/image.update.use-case';
 import { ImageRepository } from './domain/repositories/image.repository';
-import { PgImageEntity } from './infrastructure/pg/entities/pg.image.entity';
 import { PgImageRepositoryImpl } from './infrastructure/pg/repositories/pg.image.repository.impl';
 import { GrpcImageController } from './interface/grpc/grpc.image.controller';
 

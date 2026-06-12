@@ -1,16 +1,16 @@
 import { PgMapper, PgRepositoryImpl } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
-import { PgFileEntity } from '@modules/file/infrastructure/pg/entities/pg.file.entity';
 import {
   ImageCreate,
   ImageRepository,
   ImageSaveAndPlace,
 } from '@modules/image/domain/repositories/image.repository';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import { Either, left, right } from '@sweet-monads/either';
-import { PgImageEntity } from '../entities/pg.image.entity';
 
 export class PgImageRepositoryImpl
   extends PgRepositoryImpl<PgImageEntity, NestStorage.Image, NestStorage.ImageQuery, ImageCreate>

@@ -1,19 +1,19 @@
 import { PgEntity, PgSchema } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { Cascade, Ref } from '@mikro-orm/core';
 import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
-import { PgFileEntity } from '@modules/file/infrastructure/pg/entities/pg.file.entity';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageDatabaseEntity } from '@packages/common';
 
-@PgSchema({ tableName: StorageDatabaseEntity.IMAGE })
-export class PgImageEntity extends PgEntity implements NestStorage.Image {
+@PgSchema({ tableName: StorageDatabaseEntity.VIDEO })
+export class PgVideoEntity extends PgEntity<'duration' | 'views'> implements NestStorage.Video {
   @Property({ index: true })
   userId: string;
 
   @OneToOne({
     entity: () => PgFileEntity,
-    mappedBy: 'image',
+    mappedBy: 'video',
     owner: true,
     deleteRule: 'cascade',
     ref: true,
@@ -27,7 +27,7 @@ export class PgImageEntity extends PgEntity implements NestStorage.Image {
 
   @OneToOne({
     entity: () => PgStorageObjectEntity,
-    mappedBy: 'image',
+    mappedBy: 'video',
     cascade: [Cascade.REMOVE],
     orphanRemoval: true,
     nullable: true,
@@ -35,14 +35,20 @@ export class PgImageEntity extends PgEntity implements NestStorage.Image {
   })
   storageObject?: Ref<NestStorage.StorageObject>;
 
-  @Property()
-  width: number;
+  @Property({ index: true })
+  providerId: string;
 
   @Property()
-  height: number;
+  title: string;
 
-  @Property()
-  alt: string;
+  @Property({ default: 0 })
+  duration: number = 0;
+
+  @Property({ default: 0 })
+  views: number = 0;
+
+  @Property({ nullable: true })
+  description?: string;
 
   @Property()
   uploadId: string;

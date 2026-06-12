@@ -1,10 +1,10 @@
 import { PgEntity, PgProp, PgSchema } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { Cascade, Ref } from '@mikro-orm/core';
 import { OneToOne, Property } from '@mikro-orm/decorators/legacy';
-import { PgImageEntity } from '@modules/image/infrastructure/pg/entities/pg.image.entity';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
-import { PgVideoEntity } from '@modules/video/infrastructure/pg/entities/pg.video.entity';
 import { StorageDatabaseEntity } from '@packages/common';
 
 @PgSchema({ tableName: StorageDatabaseEntity.FILE })

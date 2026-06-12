@@ -1,16 +1,16 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
-import { PgFileEntity } from '@modules/file/infrastructure/pg/entities/pg.file.entity';
-import { PgStorageObjectEntity } from '@modules/storage-object/infrastructure/pg/entities/pg.storage-object.entity';
 import {
   VideoCreate,
   VideoRepository,
   VideoSaveAndPlace,
 } from '@modules/video/domain/repositories/video.repository';
 import { Either, left, right } from '@sweet-monads/either';
-import { PgVideoEntity } from '../entities/pg.video.entity';
 import { PgVideoMapper } from '../mappers/pg.video.mapper';
 
 export class PgVideoRepositoryImpl

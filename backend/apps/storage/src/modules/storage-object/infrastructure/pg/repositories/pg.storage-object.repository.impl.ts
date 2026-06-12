@@ -1,5 +1,6 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestCommon } from '@backend/proto';
+import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
@@ -10,7 +11,6 @@ import {
   StorageObjectUpdate,
 } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import _ from 'lodash';
-import { PgStorageObjectEntity } from '../entities/pg.storage-object.entity';
 import { PgStorageObjectMapper } from '../mappers/pg.storage-object.mapper';
 
 export class PgStorageObjectRepositoryImpl
