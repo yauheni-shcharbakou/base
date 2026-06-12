@@ -1,17 +1,6 @@
 import { NestAuth } from '@backend/proto';
 import { Either } from '@sweet-monads/either';
-
-export interface AuthTokenPayload {
-  id: string;
-  login: string;
-}
-
-export interface AuthTokenPayloadParsed extends AuthTokenPayload {
-  refresh?: true;
-  iat: number;
-  exp: number;
-  iss: string;
-}
+import { AuthTokenPayload, AuthTokenPayloadParsed } from '../interfaces/auth.interface';
 
 export abstract class AuthTokenService {
   abstract parseAccessTokenPayload(token: string): Either<Error, AuthTokenPayloadParsed>;

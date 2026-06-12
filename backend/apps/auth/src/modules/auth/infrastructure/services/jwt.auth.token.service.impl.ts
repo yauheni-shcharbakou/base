@@ -2,8 +2,8 @@ import { NestAuth } from '@backend/proto';
 import {
   AuthTokenPayload,
   AuthTokenPayloadParsed,
-  AuthTokenService,
-} from '@modules/auth/domain/services/auth.token.service';
+} from '@modules/auth/domain/interfaces/auth.interface';
+import { AuthTokenService } from '@modules/auth/domain/services/auth.token.service';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
