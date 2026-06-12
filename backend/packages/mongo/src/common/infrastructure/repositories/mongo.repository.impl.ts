@@ -12,7 +12,8 @@ import type { NestCommon } from '@backend/proto';
 import { NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
-import { Model } from 'mongoose';
+import { UpdateFilter } from 'mongodb';
+import { Model, UpdateQuery } from 'mongoose';
 import { MongoEntity } from '../entities';
 import { MongoMapper } from '../mappers';
 
@@ -189,13 +190,24 @@ export abstract class MongoRepositoryImpl<
     return this.updateOne({ id } as Partial<Query>, updateData);
   }
 
+  private convertUpdate(updateData: Update): UpdateQuery<Doc> {
+    return {
+      $set: updateData['set'] ?? {},
+      $unset: _.reduce(
+        (updateData['remove'] ?? []) as string[],
+        (acc: Record<string, ''>, field) => {
+          acc[field] = '';
+          return acc;
+        },
+        {},
+      ),
+      $inc: updateData['inc'] ?? {},
+    } as UpdateQuery<Doc>;
+  }
+
   async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {
     const result = await this.model
-      .updateMany(this.mapper.transformQuery(query), {
-        $set: updateData['set'] ?? {},
-        $unset: updateData['remove'] ?? {},
-        $inc: updateData['inc'] ?? {},
-      })
+      .updateMany(this.mapper.transformQuery(query), this.convertUpdate(updateData))
       .exec();
 
     return !!result.modifiedCount;
@@ -206,15 +218,9 @@ export abstract class MongoRepositoryImpl<
     updateData: Update,
   ): Promise<Either<NotFoundException, Entity>> {
     const entity = await this.model
-      .findByIdAndUpdate<Doc>(
-        this.mapper.transformQuery(query),
-        {
-          $set: updateData['set'] ?? {},
-          $unset: updateData['remove'] ?? {},
-          $inc: updateData['inc'] ?? {},
-        },
-        { new: true },
-      )
+      .findOneAndUpdate<Doc>(this.mapper.transformQuery(query), this.convertUpdate(updateData), {
+        new: true,
+      })
       .exec();
 
     if (!entity) {
@@ -235,18 +241,7 @@ export abstract class MongoRepositoryImpl<
           return {
             updateOne: {
               filter: { [bulkUpdate.filter.key]: bulkUpdate.filter.value },
-              update: {
-                $set: bulkUpdate.update.set ?? {},
-                $unset: _.reduce(
-                  _.keys(bulkUpdate.update.remove ?? {}),
-                  (acc: Partial<Entity>, field) => {
-                    acc[field] = '';
-                    return acc;
-                  },
-                  {},
-                ),
-                $inc: bulkUpdate.update.inc ?? {},
-              },
+              update: this.convertUpdate(bulkUpdate.update as Update) as UpdateFilter<any>,
             },
           };
         }),

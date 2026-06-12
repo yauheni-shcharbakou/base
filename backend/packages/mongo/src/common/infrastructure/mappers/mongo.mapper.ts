@@ -36,7 +36,7 @@ export class MongoMapper<
   protected parseLogicalFilter(filter: NestCommon.LogicalFilter): ParsedLogicalFilter {
     const result: ParsedLogicalFilter = _.pick(filter, ['field', 'operator']);
 
-    if (_.isNumber(filter.number) ?? _.isBoolean(filter.boolean)) {
+    if (_.isNumber(filter.number) || _.isBoolean(filter.boolean)) {
       result.value = filter.number ?? filter.boolean;
       return result;
     }
@@ -179,14 +179,6 @@ export class MongoMapper<
       ({ value }) => {
         if (_.isString(value)) {
           return { $not: { $regex: '^' + value, $options: 'i' } };
-        }
-      },
-    ],
-    [
-      NestCommon.LogicalOperator.startswiths,
-      ({ value }) => {
-        if (_.isString(value)) {
-          return { $regex: '^' + value };
         }
       },
     ],

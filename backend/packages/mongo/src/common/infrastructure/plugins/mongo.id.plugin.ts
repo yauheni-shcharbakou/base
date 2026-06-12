@@ -4,7 +4,7 @@ import { Schema } from 'mongoose';
 
 export function MongoIdPlugin(schema: Schema<MongoEntity>) {
   const toJsonOptions = schema.get('toJSON') || {};
-  const toObjectOptions = schema.get('toJSON') || {};
+  const toObjectOptions = schema.get('toObject') || {};
 
   const prevJsonTransform = toJsonOptions.transform;
   const prevObjectTransform = toObjectOptions.transform;
