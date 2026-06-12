@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./**/node_modules/**)",
+      "Read(./**/build/**)",
+      "Read(./**/.next/**)",
+      "Read(./**/dist/**/*.cjs)",
+      "Read(./**/dist/**/*.js)",
+      "Read(./**/dist/**/*.map)",
+      "Read(./**/src/generated/**)",
+      "Read(./**/.snapshot-*.json)"
+    ]
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  }
+}
