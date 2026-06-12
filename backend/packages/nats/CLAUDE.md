@@ -6,6 +6,30 @@ Guidance for working inside `backend/packages/nats`. The event-bus codegen flow 
 
 `src/generated/index.ts` is **emitted by the `@backend/event-bus` compiler** (its Nats adapter) — transports (`Nats<Host><Service>Transport`), subscriber/handler interfaces, and `NatsClientFactory`. Everything else (`infrastructure/`, `interface/`, `nats.module.ts`) is hand-written runtime. There is no compiler here.
 
+## Layer map (hexagon)
+
+This package is the **concrete adapter** for the abstract ports declared in
+`@backend/event-bus`. It owns the infrastructure + interface sides of the
+event-bus hexagon (the domain/ports side lives in `@backend/event-bus`):
+
+- **infrastructure/** — driven/outbound: `configs/` (connection + JetStream
+  consumer options), `constants/` (DI tokens), `types/` (`NatsStreamData`),
+  `utils/` (`globalStreamRegistry`). Plus the generated `NatsClientImpl` /
+  `NatsClientFactory` (concrete emit client).
+- **interface/** — driving/inbound: `decorators/` (`@NatsController`,
+  `@NatsEvent`), `interceptors/` (ack/nak). Plus the generated
+  `Nats<Host><Service>Transport` + controller/handler interfaces.
+- **nats.module.ts** — composition root: `forRoot` (server+client),
+  `forFeature` (bind abstract bus → concrete client via `NatsClientFactory`).
+- **generated/** — single codegen file that **spans both layers** (client =
+  infra, transports/interfaces = interface); left as one file by design (not
+  split per layer). Never hand-edit.
+
+Public API is the flat root `src/index.ts` barrel — consumers import flat
+symbols (`NatsModule`, `@NatsController`, `Nats*Transport`,
+`NATS_MICROSERVICE_OPTIONS`), never deep paths. Inside the package, `@/*`
+aliases `src/*` (e.g. `@/infrastructure`, `@/generated`).
+
 ## Module (`nats.module.ts`)
 
 - `NatsModule.forRoot({ host: EventBusHost, onlyEmitting? })` — global. Wires the JetStream client transport; unless `onlyEmitting`, also provides `NATS_MICROSERVICE_OPTIONS` (the subscriber server, connected in `main.ts`). Server options come from `natsConfig.getServerOptions(host, globalStreamRegistry.getStreams())`, declaring the registered JetStream streams at bootstrap.

@@ -6,6 +6,22 @@ Guidance for working inside `backend/packages/event-bus`. The full event-bus cod
 
 This package is **both** the event-bus source of truth + compiler **and** one of the compiler's two outputs. Like `packages/proto`, you hand-edit one part (`strategy/`) and the rest (`generated/`) is emitted.
 
+## Layer map (hexagon)
+
+This package owns the **domain + ports** side of the event-bus hexagon; the
+concrete adapter (NATS) lives in `@backend/nats`:
+
+- **strategy/** — domain: the `EventBusStrategy` contract + custom (non-proto)
+  event payloads in `strategy/events/`. `EventBusStrategy` itself is compiler
+  input (not exported at runtime); only `strategy/events` is re-exported.
+- **generated/** — ports: abstract `<Host><Service>EventBus` classes
+  (`emit<Event>`/`emitMany<Event>`) + the `EventBusHost` enum. Use-cases depend
+  on these abstractions; `@backend/nats` provides the impls. Never hand-edit.
+- **compiler/** — build-time codegen (ts-morph + pug), **not** a runtime layer.
+
+Public API is the flat root `src/index.ts` barrel (`./generated` +
+`./strategy/events`).
+
 ## Source of truth — `src/strategy/`
 
 `strategy/index.ts` exports the `EventBusStrategy` interface, shaped `[host][service][event]: PayloadType` (e.g. `auth.user.create: NestAuth.User`). To add an event, add a key here. Payloads are usually `@backend/proto` types; custom (non-proto) payloads go in `strategy/events/` (e.g. `StorageObjectParentUpdateEvent`) and are re-exported.

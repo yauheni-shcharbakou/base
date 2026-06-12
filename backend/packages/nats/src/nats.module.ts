@@ -7,10 +7,15 @@ import {
 import { Abstract, DynamicModule, Provider, Type } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CustomStrategy } from '@nestjs/microservices';
-import { NatsClientFactory } from './generated';
-import { NATS_CLIENT, NATS_CONFIG_SERVICE, NATS_MICROSERVICE_OPTIONS } from './infrastructure';
-import { NatsConfig, natsConfig } from './infrastructure/configs';
-import { globalStreamRegistry } from './infrastructure/utils';
+import { NatsClientFactory } from '@/generated';
+import {
+  globalStreamRegistry,
+  NatsConfig,
+  natsConfig,
+  NATS_CLIENT,
+  NATS_CONFIG_SERVICE,
+  NATS_MICROSERVICE_OPTIONS,
+} from '@/infrastructure';
 
 type NatsModuleForRootParams = {
   host: EventBusHost;
