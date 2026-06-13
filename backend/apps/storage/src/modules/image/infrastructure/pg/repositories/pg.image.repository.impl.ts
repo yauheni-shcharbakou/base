@@ -1,8 +1,9 @@
-import { PgMapper, PgRepositoryImpl } from '@backend/pg';
+import { PgRepositoryImpl } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { buildLeafStorageObject } from '@common/infrastructure/pg/factories/pg.storage-object.factory';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import {
@@ -11,6 +12,7 @@ import {
   ImageSaveAndPlace,
 } from '@modules/image/domain/repositories/image.repository';
 import { Either, left, right } from '@sweet-monads/either';
+import { PgImageMapper } from '../mappers/pg.image.mapper';
 
 export class PgImageRepositoryImpl
   extends PgRepositoryImpl<PgImageEntity, NestStorage.Image, NestStorage.ImageQuery, ImageCreate>
@@ -19,7 +21,7 @@ export class PgImageRepositoryImpl
   constructor(
     @InjectRepository(PgImageEntity) protected readonly repository: EntityRepository<PgImageEntity>,
   ) {
-    super(repository, new PgMapper());
+    super(repository, new PgImageMapper());
   }
 
   async saveAndPlaceOne(createData: ImageSaveAndPlace): Promise<Either<Error, NestStorage.Image>> {
@@ -39,14 +41,16 @@ export class PgImageRepositoryImpl
         em.persist([fileEntity, imageEntity]);
 
         if (createData.storageObject) {
-          const storageObjectEntity = em.create(PgStorageObjectEntity, {
-            ...createData.storageObject,
-            file: fileEntity.id,
-            image: imageEntity.id,
-            userId: fileEntity.userId,
-            type: NestStorage.StorageObjectType.IMAGE,
-            isFolder: false,
-          });
+          const storageObjectEntity = em.create(
+            PgStorageObjectEntity,
+            buildLeafStorageObject({
+              meta: createData.storageObject,
+              userId: fileEntity.userId,
+              type: NestStorage.StorageObjectType.IMAGE,
+              fileId: fileEntity.id,
+              imageId: imageEntity.id,
+            }),
+          );
 
           em.persist(storageObjectEntity);
         }
@@ -82,14 +86,16 @@ export class PgImageRepositoryImpl
           imageEntities.push(imageEntity);
 
           if (item.storageObject) {
-            const storageObjectEntity = em.create(PgStorageObjectEntity, {
-              ...item.storageObject,
-              file: fileEntity.id,
-              image: imageEntity.id,
-              userId: fileEntity.userId,
-              type: NestStorage.StorageObjectType.IMAGE,
-              isFolder: false,
-            });
+            const storageObjectEntity = em.create(
+              PgStorageObjectEntity,
+              buildLeafStorageObject({
+                meta: item.storageObject,
+                userId: fileEntity.userId,
+                type: NestStorage.StorageObjectType.IMAGE,
+                fileId: fileEntity.id,
+                imageId: imageEntity.id,
+              }),
+            );
 
             em.persist(storageObjectEntity);
           }

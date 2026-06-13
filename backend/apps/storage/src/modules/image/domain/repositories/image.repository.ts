@@ -1,6 +1,7 @@
 import { DatabaseRepository } from '@backend/common';
 import { NestStorage } from '@backend/proto';
 import { FileMeta } from '@common/domain/interfaces/file.meta.interface';
+import { StorageObjectPlacementMeta } from '@common/domain/interfaces/storage-object.meta.interface';
 import { Either } from '@sweet-monads/either';
 
 export interface ImageCreate extends NestStorage.ImageCreate {
@@ -12,7 +13,7 @@ export interface ImageCreate extends NestStorage.ImageCreate {
 export interface ImageSaveAndPlace {
   image: Omit<ImageCreate, 'file'>;
   file: FileMeta;
-  storageObject?: NestStorage.StorageMeta;
+  storageObject?: StorageObjectPlacementMeta;
 }
 
 export abstract class ImageRepository extends DatabaseRepository<

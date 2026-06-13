@@ -1,10 +1,11 @@
 import { CreateOf, DatabaseRepository } from '@backend/common';
 import { NestStorage } from '@backend/proto';
+import { StorageObjectPlacementMeta } from '@common/domain/interfaces/storage-object.meta.interface';
 import { Either } from '@sweet-monads/either';
 
 export interface FileSaveAndPlace {
   file: CreateOf<NestStorage.File>;
-  storageObject?: NestStorage.StorageMeta;
+  storageObject?: StorageObjectPlacementMeta;
 }
 
 export abstract class FileRepository extends DatabaseRepository<

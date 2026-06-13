@@ -1,6 +1,7 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestCommon } from '@backend/proto';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
@@ -10,6 +11,7 @@ import {
   StorageObjectRepository,
   StorageObjectUpdate,
 } from '@modules/storage-object/domain/repositories/storage-object.repository';
+import { StorageDatabaseEntity } from '@packages/common';
 import _ from 'lodash';
 import { PgStorageObjectMapper } from '../mappers/pg.storage-object.mapper';
 
@@ -23,6 +25,8 @@ export class PgStorageObjectRepositoryImpl
   >
   implements StorageObjectRepository
 {
+  private readonly logger = new Logger(PgStorageObjectRepositoryImpl.name);
+
   constructor(
     @InjectRepository(PgStorageObjectEntity)
     protected readonly repository: EntityRepository<PgStorageObjectEntity>,
@@ -31,17 +35,19 @@ export class PgStorageObjectRepositoryImpl
   }
 
   async getAllChildrenIds(parent: string): Promise<Set<string>> {
+    const table = StorageDatabaseEntity.STORAGE_OBJECT;
+
     try {
       const sql = `
         WITH RECURSIVE descendants AS (
             SELECT id, parent_id, is_folder
-            FROM "storage-objects"
+            FROM "${table}"
             WHERE parent_id = ?
 
             UNION ALL
 
             SELECT e.id, e.parent_id, e.is_folder
-            FROM "storage-objects" e
+            FROM "${table}" e
             INNER JOIN descendants d ON e.parent_id = d.id
         )
         SELECT id FROM descendants WHERE is_folder = true;
@@ -50,6 +56,7 @@ export class PgStorageObjectRepositoryImpl
       const results = await this.em.execute<NestCommon.IdField[]>(sql, [parent]);
       return new Set(_.map(results, (entity) => entity.id));
     } catch (error) {
+      this.logger.error(`Failed to resolve children ids for parent ${parent}`, error);
       return new Set();
     }
   }

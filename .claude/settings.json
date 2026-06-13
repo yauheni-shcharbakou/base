@@ -1,6 +1,5 @@
 {
   "model": "claude-opus-4-8",
-  "enableAllProjectMcpServers": true,
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": ["Bash(pnpm:*)", "Bash(git:*)"],
@@ -46,9 +45,7 @@
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50",
     "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-6",
     "DISABLE_TELEMETRY": "1",
-    "DISABLE_ERROR_REPORTING": "1",
-    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
-    "DISABLE_PROMPT_CACHING": "1"
+    "DISABLE_ERROR_REPORTING": "1"
   },
   "hooks": {
     "PreToolUse": [

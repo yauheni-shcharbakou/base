@@ -1,6 +1,7 @@
 import { CreateOf, DatabaseRepository } from '@backend/common';
 import { NestStorage } from '@backend/proto';
 import { FileMeta } from '@common/domain/interfaces/file.meta.interface';
+import { StorageObjectPlacementMeta } from '@common/domain/interfaces/storage-object.meta.interface';
 import { Either } from '@sweet-monads/either';
 
 export interface VideoCreate extends Omit<
@@ -13,7 +14,7 @@ export interface VideoCreate extends Omit<
 export interface VideoSaveAndPlace {
   video: Omit<VideoCreate, 'file'>;
   file: FileMeta;
-  storageObject?: NestStorage.StorageMeta;
+  storageObject?: StorageObjectPlacementMeta;
 }
 
 export abstract class VideoRepository extends DatabaseRepository<
