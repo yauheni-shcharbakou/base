@@ -1,4 +1,4 @@
-import { NatsAuthUserTransport, NatsModule } from '@backend/nats';
+import { NatsModule, NatsUserTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
 import { CryptoModule } from '@modules/crypto/crypto.module';
 import { Module } from '@nestjs/common';
@@ -14,7 +14,7 @@ import { GrpcUserController } from './interface/grpc/grpc.user.controller';
 @Module({
   imports: [
     PgModule.forFeature(PgUserEntity),
-    NatsModule.forFeature({ EventBus: NatsAuthUserTransport.EventBus }),
+    NatsModule.forFeature({ EventBus: NatsUserTransport.EventBus }),
     CryptoModule,
   ],
   providers: [

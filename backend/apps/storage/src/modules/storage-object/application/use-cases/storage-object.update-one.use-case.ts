@@ -1,4 +1,4 @@
-import { StorageObjectParentUpdateEvent, StorageStorageObjectEventBus } from '@backend/event-bus';
+import { StorageObjectEventBus, StorageObjectParentUpdateEvent } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
@@ -15,7 +15,7 @@ export class StorageObjectUpdateOneUseCase {
   constructor(
     private readonly storageObjectRepository: StorageObjectRepository,
     private readonly storageObjectValidationService: StorageObjectValidationService,
-    private readonly eventBus: StorageStorageObjectEventBus,
+    private readonly eventBus: StorageObjectEventBus,
   ) {}
 
   private async transformUpdate(

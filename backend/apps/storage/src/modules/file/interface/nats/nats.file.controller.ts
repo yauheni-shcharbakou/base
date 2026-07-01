@@ -1,21 +1,21 @@
 import {
   NatsController,
   NatsEvent,
-  NatsStorageVideoTransport,
-  NatsStorageVideoUploadFailEventHandler,
-  NatsStorageVideoUploadFinishEventHandler,
+  NatsVideoTransport,
+  NatsVideoUploadFailEventHandler,
+  NatsVideoUploadFinishEventHandler,
 } from '@backend/nats';
 import { NestStorage } from '@backend/proto';
 import { FileUpdateUseCase } from '@modules/file/application/use-cases/file.update.use-case';
 
 @NatsController()
 export class NatsFileController
-  implements NatsStorageVideoUploadFinishEventHandler, NatsStorageVideoUploadFailEventHandler
+  implements NatsVideoUploadFinishEventHandler, NatsVideoUploadFailEventHandler
 {
   constructor(private readonly updateUseCase: FileUpdateUseCase) {}
 
-  @NatsEvent(NatsStorageVideoTransport.UPLOAD_FAIL)
-  async onStorageVideoUploadFail(event: NestStorage.Video): Promise<void> {
+  @NatsEvent(NatsVideoTransport.UPLOAD_FAIL)
+  async onVideoUploadFail(event: NestStorage.Video): Promise<void> {
     await this.updateUseCase.updateById(event.fileId, {
       set: {
         uploadStatus: NestStorage.FileUploadStatus.FAILED,
@@ -23,8 +23,8 @@ export class NatsFileController
     });
   }
 
-  @NatsEvent(NatsStorageVideoTransport.UPLOAD_FINISH)
-  async onStorageVideoUploadFinish(event: NestStorage.Video): Promise<void> {
+  @NatsEvent(NatsVideoTransport.UPLOAD_FINISH)
+  async onVideoUploadFinish(event: NestStorage.Video): Promise<void> {
     await this.updateUseCase.updateById(event.fileId, {
       set: {
         uploadStatus: NestStorage.FileUploadStatus.READY,

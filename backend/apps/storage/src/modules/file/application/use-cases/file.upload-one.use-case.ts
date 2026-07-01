@@ -37,7 +37,6 @@ export class FileUploadOneUseCase {
 
   execute(
     request$: Observable<NestStorage.UploadOne>,
-    userId?: string,
   ): Observable<Either<Error, NestStorage.FileUploadResponse>> {
     type UploadContext = {
       file?: NestStorage.File;
@@ -69,16 +68,18 @@ export class FileUploadOneUseCase {
         if (!context.isInitialized) {
           // initialization phase, find entity and start uploading to storage provider
 
+          if (!message.filter) {
+            throw new ConflictException('File filter should be provided before chunks');
+          }
+
+          const { id, userId } = message.filter;
+
           if (!userId) {
             throw new ForbiddenException(`User is required`);
           }
 
-          if (!message.id) {
-            throw new ConflictException('File id should be provided before chunks');
-          }
-
           const file = await this.databaseRunnerService.isolatedRun(() => {
-            return this.fileRepository.getOne({ id: message.id, userId });
+            return this.fileRepository.getOne({ id, userId });
           });
 
           if (file.isLeft()) {

@@ -1,5 +1,5 @@
 import { BulkUpdate } from '@backend/common';
-import { StorageStorageObjectEventBus } from '@backend/event-bus';
+import { StorageObjectEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
@@ -13,7 +13,7 @@ import _ from 'lodash';
 export class StorageObjectUpdateFolderChildrenUseCase {
   constructor(
     private readonly storageObjectRepository: StorageObjectRepository,
-    private readonly eventBus: StorageStorageObjectEventBus,
+    private readonly eventBus: StorageObjectEventBus,
   ) {}
 
   async execute(

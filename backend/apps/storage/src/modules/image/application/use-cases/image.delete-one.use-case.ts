@@ -1,4 +1,4 @@
-import { StorageImageEventBus } from '@backend/event-bus';
+import { ImageEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
@@ -10,7 +10,7 @@ export class ImageDeleteOneUseCase {
   constructor(
     private readonly imageRepository: ImageRepository,
     private readonly storageFileService: StorageFileService,
-    private readonly eventBus: StorageImageEventBus,
+    private readonly eventBus: ImageEventBus,
   ) {}
 
   async execute(

@@ -1,4 +1,4 @@
-import { NatsModule, NatsStorageVideoTransport } from '@backend/nats';
+import { NatsModule, NatsVideoTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { FileModule } from '@modules/file/file.module';
@@ -22,7 +22,7 @@ import { GrpcVideoController } from './interface/grpc/grpc.video.controller';
 @Module({
   imports: [
     PgModule.forFeature(PgVideoEntity),
-    NatsModule.forFeature({ EventBus: NatsStorageVideoTransport.EventBus }),
+    NatsModule.forFeature({ EventBus: NatsVideoTransport.EventBus }),
     StorageModule,
     FileModule,
     StorageObjectModule,

@@ -1,4 +1,4 @@
-import { AuthUserEventBus } from '@backend/event-bus';
+import { UserEventBus } from '@backend/event-bus';
 import { NestAuth } from '@backend/proto';
 import { CryptoService } from '@modules/crypto/domain/services/crypto.service';
 import { UserRepository } from '@modules/user/domain/repositories/user.repository';
@@ -10,7 +10,7 @@ export class UserCreateOneUseCase {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly cryptoService: CryptoService,
-    private readonly eventBus: AuthUserEventBus,
+    private readonly eventBus: UserEventBus,
   ) {}
 
   async execute(createData: NestAuth.UserCreate): Promise<Either<Error, NestAuth.User>> {

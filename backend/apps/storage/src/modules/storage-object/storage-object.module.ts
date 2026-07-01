@@ -1,4 +1,4 @@
-import { NatsModule, NatsStorageStorageObjectTransport } from '@backend/nats';
+import { NatsModule, NatsStorageObjectTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageModule } from '@modules/storage/storage.module';
@@ -20,7 +20,7 @@ import { NatsStorageObjectController } from './interface/nats/nats.storage-objec
 @Module({
   imports: [
     PgModule.forFeature(PgStorageObjectEntity),
-    NatsModule.forFeature({ EventBus: NatsStorageStorageObjectTransport.EventBus }),
+    NatsModule.forFeature({ EventBus: NatsStorageObjectTransport.EventBus }),
     StorageModule,
   ],
   providers: [

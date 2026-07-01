@@ -1,5 +1,5 @@
 import { DatabaseRunnerService } from '@backend/common';
-import { StorageVideoEventBus } from '@backend/event-bus';
+import { VideoEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
 import { VideoRepository } from '@modules/video/domain/repositories/video.repository';
@@ -35,12 +35,11 @@ export class VideoUploadOneUseCase {
     private readonly videoRepository: VideoRepository,
     private readonly storageVideoService: StorageVideoService,
     private readonly databaseRunnerService: DatabaseRunnerService,
-    private readonly eventBus: StorageVideoEventBus,
+    private readonly eventBus: VideoEventBus,
   ) {}
 
   execute(
     request$: Observable<NestStorage.UploadOne>,
-    userId?: string,
   ): Observable<Either<Error, NestStorage.VideoUploadResponse>> {
     type UploadContext = {
       video?: NestStorage.VideoPopulated;
@@ -72,17 +71,19 @@ export class VideoUploadOneUseCase {
         if (!context.isInitialized) {
           // initialization phase, find entity and start uploading to storage provider
 
+          if (!message.filter) {
+            throw new ConflictException('Video filter should be provided before chunks');
+          }
+
+          const { id, userId } = message.filter;
+
           if (!userId) {
             throw new ForbiddenException(`User is required`);
           }
 
-          if (!message.id) {
-            throw new ConflictException('Video id should be provided before chunks');
-          }
-
           const video = await this.databaseRunnerService.isolatedRun(async () => {
             return this.videoRepository.getOne<NestStorage.VideoPopulated>(
-              { id: message.id, userId },
+              { id, userId },
               { populate: ['file'] },
             );
           });
