@@ -2,7 +2,7 @@ import { Metadata } from '@grpc/grpc-js';
 import { BadRequestException } from '@nestjs/common';
 import _ from 'lodash';
 
-export class GrpcMetadataMapper {
+export class GrpcParsedMeta {
   private readonly valueByField = new Map<string, string[]>();
 
   constructor(private readonly meta?: Metadata) {

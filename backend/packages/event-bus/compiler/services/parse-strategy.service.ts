@@ -94,7 +94,7 @@ export class ParseStrategyService {
               continue;
             }
 
-            const serviceId = dotCase(`${hostName}_${serviceName}`);
+            const serviceId = dotCase(serviceName);
             const methods: EventBusMethod[] = [];
 
             for (const event of serviceProperties) {
