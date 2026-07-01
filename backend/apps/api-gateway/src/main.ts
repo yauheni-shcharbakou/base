@@ -1,13 +1,12 @@
-import { GRPC_MICROSERVICE_OPTIONS } from '@backend/transport';
+import { GRPC_MICROSERVICE_OPTIONS } from '@backend/grpc';
+import { HttpExceptionFilter } from '@common/interface/http/filters/http.exception.filter';
+import { RpcExceptionFilter } from '@common/interface/rpc/filters/rpc.exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import { HttpExceptionFilter } from 'common/filters/http-exception.filter';
-import { RpcExceptionFilter } from 'common/filters/rpc-exception.filter';
-import { AppModule } from 'app.module';
-import { HttpRequestInterceptor } from 'common/interceptors/http-request.interceptor';
-import { Config } from 'config';
+import { AppModule } from './app.module';
+import { Config } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
@@ -18,7 +17,6 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new RpcExceptionFilter(), new HttpExceptionFilter());
-  app.useGlobalInterceptors(new HttpRequestInterceptor());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Base')

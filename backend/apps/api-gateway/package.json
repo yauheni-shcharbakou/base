@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@backend/common": "workspace:*",
+    "@backend/grpc": "workspace:*",
+    "@backend/proto": "workspace:*",
     "@grpc/grpc-js": "1.14.3",
     "@grpc/proto-loader": "0.8.1",
     "@nestjs/common": "11.1.21",
@@ -34,6 +36,7 @@
     "@nestjs/swagger": "11.4.3",
     "@nestjs/throttler": "6.5.0",
     "@packages/common": "workspace:*",
+    "@packages/proto": "workspace:*",
     "@sweet-monads/either": "3.3.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.3",
