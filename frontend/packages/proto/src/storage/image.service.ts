@@ -6,36 +6,46 @@
 // source: storage/image.service.proto
 
 /* eslint-disable */
-import { CallOptions, ChannelCredentials, Client, ClientOptions, ClientUnaryCall, makeGenericClientConstructor, Metadata, ServiceError } from "@grpc/grpc-js";
-import { IdField } from "../common/fields";
-import { GetList } from "../common/messages";
-import { Image } from "./image/image";
 import {
-    ImageArray,
-    ImageCreateMany,
-    ImageCreateManyWeb,
-    ImageCreateOne,
-    ImageCreateOneWeb,
-    ImageList,
-    ImageQuery,
-    ImageUpdateById,
-    ImageUpdateOne,
-} from "./image/image.messages";
-import { ImagePopulated } from "./image/image.populates";
+  CallOptions,
+  ChannelCredentials,
+  Client,
+  ClientOptions,
+  ClientUnaryCall,
+  makeGenericClientConstructor,
+  Metadata,
+  ServiceError,
+} from '@grpc/grpc-js';
+import { IdField } from '../common/fields';
+import { GetList } from '../common/messages';
+import { Image } from './image/image';
+import {
+  ImageArray,
+  ImageCreateMany,
+  ImageCreateManyWeb,
+  ImageCreateOne,
+  ImageCreateOneWeb,
+  ImageList,
+  ImageQuery,
+  ImageUpdateById,
+  ImageUpdateOne,
+} from './image/image.messages';
+import { ImagePopulated } from './image/image.populates';
 
 type ImageServiceService = typeof ImageServiceService;
 const ImageServiceService = {
   getById: {
-    path: "/storage.ImageService/getById" as const,
+    path: '/storage.ImageService/getById' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
     requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
-    responseSerialize: (value: ImagePopulated): Buffer => Buffer.from(ImagePopulated.encode(value).finish()),
+    responseSerialize: (value: ImagePopulated): Buffer =>
+      Buffer.from(ImagePopulated.encode(value).finish()),
     responseDeserialize: (value: Buffer): ImagePopulated => ImagePopulated.decode(value),
   },
   getList: {
-    path: "/storage.ImageService/getList" as const,
+    path: '/storage.ImageService/getList' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
@@ -44,34 +54,38 @@ const ImageServiceService = {
     responseDeserialize: (value: Buffer): ImageList => ImageList.decode(value),
   },
   createOne: {
-    path: "/storage.ImageService/createOne" as const,
+    path: '/storage.ImageService/createOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageCreateOne): Buffer => Buffer.from(ImageCreateOne.encode(value).finish()),
+    requestSerialize: (value: ImageCreateOne): Buffer =>
+      Buffer.from(ImageCreateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageCreateOne => ImageCreateOne.decode(value),
     responseSerialize: (value: Image): Buffer => Buffer.from(Image.encode(value).finish()),
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
   createMany: {
-    path: "/storage.ImageService/createMany" as const,
+    path: '/storage.ImageService/createMany' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageCreateMany): Buffer => Buffer.from(ImageCreateMany.encode(value).finish()),
+    requestSerialize: (value: ImageCreateMany): Buffer =>
+      Buffer.from(ImageCreateMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageCreateMany => ImageCreateMany.decode(value),
-    responseSerialize: (value: ImageArray): Buffer => Buffer.from(ImageArray.encode(value).finish()),
+    responseSerialize: (value: ImageArray): Buffer =>
+      Buffer.from(ImageArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): ImageArray => ImageArray.decode(value),
   },
   updateOne: {
-    path: "/storage.ImageService/updateOne" as const,
+    path: '/storage.ImageService/updateOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageUpdateOne): Buffer => Buffer.from(ImageUpdateOne.encode(value).finish()),
+    requestSerialize: (value: ImageUpdateOne): Buffer =>
+      Buffer.from(ImageUpdateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageUpdateOne => ImageUpdateOne.decode(value),
     responseSerialize: (value: Image): Buffer => Buffer.from(Image.encode(value).finish()),
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
   deleteOne: {
-    path: "/storage.ImageService/deleteOne" as const,
+    path: '/storage.ImageService/deleteOne' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: ImageQuery): Buffer => Buffer.from(ImageQuery.encode(value).finish()),
@@ -81,9 +95,11 @@ const ImageServiceService = {
   },
 } as const;
 
-
 export interface GrpcImageServiceClient extends Client {
-  getById(request: IdField, callback: (error: ServiceError | null, response: ImagePopulated) => void): ClientUnaryCall;
+  getById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: ImagePopulated) => void,
+  ): ClientUnaryCall;
   getById(
     request: IdField,
     metadata: Metadata,
@@ -95,7 +111,10 @@ export interface GrpcImageServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ImagePopulated) => void,
   ): ClientUnaryCall;
-  getList(request: GetList, callback: (error: ServiceError | null, response: ImageList) => void): ClientUnaryCall;
+  getList(
+    request: GetList,
+    callback: (error: ServiceError | null, response: ImageList) => void,
+  ): ClientUnaryCall;
   getList(
     request: GetList,
     metadata: Metadata,
@@ -107,7 +126,10 @@ export interface GrpcImageServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ImageList) => void,
   ): ClientUnaryCall;
-  createOne(request: ImageCreateOne, callback: (error: ServiceError | null, response: Image) => void): ClientUnaryCall;
+  createOne(
+    request: ImageCreateOne,
+    callback: (error: ServiceError | null, response: Image) => void,
+  ): ClientUnaryCall;
   createOne(
     request: ImageCreateOne,
     metadata: Metadata,
@@ -134,7 +156,10 @@ export interface GrpcImageServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ImageArray) => void,
   ): ClientUnaryCall;
-  updateOne(request: ImageUpdateOne, callback: (error: ServiceError | null, response: Image) => void): ClientUnaryCall;
+  updateOne(
+    request: ImageUpdateOne,
+    callback: (error: ServiceError | null, response: Image) => void,
+  ): ClientUnaryCall;
   updateOne(
     request: ImageUpdateOne,
     metadata: Metadata,
@@ -146,7 +171,10 @@ export interface GrpcImageServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Image) => void,
   ): ClientUnaryCall;
-  deleteOne(request: ImageQuery, callback: (error: ServiceError | null, response: Image) => void): ClientUnaryCall;
+  deleteOne(
+    request: ImageQuery,
+    callback: (error: ServiceError | null, response: Image) => void,
+  ): ClientUnaryCall;
   deleteOne(
     request: ImageQuery,
     metadata: Metadata,
@@ -162,26 +190,86 @@ export interface GrpcImageServiceClient extends Client {
 
 export const GrpcImageServiceClient = makeGenericClientConstructor(
   ImageServiceService,
-  "storage.ImageService",
+  'storage.ImageService',
 ) as unknown as {
-  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcImageServiceClient;
-  service: { readonly getById: { readonly path: "/storage.ImageService/getById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: ImagePopulated) => Buffer; readonly responseDeserialize: (value: Buffer) => ImagePopulated; }; readonly getList: { readonly path: "/storage.ImageService/getList"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetList) => Buffer; readonly requestDeserialize: (value: Buffer) => GetList; readonly responseSerialize: (value: ImageList) => Buffer; readonly responseDeserialize: (value: Buffer) => ImageList; }; readonly createOne: { readonly path: "/storage.ImageService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageCreateOne) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageCreateOne; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; readonly createMany: { readonly path: "/storage.ImageService/createMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageCreateMany) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageCreateMany; readonly responseSerialize: (value: ImageArray) => Buffer; readonly responseDeserialize: (value: Buffer) => ImageArray; }; readonly updateOne: { readonly path: "/storage.ImageService/updateOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageUpdateOne) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageUpdateOne; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; readonly deleteOne: { readonly path: "/storage.ImageService/deleteOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageQuery) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageQuery; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; };
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcImageServiceClient;
+  service: {
+    readonly getById: {
+      readonly path: '/storage.ImageService/getById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: ImagePopulated) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImagePopulated;
+    };
+    readonly getList: {
+      readonly path: '/storage.ImageService/getList';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: ImageList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImageList;
+    };
+    readonly createOne: {
+      readonly path: '/storage.ImageService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageCreateOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageCreateOne;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+    readonly createMany: {
+      readonly path: '/storage.ImageService/createMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageCreateMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageCreateMany;
+      readonly responseSerialize: (value: ImageArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImageArray;
+    };
+    readonly updateOne: {
+      readonly path: '/storage.ImageService/updateOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageUpdateOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageUpdateOne;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+    readonly deleteOne: {
+      readonly path: '/storage.ImageService/deleteOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageQuery) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageQuery;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+  };
   serviceName: string;
 };
 
 type ImageAdminServiceService = typeof ImageAdminServiceService;
 const ImageAdminServiceService = {
   getById: {
-    path: "/storage.ImageAdminService/getById" as const,
+    path: '/storage.ImageAdminService/getById' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
     requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
-    responseSerialize: (value: ImagePopulated): Buffer => Buffer.from(ImagePopulated.encode(value).finish()),
+    responseSerialize: (value: ImagePopulated): Buffer =>
+      Buffer.from(ImagePopulated.encode(value).finish()),
     responseDeserialize: (value: Buffer): ImagePopulated => ImagePopulated.decode(value),
   },
   getList: {
-    path: "/storage.ImageAdminService/getList" as const,
+    path: '/storage.ImageAdminService/getList' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: GetList): Buffer => Buffer.from(GetList.encode(value).finish()),
@@ -190,34 +278,38 @@ const ImageAdminServiceService = {
     responseDeserialize: (value: Buffer): ImageList => ImageList.decode(value),
   },
   createOne: {
-    path: "/storage.ImageAdminService/createOne" as const,
+    path: '/storage.ImageAdminService/createOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageCreateOne): Buffer => Buffer.from(ImageCreateOne.encode(value).finish()),
+    requestSerialize: (value: ImageCreateOne): Buffer =>
+      Buffer.from(ImageCreateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageCreateOne => ImageCreateOne.decode(value),
     responseSerialize: (value: Image): Buffer => Buffer.from(Image.encode(value).finish()),
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
   createMany: {
-    path: "/storage.ImageAdminService/createMany" as const,
+    path: '/storage.ImageAdminService/createMany' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageCreateMany): Buffer => Buffer.from(ImageCreateMany.encode(value).finish()),
+    requestSerialize: (value: ImageCreateMany): Buffer =>
+      Buffer.from(ImageCreateMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageCreateMany => ImageCreateMany.decode(value),
-    responseSerialize: (value: ImageArray): Buffer => Buffer.from(ImageArray.encode(value).finish()),
+    responseSerialize: (value: ImageArray): Buffer =>
+      Buffer.from(ImageArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): ImageArray => ImageArray.decode(value),
   },
   updateById: {
-    path: "/storage.ImageAdminService/updateById" as const,
+    path: '/storage.ImageAdminService/updateById' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageUpdateById): Buffer => Buffer.from(ImageUpdateById.encode(value).finish()),
+    requestSerialize: (value: ImageUpdateById): Buffer =>
+      Buffer.from(ImageUpdateById.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageUpdateById => ImageUpdateById.decode(value),
     responseSerialize: (value: Image): Buffer => Buffer.from(Image.encode(value).finish()),
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
   deleteById: {
-    path: "/storage.ImageAdminService/deleteById" as const,
+    path: '/storage.ImageAdminService/deleteById' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -227,9 +319,11 @@ const ImageAdminServiceService = {
   },
 } as const;
 
-
 export interface GrpcImageAdminServiceClient extends Client {
-  getById(request: IdField, callback: (error: ServiceError | null, response: ImagePopulated) => void): ClientUnaryCall;
+  getById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: ImagePopulated) => void,
+  ): ClientUnaryCall;
   getById(
     request: IdField,
     metadata: Metadata,
@@ -241,7 +335,10 @@ export interface GrpcImageAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ImagePopulated) => void,
   ): ClientUnaryCall;
-  getList(request: GetList, callback: (error: ServiceError | null, response: ImageList) => void): ClientUnaryCall;
+  getList(
+    request: GetList,
+    callback: (error: ServiceError | null, response: ImageList) => void,
+  ): ClientUnaryCall;
   getList(
     request: GetList,
     metadata: Metadata,
@@ -253,7 +350,10 @@ export interface GrpcImageAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: ImageList) => void,
   ): ClientUnaryCall;
-  createOne(request: ImageCreateOne, callback: (error: ServiceError | null, response: Image) => void): ClientUnaryCall;
+  createOne(
+    request: ImageCreateOne,
+    callback: (error: ServiceError | null, response: Image) => void,
+  ): ClientUnaryCall;
   createOne(
     request: ImageCreateOne,
     metadata: Metadata,
@@ -295,7 +395,10 @@ export interface GrpcImageAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Image) => void,
   ): ClientUnaryCall;
-  deleteById(request: IdField, callback: (error: ServiceError | null, response: Image) => void): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: Image) => void,
+  ): ClientUnaryCall;
   deleteById(
     request: IdField,
     metadata: Metadata,
@@ -311,44 +414,107 @@ export interface GrpcImageAdminServiceClient extends Client {
 
 export const GrpcImageAdminServiceClient = makeGenericClientConstructor(
   ImageAdminServiceService,
-  "storage.ImageAdminService",
+  'storage.ImageAdminService',
 ) as unknown as {
-  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcImageAdminServiceClient;
-  service: { readonly getById: { readonly path: "/storage.ImageAdminService/getById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: ImagePopulated) => Buffer; readonly responseDeserialize: (value: Buffer) => ImagePopulated; }; readonly getList: { readonly path: "/storage.ImageAdminService/getList"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: GetList) => Buffer; readonly requestDeserialize: (value: Buffer) => GetList; readonly responseSerialize: (value: ImageList) => Buffer; readonly responseDeserialize: (value: Buffer) => ImageList; }; readonly createOne: { readonly path: "/storage.ImageAdminService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageCreateOne) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageCreateOne; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; readonly createMany: { readonly path: "/storage.ImageAdminService/createMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageCreateMany) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageCreateMany; readonly responseSerialize: (value: ImageArray) => Buffer; readonly responseDeserialize: (value: Buffer) => ImageArray; }; readonly updateById: { readonly path: "/storage.ImageAdminService/updateById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageUpdateById) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageUpdateById; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; readonly deleteById: { readonly path: "/storage.ImageAdminService/deleteById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; };
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcImageAdminServiceClient;
+  service: {
+    readonly getById: {
+      readonly path: '/storage.ImageAdminService/getById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: ImagePopulated) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImagePopulated;
+    };
+    readonly getList: {
+      readonly path: '/storage.ImageAdminService/getList';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: GetList) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetList;
+      readonly responseSerialize: (value: ImageList) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImageList;
+    };
+    readonly createOne: {
+      readonly path: '/storage.ImageAdminService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageCreateOne) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageCreateOne;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+    readonly createMany: {
+      readonly path: '/storage.ImageAdminService/createMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageCreateMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageCreateMany;
+      readonly responseSerialize: (value: ImageArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImageArray;
+    };
+    readonly updateById: {
+      readonly path: '/storage.ImageAdminService/updateById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageUpdateById) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageUpdateById;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+    readonly deleteById: {
+      readonly path: '/storage.ImageAdminService/deleteById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+  };
   serviceName: string;
 };
 
 type ImageWebServiceService = typeof ImageWebServiceService;
 const ImageWebServiceService = {
   createOne: {
-    path: "/storage.ImageWebService/createOne" as const,
+    path: '/storage.ImageWebService/createOne' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageCreateOneWeb): Buffer => Buffer.from(ImageCreateOneWeb.encode(value).finish()),
+    requestSerialize: (value: ImageCreateOneWeb): Buffer =>
+      Buffer.from(ImageCreateOneWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageCreateOneWeb => ImageCreateOneWeb.decode(value),
     responseSerialize: (value: Image): Buffer => Buffer.from(Image.encode(value).finish()),
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
   createMany: {
-    path: "/storage.ImageWebService/createMany" as const,
+    path: '/storage.ImageWebService/createMany' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageCreateManyWeb): Buffer => Buffer.from(ImageCreateManyWeb.encode(value).finish()),
+    requestSerialize: (value: ImageCreateManyWeb): Buffer =>
+      Buffer.from(ImageCreateManyWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageCreateManyWeb => ImageCreateManyWeb.decode(value),
-    responseSerialize: (value: ImageArray): Buffer => Buffer.from(ImageArray.encode(value).finish()),
+    responseSerialize: (value: ImageArray): Buffer =>
+      Buffer.from(ImageArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): ImageArray => ImageArray.decode(value),
   },
   updateById: {
-    path: "/storage.ImageWebService/updateById" as const,
+    path: '/storage.ImageWebService/updateById' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: ImageUpdateById): Buffer => Buffer.from(ImageUpdateById.encode(value).finish()),
+    requestSerialize: (value: ImageUpdateById): Buffer =>
+      Buffer.from(ImageUpdateById.encode(value).finish()),
     requestDeserialize: (value: Buffer): ImageUpdateById => ImageUpdateById.decode(value),
     responseSerialize: (value: Image): Buffer => Buffer.from(Image.encode(value).finish()),
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
   deleteById: {
-    path: "/storage.ImageWebService/deleteById" as const,
+    path: '/storage.ImageWebService/deleteById' as const,
     requestStream: false as const,
     responseStream: false as const,
     requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
@@ -357,7 +523,6 @@ const ImageWebServiceService = {
     responseDeserialize: (value: Buffer): Image => Image.decode(value),
   },
 } as const;
-
 
 export interface GrpcImageWebServiceClient extends Client {
   createOne(
@@ -405,7 +570,10 @@ export interface GrpcImageWebServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: Image) => void,
   ): ClientUnaryCall;
-  deleteById(request: IdField, callback: (error: ServiceError | null, response: Image) => void): ClientUnaryCall;
+  deleteById(
+    request: IdField,
+    callback: (error: ServiceError | null, response: Image) => void,
+  ): ClientUnaryCall;
   deleteById(
     request: IdField,
     metadata: Metadata,
@@ -421,10 +589,51 @@ export interface GrpcImageWebServiceClient extends Client {
 
 export const GrpcImageWebServiceClient = makeGenericClientConstructor(
   ImageWebServiceService,
-  "storage.ImageWebService",
+  'storage.ImageWebService',
 ) as unknown as {
-  new(address: string, credentials: ChannelCredentials, options?: Partial<ClientOptions>): GrpcImageWebServiceClient;
-  service: { readonly createOne: { readonly path: "/storage.ImageWebService/createOne"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageCreateOneWeb) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageCreateOneWeb; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; readonly createMany: { readonly path: "/storage.ImageWebService/createMany"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageCreateManyWeb) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageCreateManyWeb; readonly responseSerialize: (value: ImageArray) => Buffer; readonly responseDeserialize: (value: Buffer) => ImageArray; }; readonly updateById: { readonly path: "/storage.ImageWebService/updateById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: ImageUpdateById) => Buffer; readonly requestDeserialize: (value: Buffer) => ImageUpdateById; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; readonly deleteById: { readonly path: "/storage.ImageWebService/deleteById"; readonly requestStream: false; readonly responseStream: false; readonly requestSerialize: (value: IdField) => Buffer; readonly requestDeserialize: (value: Buffer) => IdField; readonly responseSerialize: (value: Image) => Buffer; readonly responseDeserialize: (value: Buffer) => Image; }; };
+  new (
+    address: string,
+    credentials: ChannelCredentials,
+    options?: Partial<ClientOptions>,
+  ): GrpcImageWebServiceClient;
+  service: {
+    readonly createOne: {
+      readonly path: '/storage.ImageWebService/createOne';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageCreateOneWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageCreateOneWeb;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+    readonly createMany: {
+      readonly path: '/storage.ImageWebService/createMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageCreateManyWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageCreateManyWeb;
+      readonly responseSerialize: (value: ImageArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => ImageArray;
+    };
+    readonly updateById: {
+      readonly path: '/storage.ImageWebService/updateById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: ImageUpdateById) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => ImageUpdateById;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+    readonly deleteById: {
+      readonly path: '/storage.ImageWebService/deleteById';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: Image) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Image;
+    };
+  };
   serviceName: string;
 };
 
@@ -434,7 +643,7 @@ export class GrpcImageRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>
+    options?: Partial<ClientOptions>,
   ) {
     this.client = new GrpcImageServiceClient(address, credentials, options);
   }
@@ -546,7 +755,7 @@ export class GrpcImageAdminRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>
+    options?: Partial<ClientOptions>,
   ) {
     this.client = new GrpcImageAdminServiceClient(address, credentials, options);
   }
@@ -658,7 +867,7 @@ export class GrpcImageWebRepository {
   constructor(
     address: string,
     credentials: ChannelCredentials = ChannelCredentials.createInsecure(),
-    options?: Partial<ClientOptions>
+    options?: Partial<ClientOptions>,
   ) {
     this.client = new GrpcImageWebServiceClient(address, credentials, options);
   }
@@ -731,4 +940,3 @@ export class GrpcImageWebRepository {
     });
   }
 }
-

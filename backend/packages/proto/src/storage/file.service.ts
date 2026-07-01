@@ -11,7 +11,13 @@ import { Observable } from 'rxjs';
 import { IdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { StringMap } from '../common/types';
-import { DownloadMap, GetUrlMap, GetUrlMapWeb, UploadOne } from './common/common.messages';
+import {
+  DownloadMap,
+  GetUrlMap,
+  GetUrlMapWeb,
+  UploadOne,
+  UploadOneWeb,
+} from './common/common.messages';
 import { File } from './file/file';
 import {
   FileArray,
@@ -173,7 +179,7 @@ export interface GrpcFileWebServiceClient {
 
   createMany(request: FileCreateManyWeb, metadata?: Metadata): Observable<FileArray>;
 
-  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<FileUploadResponse>;
+  uploadOne(request: Observable<UploadOneWeb>, metadata?: Metadata): Observable<FileUploadResponse>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<File>;
 }
@@ -196,7 +202,7 @@ export interface GrpcFileWebServiceController {
     ...args: any[]
   ): Promise<FileArray> | Observable<FileArray> | FileArray;
 
-  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<FileUploadResponse>;
+  uploadOne(request: Observable<UploadOneWeb>, ...args: any[]): Observable<FileUploadResponse>;
 
   deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
 }

@@ -20,8 +20,22 @@ export interface DownloadMap_EntriesEntry {
   value: DownloadData;
 }
 
+export interface UploadOneFilter {
+  id: string;
+  userId: string;
+}
+
+export interface UploadOneFilterWeb {
+  id: string;
+}
+
 export interface UploadOne {
-  id?: string;
+  filter?: UploadOneFilter;
+  chunk?: Uint8Array<ArrayBufferLike>;
+}
+
+export interface UploadOneWeb {
+  filter?: UploadOneFilterWeb;
   chunk?: Uint8Array<ArrayBufferLike>;
 }
 

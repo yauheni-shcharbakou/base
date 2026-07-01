@@ -36,6 +36,6 @@ service FileWebService {
   rpc getDownloadMap (common.GetUrlMapWeb) returns (common.DownloadMap) {}
   rpc createOne (storage.file.FileCreateOneWeb) returns (storage.file.File) {}
   rpc createMany (storage.file.FileCreateManyWeb) returns (storage.file.FileArray) {}
-  rpc uploadOne (stream common.UploadOne) returns (stream storage.file.FileUploadResponse) {}
+  rpc uploadOne (stream common.UploadOneWeb) returns (stream storage.file.FileUploadResponse) {}
   rpc deleteById (IdField) returns (storage.file.File) {}
 }

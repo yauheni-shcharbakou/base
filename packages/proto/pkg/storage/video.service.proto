@@ -40,6 +40,6 @@ service VideoWebService {
   rpc createOne (video.VideoCreateOneWeb) returns (video.Video) {}
   rpc createMany (video.VideoCreateManyWeb) returns (video.VideoArray) {}
   rpc updateById (video.VideoUpdateById) returns (video.Video) {}
-  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc uploadOne (stream common.UploadOneWeb) returns (stream video.VideoUploadResponse) {}
   rpc deleteById (IdField) returns (video.Video) {}
 }

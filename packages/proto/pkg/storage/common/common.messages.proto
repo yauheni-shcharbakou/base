@@ -11,9 +11,25 @@ message DownloadMap {
   map<string, DownloadData> entries = 1;
 }
 
+message UploadOneFilter {
+  string id = 1;
+  string userId = 2;
+}
+
+message UploadOneFilterWeb {
+  string id = 1;
+}
+
 message UploadOne {
   oneof payload {
-    string id = 1;
+    UploadOneFilter filter = 1;
+    bytes chunk = 2;
+  }
+}
+
+message UploadOneWeb {
+  oneof payload {
+    UploadOneFilterWeb filter = 1;
     bytes chunk = 2;
   }
 }

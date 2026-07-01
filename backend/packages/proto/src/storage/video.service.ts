@@ -11,7 +11,13 @@ import { Observable } from 'rxjs';
 import { IdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { StringMap } from '../common/types';
-import { DownloadMap, GetUrlMap, GetUrlMapWeb, UploadOne } from './common/common.messages';
+import {
+  DownloadMap,
+  GetUrlMap,
+  GetUrlMapWeb,
+  UploadOne,
+  UploadOneWeb,
+} from './common/common.messages';
 import { Video } from './video/video';
 import {
   VideoArray,
@@ -194,7 +200,10 @@ export interface GrpcVideoWebServiceClient {
 
   updateById(request: VideoUpdateById, metadata?: Metadata): Observable<Video>;
 
-  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<VideoUploadResponse>;
+  uploadOne(
+    request: Observable<UploadOneWeb>,
+    metadata?: Metadata,
+  ): Observable<VideoUploadResponse>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<Video>;
 }
@@ -219,7 +228,7 @@ export interface GrpcVideoWebServiceController {
 
   updateById(request: VideoUpdateById, ...args: any[]): Promise<Video> | Observable<Video> | Video;
 
-  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<VideoUploadResponse>;
+  uploadOne(request: Observable<UploadOneWeb>, ...args: any[]): Observable<VideoUploadResponse>;
 
   deleteById(request: IdField, ...args: any[]): Promise<Video> | Observable<Video> | Video;
 }

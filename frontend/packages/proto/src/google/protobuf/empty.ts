@@ -6,7 +6,7 @@
 // source: google/protobuf/empty.proto
 
 /* eslint-disable */
-import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
+import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
 
 /**
  * A generic empty message that you can re-use to avoid defining duplicated
@@ -17,8 +17,7 @@ import { BinaryReader, BinaryWriter } from "@bufbuild/protobuf/wire";
  *       rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);
  *     }
  */
-export interface Empty {
-}
+export interface Empty {}
 
 function createBaseEmpty(): Empty {
   return {};
@@ -65,14 +64,19 @@ export const Empty: MessageFns<Empty> = {
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
-  : Partial<T>;
+type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+    ? globalThis.Array<DeepPartial<U>>
+    : T extends ReadonlyArray<infer U>
+      ? ReadonlyArray<DeepPartial<U>>
+      : T extends {}
+        ? { [K in keyof T]?: DeepPartial<T[K]> }
+        : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-type Exact<P, I extends P> = P extends Builtin ? P
+type Exact<P, I extends P> = P extends Builtin
+  ? P
   : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 interface MessageFns<T> {
