@@ -21,7 +21,7 @@ const NatsUserEventPattern = {
   CREATE: {
     pattern: 'auth-user-create',
     registerStream: (): void => {
-      globalStreamRegistry.append({ name: 'user-stream', subjects: ['auth-user-create'] });
+      globalStreamRegistry.append({ name: 'auth-user-stream', subjects: ['auth-user-create'] });
     },
   },
 };
@@ -60,7 +60,10 @@ const NatsImageEventPattern = {
   DELETE: {
     pattern: 'storage-image-delete',
     registerStream: (): void => {
-      globalStreamRegistry.append({ name: 'image-stream', subjects: ['storage-image-delete'] });
+      globalStreamRegistry.append({
+        name: 'storage-image-stream',
+        subjects: ['storage-image-delete'],
+      });
     },
   },
 };
@@ -100,7 +103,7 @@ const NatsStorageObjectEventPattern = {
     pattern: 'storage-storage-object-parent-update',
     registerStream: (): void => {
       globalStreamRegistry.append({
-        name: 'storage-object-stream',
+        name: 'storage-storage-object-stream',
         subjects: ['storage-storage-object-parent-update'],
       });
     },
@@ -142,7 +145,7 @@ const NatsVideoEventPattern = {
     pattern: 'storage-video-upload-finish',
     registerStream: (): void => {
       globalStreamRegistry.append({
-        name: 'video-stream',
+        name: 'storage-video-stream',
         subjects: ['storage-video-upload-finish'],
       });
     },
@@ -151,7 +154,7 @@ const NatsVideoEventPattern = {
     pattern: 'storage-video-upload-fail',
     registerStream: (): void => {
       globalStreamRegistry.append({
-        name: 'video-stream',
+        name: 'storage-video-stream',
         subjects: ['storage-video-upload-fail'],
       });
     },

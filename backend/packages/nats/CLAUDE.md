@@ -4,7 +4,7 @@ Guidance for working inside `backend/packages/nats`. The event-bus codegen flow 
 
 ## Dual nature
 
-`src/generated/index.ts` is **emitted by the `@backend/event-bus` compiler** (its Nats adapter) — transports (`Nats<Host><Service>Transport`), subscriber/handler interfaces, and `NatsClientFactory`. Everything else (`infrastructure/`, `interface/`, `nats.module.ts`) is hand-written runtime. There is no compiler here.
+`src/generated/index.ts` is **emitted by the `@backend/event-bus` compiler** (its Nats adapter) — transports (`Nats<Service>Transport`, service-scoped naming, host dropped), subscriber/handler interfaces, and `NatsClientFactory`. Everything else (`infrastructure/`, `interface/`, `nats.module.ts`) is hand-written runtime. There is no compiler here.
 
 ## Layer map (hexagon)
 
@@ -18,7 +18,7 @@ event-bus hexagon (the domain/ports side lives in `@backend/event-bus`):
   `NatsClientFactory` (concrete emit client).
 - **interface/** — driving/inbound: `decorators/` (`@NatsController`,
   `@NatsEvent`), `interceptors/` (ack/nak). Plus the generated
-  `Nats<Host><Service>Transport` + controller/handler interfaces.
+  `Nats<Service>Transport` + controller/handler interfaces.
 - **nats.module.ts** — composition root: `forRoot` (server+client),
   `forFeature` (bind abstract bus → concrete client via `NatsClientFactory`).
 - **generated/** — single codegen file that **spans both layers** (client =

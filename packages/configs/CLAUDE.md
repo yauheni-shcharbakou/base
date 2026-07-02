@@ -31,6 +31,27 @@ import nestConfig from '@packages/configs/eslint/nest.config.mjs';
 export default nestConfig(import.meta.url);
 ```
 
+## Layer-direction guard (`eslint/layer-guard.mjs`)
+
+- `eslint/layer-guard.mjs` → factory `layerGuard(forbidden?)`. Enforces the inward clean-architecture dependency direction (`interface -> infrastructure -> application -> domain`) by matching path segments regardless of nesting depth, so it works across every layout in the repo (`src/modules/<feature>/<layer>/...` in apps, `src/{core,migration}/<layer>/...` in pg/mongo, `src/<layer>/...` in nats).
+- Default forbidden-imports map (used when called with no argument):
+  ```js
+  {
+    domain: ['application', 'infrastructure', 'interface'],
+    application: ['infrastructure', 'interface'],
+    infrastructure: ['interface'],
+  }
+  ```
+- Composition roots (`*.module.ts`, `main.ts`) sit outside any `<layer>/` directory, so they're exempt and may freely wire concrete implementations together.
+- Consumers: `backend/packages/nats`, `backend/packages/pg`, `backend/packages/mongo`, `backend/apps/auth`, `backend/apps/storage`. All wire it the same way, alongside `nestConfig`:
+  ```js
+  // backend/*/eslint.config.mjs
+  import nestConfig from '@packages/configs/eslint/nest.config.mjs';
+  import layerGuard from '@packages/configs/eslint/layer-guard.mjs';
+
+  export default [...nestConfig(import.meta.url), ...layerGuard()];
+  ```
+
 ## Commands
 
 ```bash

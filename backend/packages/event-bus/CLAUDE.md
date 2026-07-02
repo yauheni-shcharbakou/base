@@ -14,7 +14,7 @@ concrete adapter (NATS) lives in `@backend/nats`:
 - **strategy/** — domain: the `EventBusStrategy` contract + custom (non-proto)
   event payloads in `strategy/events/`. `EventBusStrategy` itself is compiler
   input (not exported at runtime); only `strategy/events` is re-exported.
-- **generated/** — ports: abstract `<Host><Service>EventBus` classes
+- **generated/** — ports: abstract `<Service>EventBus` classes
   (`emit<Event>`/`emitMany<Event>`) + the `EventBusHost` enum. Use-cases depend
   on these abstractions; `@backend/nats` provides the impls. Never hand-edit.
 - **compiler/** — build-time codegen (ts-morph + pug), **not** a runtime layer.
@@ -29,10 +29,10 @@ Public API is the flat root `src/index.ts` barrel (`./generated` +
 ## Compiler — `compiler/` (`pnpm compile`)
 
 `main.ts` parses `EventBusStrategy` with **ts-morph** (`ParseStrategyService`), then emits in two stages:
-1. `EventBusService` writes abstract `<Host><Service>EventBus` classes (`emit<Event>` / `emitMany<Event>`) + the `EventBusHost` enum into **this package's** `src/generated/index.ts`.
+1. `EventBusService` writes abstract `<Service>EventBus` classes (`emit<Event>` / `emitMany<Event>`) + the `EventBusHost` enum into **this package's** `src/generated/index.ts`.
 2. The Nats adapter (pug templates in `compiler/adapters/nats/templates/`) writes transports/controllers into **`@backend/nats/src/generated/index.ts`** — a sibling package.
 
-Naming: `serviceId = dot-case(host_service)`; subjects are `host-service-event` (kebab); buses are `<Host><Service>EventBus`.
+Naming: `serviceId = dot-case(service)` — **host is dropped from class/interface names**, so generated bus/transport/controller names are `<Service>EventBus` / `Nats<Service>Transport` / etc., not `<Host><Service>…`. This means service names must be unique across all hosts in `EventBusStrategy`, or the compiler emits colliding class names. Subjects (`eventId = dot-case(host_service_event)` → kebab `host-service-event`, e.g. `auth-user-create`) and JetStream stream names (`host-service-stream`, e.g. `auth-user-stream`) both stay host-scoped — only the generated class/interface names dropped the host.
 
 ## Exports — `src/index.ts`
 

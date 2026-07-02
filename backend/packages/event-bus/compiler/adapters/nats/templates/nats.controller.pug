@@ -1,4 +1,4 @@
-- const streamName = `${kebabCase(data.service.id)}-stream`
+- const streamName = `${kebabCase(`${data.service.hostName}_${data.service.id}`)}-stream`
 - const pattern = `Nats${data.service.patternName}`
 - const controller = `Nats${data.service.controllerName}`
 - const transport = `Nats${data.service.transportName}`
