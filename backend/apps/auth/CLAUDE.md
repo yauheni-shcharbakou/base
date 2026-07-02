@@ -8,7 +8,7 @@ The identity / authentication microservice. gRPC host `auth`, event-bus host `Ev
 
 ## Modules (`src/modules/`)
 
-- **user** — user CRUD. `GrpcUserController` serves `User` / `UserAdmin` / `UserWeb` gRPC services. Emits `AuthUserEventBus` on create (storage subscribes to provision a root folder). `UserRepository.getOneInternal` exposes the password `hash` for login (the public `User` proto never includes it).
+- **user** — user CRUD. `GrpcUserController` serves `User` / `UserAdmin` / `UserWeb` gRPC services. Emits `UserEventBus` on create (storage subscribes to provision a root folder). `UserRepository.getOneInternal` exposes the password `hash` for login (the public `User` proto never includes it).
 - **auth** — `AuthLoginUseCase` (verify password → issue tokens), `AuthRefreshTokenUseCase`, `AuthGetUserByTokenUseCase`. Tokens via `AuthTokenService` → `JwtAuthTokenServiceImpl` (`@nestjs/jwt`, `jwtConfig`). Depends on `UserModule` + `CryptoModule`.
 - **crypto** — `CryptoService` → `BcryptCryptoServiceImpl` (`hash` / `compare`), returns `Either`.
 - **temp-code** — single-use authorization codes (`randomUUID`, `expiredAt` from `tempCode.expiresInMinutes`, `isActive`). Currently used only to authorize gRPC **stream** requests. CRUD + deactivate use-cases; `CronTempCodeScheduler` deactivates expired codes every minute inside `databaseRunnerService.isolatedRun`. Serves `TempCode` / `Admin` / `Web` gRPC services.
@@ -34,3 +34,4 @@ pnpm lint
 
 - Reference service: new backend code elsewhere should mirror this layout — don't diverge here.
 - Cron/event handlers wrap work in `isolatedRun` for a per-run `EntityManager` context.
+- `eslint.config.mjs` wires `@packages/configs` `layerGuard()` alongside `nestConfig` — an inward-only import guard (`interface → infrastructure → application → domain`); it lints clean today, keep new imports pointed inward.

@@ -16,6 +16,6 @@ import { GrpcTempCodeWebController } from './interface/grpc/grpc.temp-code.web.c
     UserModule,
   ],
   providers: [TempCodeProxyService],
-  exports: [GrpcTempCodeWebController, GrpcTempCodeAdminController],
+  controllers: [GrpcTempCodeWebController, GrpcTempCodeAdminController],
 })
 export class TempCodeModule {}

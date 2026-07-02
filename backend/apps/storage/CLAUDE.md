@@ -10,13 +10,14 @@ The media / file storage microservice, backed by **Bunny CDN**. gRPC host `stora
 
 - **storage** — provider abstraction over Bunny (no DB, no controller). `StorageFileService` → Bunny **Storage** API, `StorageVideoService` → Bunny **Stream** API, each via its own axios client (`FILE_HTTP_CLIENT` / `VIDEO_HTTP_CLIENT`). `bunnyStorageConfig` builds API URLs, signed CDN URLs (private key + expiry), and `rootDir` = `dev`/`prod`. Exports the two services.
 - **storage-object** — a virtual folder tree (`folderPath`, `isPublic`, `isFolder`). NATS (`NatsStorageObjectController`): on `auth.user.create` → create the user's root folder; on `storage-object.parentUpdate` → cascade `folderPath`/`isPublic` to children. Emits `parentUpdate`. Exports `StorageObjectValidationService`.
-- **file** — plain files (Bunny Storage); upload + hourly `FileCleanupUseCase` cron.
-- **image** — images; gRPC + NATS.
-- **video** — videos (Bunny Stream); upload, url/download maps, and `VideoSyncWithProviderUseCase` (cron) that pages Bunny and `bulkUpdate`s `duration`/`views` by `providerId`. Emits `uploadFinish`/`uploadFail`.
+- **file** — plain files (Bunny Storage); upload + hourly `FileCleanupUseCase` cron. NATS (`NatsFileController`) consumes `video.uploadFinish`/`uploadFail` (cross-host handler on the `video` service) to flip the backing file's `uploadStatus` to `READY`/`FAILED` — video uploads always create a companion file row.
+- **image** — images; gRPC only. Emits `ImageEventBus.emitDelete` on delete; has no NATS subscriber of its own.
+- **video** — videos (Bunny Stream); upload, url/download maps, and `VideoSyncWithProviderUseCase` (cron) that pages Bunny and `bulkUpdate`s `duration`/`views` by `providerId`. Emits `uploadFinish`/`uploadFail`, consumed by `file`.
 
 ## Entities & migrator
 
 - Note: PG entities live in `src/common/infrastructure/pg/entities/` (shared across modules), unlike `auth` where entities sit inside each module.
+- **Transactional placement**: `file`/`image`/`video` repositories implement `saveAndPlaceOne`/`saveAndPlaceMany` (not the base `create*`) — inside a single MikroORM `em.transactional`, they persist the entity (`image`/`video` also create their backing `file` row from a `FileMeta`) plus, if a placement `StorageObjectPlacementMeta` is given, a leaf `storage-object` row built by the shared `common/infrastructure/pg/factories/pg.storage-object.factory.ts` (`buildLeafStorageObject` — owns the `type` discriminator, `isFolder: false`, and the file/image/video relation wiring so the three repositories don't duplicate it).
 - Migrator tasks: `create-root-folders` backfills root folders for existing users — it injects the **auth** `GrpcUserServiceClient` (the migrator declares `appClientStrategy: { auth: [GrpcUserTransport.service] }`), which is why `AUTH_GRPC_URL` is set even though the runtime never calls auth. `add-storage-object-is-folder` backfills the `isFolder` flag.
 
 ## Config / env
@@ -31,3 +32,4 @@ pnpm build / migrate (:new/:initial/:sql/:tasks) / lint
 ```
 - NATS handlers must stay idempotent (at-least-once redelivery).
 - Heavy cross-module wiring (`video` imports `file` + `storage-object` + `storage`) — check for cycles when adding deps.
+- `eslint.config.mjs` wires `@packages/configs` `layerGuard()` alongside `nestConfig` — same inward-only import guard as `auth`; keep new imports pointed inward (`interface → infrastructure → application → domain`).

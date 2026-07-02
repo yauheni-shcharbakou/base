@@ -142,6 +142,7 @@ Key conventions, all visible in the auth module:
 - **Config** (`config.ts`) spreads `commonConfig()` from `@backend/common` and validates service-specific env with `validateEnv(zod schema)` from `@packages/common`.
 - **Data layer**: entity IDs are application-generated monotonic **ULIDs** (`pgId`), not DB sequences/UUIDs (so `id` is a sortable string); table/database names come from `@packages/common` `database/enums`; every gRPC handler runs inside a per-request MikroORM `RequestContext` (transactional isolation via `PgRequestInterceptor`).
 - **gRPC topology**: the host → URL → services map is centralized in `@backend/grpc` `grpcConfig` (driven by `*_GRPC_URL` env vars). Adding a service or host means editing it **and** the env var.
+- **Layer direction is lint-enforced**: `auth` and `storage` (plus `@backend/pg`/`mongo`/`nats`) wire a shared `layerGuard()` flat-config helper (`@packages/configs/eslint/layer-guard.mjs`) alongside `nestConfig` in their `eslint.config.mjs`. It forbids outward-to-inward imports (`domain` can't import `application`/`infrastructure`/`interface`, etc.) by path segment, regardless of nesting depth; `*.module.ts`/`main.ts` composition roots are exempt.
 
 ### Migrations & the migrator sub-app
 
@@ -151,9 +152,9 @@ A data task may call **other services over gRPC** by declaring `appClientStrateg
 
 ## api-gateway
 
-The edge service: it serves REST + Swagger **and** runs as a gRPC server (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC), terminating external requests and **proxying to internal gRPC services**. Controllers are split by audience under `modules/<feature>/interface/grpc/` (`*.web.controller.ts`, `*.admin.controller.ts`, `*.public.controller.ts`); each delegates to an `application/services/*.proxy.service.ts` that injects a generated gRPC client via `@InjectGrpcService(GrpcXTransport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))`. The `grpc-access` module provides auth guards/interceptors over gRPC metadata.
+The edge service: it serves REST + Swagger **and** runs as a gRPC server (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC), terminating external requests and **proxying to internal gRPC services**. Controllers are split by audience under `modules/<feature>/interface/grpc/` (`*.web.controller.ts`, `*.admin.controller.ts`, `*.public.controller.ts`); each delegates to an `application/services/*.proxy.service.ts` that injects a generated gRPC client via `@InjectGrpcService(GrpcXTransport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))`. Authorization is a global `CommonModule` exposing `AccessService` plus per-controller access decorators (`@PublicGrpcController()` / `@DefaultGrpcController()` / `@AdminGrpcController()`) and unary/stream guards over gRPC metadata.
 
-> **Note:** api-gateway is mid-migration to the use-case layout and **currently does not compile** — some files still reference the deleted old structure (e.g. `@backend/transport`, `common/decorators/method.decorator.ts`). Don't treat it as a buildable reference. Treat the new `modules/<feature>/{interface,application}` layout (mirroring auth) as the target; don't reintroduce the old `common/`-rooted patterns.
+> **Note:** Its feature modules are **two-layer** (`modules/<feature>/{interface,application}` only — no `domain`/`infrastructure`, since the gateway has no persistence); cross-cutting auth lives in `src/common/`. This differs from the four-layer `auth`/`storage` services on purpose — don't add domain/infra layers here.
 
 ## Frontend admin
 

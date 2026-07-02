@@ -7,7 +7,7 @@ import { ImageModule } from '@modules/image/image.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
 import { TempCodeModule } from '@modules/temp-code/temp-code.module';
 import { UserModule } from '@modules/user/user.module';
-import { VideoModule } from '@modules/video/file.module';
+import { VideoModule } from '@modules/video/video.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
