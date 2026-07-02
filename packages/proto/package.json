@@ -16,14 +16,14 @@
     "reset:modules": "rm -rf node_modules"
   },
   "devDependencies": {
-    "@grpc/grpc-js": "1.14.3",
+    "@grpc/grpc-js": "1.14.4",
     "@packages/compiler-utils": "workspace:*",
     "@packages/configs": "workspace:*",
     "@types/pug": "2.0.10",
-    "protobufjs": "7.5.8",
+    "protobufjs": "7.6.3",
     "pug": "3.0.4",
     "ts-morph": "28.0.0",
     "ts-proto": "2.11.6",
-    "tsx": "4.21.0"
+    "tsx": "4.22.4"
   }
 }
