@@ -24,6 +24,6 @@ export const GrpcUserId = createParamDecorator(
     }
 
     const parsedMetadata = new GrpcParsedMeta(rawMetadata);
-    return parsedMetadata[options.required ? 'getOrThrow' : 'get']('userId');
+    return parsedMetadata[options.required ? 'getOrThrow' : 'get']('user-id');
   },
 );

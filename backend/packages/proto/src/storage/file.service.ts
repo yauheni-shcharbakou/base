@@ -14,9 +14,9 @@ import { StringMap } from '../common/types';
 import {
   DownloadMap,
   GetUrlMap,
-  GetUrlMapWeb,
+  GetUrlMapShort,
   UploadOne,
-  UploadOneWeb,
+  UploadOneShort,
 } from './common/common.messages';
 import { File } from './file/file';
 import {
@@ -99,9 +99,9 @@ function FileServiceControllerMethods() {
 }
 
 export interface GrpcFileAdminServiceClient {
-  getUrlMap(request: GetUrlMap, metadata?: Metadata): Observable<StringMap>;
+  getUrlMap(request: GetUrlMapShort, metadata?: Metadata): Observable<StringMap>;
 
-  getDownloadMap(request: GetUrlMap, metadata?: Metadata): Observable<DownloadMap>;
+  getDownloadMap(request: GetUrlMapShort, metadata?: Metadata): Observable<DownloadMap>;
 
   getById(request: IdField, metadata?: Metadata): Observable<File>;
 
@@ -111,19 +111,22 @@ export interface GrpcFileAdminServiceClient {
 
   createMany(request: FileCreateMany, metadata?: Metadata): Observable<FileArray>;
 
-  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<FileUploadResponse>;
+  uploadOne(
+    request: Observable<UploadOneShort>,
+    metadata?: Metadata,
+  ): Observable<FileUploadResponse>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<File>;
 }
 
 export interface GrpcFileAdminServiceController {
   getUrlMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<StringMap> | Observable<StringMap> | StringMap;
 
   getDownloadMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
 
@@ -138,7 +141,7 @@ export interface GrpcFileAdminServiceController {
     ...args: any[]
   ): Promise<FileArray> | Observable<FileArray> | FileArray;
 
-  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<FileUploadResponse>;
+  uploadOne(request: Observable<UploadOneShort>, ...args: any[]): Observable<FileUploadResponse>;
 
   deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
 }
@@ -171,27 +174,30 @@ function FileAdminServiceControllerMethods() {
 }
 
 export interface GrpcFileWebServiceClient {
-  getUrlMap(request: GetUrlMapWeb, metadata?: Metadata): Observable<StringMap>;
+  getUrlMap(request: GetUrlMapShort, metadata?: Metadata): Observable<StringMap>;
 
-  getDownloadMap(request: GetUrlMapWeb, metadata?: Metadata): Observable<DownloadMap>;
+  getDownloadMap(request: GetUrlMapShort, metadata?: Metadata): Observable<DownloadMap>;
 
   createOne(request: FileCreateOneWeb, metadata?: Metadata): Observable<File>;
 
   createMany(request: FileCreateManyWeb, metadata?: Metadata): Observable<FileArray>;
 
-  uploadOne(request: Observable<UploadOneWeb>, metadata?: Metadata): Observable<FileUploadResponse>;
+  uploadOne(
+    request: Observable<UploadOneShort>,
+    metadata?: Metadata,
+  ): Observable<FileUploadResponse>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<File>;
 }
 
 export interface GrpcFileWebServiceController {
   getUrlMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<StringMap> | Observable<StringMap> | StringMap;
 
   getDownloadMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
 
@@ -202,7 +208,7 @@ export interface GrpcFileWebServiceController {
     ...args: any[]
   ): Promise<FileArray> | Observable<FileArray> | FileArray;
 
-  uploadOne(request: Observable<UploadOneWeb>, ...args: any[]): Observable<FileUploadResponse>;
+  uploadOne(request: Observable<UploadOneShort>, ...args: any[]): Observable<FileUploadResponse>;
 
   deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
 }

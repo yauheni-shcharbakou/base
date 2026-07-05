@@ -12,7 +12,7 @@ import type { ClientStorage } from '@frontend/proto';
 type CreateActionResponse<T> = { entity: T } | { error: string };
 
 export async function createFile(
-  request: ClientStorage.FileCreateRequest,
+  request: ClientStorage.FileCreateOne,
 ): Promise<CreateActionResponse<ClientStorage.File>> {
   try {
     const metadata = await authService.getAuthMetadata();
@@ -24,7 +24,7 @@ export async function createFile(
 }
 
 export async function createVideo(
-  request: ClientStorage.VideoCreateRequest,
+  request: ClientStorage.VideoCreateOne,
 ): Promise<CreateActionResponse<ClientStorage.Video>> {
   try {
     const metadata = await authService.getAuthMetadata();
@@ -36,7 +36,7 @@ export async function createVideo(
 }
 
 export async function createImage(
-  request: ClientStorage.ImageCreateRequest,
+  request: ClientStorage.ImageCreateOne,
 ): Promise<CreateActionResponse<ClientStorage.Image>> {
   try {
     const metadata = await authService.getAuthMetadata();

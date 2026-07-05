@@ -17,7 +17,7 @@ export class VideoProxyService {
     private readonly videoMapper: VideoMapper,
   ) {}
 
-  getUrlMap(query: NestCommon.Query, userId: string, ip?: string): Promise<NestCommon.StringMap> {
+  getUrlMap(query: NestCommon.Query, ip?: string, userId?: string): Promise<NestCommon.StringMap> {
     return firstValueFrom(
       this.videoClient.getUrlMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
     );
@@ -25,8 +25,8 @@ export class VideoProxyService {
 
   getDownloadMap(
     query: NestCommon.Query,
-    userId: string,
     ip?: string,
+    userId?: string,
   ): Promise<NestStorage.DownloadMap> {
     return firstValueFrom(
       this.videoClient.getDownloadMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
@@ -51,12 +51,12 @@ export class VideoProxyService {
   }
 
   uploadOne(
-    request$: Observable<NestStorage.UploadOne | NestStorage.UploadOneWeb>,
+    request$: Observable<NestStorage.UploadOneShort>,
     userId?: string,
   ): Observable<NestStorage.VideoUploadResponse> {
     const sanitizedRequest$ = request$.pipe(
       map((message: NestStorage.UploadOne) => {
-        if (message.filter && !message.filter.userId) {
+        if (message.filter && userId) {
           message.filter.userId = userId;
         }
 

@@ -3,13 +3,14 @@ import { StorageData, StorageUploadItem } from '@/features/storage/types';
 import type { BrowserStorage } from '@packages/proto';
 
 export class FileActionProvider {
-  async createOne(file: File, storage?: StorageData): Promise<BrowserStorage.File> {
-    const data: BrowserStorage.FileCreateRequest = {
+  async createOne(userId: string, file: File, storage?: StorageData): Promise<BrowserStorage.File> {
+    const data: BrowserStorage.FileCreateOne = {
       file: {
         originalName: file.name,
         size: file.size,
         mimeType: file.type,
       },
+      userId,
     };
 
     if (storage?.parent) {
@@ -30,10 +31,11 @@ export class FileActionProvider {
   }
 
   async createMany(
+    userId: string,
     items: StorageUploadItem[],
     storage?: Omit<StorageData, 'name'>,
   ): Promise<BrowserStorage.File[]> {
-    const data: BrowserStorage.FileCreateManyRequest = {
+    const data: BrowserStorage.FileCreateMany = {
       items: items.map((item) => {
         return {
           file: {
@@ -44,6 +46,7 @@ export class FileActionProvider {
           uploadId: item.uploadId,
         };
       }),
+      userId,
     };
 
     if (storage?.parent) {

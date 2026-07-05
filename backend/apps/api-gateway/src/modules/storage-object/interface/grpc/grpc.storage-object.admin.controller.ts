@@ -1,7 +1,7 @@
 import { ValidateGrpcPayload } from '@backend/grpc';
 import {
   GrpcStorageObjectAdminServiceController,
-  GrpcStorageObjectTransport,
+  GrpcStorageObjectAdminTransport,
   NestCommon,
   NestStorage,
 } from '@backend/proto';
@@ -15,7 +15,7 @@ import { StorageObjectUpdateByIdDto } from '@modules/storage-object/application/
 import { StorageObjectProxyService } from '@modules/storage-object/application/services/storage-object.proxy.service';
 
 @AdminGrpcController()
-@GrpcStorageObjectTransport.ControllerMethods()
+@GrpcStorageObjectAdminTransport.ControllerMethods()
 export class GrpcStorageObjectAdminController implements GrpcStorageObjectAdminServiceController {
   constructor(private readonly storageObjectService: StorageObjectProxyService) {}
 

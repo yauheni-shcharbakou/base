@@ -2,13 +2,13 @@
 
 import { AppEdit, ControlledBooleanField, TextEditField } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
-import { folderActionProvider } from '@/features/storage/providers';
 import { FolderSelect } from '@/features/storage/components';
+import { folderActionProvider } from '@/features/storage/providers';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import React, { useEffect } from 'react';
-import zod from 'zod';
 import type { BrowserStorage } from '@packages/proto';
+import { useEffect } from 'react';
+import zod from 'zod';
 
 const schema = {
   parent: zod.string().optional(),
@@ -59,6 +59,8 @@ export default function StorageObjectEdit() {
       const hasFolderWithSameName = await folderActionProvider.isExistsFolder({
         parent,
         name: data.name!,
+        userId: entity?.userId,
+        ids: [],
       });
 
       if (hasFolderWithSameName) {
@@ -84,7 +86,8 @@ export default function StorageObjectEdit() {
             fieldErr={errors?.parent}
             control={control}
             onOptionsLoaded={() => setValue('parent', entity?.parentId)}
-            id={entity?.id}
+            excludeChildrenOf={entity?.id}
+            userId={entity?.userId}
           />
         )}
         <TextEditField

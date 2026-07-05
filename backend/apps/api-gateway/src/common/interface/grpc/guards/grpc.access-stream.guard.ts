@@ -61,7 +61,7 @@ export class GrpcAccessStreamGuard implements CanActivate {
       throw GrpcExceptionMapper.toRpcException(user.value);
     }
 
-    metadata.set('userId', user.value.id);
+    metadata.set('user-id', user.value.id);
     return true;
   }
 }

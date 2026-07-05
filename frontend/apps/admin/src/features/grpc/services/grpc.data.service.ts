@@ -1,12 +1,12 @@
 import { ConfigService } from '@/common/services/config.service';
 import { GrpcDataRepository } from '@/features/grpc/types';
 import {
-  GrpcFileRepository,
-  GrpcImageRepository,
-  GrpcStorageObjectRepository,
-  GrpcTempCodeRepository,
-  GrpcUserRepository,
-  GrpcVideoRepository,
+  GrpcFileAdminRepository,
+  GrpcImageAdminRepository,
+  GrpcStorageObjectAdminRepository,
+  GrpcTempCodeAdminRepository,
+  GrpcUserAdminRepository,
+  GrpcVideoAdminRepository,
 } from '@frontend/proto';
 import { AuthDatabaseEntity, StorageDatabaseEntity } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
@@ -17,12 +17,12 @@ export class GrpcDataService {
   private readonly grpcUrl = this.configService.getGrpcUrl();
 
   private readonly repositories: Record<string, Partial<GrpcDataRepository<any>>> = {
-    [AuthDatabaseEntity.USER]: new GrpcUserRepository(this.grpcUrl),
-    [AuthDatabaseEntity.TEMP_CODE]: new GrpcTempCodeRepository(this.grpcUrl),
-    [StorageDatabaseEntity.FILE]: new GrpcFileRepository(this.grpcUrl),
-    [StorageDatabaseEntity.IMAGE]: new GrpcImageRepository(this.grpcUrl),
-    [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectRepository(this.grpcUrl),
-    [StorageDatabaseEntity.VIDEO]: new GrpcVideoRepository(this.grpcUrl),
+    [AuthDatabaseEntity.USER]: new GrpcUserAdminRepository(this.grpcUrl),
+    [AuthDatabaseEntity.TEMP_CODE]: new GrpcTempCodeAdminRepository(this.grpcUrl),
+    [StorageDatabaseEntity.FILE]: new GrpcFileAdminRepository(this.grpcUrl),
+    [StorageDatabaseEntity.IMAGE]: new GrpcImageAdminRepository(this.grpcUrl),
+    [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectAdminRepository(this.grpcUrl),
+    [StorageDatabaseEntity.VIDEO]: new GrpcVideoAdminRepository(this.grpcUrl),
   };
 
   getRepository<Entity extends BaseRecord>(resource: string): GrpcDataRepository<Entity> {

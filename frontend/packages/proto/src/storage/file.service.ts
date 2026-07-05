@@ -23,9 +23,9 @@ import { StringMap } from '../common/types';
 import {
   DownloadMap,
   GetUrlMap,
-  GetUrlMapWeb,
+  GetUrlMapShort,
   UploadOne,
-  UploadOneWeb,
+  UploadOneShort,
 } from './common/common.messages';
 import { File } from './file/file';
 import {
@@ -325,8 +325,9 @@ const FileAdminServiceService = {
     path: '/storage.FileAdminService/getUrlMap' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
+    requestSerialize: (value: GetUrlMapShort): Buffer =>
+      Buffer.from(GetUrlMapShort.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMapShort => GetUrlMapShort.decode(value),
     responseSerialize: (value: StringMap): Buffer => Buffer.from(StringMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
   },
@@ -334,8 +335,9 @@ const FileAdminServiceService = {
     path: '/storage.FileAdminService/getDownloadMap' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetUrlMap): Buffer => Buffer.from(GetUrlMap.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetUrlMap => GetUrlMap.decode(value),
+    requestSerialize: (value: GetUrlMapShort): Buffer =>
+      Buffer.from(GetUrlMapShort.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMapShort => GetUrlMapShort.decode(value),
     responseSerialize: (value: DownloadMap): Buffer =>
       Buffer.from(DownloadMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
@@ -382,8 +384,9 @@ const FileAdminServiceService = {
     path: '/storage.FileAdminService/uploadOne' as const,
     requestStream: true as const,
     responseStream: true as const,
-    requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
+    requestSerialize: (value: UploadOneShort): Buffer =>
+      Buffer.from(UploadOneShort.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UploadOneShort => UploadOneShort.decode(value),
     responseSerialize: (value: FileUploadResponse): Buffer =>
       Buffer.from(FileUploadResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
@@ -401,31 +404,31 @@ const FileAdminServiceService = {
 
 export interface GrpcFileAdminServiceClient extends Client {
   getUrlMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getUrlMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getUrlMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
@@ -490,12 +493,12 @@ export interface GrpcFileAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: FileArray) => void,
   ): ClientUnaryCall;
-  uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  uploadOne(): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
+  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
   uploadOne(
     metadata: Metadata,
     options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
+  ): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
   deleteById(
     request: IdField,
     callback: (error: ServiceError | null, response: File) => void,
@@ -527,8 +530,8 @@ export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileAdminService/getUrlMap';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMap) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
+      readonly requestSerialize: (value: GetUrlMapShort) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMapShort;
       readonly responseSerialize: (value: StringMap) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StringMap;
     };
@@ -536,8 +539,8 @@ export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileAdminService/getDownloadMap';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMap) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMap;
+      readonly requestSerialize: (value: GetUrlMapShort) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMapShort;
       readonly responseSerialize: (value: DownloadMap) => Buffer;
       readonly responseDeserialize: (value: Buffer) => DownloadMap;
     };
@@ -581,8 +584,8 @@ export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileAdminService/uploadOne';
       readonly requestStream: true;
       readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOne;
+      readonly requestSerialize: (value: UploadOneShort) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UploadOneShort;
       readonly responseSerialize: (value: FileUploadResponse) => Buffer;
       readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
     };
@@ -605,9 +608,9 @@ const FileWebServiceService = {
     path: '/storage.FileWebService/getUrlMap' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetUrlMapWeb): Buffer =>
-      Buffer.from(GetUrlMapWeb.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetUrlMapWeb => GetUrlMapWeb.decode(value),
+    requestSerialize: (value: GetUrlMapShort): Buffer =>
+      Buffer.from(GetUrlMapShort.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMapShort => GetUrlMapShort.decode(value),
     responseSerialize: (value: StringMap): Buffer => Buffer.from(StringMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): StringMap => StringMap.decode(value),
   },
@@ -615,9 +618,9 @@ const FileWebServiceService = {
     path: '/storage.FileWebService/getDownloadMap' as const,
     requestStream: false as const,
     responseStream: false as const,
-    requestSerialize: (value: GetUrlMapWeb): Buffer =>
-      Buffer.from(GetUrlMapWeb.encode(value).finish()),
-    requestDeserialize: (value: Buffer): GetUrlMapWeb => GetUrlMapWeb.decode(value),
+    requestSerialize: (value: GetUrlMapShort): Buffer =>
+      Buffer.from(GetUrlMapShort.encode(value).finish()),
+    requestDeserialize: (value: Buffer): GetUrlMapShort => GetUrlMapShort.decode(value),
     responseSerialize: (value: DownloadMap): Buffer =>
       Buffer.from(DownloadMap.encode(value).finish()),
     responseDeserialize: (value: Buffer): DownloadMap => DownloadMap.decode(value),
@@ -646,9 +649,9 @@ const FileWebServiceService = {
     path: '/storage.FileWebService/uploadOne' as const,
     requestStream: true as const,
     responseStream: true as const,
-    requestSerialize: (value: UploadOneWeb): Buffer =>
-      Buffer.from(UploadOneWeb.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UploadOneWeb => UploadOneWeb.decode(value),
+    requestSerialize: (value: UploadOneShort): Buffer =>
+      Buffer.from(UploadOneShort.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UploadOneShort => UploadOneShort.decode(value),
     responseSerialize: (value: FileUploadResponse): Buffer =>
       Buffer.from(FileUploadResponse.encode(value).finish()),
     responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
@@ -666,31 +669,31 @@ const FileWebServiceService = {
 
 export interface GrpcFileWebServiceClient extends Client {
   getUrlMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getUrlMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getUrlMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StringMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     metadata: Metadata,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
   ): ClientUnaryCall;
   getDownloadMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: DownloadMap) => void,
@@ -725,12 +728,12 @@ export interface GrpcFileWebServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: FileArray) => void,
   ): ClientUnaryCall;
-  uploadOne(): ClientDuplexStream<UploadOneWeb, FileUploadResponse>;
-  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOneWeb, FileUploadResponse>;
+  uploadOne(): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
+  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
   uploadOne(
     metadata: Metadata,
     options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOneWeb, FileUploadResponse>;
+  ): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
   deleteById(
     request: IdField,
     callback: (error: ServiceError | null, response: File) => void,
@@ -762,8 +765,8 @@ export const GrpcFileWebServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileWebService/getUrlMap';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMapWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb;
+      readonly requestSerialize: (value: GetUrlMapShort) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMapShort;
       readonly responseSerialize: (value: StringMap) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StringMap;
     };
@@ -771,8 +774,8 @@ export const GrpcFileWebServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileWebService/getDownloadMap';
       readonly requestStream: false;
       readonly responseStream: false;
-      readonly requestSerialize: (value: GetUrlMapWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => GetUrlMapWeb;
+      readonly requestSerialize: (value: GetUrlMapShort) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => GetUrlMapShort;
       readonly responseSerialize: (value: DownloadMap) => Buffer;
       readonly responseDeserialize: (value: Buffer) => DownloadMap;
     };
@@ -798,8 +801,8 @@ export const GrpcFileWebServiceClient = makeGenericClientConstructor(
       readonly path: '/storage.FileWebService/uploadOne';
       readonly requestStream: true;
       readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOneWeb) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOneWeb;
+      readonly requestSerialize: (value: UploadOneShort) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UploadOneShort;
       readonly responseSerialize: (value: FileUploadResponse) => Buffer;
       readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
     };
@@ -960,7 +963,7 @@ export class GrpcFileAdminRepository {
   }
 
   getUrlMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<StringMap> {
@@ -976,7 +979,7 @@ export class GrpcFileAdminRepository {
   }
 
   getDownloadMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<DownloadMap> {
@@ -1088,7 +1091,7 @@ export class GrpcFileWebRepository {
   }
 
   getUrlMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<StringMap> {
@@ -1104,7 +1107,7 @@ export class GrpcFileWebRepository {
   }
 
   getDownloadMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
   ): Promise<DownloadMap> {

@@ -22,10 +22,10 @@ export interface DownloadMapEntriesEntry {
 
 export interface UploadOneFilter {
   id: string;
-  userId: string;
+  userId?: string;
 }
 
-export interface UploadOneFilterWeb {
+export interface UploadOneFilterShort {
   id: string;
 }
 
@@ -34,8 +34,8 @@ export interface UploadOne {
   chunk?: Uint8Array<ArrayBufferLike>;
 }
 
-export interface UploadOneWeb {
-  filter?: UploadOneFilterWeb;
+export interface UploadOneShort {
+  filter?: UploadOneFilterShort;
   chunk?: Uint8Array<ArrayBufferLike>;
 }
 
@@ -54,10 +54,10 @@ export interface GetUrlMap {
   id?: string;
   ids: string[];
   ip?: string;
-  userId: string;
+  userId?: string;
 }
 
-export interface GetUrlMapWeb {
+export interface GetUrlMapShort {
   id?: string;
   ids: string[];
   ip?: string;

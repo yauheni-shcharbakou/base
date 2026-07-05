@@ -5,7 +5,6 @@ import { StorageFileService } from '@modules/storage/domain/services/storage.fil
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -73,10 +72,6 @@ export class FileUploadOneUseCase {
           }
 
           const { id, userId } = message.filter;
-
-          if (!userId) {
-            throw new ForbiddenException(`User is required`);
-          }
 
           const file = await this.databaseRunnerService.isolatedRun(() => {
             return this.fileRepository.getOne({ id, userId });

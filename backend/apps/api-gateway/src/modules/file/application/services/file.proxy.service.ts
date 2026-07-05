@@ -12,7 +12,7 @@ export class FileProxyService {
     private readonly fileMapper: FileMapper,
   ) {}
 
-  getUrlMap(query: NestCommon.Query, userId: string, ip?: string): Promise<NestCommon.StringMap> {
+  getUrlMap(query: NestCommon.Query, ip?: string, userId?: string): Promise<NestCommon.StringMap> {
     return firstValueFrom(
       this.fileClient.getUrlMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
     );
@@ -20,8 +20,8 @@ export class FileProxyService {
 
   getDownloadMap(
     query: NestCommon.Query,
-    userId: string,
     ip?: string,
+    userId?: string,
   ): Promise<NestStorage.DownloadMap> {
     return firstValueFrom(
       this.fileClient.getDownloadMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
@@ -45,12 +45,12 @@ export class FileProxyService {
   }
 
   uploadOne(
-    request$: Observable<NestStorage.UploadOne | NestStorage.UploadOneWeb>,
+    request$: Observable<NestStorage.UploadOneShort>,
     userId?: string,
   ): Observable<NestStorage.FileUploadResponse> {
     const sanitizedRequest$ = request$.pipe(
       map((message: NestStorage.UploadOne) => {
-        if (message.filter && !message.filter.userId) {
+        if (message.filter && userId) {
           message.filter.userId = userId;
         }
 

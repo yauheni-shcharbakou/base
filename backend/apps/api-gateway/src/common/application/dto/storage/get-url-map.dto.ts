@@ -5,14 +5,14 @@ import { IsIP } from 'class-validator';
 import { QueryDto } from '../query.dto';
 
 export class GetUrlMapDto extends QueryDto implements NestStorage.GetUrlMap {
-  @ULIDField()
-  userId: string;
+  @ULIDField({ required: false })
+  userId?: string;
 
   @StringField({ required: false })
   @IsIP()
   ip?: string;
 }
 
-export class GetUrlMapWebDto
+export class GetUrlMapShortDto
   extends OmitType(GetUrlMapDto, ['userId'] as const)
-  implements NestStorage.GetUrlMapWeb {}
+  implements NestStorage.GetUrlMapShort {}

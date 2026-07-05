@@ -13,10 +13,10 @@ message DownloadMap {
 
 message UploadOneFilter {
   string id = 1;
-  string userId = 2;
+  optional string userId = 2;
 }
 
-message UploadOneFilterWeb {
+message UploadOneFilterShort {
   string id = 1;
 }
 
@@ -27,9 +27,9 @@ message UploadOne {
   }
 }
 
-message UploadOneWeb {
+message UploadOneShort {
   oneof payload {
-    UploadOneFilterWeb filter = 1;
+    UploadOneFilterShort filter = 1;
     bytes chunk = 2;
   }
 }
@@ -49,10 +49,10 @@ message GetUrlMap {
   optional string id = 1;
   repeated string ids = 2;
   optional string ip = 3;
-  string userId = 4;
+  optional string userId = 4;
 }
 
-message GetUrlMapWeb {
+message GetUrlMapShort {
   optional string id = 1;
   repeated string ids = 2;
   optional string ip = 3;

@@ -9,8 +9,12 @@ type VideoItem = Pick<StorageUploadItem, 'file'> & {
 };
 
 export class VideoActionProvider {
-  async createOne(item: VideoItem, storage?: StorageData): Promise<BrowserStorage.Video> {
-    const data: BrowserStorage.VideoCreateRequest = {
+  async createOne(
+    userId: string,
+    item: VideoItem,
+    storage?: StorageData,
+  ): Promise<BrowserStorage.Video> {
+    const data: BrowserStorage.VideoCreateOne = {
       file: {
         originalName: item.file.name,
         size: item.file.size,
@@ -20,6 +24,7 @@ export class VideoActionProvider {
         title: item.title,
         description: item.description,
       },
+      userId,
     };
 
     if (storage?.parent) {
@@ -40,10 +45,11 @@ export class VideoActionProvider {
   }
 
   async createMany(
+    userId: string,
     items: StorageUploadItem[],
     storage?: Omit<StorageData, 'name'>,
   ): Promise<BrowserStorage.Video[]> {
-    const data: BrowserStorage.VideoCreateManyRequest = {
+    const data: BrowserStorage.VideoCreateMany = {
       items: items.map((item) => {
         return {
           file: {
@@ -57,6 +63,7 @@ export class VideoActionProvider {
           uploadId: item.uploadId,
         };
       }),
+      userId,
     };
 
     if (storage?.parent) {

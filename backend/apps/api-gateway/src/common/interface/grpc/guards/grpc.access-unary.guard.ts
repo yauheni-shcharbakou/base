@@ -61,7 +61,7 @@ export class GrpcAccessUnaryGuard implements CanActivate {
           throw user.value;
         }
 
-        metadata.set('userId', user.value.id);
+        metadata.set('user-id', user.value.id);
         return !!user.value;
       }),
       GrpcRxPipe.rpcException,

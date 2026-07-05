@@ -1,13 +1,13 @@
 import { ValidateGrpcPayload } from '@backend/grpc';
 import {
   GrpcVideoAdminServiceController,
-  GrpcVideoTransport,
+  GrpcVideoAdminTransport,
   NestCommon,
   NestStorage,
 } from '@backend/proto';
 import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
-import { GetUrlMapDto } from '@common/application/dto/storage/get-url-map.dto';
+import { GetUrlMapShortDto } from '@common/application/dto/storage/get-url-map.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { GrpcStreamMethod } from '@common/interface/grpc/decorators/grpc.stream-method.decorator';
 import { VideoCreateManyDto } from '@modules/video/application/dto/video.create-many.dto';
@@ -17,22 +17,18 @@ import { VideoProxyService } from '@modules/video/application/services/video.pro
 import { Observable } from 'rxjs';
 
 @AdminGrpcController()
-@GrpcVideoTransport.ControllerMethods()
+@GrpcVideoAdminTransport.ControllerMethods()
 export class GrpcVideoAdminController implements GrpcVideoAdminServiceController {
   constructor(private readonly videoService: VideoProxyService) {}
 
-  @ValidateGrpcPayload(GetUrlMapDto)
-  getUrlMap({ ip, userId, ...query }: NestStorage.GetUrlMap): Promise<NestCommon.StringMap> {
-    return this.videoService.getUrlMap(query, userId, ip);
+  @ValidateGrpcPayload(GetUrlMapShortDto)
+  getUrlMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestCommon.StringMap> {
+    return this.videoService.getUrlMap(query, ip);
   }
 
-  @ValidateGrpcPayload(GetUrlMapDto)
-  getDownloadMap({
-    ip,
-    userId,
-    ...query
-  }: NestStorage.GetUrlMap): Promise<NestStorage.DownloadMap> {
-    return this.videoService.getDownloadMap(query, userId, ip);
+  @ValidateGrpcPayload(GetUrlMapShortDto)
+  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestStorage.DownloadMap> {
+    return this.videoService.getDownloadMap(query, ip);
   }
 
   @ValidateGrpcPayload(IdFieldDto)
@@ -57,7 +53,7 @@ export class GrpcVideoAdminController implements GrpcVideoAdminServiceController
 
   @GrpcStreamMethod()
   uploadOne(
-    request$: Observable<NestStorage.UploadOne>,
+    request$: Observable<NestStorage.UploadOneShort>,
   ): Observable<NestStorage.VideoUploadResponse> {
     return this.videoService.uploadOne(request$);
   }

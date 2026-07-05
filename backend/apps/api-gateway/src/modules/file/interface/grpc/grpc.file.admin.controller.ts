@@ -1,13 +1,13 @@
 import { ValidateGrpcPayload } from '@backend/grpc';
 import {
   GrpcFileAdminServiceController,
-  GrpcFileTransport,
+  GrpcFileAdminTransport,
   NestCommon,
   NestStorage,
 } from '@backend/proto';
 import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
-import { GetUrlMapDto } from '@common/application/dto/storage/get-url-map.dto';
+import { GetUrlMapShortDto } from '@common/application/dto/storage/get-url-map.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { GrpcStreamMethod } from '@common/interface/grpc/decorators/grpc.stream-method.decorator';
 import { FileCreateManyDto } from '@modules/file/application/dto/file.create-many.dto';
@@ -16,22 +16,18 @@ import { FileProxyService } from '@modules/file/application/services/file.proxy.
 import { Observable } from 'rxjs';
 
 @AdminGrpcController()
-@GrpcFileTransport.ControllerMethods()
+@GrpcFileAdminTransport.ControllerMethods()
 export class GrpcFileAdminController implements GrpcFileAdminServiceController {
   constructor(private readonly fileService: FileProxyService) {}
 
-  @ValidateGrpcPayload(GetUrlMapDto)
-  getUrlMap({ ip, userId, ...query }: NestStorage.GetUrlMap): Promise<NestCommon.StringMap> {
-    return this.fileService.getUrlMap(query, userId, ip);
+  @ValidateGrpcPayload(GetUrlMapShortDto)
+  getUrlMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestCommon.StringMap> {
+    return this.fileService.getUrlMap(query, ip);
   }
 
-  @ValidateGrpcPayload(GetUrlMapDto)
-  getDownloadMap({
-    ip,
-    userId,
-    ...query
-  }: NestStorage.GetUrlMap): Promise<NestStorage.DownloadMap> {
-    return this.fileService.getDownloadMap(query, userId, ip);
+  @ValidateGrpcPayload(GetUrlMapShortDto)
+  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestStorage.DownloadMap> {
+    return this.fileService.getDownloadMap(query, ip);
   }
 
   @ValidateGrpcPayload(IdFieldDto)
@@ -56,7 +52,7 @@ export class GrpcFileAdminController implements GrpcFileAdminServiceController {
 
   @GrpcStreamMethod()
   uploadOne(
-    request$: Observable<NestStorage.UploadOne>,
+    request$: Observable<NestStorage.UploadOneShort>,
   ): Observable<NestStorage.FileUploadResponse> {
     return this.fileService.uploadOne(request$);
   }

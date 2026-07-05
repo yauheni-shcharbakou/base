@@ -2,18 +2,20 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import { FolderSelect } from '@/features/storage/components/folder-select';
 import { Card, CardContent, CardHeader } from '@mui/material';
-import React from 'react';
 import { Control, FieldErrors } from 'react-hook-form';
 
 type StorageMeta =
   | {
+      userId?: string;
       parent?: string;
       isPublic?: boolean;
       name?: string;
     }
   | {
+      userId?: string;
       parent?: string;
       isPublic?: boolean;
     };
@@ -23,6 +25,8 @@ type Props<Values extends StorageMeta = StorageMeta> = {
   errors?: FieldErrors<Values>;
   parent?: string;
   excludeName?: boolean;
+  currentUserId?: string;
+  userId?: string;
 };
 
 export const StorageObjectMetaFormSection = <Values extends StorageMeta = StorageMeta>({
@@ -30,17 +34,31 @@ export const StorageObjectMetaFormSection = <Values extends StorageMeta = Storag
   errors,
   parent,
   excludeName,
+  currentUserId,
+  userId,
 }: Props<Values>) => {
   return (
     <Card variant="outlined">
       <CardHeader title="Storage" />
       <CardContent>
-        <FolderSelect
-          label="Folder"
-          fieldName="parent"
-          fieldErr={errors?.parent as FieldErr}
-          control={control}
-        />
+        {currentUserId && (
+          <>
+            <UserSelect
+              label="User"
+              fieldName="userId"
+              fieldErr={errors?.userId as FieldErr}
+              control={control}
+              defaultValue={currentUserId}
+            />
+            <FolderSelect
+              label="Folder"
+              fieldName="parent"
+              fieldErr={errors?.parent as FieldErr}
+              control={control}
+              userId={userId}
+            />
+          </>
+        )}
         {parent && (
           <>
             {!excludeName && (

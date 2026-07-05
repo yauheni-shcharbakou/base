@@ -1,10 +1,9 @@
 'use client';
 
 import { ONE_MB_BYTES } from '@/common/constants';
-import { imageActionProvider } from '@/features/storage/providers';
 import { UploadManyPage } from '@/features/storage/components';
+import { imageActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
-import React from 'react';
 
 export default function ImageCreateMany() {
   return (
@@ -13,7 +12,7 @@ export default function ImageCreateMany() {
       fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
       createFactory={async (filesBatch, form) => {
-        return imageActionProvider.createMany(filesBatch, {
+        return imageActionProvider.createMany(form.userId, filesBatch, {
           parent: form.parent,
           isPublic: form.isPublic,
         });

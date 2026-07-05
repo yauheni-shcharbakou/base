@@ -6,7 +6,7 @@ import {
   NestStorage,
 } from '@backend/proto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
-import { GetUrlMapWebDto } from '@common/application/dto/storage/get-url-map.dto';
+import { GetUrlMapShortDto } from '@common/application/dto/storage/get-url-map.dto';
 import { DefaultGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { GrpcStreamMethod } from '@common/interface/grpc/decorators/grpc.stream-method.decorator';
 import { GrpcUserId } from '@common/interface/grpc/decorators/grpc.user-id.decorator';
@@ -21,20 +21,20 @@ import { Observable } from 'rxjs';
 export class GrpcVideoWebController implements GrpcVideoWebServiceController {
   constructor(private readonly videoService: VideoProxyService) {}
 
-  @ValidateGrpcPayload(GetUrlMapWebDto)
+  @ValidateGrpcPayload(GetUrlMapShortDto)
   getUrlMap(
-    { ip, ...query }: NestStorage.GetUrlMapWeb,
+    { ip, ...query }: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestCommon.StringMap> {
-    return this.videoService.getUrlMap(query, userId, ip);
+    return this.videoService.getUrlMap(query, ip, userId);
   }
 
-  @ValidateGrpcPayload(GetUrlMapWebDto)
+  @ValidateGrpcPayload(GetUrlMapShortDto)
   getDownloadMap(
-    { ip, ...query }: NestStorage.GetUrlMapWeb,
+    { ip, ...query }: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.DownloadMap> {
-    return this.videoService.getDownloadMap(query, userId, ip);
+    return this.videoService.getDownloadMap(query, ip, userId);
   }
 
   @ValidateGrpcPayload(VideoCreateOneWebDto)
@@ -55,7 +55,7 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @GrpcStreamMethod()
   uploadOne(
-    request$: Observable<NestStorage.UploadOneWeb>,
+    request$: Observable<NestStorage.UploadOneShort>,
     @GrpcUserId() userId: string,
   ): Observable<NestStorage.VideoUploadResponse> {
     return this.videoService.uploadOne(request$, userId);

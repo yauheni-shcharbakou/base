@@ -4,10 +4,10 @@ import { DateEntityField } from '@/common/components/entity-fields';
 import { IdField } from '@/common/components/id-field';
 import { Divider, Skeleton, Stack, Typography } from '@mui/material';
 import type { BrowserCommon } from '@packages/proto';
-import React, { FC, ReactNode } from 'react';
+import { FC, ReactNode } from 'react';
 
 type Props = {
-  record?: BrowserCommon.EntityWithTimestamps;
+  record?: BrowserCommon.Entity;
   children?: ReactNode;
 };
 

@@ -3,21 +3,22 @@
 import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { videoActionProvider } from '@/features/storage/providers';
 import {
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
+import { videoActionProvider } from '@/features/storage/providers';
 import { getGenericVideTitle } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import React from 'react';
+import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
-import type { BrowserStorage } from '@packages/proto';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
@@ -29,6 +30,8 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function VideoCreate() {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.VIDEO,
   });
@@ -59,6 +62,7 @@ export default function VideoCreate() {
   const handleSave = async (data: Params) => {
     const createdVideo = await handleUpload<BrowserStorage.Video>(data.file, async () => {
       return videoActionProvider.createOne(
+        fields.userId,
         {
           file: data.file,
           title: data.title,
@@ -87,7 +91,13 @@ export default function VideoCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
+          <StorageObjectMetaFormSection
+            parent={fields.parent}
+            control={control}
+            errors={errors}
+            userId={fields.userId}
+            currentUserId={user?.id}
+          />
 
           <Card variant="outlined">
             <CardHeader title="Video metadata" />

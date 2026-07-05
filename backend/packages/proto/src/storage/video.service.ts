@@ -14,9 +14,9 @@ import { StringMap } from '../common/types';
 import {
   DownloadMap,
   GetUrlMap,
-  GetUrlMapWeb,
+  GetUrlMapShort,
   UploadOne,
-  UploadOneWeb,
+  UploadOneShort,
 } from './common/common.messages';
 import { Video } from './video/video';
 import {
@@ -110,9 +110,9 @@ function VideoServiceControllerMethods() {
 }
 
 export interface GrpcVideoAdminServiceClient {
-  getUrlMap(request: GetUrlMap, metadata?: Metadata): Observable<StringMap>;
+  getUrlMap(request: GetUrlMapShort, metadata?: Metadata): Observable<StringMap>;
 
-  getDownloadMap(request: GetUrlMap, metadata?: Metadata): Observable<DownloadMap>;
+  getDownloadMap(request: GetUrlMapShort, metadata?: Metadata): Observable<DownloadMap>;
 
   getById(request: IdField, metadata?: Metadata): Observable<VideoPopulated>;
 
@@ -124,19 +124,22 @@ export interface GrpcVideoAdminServiceClient {
 
   updateById(request: VideoUpdateById, metadata?: Metadata): Observable<Video>;
 
-  uploadOne(request: Observable<UploadOne>, metadata?: Metadata): Observable<VideoUploadResponse>;
+  uploadOne(
+    request: Observable<UploadOneShort>,
+    metadata?: Metadata,
+  ): Observable<VideoUploadResponse>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<Video>;
 }
 
 export interface GrpcVideoAdminServiceController {
   getUrlMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<StringMap> | Observable<StringMap> | StringMap;
 
   getDownloadMap(
-    request: GetUrlMap,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
 
@@ -156,7 +159,7 @@ export interface GrpcVideoAdminServiceController {
 
   updateById(request: VideoUpdateById, ...args: any[]): Promise<Video> | Observable<Video> | Video;
 
-  uploadOne(request: Observable<UploadOne>, ...args: any[]): Observable<VideoUploadResponse>;
+  uploadOne(request: Observable<UploadOneShort>, ...args: any[]): Observable<VideoUploadResponse>;
 
   deleteById(request: IdField, ...args: any[]): Promise<Video> | Observable<Video> | Video;
 }
@@ -190,9 +193,9 @@ function VideoAdminServiceControllerMethods() {
 }
 
 export interface GrpcVideoWebServiceClient {
-  getUrlMap(request: GetUrlMapWeb, metadata?: Metadata): Observable<StringMap>;
+  getUrlMap(request: GetUrlMapShort, metadata?: Metadata): Observable<StringMap>;
 
-  getDownloadMap(request: GetUrlMapWeb, metadata?: Metadata): Observable<DownloadMap>;
+  getDownloadMap(request: GetUrlMapShort, metadata?: Metadata): Observable<DownloadMap>;
 
   createOne(request: VideoCreateOneWeb, metadata?: Metadata): Observable<Video>;
 
@@ -201,7 +204,7 @@ export interface GrpcVideoWebServiceClient {
   updateById(request: VideoUpdateById, metadata?: Metadata): Observable<Video>;
 
   uploadOne(
-    request: Observable<UploadOneWeb>,
+    request: Observable<UploadOneShort>,
     metadata?: Metadata,
   ): Observable<VideoUploadResponse>;
 
@@ -210,12 +213,12 @@ export interface GrpcVideoWebServiceClient {
 
 export interface GrpcVideoWebServiceController {
   getUrlMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<StringMap> | Observable<StringMap> | StringMap;
 
   getDownloadMap(
-    request: GetUrlMapWeb,
+    request: GetUrlMapShort,
     ...args: any[]
   ): Promise<DownloadMap> | Observable<DownloadMap> | DownloadMap;
 
@@ -228,7 +231,7 @@ export interface GrpcVideoWebServiceController {
 
   updateById(request: VideoUpdateById, ...args: any[]): Promise<Video> | Observable<Video> | Video;
 
-  uploadOne(request: Observable<UploadOneWeb>, ...args: any[]): Observable<VideoUploadResponse>;
+  uploadOne(request: Observable<UploadOneShort>, ...args: any[]): Observable<VideoUploadResponse>;
 
   deleteById(request: IdField, ...args: any[]): Promise<Video> | Observable<Video> | Video;
 }

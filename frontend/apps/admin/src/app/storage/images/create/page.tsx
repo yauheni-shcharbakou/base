@@ -3,20 +3,21 @@
 import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { imageActionProvider } from '@/features/storage/providers';
 import {
-  StorageUploader,
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
+  StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
+import { imageActionProvider } from '@/features/storage/providers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import React from 'react';
+import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
-import type { BrowserStorage } from '@packages/proto';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
@@ -27,6 +28,8 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function ImageCreate() {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
   });
@@ -53,6 +56,7 @@ export default function ImageCreate() {
       data.file,
       async () => {
         return imageActionProvider.createOne(
+          fields.userId,
           {
             file: data.file,
             alt: data.alt,
@@ -82,7 +86,13 @@ export default function ImageCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
+          <StorageObjectMetaFormSection
+            parent={fields.parent}
+            control={control}
+            errors={errors}
+            currentUserId={user?.id}
+            userId={fields.userId}
+          />
 
           <Card variant="outlined">
             <CardHeader title="Image metadata" />

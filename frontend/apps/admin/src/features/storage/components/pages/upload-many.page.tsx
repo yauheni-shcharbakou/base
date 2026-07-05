@@ -3,22 +3,23 @@
 import { AppCreate, ControlledSingleSelect } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
 import {
-  MultiUploadProgressBar,
-  StorageUploader,
   FailedItemsList,
-  StorageUploaderProps,
+  MultiUploadProgressBar,
   StorageObjectMetaFormSection,
+  StorageUploader,
+  StorageUploaderProps,
 } from '@/features/storage/components';
 import { useMultipleFileUpload } from '@/features/storage/hooks';
 import { StorageUploadItem } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import type { BrowserCommon } from '@packages/proto';
-import { useInvalidate, useNavigation } from '@refinedev/core';
-import React, { useCallback, useMemo } from 'react';
+import { BrowserAuth, type BrowserCommon } from '@packages/proto';
+import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
+import { useCallback, useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   isPublic: zod.boolean().optional(),
   files: zod.array(zod.file()),
@@ -39,6 +40,8 @@ type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
 export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId: string }>(
   props: Props<Entity>,
 ) => {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const {
     isUploading,
     uploadedCount,
@@ -81,6 +84,7 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
 
   const parent = watch('parent');
   const selectedFiles = watch('files');
+  const userId = watch('userId');
 
   const handleSave = async (data: Params) => {
     const isSuccess = await handleUpload<Entity>(
@@ -110,6 +114,8 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
             parent={parent}
             control={control}
             errors={errors}
+            userId={userId}
+            currentUserId={user?.id}
             excludeName
           />
 

@@ -12,7 +12,7 @@ import type { ClientStorage } from '@frontend/proto';
 type CreateActionResponse<T> = { data: T } | { error: string };
 
 export async function createManyFiles(
-  request: ClientStorage.FileCreateManyRequest,
+  request: ClientStorage.FileCreateMany,
 ): Promise<CreateActionResponse<ClientStorage.File[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
@@ -24,7 +24,7 @@ export async function createManyFiles(
 }
 
 export async function createManyImages(
-  request: ClientStorage.ImageCreateManyRequest,
+  request: ClientStorage.ImageCreateMany,
 ): Promise<CreateActionResponse<ClientStorage.Image[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
@@ -36,7 +36,7 @@ export async function createManyImages(
 }
 
 export async function createManyVideos(
-  request: ClientStorage.VideoCreateManyRequest,
+  request: ClientStorage.VideoCreateMany,
 ): Promise<CreateActionResponse<ClientStorage.Video[]>> {
   try {
     const metadata = await authService.getAuthMetadata();

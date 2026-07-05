@@ -8,10 +8,14 @@ type ImageItem = Pick<StorageUploadItem, 'file'> & {
 };
 
 export class ImageActionProvider {
-  async createOne(item: ImageItem, storage?: StorageData): Promise<BrowserStorage.Image> {
+  async createOne(
+    userId: string,
+    item: ImageItem,
+    storage?: StorageData,
+  ): Promise<BrowserStorage.Image> {
     const dimensions = await getImageDimensions(item.file);
 
-    const data: BrowserStorage.ImageCreateRequest = {
+    const data: BrowserStorage.ImageCreateOne = {
       file: {
         originalName: item.file.name,
         size: item.file.size,
@@ -21,6 +25,7 @@ export class ImageActionProvider {
         ...dimensions,
         alt: item.alt,
       },
+      userId,
     };
 
     if (storage?.parent) {
@@ -41,10 +46,11 @@ export class ImageActionProvider {
   }
 
   async createMany(
+    userId: string,
     items: StorageUploadItem[],
     storage?: Omit<StorageData, 'name'>,
   ): Promise<BrowserStorage.Image[]> {
-    const data: BrowserStorage.ImageCreateManyRequest = {
+    const data: BrowserStorage.ImageCreateMany = {
       items: await Promise.all(
         items.map(async (item) => {
           const dimensions = await getImageDimensions(item.file);
@@ -63,6 +69,7 @@ export class ImageActionProvider {
           };
         }),
       ),
+      userId,
     };
 
     if (storage?.parent) {

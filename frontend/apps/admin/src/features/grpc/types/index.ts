@@ -17,7 +17,7 @@ export interface GrpcDataRepository<Entity extends BaseRecord = BaseRecord> {
     options?: Partial<CallOptions>,
   ): Promise<Entity>;
   getList(
-    request: ClientCommon.GetListRequest,
+    request: ClientCommon.GetList,
     metadata?: Metadata,
     options?: Partial<CallOptions>,
   ): Promise<{ items: Entity[]; total: number }>;

@@ -23,23 +23,23 @@ service VideoService {
 }
 
 service VideoAdminService {
-  rpc getUrlMap (common.GetUrlMap) returns (StringMap) {}
-  rpc getDownloadMap (common.GetUrlMap) returns (common.DownloadMap) {}
+  rpc getUrlMap (common.GetUrlMapShort) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMapShort) returns (common.DownloadMap) {}
   rpc getById (IdField) returns (video.VideoPopulated) {}
   rpc getList (GetList) returns (video.VideoList) {}
   rpc createOne (video.VideoCreateOne) returns (video.Video) {}
   rpc createMany (video.VideoCreateMany) returns (video.VideoArray) {}
   rpc updateById (video.VideoUpdateById) returns (video.Video) {}
-  rpc uploadOne (stream common.UploadOne) returns (stream video.VideoUploadResponse) {}
+  rpc uploadOne (stream common.UploadOneShort) returns (stream video.VideoUploadResponse) {}
   rpc deleteById (IdField) returns (video.Video) {}
 }
 
 service VideoWebService {
-  rpc getUrlMap (common.GetUrlMapWeb) returns (StringMap) {}
-  rpc getDownloadMap (common.GetUrlMapWeb) returns (common.DownloadMap) {}
+  rpc getUrlMap (common.GetUrlMapShort) returns (StringMap) {}
+  rpc getDownloadMap (common.GetUrlMapShort) returns (common.DownloadMap) {}
   rpc createOne (video.VideoCreateOneWeb) returns (video.Video) {}
   rpc createMany (video.VideoCreateManyWeb) returns (video.VideoArray) {}
   rpc updateById (video.VideoUpdateById) returns (video.Video) {}
-  rpc uploadOne (stream common.UploadOneWeb) returns (stream video.VideoUploadResponse) {}
+  rpc uploadOne (stream common.UploadOneShort) returns (stream video.VideoUploadResponse) {}
   rpc deleteById (IdField) returns (video.Video) {}
 }

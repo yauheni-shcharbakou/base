@@ -3,16 +3,22 @@ import {
   GrpcAuthTransport,
   GrpcFileAdminTransport,
   GrpcFileTransport,
+  GrpcFileWebTransport,
   GrpcImageAdminTransport,
   GrpcImageTransport,
+  GrpcImageWebTransport,
   GrpcStorageObjectAdminTransport,
   GrpcStorageObjectTransport,
+  GrpcStorageObjectWebTransport,
   GrpcTempCodeAdminTransport,
   GrpcTempCodeTransport,
+  GrpcTempCodeWebTransport,
   GrpcUserAdminTransport,
   GrpcUserTransport,
+  GrpcUserWebTransport,
   GrpcVideoAdminTransport,
   GrpcVideoTransport,
+  GrpcVideoWebTransport,
 } from '@backend/proto';
 import { Transport } from '@nestjs/microservices';
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface';
@@ -68,12 +74,18 @@ export const grpcConfig = () => {
       services: {
         [GrpcAuthPublicTransport.service]: GrpcAuthPublicTransport.definition,
         [GrpcTempCodeAdminTransport.service]: GrpcTempCodeAdminTransport.definition,
+        [GrpcTempCodeWebTransport.service]: GrpcTempCodeWebTransport.definition,
         [GrpcUserAdminTransport.service]: GrpcUserAdminTransport.definition,
+        [GrpcUserWebTransport.service]: GrpcUserWebTransport.definition,
 
         [GrpcFileAdminTransport.service]: GrpcFileAdminTransport.definition,
+        [GrpcFileWebTransport.service]: GrpcFileWebTransport.definition,
         [GrpcImageAdminTransport.service]: GrpcImageAdminTransport.definition,
+        [GrpcImageWebTransport.service]: GrpcImageWebTransport.definition,
         [GrpcStorageObjectAdminTransport.service]: GrpcStorageObjectAdminTransport.definition,
+        [GrpcStorageObjectWebTransport.service]: GrpcStorageObjectWebTransport.definition,
         [GrpcVideoAdminTransport.service]: GrpcVideoAdminTransport.definition,
+        [GrpcVideoWebTransport.service]: GrpcVideoWebTransport.definition,
       },
     },
     auth: {

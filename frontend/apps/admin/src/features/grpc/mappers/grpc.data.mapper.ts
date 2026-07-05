@@ -1,18 +1,18 @@
+import { BrowserCommon } from '@packages/proto';
 import { CrudFilter, CrudSort, GetListParams, LogicalFilter } from '@refinedev/core';
 import _ from 'lodash';
-import { BrowserCommon } from '@packages/proto';
 
 type ParsedFilters = {
-  logicalFilters: BrowserCommon.CrudLogicalFilter[];
-  conditionalFilters: BrowserCommon.CrudConditionalFilter[];
+  logicalFilters: BrowserCommon.LogicalFilter[];
+  conditionalFilters: BrowserCommon.ConditionalFilter[];
 };
 
 export class GrpcDataMapper {
-  protected convertLogicalFilter(logicalFilter: LogicalFilter): BrowserCommon.CrudLogicalFilter {
-    const filter: BrowserCommon.CrudLogicalFilter = _.pick(logicalFilter, [
+  protected convertLogicalFilter(logicalFilter: LogicalFilter): BrowserCommon.LogicalFilter {
+    const filter: BrowserCommon.LogicalFilter = _.pick(logicalFilter, [
       'field',
       'operator',
-    ]) as BrowserCommon.CrudLogicalFilter;
+    ]) as BrowserCommon.LogicalFilter;
 
     if (_.isString(logicalFilter.value)) {
       filter.string = logicalFilter.value;
@@ -41,13 +41,13 @@ export class GrpcDataMapper {
     return _.reduce(
       filters,
       (acc: ParsedFilters, filter) => {
-        if (_.includes(_.values(BrowserCommon.CrudConditionalOperator), filter.operator)) {
+        if (_.includes(_.values(BrowserCommon.ConditionalOperator), filter.operator)) {
           if (!filter.value?.length) {
             return acc;
           }
 
           acc.conditionalFilters.push({
-            ...(filter as BrowserCommon.CrudConditionalFilter),
+            ...(filter as BrowserCommon.ConditionalFilter),
             value: _.map(filter.value, (nestedFilter) => this.convertLogicalFilter(nestedFilter)),
           });
 
@@ -64,16 +64,16 @@ export class GrpcDataMapper {
     );
   }
 
-  protected convertSorters(sorters: CrudSort[] = []): BrowserCommon.CrudSorter[] {
+  protected convertSorters(sorters: CrudSort[] = []): BrowserCommon.Sorter[] {
     return _.map(sorters, (sorter) => {
       return {
         field: sorter.field,
-        order: sorter.order === 'desc' ? BrowserCommon.CrudSort.desc : BrowserCommon.CrudSort.asc,
+        order: sorter.order === 'desc' ? BrowserCommon.Sort.desc : BrowserCommon.Sort.asc,
       };
     });
   }
 
-  convertGetListParams(params: GetListParams): BrowserCommon.GetListRequest {
+  convertGetListParams(params: GetListParams): BrowserCommon.GetList {
     return {
       ...this.convertFilters(params.filters),
       sorters: this.convertSorters(params.sorters),

@@ -1,14 +1,14 @@
 import { configService } from '@/common/services';
 import {
-  GrpcFileRepository,
-  GrpcImageRepository,
-  GrpcStorageObjectRepository,
-  GrpcVideoRepository,
+  GrpcFileAdminRepository,
+  GrpcImageAdminRepository,
+  GrpcStorageObjectAdminRepository,
+  GrpcVideoAdminRepository,
 } from '@frontend/proto';
 
 const grpcUrl = configService.getGrpcUrl();
 
-export const fileGrpcRepository = new GrpcFileRepository(grpcUrl);
-export const imageGrpcRepository = new GrpcImageRepository(grpcUrl);
-export const storageObjectGrpcRepository = new GrpcStorageObjectRepository(grpcUrl);
-export const videoGrpcRepository = new GrpcVideoRepository(grpcUrl);
+export const fileGrpcRepository = new GrpcFileAdminRepository(grpcUrl);
+export const imageGrpcRepository = new GrpcImageAdminRepository(grpcUrl);
+export const storageObjectGrpcRepository = new GrpcStorageObjectAdminRepository(grpcUrl);
+export const videoGrpcRepository = new GrpcVideoAdminRepository(grpcUrl);

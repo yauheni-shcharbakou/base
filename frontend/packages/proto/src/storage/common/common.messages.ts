@@ -24,10 +24,10 @@ export interface DownloadMap_EntriesEntry {
 
 export interface UploadOneFilter {
   id: string;
-  userId: string;
+  userId?: string;
 }
 
-export interface UploadOneFilterWeb {
+export interface UploadOneFilterShort {
   id: string;
 }
 
@@ -36,8 +36,8 @@ export interface UploadOne {
   chunk?: Uint8Array<ArrayBufferLike>;
 }
 
-export interface UploadOneWeb {
-  filter?: UploadOneFilterWeb;
+export interface UploadOneShort {
+  filter?: UploadOneFilterShort;
   chunk?: Uint8Array<ArrayBufferLike>;
 }
 
@@ -56,10 +56,10 @@ export interface GetUrlMap {
   id?: string;
   ids: string[];
   ip?: string;
-  userId: string;
+  userId?: string;
 }
 
-export interface GetUrlMapWeb {
+export interface GetUrlMapShort {
   id?: string;
   ids: string[];
   ip?: string;
@@ -310,7 +310,7 @@ export const DownloadMap_EntriesEntry: MessageFns<DownloadMap_EntriesEntry> = {
 };
 
 function createBaseUploadOneFilter(): UploadOneFilter {
-  return { id: '', userId: '' };
+  return { id: '', userId: undefined };
 }
 
 export const UploadOneFilter: MessageFns<UploadOneFilter> = {
@@ -318,7 +318,7 @@ export const UploadOneFilter: MessageFns<UploadOneFilter> = {
     if (message.id !== '') {
       writer.uint32(10).string(message.id);
     }
-    if (message.userId !== '') {
+    if (message.userId !== undefined) {
       writer.uint32(18).string(message.userId);
     }
     return writer;
@@ -359,7 +359,7 @@ export const UploadOneFilter: MessageFns<UploadOneFilter> = {
   fromJSON(object: any): UploadOneFilter {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : '',
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
     };
   },
 
@@ -368,7 +368,7 @@ export const UploadOneFilter: MessageFns<UploadOneFilter> = {
     if (message.id !== '') {
       obj.id = message.id;
     }
-    if (message.userId !== '') {
+    if (message.userId !== undefined) {
       obj.userId = message.userId;
     }
     return obj;
@@ -380,27 +380,27 @@ export const UploadOneFilter: MessageFns<UploadOneFilter> = {
   fromPartial<I extends Exact<DeepPartial<UploadOneFilter>, I>>(object: I): UploadOneFilter {
     const message = createBaseUploadOneFilter();
     message.id = object.id ?? '';
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? undefined;
     return message;
   },
 };
 
-function createBaseUploadOneFilterWeb(): UploadOneFilterWeb {
+function createBaseUploadOneFilterShort(): UploadOneFilterShort {
   return { id: '' };
 }
 
-export const UploadOneFilterWeb: MessageFns<UploadOneFilterWeb> = {
-  encode(message: UploadOneFilterWeb, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const UploadOneFilterShort: MessageFns<UploadOneFilterShort> = {
+  encode(message: UploadOneFilterShort, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== '') {
       writer.uint32(10).string(message.id);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): UploadOneFilterWeb {
+  decode(input: BinaryReader | Uint8Array, length?: number): UploadOneFilterShort {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUploadOneFilterWeb();
+    const message = createBaseUploadOneFilterShort();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -421,11 +421,11 @@ export const UploadOneFilterWeb: MessageFns<UploadOneFilterWeb> = {
     return message;
   },
 
-  fromJSON(object: any): UploadOneFilterWeb {
+  fromJSON(object: any): UploadOneFilterShort {
     return { id: isSet(object.id) ? globalThis.String(object.id) : '' };
   },
 
-  toJSON(message: UploadOneFilterWeb): unknown {
+  toJSON(message: UploadOneFilterShort): unknown {
     const obj: any = {};
     if (message.id !== '') {
       obj.id = message.id;
@@ -433,11 +433,13 @@ export const UploadOneFilterWeb: MessageFns<UploadOneFilterWeb> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<UploadOneFilterWeb>, I>>(base?: I): UploadOneFilterWeb {
-    return UploadOneFilterWeb.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<UploadOneFilterShort>, I>>(base?: I): UploadOneFilterShort {
+    return UploadOneFilterShort.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<UploadOneFilterWeb>, I>>(object: I): UploadOneFilterWeb {
-    const message = createBaseUploadOneFilterWeb();
+  fromPartial<I extends Exact<DeepPartial<UploadOneFilterShort>, I>>(
+    object: I,
+  ): UploadOneFilterShort {
+    const message = createBaseUploadOneFilterShort();
     message.id = object.id ?? '';
     return message;
   },
@@ -522,14 +524,14 @@ export const UploadOne: MessageFns<UploadOne> = {
   },
 };
 
-function createBaseUploadOneWeb(): UploadOneWeb {
+function createBaseUploadOneShort(): UploadOneShort {
   return { filter: undefined, chunk: undefined };
 }
 
-export const UploadOneWeb: MessageFns<UploadOneWeb> = {
-  encode(message: UploadOneWeb, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const UploadOneShort: MessageFns<UploadOneShort> = {
+  encode(message: UploadOneShort, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.filter !== undefined) {
-      UploadOneFilterWeb.encode(message.filter, writer.uint32(10).fork()).join();
+      UploadOneFilterShort.encode(message.filter, writer.uint32(10).fork()).join();
     }
     if (message.chunk !== undefined) {
       writer.uint32(18).bytes(message.chunk);
@@ -537,10 +539,10 @@ export const UploadOneWeb: MessageFns<UploadOneWeb> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): UploadOneWeb {
+  decode(input: BinaryReader | Uint8Array, length?: number): UploadOneShort {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseUploadOneWeb();
+    const message = createBaseUploadOneShort();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -549,7 +551,7 @@ export const UploadOneWeb: MessageFns<UploadOneWeb> = {
             break;
           }
 
-          message.filter = UploadOneFilterWeb.decode(reader, reader.uint32());
+          message.filter = UploadOneFilterShort.decode(reader, reader.uint32());
           continue;
         }
         case 2: {
@@ -569,17 +571,17 @@ export const UploadOneWeb: MessageFns<UploadOneWeb> = {
     return message;
   },
 
-  fromJSON(object: any): UploadOneWeb {
+  fromJSON(object: any): UploadOneShort {
     return {
-      filter: isSet(object.filter) ? UploadOneFilterWeb.fromJSON(object.filter) : undefined,
+      filter: isSet(object.filter) ? UploadOneFilterShort.fromJSON(object.filter) : undefined,
       chunk: isSet(object.chunk) ? bytesFromBase64(object.chunk) : undefined,
     };
   },
 
-  toJSON(message: UploadOneWeb): unknown {
+  toJSON(message: UploadOneShort): unknown {
     const obj: any = {};
     if (message.filter !== undefined) {
-      obj.filter = UploadOneFilterWeb.toJSON(message.filter);
+      obj.filter = UploadOneFilterShort.toJSON(message.filter);
     }
     if (message.chunk !== undefined) {
       obj.chunk = base64FromBytes(message.chunk);
@@ -587,14 +589,14 @@ export const UploadOneWeb: MessageFns<UploadOneWeb> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<UploadOneWeb>, I>>(base?: I): UploadOneWeb {
-    return UploadOneWeb.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<UploadOneShort>, I>>(base?: I): UploadOneShort {
+    return UploadOneShort.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<UploadOneWeb>, I>>(object: I): UploadOneWeb {
-    const message = createBaseUploadOneWeb();
+  fromPartial<I extends Exact<DeepPartial<UploadOneShort>, I>>(object: I): UploadOneShort {
+    const message = createBaseUploadOneShort();
     message.filter =
       object.filter !== undefined && object.filter !== null
-        ? UploadOneFilterWeb.fromPartial(object.filter)
+        ? UploadOneFilterShort.fromPartial(object.filter)
         : undefined;
     message.chunk = object.chunk ?? undefined;
     return message;
@@ -770,7 +772,7 @@ export const StorageManyMeta: MessageFns<StorageManyMeta> = {
 };
 
 function createBaseGetUrlMap(): GetUrlMap {
-  return { id: undefined, ids: [], ip: undefined, userId: '' };
+  return { id: undefined, ids: [], ip: undefined, userId: undefined };
 }
 
 export const GetUrlMap: MessageFns<GetUrlMap> = {
@@ -784,7 +786,7 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     if (message.ip !== undefined) {
       writer.uint32(26).string(message.ip);
     }
-    if (message.userId !== '') {
+    if (message.userId !== undefined) {
       writer.uint32(34).string(message.userId);
     }
     return writer;
@@ -845,7 +847,7 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
         ? object.ids.map((e: any) => globalThis.String(e))
         : [],
       ip: isSet(object.ip) ? globalThis.String(object.ip) : undefined,
-      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
     };
   },
 
@@ -860,7 +862,7 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     if (message.ip !== undefined) {
       obj.ip = message.ip;
     }
-    if (message.userId !== '') {
+    if (message.userId !== undefined) {
       obj.userId = message.userId;
     }
     return obj;
@@ -874,17 +876,17 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     message.id = object.id ?? undefined;
     message.ids = object.ids?.map((e) => e) || [];
     message.ip = object.ip ?? undefined;
-    message.userId = object.userId ?? '';
+    message.userId = object.userId ?? undefined;
     return message;
   },
 };
 
-function createBaseGetUrlMapWeb(): GetUrlMapWeb {
+function createBaseGetUrlMapShort(): GetUrlMapShort {
   return { id: undefined, ids: [], ip: undefined };
 }
 
-export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
-  encode(message: GetUrlMapWeb, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
+  encode(message: GetUrlMapShort, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
     if (message.id !== undefined) {
       writer.uint32(10).string(message.id);
     }
@@ -897,10 +899,10 @@ export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): GetUrlMapWeb {
+  decode(input: BinaryReader | Uint8Array, length?: number): GetUrlMapShort {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseGetUrlMapWeb();
+    const message = createBaseGetUrlMapShort();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -937,7 +939,7 @@ export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
     return message;
   },
 
-  fromJSON(object: any): GetUrlMapWeb {
+  fromJSON(object: any): GetUrlMapShort {
     return {
       id: isSet(object.id) ? globalThis.String(object.id) : undefined,
       ids: globalThis.Array.isArray(object?.ids)
@@ -947,7 +949,7 @@ export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
     };
   },
 
-  toJSON(message: GetUrlMapWeb): unknown {
+  toJSON(message: GetUrlMapShort): unknown {
     const obj: any = {};
     if (message.id !== undefined) {
       obj.id = message.id;
@@ -961,11 +963,11 @@ export const GetUrlMapWeb: MessageFns<GetUrlMapWeb> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<GetUrlMapWeb>, I>>(base?: I): GetUrlMapWeb {
-    return GetUrlMapWeb.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<GetUrlMapShort>, I>>(base?: I): GetUrlMapShort {
+    return GetUrlMapShort.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<GetUrlMapWeb>, I>>(object: I): GetUrlMapWeb {
-    const message = createBaseGetUrlMapWeb();
+  fromPartial<I extends Exact<DeepPartial<GetUrlMapShort>, I>>(object: I): GetUrlMapShort {
+    const message = createBaseGetUrlMapShort();
     message.id = object.id ?? undefined;
     message.ids = object.ids?.map((e) => e) || [];
     message.ip = object.ip ?? undefined;

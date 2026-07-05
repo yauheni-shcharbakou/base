@@ -1,14 +1,14 @@
 'use server';
 
 import { AppLayout } from '@/common/components';
-import { authService } from '@/features/auth/services';
 import { redirect } from 'next/navigation';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
+import { checkAccess } from '../../actions';
 
 export const AuthorizedLayout = async ({ children }: PropsWithChildren) => {
-  const hasAuth = await authService.hasAuth();
+  const { authenticated } = await checkAccess();
 
-  if (!hasAuth) {
+  if (!authenticated) {
     redirect('/login');
   }
 

@@ -6,7 +6,6 @@ import { VideoRepository } from '@modules/video/domain/repositories/video.reposi
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -76,10 +75,6 @@ export class VideoUploadOneUseCase {
           }
 
           const { id, userId } = message.filter;
-
-          if (!userId) {
-            throw new ForbiddenException(`User is required`);
-          }
 
           const video = await this.databaseRunnerService.isolatedRun(async () => {
             return this.videoRepository.getOne<NestStorage.VideoPopulated>(
