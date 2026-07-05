@@ -128,54 +128,54 @@ services:
     profiles:
       - all
 
-  # backend.api-gateway:
-  #   build:
-  #     context: .
-  #     dockerfile: ./backend/apps/api-gateway/Dockerfile
-  #   restart: unless-stopped
-  #   container_name: base-backend-api-gateway
-  #   ports:
-  #     - '${BACKEND_PORT:-5555}:5555'
-  #   environment:
-  #     PORT: 5555
-  #     NODE_ENV: production
-  #     API_GATEWAY_GRPC_URL: 0.0.0.0:8000
-  #     AUTH_GRPC_URL: backend.auth:8001
-  #     STORAGE_GRPC_URL: backend.storage:8002
-  #     NATS_URL: nats://nats:4222
-  #   networks:
-  #     - private_network
-  #     - public_network
-  #   depends_on:
-  #     - nats
-  #     - backend.auth
-  #     - backend.storage
-  #   profiles:
-  #     - all
+  backend.api-gateway:
+    build:
+      context: .
+      dockerfile: ./backend/apps/api-gateway/Dockerfile
+    restart: unless-stopped
+    container_name: base-backend-api-gateway
+    ports:
+      - '${BACKEND_PORT:-5555}:5555'
+    environment:
+      PORT: 5555
+      NODE_ENV: production
+      API_GATEWAY_GRPC_URL: 0.0.0.0:8000
+      AUTH_GRPC_URL: backend.auth:8001
+      STORAGE_GRPC_URL: backend.storage:8002
+      NATS_URL: nats://nats:4222
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - nats
+      - backend.auth
+      - backend.storage
+    profiles:
+      - all
 
-  # frontend.admin:
-  #   build:
-  #     context: .
-  #     dockerfile: ./frontend/apps/admin/Dockerfile
-  #   restart: unless-stopped
-  #   container_name: base-frontend-admin
-  #   ports:
-  #     - '${ADMIN_PORT:-3336}:3336'
-  #   environment:
-  #     PORT: 3336
-  #     HOSTNAME: 0.0.0.0
-  #     NODE_ENV: production
-  #     BACKEND_GRPC_URL: backend.api-gateway:8000
-  #     DEFAULT_EMAIL: admin@gmail.com
-  #     DEFAULT_PASSWORD: string123
-  #     CHUNK_SIZE_MB: 1
-  #   networks:
-  #     - private_network
-  #     - public_network
-  #   depends_on:
-  #     - backend.api-gateway
-  #   profiles:
-  #     - all
+  frontend.admin:
+    build:
+      context: .
+      dockerfile: ./frontend/apps/admin/Dockerfile
+    restart: unless-stopped
+    container_name: base-frontend-admin
+    ports:
+      - '${ADMIN_PORT:-3336}:3336'
+    environment:
+      PORT: 3336
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+      BACKEND_GRPC_URL: backend.api-gateway:8000
+      DEFAULT_EMAIL: admin@gmail.com
+      DEFAULT_PASSWORD: string123
+      CHUNK_SIZE_MB: 1
+    networks:
+      - private_network
+      - public_network
+    depends_on:
+      - backend.api-gateway
+    profiles:
+      - all
 
 networks:
   private_network:
