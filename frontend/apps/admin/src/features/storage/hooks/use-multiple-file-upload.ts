@@ -4,7 +4,7 @@ import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
 import { StorageUploadItem } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { monotonicFactory } from 'ulid';
 import type { BrowserCommon } from '@packages/proto';
 
@@ -27,7 +27,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
 
   const { open } = useNotification();
 
-  const addFiles = (files: File[] = []) => {
+  const addFiles = useCallback((files: File[] = []) => {
     if (!files.length) {
       setUploadMap(() => ({}));
       setUploadedCount(() => 0);
@@ -48,7 +48,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
 
     setUploadedCount(() => 0);
     setItemsCount(() => files.length);
-  };
+  }, []);
 
   const handleFinish = (id: string) => {
     setUploadMap((prev) => {
@@ -64,7 +64,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
     setFailedItems((prev) => [...prev, uploadMap[uploadId]]);
   };
 
-  const handleDelete = (uploadId: string) => {
+  const handleDelete = useCallback((uploadId: string) => {
     setUploadMap((prev) => {
       const newMap = { ...prev };
       delete newMap[uploadId];
@@ -72,7 +72,7 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
     });
 
     setFailedItems((prev) => prev.filter((e) => e.uploadId !== uploadId));
-  };
+  }, []);
 
   const handleUpload = async <Record extends Entity = Entity>(
     createCallback: (items: StorageUploadItem[]) => Promise<Record[]>,

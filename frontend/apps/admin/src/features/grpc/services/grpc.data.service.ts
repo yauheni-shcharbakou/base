@@ -1,28 +1,23 @@
-import { ConfigService } from '@/common/services/config.service';
-import { GrpcDataRepository } from '@/features/grpc/types';
 import {
-  GrpcFileAdminRepository,
-  GrpcImageAdminRepository,
-  GrpcStorageObjectAdminRepository,
-  GrpcTempCodeAdminRepository,
-  GrpcUserAdminRepository,
-  GrpcVideoAdminRepository,
-} from '@frontend/proto';
+  fileGrpcRepository,
+  imageGrpcRepository,
+  storageObjectGrpcRepository,
+  tempCodeGrpcRepository,
+  userGrpcRepository,
+  videoGrpcRepository,
+} from '@/features/grpc/repositories';
+import { GrpcDataRepository } from '@/features/grpc/types';
 import { AuthDatabaseEntity, StorageDatabaseEntity } from '@packages/common';
 import { BaseRecord } from '@refinedev/core';
 
 export class GrpcDataService {
-  constructor(private readonly configService: ConfigService) {}
-
-  private readonly grpcUrl = this.configService.getGrpcUrl();
-
   private readonly repositories: Record<string, Partial<GrpcDataRepository<any>>> = {
-    [AuthDatabaseEntity.USER]: new GrpcUserAdminRepository(this.grpcUrl),
-    [AuthDatabaseEntity.TEMP_CODE]: new GrpcTempCodeAdminRepository(this.grpcUrl),
-    [StorageDatabaseEntity.FILE]: new GrpcFileAdminRepository(this.grpcUrl),
-    [StorageDatabaseEntity.IMAGE]: new GrpcImageAdminRepository(this.grpcUrl),
-    [StorageDatabaseEntity.STORAGE_OBJECT]: new GrpcStorageObjectAdminRepository(this.grpcUrl),
-    [StorageDatabaseEntity.VIDEO]: new GrpcVideoAdminRepository(this.grpcUrl),
+    [AuthDatabaseEntity.USER]: userGrpcRepository,
+    [AuthDatabaseEntity.TEMP_CODE]: tempCodeGrpcRepository,
+    [StorageDatabaseEntity.FILE]: fileGrpcRepository,
+    [StorageDatabaseEntity.IMAGE]: imageGrpcRepository,
+    [StorageDatabaseEntity.STORAGE_OBJECT]: storageObjectGrpcRepository,
+    [StorageDatabaseEntity.VIDEO]: videoGrpcRepository,
   };
 
   getRepository<Entity extends BaseRecord>(resource: string): GrpcDataRepository<Entity> {

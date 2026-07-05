@@ -3,6 +3,8 @@
 import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
@@ -40,21 +42,24 @@ export default function VideoCreate() {
     formState: { errors, isValid },
     control,
     setValue,
+    getValues,
     refineCore: { onFinish, formLoading },
     handleSubmit,
     watch,
   } = useValidatedForm(schema);
 
-  const fields = watch();
+  const parent = watch('parent');
+  const userId = watch('userId');
+  const file = watch('file');
 
-  const handleFileChange = (file?: File) => {
-    const fileName = file?.name ?? '';
+  const handleFileChange = (selectedFile?: File) => {
+    const fileName = selectedFile?.name ?? '';
 
-    if (!fields.name?.trim()) {
+    if (!getValues('name')?.trim()) {
       setValue('name', fileName);
     }
 
-    if (!fields.title?.trim()) {
+    if (!getValues('title')?.trim()) {
       setValue('title', getGenericVideTitle(fileName));
     }
   };
@@ -62,7 +67,7 @@ export default function VideoCreate() {
   const handleSave = async (data: Params) => {
     const createdVideo = await handleUpload<BrowserStorage.Video>(data.file, async () => {
       return videoActionProvider.createOne(
-        fields.userId,
+        data.userId,
         {
           file: data.file,
           title: data.title,
@@ -91,12 +96,20 @@ export default function VideoCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
+          <UserSelect
+            label="User"
+            fieldName="userId"
+            fieldErr={errors?.userId as FieldErr}
+            control={control}
+            defaultValue={user?.id}
+            required
+          />
+
           <StorageObjectMetaFormSection
-            parent={fields.parent}
+            parent={parent}
             control={control}
             errors={errors}
-            userId={fields.userId}
-            currentUserId={user?.id}
+            userId={userId}
           />
 
           <Card variant="outlined">
@@ -130,7 +143,7 @@ export default function VideoCreate() {
               },
             }}
             fieldErr={errors?.file}
-            selected={fields.file}
+            selected={file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required

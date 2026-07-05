@@ -13,7 +13,7 @@ export const DateEntityField: FC<DateFieldProps> = ({ label, value }: DateFieldP
       <Typography variant="body1" fontWeight="bold" color="info">
         {label}
       </Typography>
-      <DateField value={value} format="YYYY-MM-DDThh:mm:ssZ" />
+      <DateField value={value} format="YYYY-MM-DDTHH:mm:ssZ" />
     </>
   );
 };

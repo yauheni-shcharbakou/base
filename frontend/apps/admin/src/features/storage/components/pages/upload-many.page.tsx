@@ -2,6 +2,8 @@
 
 import { AppCreate, ControlledSingleSelect } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
   FailedItemsList,
   MultiUploadProgressBar,
@@ -15,7 +17,7 @@ import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { BrowserAuth, type BrowserCommon } from '@packages/proto';
 import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
@@ -33,7 +35,11 @@ type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
   resource: string;
   batchSize: number;
   uploaderProps?: Pick<StorageUploaderProps, 'dropzoneProps' | 'maxFiles' | 'allowedTypes'>;
-  createFactory: (uploadItemsBatch: StorageUploadItem[], form: Params) => Promise<Entity[]>;
+  // Named with the `Action` suffix so Next's `'use client'` serializable-props check (71007)
+  // accepts this function prop. It runs on the client but orchestrates server actions
+  // (`*ActionProvider.createMany`); both this component and its consumers are `'use client'`,
+  // so passing it is safe.
+  createManyAction: (uploadItemsBatch: StorageUploadItem[], form: Params) => Promise<Entity[]>;
   fileRefField?: keyof Entity | string;
 };
 
@@ -51,8 +57,6 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     handleDelete,
     addFiles,
   } = useMultipleFileUpload({ resource: props.fileResource });
-
-  const onDelete = useCallback(handleDelete, []);
 
   const batchSizeOptions = useMemo(() => {
     const options = [1, 5, 10, 20, 100];
@@ -88,7 +92,7 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
 
   const handleSave = async (data: Params) => {
     const isSuccess = await handleUpload<Entity>(
-      async (batch) => props.createFactory(batch, data),
+      async (batch) => props.createManyAction(batch, data),
       props.fileRefField as keyof Entity,
       data.batchSize,
     );
@@ -110,12 +114,22 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
+          {user?.id && (
+            <UserSelect
+              label="User"
+              fieldName="userId"
+              fieldErr={errors?.userId as FieldErr}
+              control={control}
+              defaultValue={user.id}
+              required
+            />
+          )}
+
           <StorageObjectMetaFormSection
             parent={parent}
             control={control}
             errors={errors}
             userId={userId}
-            currentUserId={user?.id}
             excludeName
           />
 
@@ -150,7 +164,7 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
             <FailedItemsList
               failedItems={failedItems}
               isUploading={isUploading}
-              onDelete={onDelete}
+              onDelete={handleDelete}
             />
           </StorageUploader>
         </Stack>

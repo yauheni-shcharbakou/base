@@ -2,6 +2,12 @@ import { DevtoolsProvider } from '@/common/components';
 import { pathProvider } from '@/common/providers';
 import { authProvider } from '@/features/auth/providers';
 import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
+import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
+import PlayCircleOutlineOutlinedIcon from '@mui/icons-material/PlayCircleOutlineOutlined';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import { Refine, ResourceProps } from '@refinedev/core';
 import { RefineKbar, RefineKbarProvider } from '@refinedev/kbar';
@@ -10,13 +16,7 @@ import routerProvider from '@refinedev/nextjs-router';
 import { pascalCase } from 'change-case-all';
 import { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import React, { ReactNode, Suspense } from 'react';
-import PlayCircleOutlineOutlinedIcon from '@mui/icons-material/PlayCircleOutlineOutlined';
-import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
-import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined';
-import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
+import { ReactNode, Suspense } from 'react';
 
 import { ColorModeContextProvider } from '@/common/contexts';
 
@@ -27,9 +27,6 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
   },
 };
-
-// TODO: create custom list view
-// TODO: try migrate to 16 Next
 
 const resources: ResourceProps[] = [
   {

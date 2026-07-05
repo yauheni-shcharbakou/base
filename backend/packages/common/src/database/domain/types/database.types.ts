@@ -11,9 +11,9 @@ export type UpdateSetOf<Entity> = Partial<ExcludeDatabaseSystemFields<Entity>>;
 export type UpdateRemoveOf<Entity> = (keyof UpdateSetOf<Entity>)[];
 
 export type UpdateIncOf<Entity> = {
-  [Field in keyof UpdateSetOf<Entity> as Entity[Field] extends number
-    ? Field
-    : never]?: Entity[Field];
+  [
+    Field in keyof UpdateSetOf<Entity> as Entity[Field] extends number ? Field : never
+  ]?: Entity[Field];
 };
 
 export type UpdateOf<Entity> = {

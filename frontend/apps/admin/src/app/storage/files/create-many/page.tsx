@@ -11,7 +11,7 @@ export default function FileCreateMany() {
       resource={StorageDatabaseEntity.FILE}
       fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
-      createFactory={async (filesBatch, form) => {
+      createManyAction={async (filesBatch, form) => {
         return fileActionProvider.createMany(form.userId, filesBatch, {
           parent: form.parent,
           isPublic: form.isPublic,

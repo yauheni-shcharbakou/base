@@ -20,7 +20,7 @@ Gotcha: backend configs are intentionally non-strict (`strict` off), even though
 ## ESLint presets (`eslint/`)
 
 - `eslint/nest.config.mjs` → factory `nestConfig(import.meta.url)`. **The argument is required** — it feeds `tsconfigRootDir` + `projectService` (type-checked rules). Used by all backend apps and `@backend/packages/*`.
-- `eslint/next.config.mjs` → factory `nextConfig()` (no argument); reads the root `.prettierrc` via a relative path. Used only by frontend/apps/admin.
+- `eslint/next.config.mjs` → factory `nextConfig()` (no argument); reads the root `.prettierrc` via a relative path. Used only by frontend/apps/admin. Wires `@next/next` (recommended + core-web-vitals) and **`eslint-plugin-react-hooks`** (`rules-of-hooks: error`, `exhaustive-deps: warn`) on top of the TS/prettier rules — so React hook violations DO fail lint here.
 
 Both enable `prettier/prettier: 'error'`. The nest preset runs in type-checked mode but deliberately **disables** most unsafe rules (`no-explicit-any`, `no-floating-promises`, `no-unused-vars`, `unbound-method`, `no-unsafe-*`). So the linter does NOT catch those classes of errors.
 

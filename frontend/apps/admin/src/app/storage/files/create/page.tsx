@@ -3,6 +3,8 @@
 import { AppCreate } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
@@ -35,6 +37,7 @@ export default function FileCreate() {
 
   const {
     watch,
+    getValues,
     formState: { errors, isValid },
     control,
     setValue,
@@ -42,17 +45,19 @@ export default function FileCreate() {
     handleSubmit,
   } = useValidatedForm(schema);
 
-  const fields = watch();
+  const parent = watch('parent');
+  const userId = watch('userId');
+  const file = watch('file');
 
-  const handleFileChange = (file?: File) => {
-    if (!fields.name?.trim()) {
-      setValue('name', file?.name ?? '');
+  const handleFileChange = (selectedFile?: File) => {
+    if (!getValues('name')?.trim()) {
+      setValue('name', selectedFile?.name ?? '');
     }
   };
 
   const handleSave = async (data: Params) => {
     const createdFile = await handleUpload<BrowserStorage.File>(data.file, async () => {
-      return fileActionProvider.createOne(fields.userId, data.file, {
+      return fileActionProvider.createOne(data.userId, data.file, {
         parent: data.parent,
         name: data.name,
         isPublic: data.isPublic,
@@ -74,12 +79,20 @@ export default function FileCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
+          <UserSelect
+            label="User"
+            fieldName="userId"
+            fieldErr={errors?.userId as FieldErr}
+            control={control}
+            defaultValue={user?.id}
+            required
+          />
+
           <StorageObjectMetaFormSection
-            parent={fields.parent}
+            parent={parent}
             control={control}
             errors={errors}
-            userId={fields.userId}
-            currentUserId={user?.id}
+            userId={userId}
           />
 
           <StorageUploader
@@ -92,7 +105,7 @@ export default function FileCreate() {
               },
             }}
             fieldErr={errors?.file}
-            selected={fields.file}
+            selected={file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required

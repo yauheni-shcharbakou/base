@@ -1,5 +1,20 @@
 'use client';
 
+/**
+ * ⚠️ DO NOT "simplify" this page to Refine's built-in `syncWithLocation`
+ * (`<DataGrid {...dataGridProps} />` without the mount gate). That has been tried
+ * and reverted.
+ *
+ * The manual URL sync + `isMounted` gate below is deliberate and load-bearing:
+ *  - `enabled: () => isMounted` + rendering a placeholder until mount keeps the
+ *    DataGrid from mounting during SSR / first render.
+ *  - Without it Refine does NOT fire the initial `getList` (the page hangs on an
+ *    infinite loading state) and React throws:
+ *    "Can't perform a React state update on a component that hasn't mounted yet."
+ *
+ * Keep this approach. The empty-deps mount effect is intentional.
+ */
+
 import { AppBreadcrumb } from '@/common/components';
 import { LinearProgress } from '@mui/material';
 import {
@@ -47,6 +62,8 @@ export const ResourceListPage: FC<ResourceListProps> = ({ columns, headerButtons
     params.set('sortOrder', initialSorter.order);
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    // Intentionally run once on mount — do not add deps (see the note at the top).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const { dataGridProps } = useDataGrid({

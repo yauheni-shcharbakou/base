@@ -11,7 +11,7 @@ export default function ImageCreateMany() {
       resource={StorageDatabaseEntity.IMAGE}
       fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
-      createFactory={async (filesBatch, form) => {
+      createManyAction={async (filesBatch, form) => {
         return imageActionProvider.createMany(form.userId, filesBatch, {
           parent: form.parent,
           isPublic: form.isPublic,

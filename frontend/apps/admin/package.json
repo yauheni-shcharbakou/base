@@ -49,11 +49,5 @@
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.2",
     "cross-env": "10.1.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "react-hook-form": "7.57.0",
-      "sanitize-html": "2.17.4"
-    }
   }
 }

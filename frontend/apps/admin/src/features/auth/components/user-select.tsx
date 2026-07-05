@@ -8,7 +8,7 @@ import {
 import { AuthDatabaseEntity } from '@packages/common';
 import { BrowserAuth } from '@packages/proto';
 import { useList } from '@refinedev/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FieldValues } from 'react-hook-form';
 
 type Props<V extends FieldValues = FieldValues, E = any, T = V> = Omit<
@@ -25,18 +25,25 @@ export const UserSelect = <V extends FieldValues = FieldValues, E = any, T = V>(
 }: Props<V, E, T>) => {
   const [options, setOptions] = useState<SelectOption[]>([]);
 
+  // Keep the latest callback in a ref so the effect doesn't depend on it.
+  const onOptionsLoadedRef = useRef(onOptionsLoaded);
+
+  useEffect(() => {
+    onOptionsLoadedRef.current = onOptionsLoaded;
+  });
+
   const { result } = useList<BrowserAuth.User>({
     resource: AuthDatabaseEntity.USER,
     pagination: { pageSize: 100, currentPage: 1 },
   });
 
   useEffect(() => {
-    setOptions(() => {
-      return (result.data ?? []).map((user) => ({ label: user.email, value: user.id }));
-    });
+    const next = (result.data ?? []).map((user) => ({ label: user.email, value: user.id }));
 
-    if (onOptionsLoaded && options.length) {
-      onOptionsLoaded(options);
+    setOptions(next);
+
+    if (next.length) {
+      onOptionsLoadedRef.current?.(next);
     }
   }, [result.data]);
 

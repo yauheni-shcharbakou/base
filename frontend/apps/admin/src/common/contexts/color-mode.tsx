@@ -7,7 +7,15 @@ import { ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { RefineThemes } from '@refinedev/mui';
 import Cookies from 'js-cookie';
-import React, { type PropsWithChildren, createContext, useEffect, useState, FC } from 'react';
+import React, {
+  type PropsWithChildren,
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  FC,
+} from 'react';
 
 type ColorModeContextType = {
   mode: string;
@@ -85,20 +93,20 @@ export const ColorModeContextProvider: FC<PropsWithChildren<ColorModeContextProv
     }
   }, [isMounted, systemTheme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const nextTheme = mode === 'light' ? 'dark' : 'light';
 
-    setMode(() => nextTheme);
+    setMode(nextTheme);
     Cookies.set('theme', nextTheme);
-  };
+  }, [mode]);
+
+  const contextValue = useMemo<ColorModeContextType>(
+    () => ({ setMode: toggleTheme, mode }),
+    [toggleTheme, mode],
+  );
 
   return (
-    <ColorModeContext.Provider
-      value={{
-        setMode: toggleTheme,
-        mode,
-      }}
-    >
+    <ColorModeContext.Provider value={contextValue}>
       <ThemeProvider theme={mode === 'light' ? lightTheme : darkTheme}>
         <CssBaseline />
         <GlobalStyles styles={{ html: { WebkitFontSmoothing: 'auto' } }} />

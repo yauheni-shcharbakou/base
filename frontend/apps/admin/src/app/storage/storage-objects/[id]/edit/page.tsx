@@ -34,7 +34,7 @@ export default function StorageObjectEdit() {
     if (formLoading) {
       setValue('parent', '');
     }
-  }, [formLoading]);
+  }, [formLoading, setValue]);
 
   const entity = query?.data?.data;
 

@@ -11,7 +11,7 @@ export default function VideoCreateMany() {
       resource={StorageDatabaseEntity.VIDEO}
       fileResource={StorageDatabaseEntity.VIDEO}
       batchSize={1}
-      createFactory={async (filesBatch, form) => {
+      createManyAction={async (filesBatch, form) => {
         return videoActionProvider.createMany(form.userId, filesBatch, {
           parent: form.parent,
           isPublic: form.isPublic,
