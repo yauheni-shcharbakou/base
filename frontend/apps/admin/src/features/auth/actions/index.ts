@@ -15,7 +15,7 @@ export async function checkAccess(): Promise<CheckResponse> {
 
     return { authenticated: true };
   } catch (error) {
-    await authService.clearCookies();
+    // await authService.clearCookies();
 
     return {
       authenticated: false,
