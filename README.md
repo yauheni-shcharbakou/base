@@ -5,7 +5,7 @@ My personal website
 ### Requirements
 
 - Node.js 22.22.0+
-- pnpm 11.0.9
+- pnpm 11.9.0
 - Installed `protobuf` compiler (for development and gRPC compiler only)
 - Installed `docker` and `docker compose` (optional)
 
