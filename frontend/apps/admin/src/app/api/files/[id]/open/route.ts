@@ -10,15 +10,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
     const ip = getRequestIp(request);
-
-    if (ip) {
-      authMeta.set('ip', ip);
-    }
-
     const query = request.nextUrl.searchParams;
-
-    const response = await fileGrpcRepository.getUrlMap({ id, ids: [] }, authMeta);
-    const url = response.items.get(id);
+    const response = await fileGrpcRepository.getUrlMap({ id, ids: [], ip }, authMeta);
+    const url = response.entries.get(id);
 
     if (!url) {
       throw new Error("Can't get signed url for file");

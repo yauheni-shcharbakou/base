@@ -5,13 +5,13 @@ import { GridColumnsBuilder } from '@/common/utils';
 import { getVideoDuration } from '@/features/video/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcVideoPopulated } from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 import React, { useMemo } from 'react';
 
 export default function VideoList() {
-  const columns = useMemo<GridColDef<GrpcVideoPopulated>[]>(
+  const columns = useMemo<GridColDef<BrowserStorage.VideoPopulated>[]>(
     () =>
-      new GridColumnsBuilder<GrpcVideoPopulated>()
+      new GridColumnsBuilder<BrowserStorage.VideoPopulated>()
         .ref('userId', {
           headerName: 'User',
           database: Database.AUTH,

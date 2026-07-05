@@ -1,0 +1,64 @@
+{
+  "model": "claude-opus-4-8",
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": ["Bash(pnpm:*)", "Bash(git:*)"],
+    "deny": [
+      "Grep(./**/.env)",
+      "Read(./**/.env)",
+      "Read(./**/node_modules/**)",
+      "Read(./**/build/**)",
+      "Read(./**/.next/**)",
+      "Read(./**/dist/**/*.cjs)",
+      "Read(./**/dist/**/*.mjs)",
+      "Read(./**/dist/**/*.js)",
+      "Read(./**/dist/**/*.map)",
+      "Read(./**/src/generated/**)",
+      "Read(./**/.snapshot-*.json)",
+      "Bash(pnpm reset)",
+      "Bash(pnpm reset:modules)",
+      "Bash(pnpm run reset)",
+      "Bash(pnpm run reset:modules)",
+      "Bash(git reset --hard:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push --force-with-lease:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git clean -df:*)",
+      "Bash(git clean -xfd:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git checkout --:*)",
+      "Bash(git restore:*)",
+      "Bash(git reflog expire:*)",
+      "Bash(git gc --prune:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "env": {
+    "ENABLE_TOOL_SEARCH": "auto:5",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-4-6",
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-dangerous-bash.sh",
+            "statusMessage": "Checking command safety"
+          }
+        ]
+      }
+    ]
+  }
+}

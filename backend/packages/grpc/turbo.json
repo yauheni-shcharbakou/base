@@ -2,15 +2,8 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": ["src/**/*.ts", "package.json", "ts-config*.json"],
+      "inputs": ["src/**/*.ts", "package.json", "tsconfig*.json", "tsdown.config.mts"],
       "outputs": ["dist/**"]
-    },
-    "format": {
-      "inputs": ["src/**/*.ts"],
-      "outputs": ["src/**/*.ts"]
-    },
-    "reset:modules": {
-      "inputs": ["package.json"]
     }
   }
 }

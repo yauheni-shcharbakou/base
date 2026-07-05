@@ -1,9 +1,9 @@
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import globals from 'globals';
+import { dirname } from 'path';
 import typescriptEslint from 'typescript-eslint';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
 export default function nestConfig(url) {
   const __filename = fileURLToPath(url);
@@ -11,7 +11,13 @@ export default function nestConfig(url) {
 
   return typescriptEslint.config(
     {
-      ignores: ['eslint.config.mjs', 'node_modules/*', 'dist/*', 'src/migrator/migrations/*'],
+      ignores: [
+        'eslint.config.mjs',
+        'node_modules/*',
+        'dist/*',
+        'src/migrator/migrations/*',
+        'tsdown.config.mts',
+      ],
     },
     eslint.configs.recommended,
     ...typescriptEslint.configs.recommendedTypeChecked,

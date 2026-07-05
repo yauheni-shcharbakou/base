@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -28,13 +28,13 @@ services:
       PGPASSWORD: password123
     command: >
       bash -c "
-        until pg_isready -h postgres -p 5432 -U $$POSTGRES_USER; do 
-          sleep 2; 
+        until pg_isready -h postgres -p 5432 -U $$POSTGRES_USER; do
+          sleep 2;
         done;
-      
+
         for db in auth storage; do
           chk=$$(psql -h postgres -U $$POSTGRES_USER -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='$$db'\")
-      
+
           if [ \"$$chk\" != \"1\" ]; then
             echo \"Create database $$db...\"
             psql -h postgres -U $$POSTGRES_USER -d postgres -c \"CREATE DATABASE $$db;\"
@@ -56,14 +56,9 @@ services:
     restart: unless-stopped
     container_name: base-nats
     ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: [
-      "-js",
-      "-m", "8222",
-      "-sd", "/data",
-      "--name", "nats-node"
-    ]
+      - '4222:4222'
+      - '8222:8222'
+    command: ['-js', '-m', '8222', '-sd', '/data', '--name', 'nats-node']
     volumes:
       - nats_data:/data
     networks:

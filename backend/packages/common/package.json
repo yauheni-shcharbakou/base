@@ -10,21 +10,21 @@
     "format": "prettier src --write --config ../../../.prettierrc",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
-    "build": "tsdown src/index.ts --format cjs --dts",
+    "build": "tsdown",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
-    "@backend/grpc": "workspace:*",
-    "@nestjs/common": "11.1.19",
-    "@nestjs/config": "4.0.3",
-    "@nestjs/microservices": "11.1.19",
+    "@backend/proto": "workspace:*",
+    "@nestjs/common": "11.1.27",
     "@packages/common": "workspace:*",
     "@sweet-monads/either": "3.3.1",
+    "lodash": "4.18.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@packages/configs": "workspace:*"
+    "@packages/configs": "workspace:*",
+    "@types/lodash": "4.17.23"
   }
 }

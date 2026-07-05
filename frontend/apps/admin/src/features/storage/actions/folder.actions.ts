@@ -2,15 +2,11 @@
 
 import { authService } from '@/features/auth/services';
 import { storageObjectGrpcRepository } from '@/features/grpc/repositories';
-import {
-  GrpcStorageObjectExistsFolderRequest,
-  GrpcStorageObjectGetFoldersItem,
-  GrpcStorageObjectGetFoldersRequest,
-} from '@frontend/grpc';
+import { ClientStorage } from '@frontend/proto';
 
 export async function getUserFolders(
-  request: GrpcStorageObjectGetFoldersRequest,
-): Promise<GrpcStorageObjectGetFoldersItem[]> {
+  request: ClientStorage.StorageObjectGetFolders,
+): Promise<ClientStorage.StorageObjectPopulated[]> {
   try {
     const metadata = await authService.getAuthMetadata();
     const list = await storageObjectGrpcRepository.getFolders(request, metadata);
@@ -20,12 +16,15 @@ export async function getUserFolders(
   }
 }
 
-export async function isExistsFolder(
-  request: GrpcStorageObjectExistsFolderRequest,
-): Promise<boolean> {
+export async function isExistsFolder(query: ClientStorage.StorageObjectQuery): Promise<boolean> {
   try {
     const metadata = await authService.getAuthMetadata();
-    const result = await storageObjectGrpcRepository.isExistsFolder(request, metadata);
+
+    const result = await storageObjectGrpcRepository.isExists(
+      { ...query, type: ClientStorage.StorageObjectType.FOLDER },
+      metadata,
+    );
+
     return result.value;
   } catch (error) {
     return false;

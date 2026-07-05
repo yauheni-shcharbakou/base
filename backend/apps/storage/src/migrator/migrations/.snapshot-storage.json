@@ -1,13 +1,43 @@
 {
   "name": "public",
-  "namespaces": [
-    "public"
-  ],
+  "namespaces": ["public"],
   "tables": [
     {
       "name": "files",
       "schema": "public",
       "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "extension": {
+          "name": "extension",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
         "id": {
           "name": "id",
           "type": "varchar(255)",
@@ -24,40 +54,8 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 3,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 3,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
-        },
-        "user_id": {
-          "name": "user_id",
+        "mime_type": {
+          "name": "mime_type",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -88,74 +86,6 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "size": {
-          "name": "size",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
-        },
-        "mime_type": {
-          "name": "mime_type",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "extension": {
-          "name": "extension",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "upload_status": {
-          "name": "upload_status",
-          "type": "varchar",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": -1,
-          "precision": null,
-          "scale": null,
-          "default": "'PENDING'",
-          "comment": null,
-          "enumItems": [
-            "PENDING",
-            "FAILED",
-            "READY"
-          ],
-          "mappedType": "enum"
-        },
         "provider_id": {
           "name": "provider_id",
           "type": "varchar(255)",
@@ -172,8 +102,72 @@
           "enumItems": [],
           "mappedType": "string"
         },
+        "size": {
+          "name": "size",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
         "upload_id": {
           "name": "upload_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "upload_status": {
+          "name": "upload_status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'PENDING'",
+          "comment": null,
+          "enumItems": ["PENDING", "FAILED", "READY"],
+          "mappedType": "enum"
+        },
+        "user_id": {
+          "name": "user_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -191,54 +185,44 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
+          "constraint": false,
           "keyName": "files_created_at_index",
-          "constraint": false,
           "primary": false,
           "unique": false
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
-          "composite": false,
-          "keyName": "files_user_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "upload_status"
-          ],
-          "composite": false,
-          "keyName": "files_upload_status_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "provider_id"
-          ],
-          "composite": false,
-          "keyName": "files_provider_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "files_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
+          "keyName": "files_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": ["provider_id"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "files_provider_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["upload_status"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "files_upload_status_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["user_id"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "files_user_id_index",
+          "primary": false,
+          "unique": false
         }
       ],
       "checks": [
@@ -250,12 +234,76 @@
         }
       ],
       "foreignKeys": {},
-      "nativeEnums": {}
+      "comment": null
     },
     {
       "name": "images",
       "schema": "public",
       "columns": {
+        "alt": {
+          "name": "alt",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "file_id": {
+          "name": "file_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "height": {
+          "name": "height",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
         "id": {
           "name": "id",
           "type": "varchar(255)",
@@ -272,31 +320,15 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 3,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
-        },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamptz",
+          "type": "timestamptz(6)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 3,
+          "length": 6,
           "precision": null,
           "scale": null,
           "default": null,
@@ -304,8 +336,8 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "user_id": {
-          "name": "user_id",
+        "upload_id": {
+          "name": "upload_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -320,8 +352,8 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "file_id": {
-          "name": "file_id",
+        "user_id": {
+          "name": "user_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
@@ -351,202 +383,74 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "integer"
-        },
-        "height": {
-          "name": "height",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
-        },
-        "alt": {
-          "name": "alt",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "upload_id": {
-          "name": "upload_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
         }
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
+          "constraint": false,
           "keyName": "images_created_at_index",
-          "constraint": false,
           "primary": false,
           "unique": false
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["file_id"],
           "composite": false,
-          "keyName": "images_user_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "file_id"
-          ],
-          "composite": false,
-          "keyName": "images_file_id_unique",
           "constraint": true,
+          "keyName": "images_file_id_unique",
           "primary": false,
           "unique": true
         },
         {
-          "keyName": "images_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
+          "keyName": "images_pkey",
           "primary": true,
           "unique": true
+        },
+        {
+          "columnNames": ["user_id"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "images_user_id_index",
+          "primary": false,
+          "unique": false
         }
       ],
       "checks": [],
       "foreignKeys": {
         "images_file_id_foreign": {
+          "columnNames": ["file_id"],
           "constraintName": "images_file_id_foreign",
-          "columnNames": [
-            "file_id"
-          ],
           "localTableName": "public.images",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.files",
           "deleteRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "comment": null
     },
     {
       "name": "migrations",
       "schema": "public",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": true,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
         "created_at": {
           "name": "created_at",
-          "type": "timestamptz",
+          "type": "timestamptz(6)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 3,
+          "length": 6,
           "precision": null,
           "scale": null,
           "default": null,
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 3,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": -1,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [
-            "pending",
-            "success",
-            "failed"
-          ],
-          "mappedType": "enum"
         },
         "error_message": {
           "name": "error_message",
@@ -579,75 +483,7 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "string"
-        }
-      },
-      "indexes": [
-        {
-          "columnNames": [
-            "created_at"
-          ],
-          "composite": false,
-          "keyName": "migrations_created_at_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
         },
-        {
-          "columnNames": [
-            "name"
-          ],
-          "composite": false,
-          "keyName": "migrations_name_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "name"
-          ],
-          "composite": false,
-          "keyName": "migrations_name_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "status"
-          ],
-          "composite": false,
-          "keyName": "migrations_status_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "migrations_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [
-        {
-          "name": "migrations_status_check",
-          "expression": "\"status\" in ('pending', 'success', 'failed')",
-          "definition": "check (\"status\" in ('pending', 'success', 'failed'))",
-          "columnName": "status"
-        }
-      ],
-      "foreignKeys": {},
-      "nativeEnums": {}
-    },
-    {
-      "name": "videos",
-      "schema": "public",
-      "columns": {
         "id": {
           "name": "id",
           "type": "varchar(255)",
@@ -664,15 +500,121 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 3,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": ["pending", "success", "failed"],
+          "mappedType": "enum"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": ["created_at"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "migrations_created_at_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["name"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "migrations_name_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["name"],
+          "composite": false,
+          "constraint": true,
+          "keyName": "migrations_name_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": ["id"],
+          "composite": false,
+          "constraint": true,
+          "keyName": "migrations_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": ["status"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "migrations_status_index",
+          "primary": false,
+          "unique": false
+        }
+      ],
+      "checks": [
+        {
+          "name": "migrations_status_check",
+          "expression": "\"status\" in ('pending', 'success', 'failed')",
+          "definition": "check (\"status\" in ('pending', 'success', 'failed'))",
+          "columnName": "status"
+        }
+      ],
+      "foreignKeys": {},
+      "comment": null
+    },
+    {
+      "name": "storage-objects",
+      "schema": "public",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
           "precision": null,
           "scale": null,
           "default": null,
@@ -680,15 +622,175 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamptz",
+        "file_id": {
+          "name": "file_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "folder_path": {
+          "name": "folder_path",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "image_id": {
+          "name": "image_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": 3,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "is_folder": {
+          "name": "is_folder",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "is_public": {
+          "name": "is_public",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": ["FOLDER", "FILE", "IMAGE", "VIDEO"],
+          "mappedType": "enum"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
           "precision": null,
           "scale": null,
           "default": null,
@@ -712,12 +814,231 @@
           "enumItems": [],
           "mappedType": "string"
         },
+        "video_id": {
+          "name": "video_id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        }
+      },
+      "indexes": [
+        {
+          "columnNames": ["created_at"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_created_at_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["file_id"],
+          "composite": false,
+          "constraint": true,
+          "keyName": "storage-objects_file_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": ["image_id"],
+          "composite": false,
+          "constraint": true,
+          "keyName": "storage-objects_image_id_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": ["is_deleted"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_is_deleted_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["is_folder"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_is_folder_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["is_public"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_is_public_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["name"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_name_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["id"],
+          "composite": false,
+          "constraint": true,
+          "keyName": "storage-objects_pkey",
+          "primary": true,
+          "unique": true
+        },
+        {
+          "columnNames": ["type"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_type_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["user_id"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_user_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["video_id"],
+          "composite": false,
+          "constraint": true,
+          "keyName": "storage-objects_video_id_unique",
+          "primary": false,
+          "unique": true
+        }
+      ],
+      "checks": [
+        {
+          "name": "storage-objects_type_check",
+          "expression": "\"type\" in ('FOLDER', 'FILE', 'IMAGE', 'VIDEO')",
+          "definition": "check (\"type\" in ('FOLDER', 'FILE', 'IMAGE', 'VIDEO'))",
+          "columnName": "type"
+        }
+      ],
+      "foreignKeys": {
+        "storage-objects_file_id_foreign": {
+          "columnNames": ["file_id"],
+          "constraintName": "storage-objects_file_id_foreign",
+          "localTableName": "public.storage-objects",
+          "referencedColumnNames": ["id"],
+          "referencedTableName": "public.files",
+          "deleteRule": "cascade"
+        },
+        "storage-objects_image_id_foreign": {
+          "columnNames": ["image_id"],
+          "constraintName": "storage-objects_image_id_foreign",
+          "localTableName": "public.storage-objects",
+          "referencedColumnNames": ["id"],
+          "referencedTableName": "public.images",
+          "deleteRule": "cascade"
+        },
+        "storage-objects_parent_id_foreign": {
+          "columnNames": ["parent_id"],
+          "constraintName": "storage-objects_parent_id_foreign",
+          "localTableName": "public.storage-objects",
+          "referencedColumnNames": ["id"],
+          "referencedTableName": "public.storage-objects",
+          "deleteRule": "set null"
+        },
+        "storage-objects_video_id_foreign": {
+          "columnNames": ["video_id"],
+          "constraintName": "storage-objects_video_id_foreign",
+          "localTableName": "public.storage-objects",
+          "referencedColumnNames": ["id"],
+          "referencedTableName": "public.videos",
+          "deleteRule": "cascade"
+        }
+      },
+      "comment": null
+    },
+    {
+      "name": "videos",
+      "schema": "public",
+      "columns": {
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "duration": {
+          "name": "duration",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "0",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "integer"
+        },
         "file_id": {
           "name": "file_id",
           "type": "varchar(255)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
           "nullable": false,
           "unique": false,
           "length": 255,
@@ -760,53 +1081,21 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "duration": {
-          "name": "duration",
-          "type": "int",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
           "nullable": false,
           "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": "0",
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
-        },
-        "views": {
-          "name": "views",
-          "type": "int",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": "0",
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "integer"
-        },
-        "description": {
-          "name": "description",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
+          "length": 6,
           "precision": null,
           "scale": null,
           "default": null,
           "comment": null,
           "enumItems": [],
-          "mappedType": "string"
+          "mappedType": "datetime"
         },
         "upload_id": {
           "name": "upload_id",
@@ -823,128 +1112,6 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "string"
-        }
-      },
-      "indexes": [
-        {
-          "columnNames": [
-            "created_at"
-          ],
-          "composite": false,
-          "keyName": "videos_created_at_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "user_id"
-          ],
-          "composite": false,
-          "keyName": "videos_user_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "file_id"
-          ],
-          "composite": false,
-          "keyName": "videos_file_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "provider_id"
-          ],
-          "composite": false,
-          "keyName": "videos_provider_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "keyName": "videos_pkey",
-          "columnNames": [
-            "id"
-          ],
-          "composite": false,
-          "constraint": true,
-          "primary": true,
-          "unique": true
-        }
-      ],
-      "checks": [],
-      "foreignKeys": {
-        "videos_file_id_foreign": {
-          "constraintName": "videos_file_id_foreign",
-          "columnNames": [
-            "file_id"
-          ],
-          "localTableName": "public.videos",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.files",
-          "deleteRule": "cascade"
-        }
-      },
-      "nativeEnums": {}
-    },
-    {
-      "name": "storage-objects",
-      "schema": "public",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": true,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 3,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamptz",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 3,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "datetime"
         },
         "user_id": {
           "name": "user_id",
@@ -962,25 +1129,9 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "is_public": {
-          "name": "is_public",
-          "type": "boolean",
+        "views": {
+          "name": "views",
+          "type": "int",
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
@@ -989,290 +1140,66 @@
           "length": null,
           "precision": null,
           "scale": null,
-          "default": "false",
+          "default": "0",
           "comment": null,
           "enumItems": [],
-          "mappedType": "boolean"
-        },
-        "is_folder": {
-          "name": "is_folder",
-          "type": "boolean",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": "false",
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "boolean"
-        },
-        "type": {
-          "name": "type",
-          "type": "varchar",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": -1,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [
-            "FOLDER",
-            "FILE",
-            "IMAGE",
-            "VIDEO"
-          ],
-          "mappedType": "enum"
-        },
-        "parent_id": {
-          "name": "parent_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "file_id": {
-          "name": "file_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "folder_path": {
-          "name": "folder_path",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "image_id": {
-          "name": "image_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
-        "video_id": {
-          "name": "video_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
+          "mappedType": "integer"
         }
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
-          "keyName": "storage-objects_created_at_index",
           "constraint": false,
+          "keyName": "videos_created_at_index",
           "primary": false,
           "unique": false
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["file_id"],
           "composite": false,
-          "keyName": "storage-objects_user_id_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "name"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_name_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "is_public"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_is_public_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "is_folder"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_is_folder_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "type"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_type_index",
-          "constraint": false,
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "file_id"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_file_id_unique",
           "constraint": true,
+          "keyName": "videos_file_id_unique",
           "primary": false,
           "unique": true
         },
         {
-          "columnNames": [
-            "image_id"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_image_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "columnNames": [
-            "video_id"
-          ],
-          "composite": false,
-          "keyName": "storage-objects_video_id_unique",
-          "constraint": true,
-          "primary": false,
-          "unique": true
-        },
-        {
-          "keyName": "storage-objects_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
+          "keyName": "videos_pkey",
           "primary": true,
           "unique": true
-        }
-      ],
-      "checks": [
+        },
         {
-          "name": "storage-objects_type_check",
-          "expression": "\"type\" in ('FOLDER', 'FILE', 'IMAGE', 'VIDEO')",
-          "definition": "check (\"type\" in ('FOLDER', 'FILE', 'IMAGE', 'VIDEO'))",
-          "columnName": "type"
+          "columnNames": ["provider_id"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "videos_provider_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": ["user_id"],
+          "composite": false,
+          "constraint": false,
+          "keyName": "videos_user_id_index",
+          "primary": false,
+          "unique": false
         }
       ],
+      "checks": [],
       "foreignKeys": {
-        "storage-objects_parent_id_foreign": {
-          "constraintName": "storage-objects_parent_id_foreign",
-          "columnNames": [
-            "parent_id"
-          ],
-          "localTableName": "public.storage-objects",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.storage-objects",
-          "deleteRule": "set null"
-        },
-        "storage-objects_file_id_foreign": {
-          "constraintName": "storage-objects_file_id_foreign",
-          "columnNames": [
-            "file_id"
-          ],
-          "localTableName": "public.storage-objects",
-          "referencedColumnNames": [
-            "id"
-          ],
+        "videos_file_id_foreign": {
+          "columnNames": ["file_id"],
+          "constraintName": "videos_file_id_foreign",
+          "localTableName": "public.videos",
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.files",
-          "deleteRule": "cascade"
-        },
-        "storage-objects_image_id_foreign": {
-          "constraintName": "storage-objects_image_id_foreign",
-          "columnNames": [
-            "image_id"
-          ],
-          "localTableName": "public.storage-objects",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.images",
-          "deleteRule": "cascade"
-        },
-        "storage-objects_video_id_foreign": {
-          "constraintName": "storage-objects_video_id_foreign",
-          "columnNames": [
-            "video_id"
-          ],
-          "localTableName": "public.storage-objects",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.videos",
           "deleteRule": "cascade"
         }
       },
-      "nativeEnums": {}
+      "comment": null
     }
   ],
   "views": [],

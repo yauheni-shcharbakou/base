@@ -1,16 +1,16 @@
 import { createFile, createManyFiles } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
-import { GrpcFile, GrpcFileCreateRequest } from '@packages/grpc';
-import { GrpcFileCreateManyRequest } from '@packages/grpc/src';
+import type { BrowserStorage } from '@packages/proto';
 
 export class FileActionProvider {
-  async createOne(file: File, storage?: StorageData): Promise<GrpcFile> {
-    const data: GrpcFileCreateRequest = {
+  async createOne(userId: string, file: File, storage?: StorageData): Promise<BrowserStorage.File> {
+    const data: BrowserStorage.FileCreateOne = {
       file: {
         originalName: file.name,
         size: file.size,
         mimeType: file.type,
       },
+      userId,
     };
 
     if (storage?.parent) {
@@ -31,10 +31,11 @@ export class FileActionProvider {
   }
 
   async createMany(
+    userId: string,
     items: StorageUploadItem[],
     storage?: Omit<StorageData, 'name'>,
-  ): Promise<GrpcFile[]> {
-    const data: GrpcFileCreateManyRequest = {
+  ): Promise<BrowserStorage.File[]> {
+    const data: BrowserStorage.FileCreateMany = {
       items: items.map((item) => {
         return {
           file: {
@@ -45,6 +46,7 @@ export class FileActionProvider {
           uploadId: item.uploadId,
         };
       }),
+      userId,
     };
 
     if (storage?.parent) {

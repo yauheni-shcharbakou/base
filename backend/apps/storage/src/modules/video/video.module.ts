@@ -1,8 +1,48 @@
+import { NatsModule, NatsVideoTransport } from '@backend/nats';
+import { PgModule } from '@backend/pg';
+import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
+import { FileModule } from '@modules/file/file.module';
+import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
+import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
-import { VideoEventModule } from 'modules/video/event/video.event.module';
-import { VideoRpcModule } from 'modules/video/rpc/video.rpc.module';
+import { VideoCreateManyUseCase } from './application/use-cases/video.create-many.use-case';
+import { VideoCreateOneUseCase } from './application/use-cases/video.create-one.use-case';
+import { VideoDeleteOneUseCase } from './application/use-cases/video.delete-one.use-case';
+import { VideoGetDownloadMapUseCase } from './application/use-cases/video.get-download-map.use-case';
+import { VideoGetUrlMapUseCase } from './application/use-cases/video.get-url-map.use-case';
+import { VideoGetUseCase } from './application/use-cases/video.get.use-case';
+import { VideoSyncWithProviderUseCase } from './application/use-cases/video.sync-with-provider.use-case';
+import { VideoUpdateUseCase } from './application/use-cases/video.update.use-case';
+import { VideoUploadOneUseCase } from './application/use-cases/video.upload-one.use-case';
+import { VideoRepository } from './domain/repositories/video.repository';
+import { PgVideoRepositoryImpl } from './infrastructure/pg/repositories/pg.video.repository.impl';
+import { CronVideoScheduler } from './interface/cron/cron.video.scheduler';
+import { GrpcVideoController } from './interface/grpc/grpc.video.controller';
 
 @Module({
-  imports: [VideoRpcModule, VideoEventModule],
+  imports: [
+    PgModule.forFeature(PgVideoEntity),
+    NatsModule.forFeature({ EventBus: NatsVideoTransport.EventBus }),
+    StorageModule,
+    FileModule,
+    StorageObjectModule,
+  ],
+  providers: [
+    {
+      provide: VideoRepository,
+      useClass: PgVideoRepositoryImpl,
+    },
+    VideoGetUseCase,
+    VideoGetUrlMapUseCase,
+    VideoGetDownloadMapUseCase,
+    VideoDeleteOneUseCase,
+    VideoUpdateUseCase,
+    VideoCreateOneUseCase,
+    VideoCreateManyUseCase,
+    VideoUploadOneUseCase,
+    VideoSyncWithProviderUseCase,
+    CronVideoScheduler,
+  ],
+  controllers: [GrpcVideoController],
 })
 export class VideoModule {}

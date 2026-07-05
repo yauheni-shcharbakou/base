@@ -3,14 +3,14 @@
 import { ColorModeContext } from '@/common/contexts/color-mode';
 import { DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
 import { Stack, Typography, Toolbar, AppBar, IconButton } from '@mui/material';
-import { GrpcUser } from '@frontend/grpc';
 import { useGetIdentity } from '@refinedev/core';
 import { HamburgerMenu, RefineThemedLayoutHeaderProps } from '@refinedev/mui';
 import React, { FC, useContext } from 'react';
+import type { BrowserAuth } from '@packages/proto';
 
 export const Header: FC<RefineThemedLayoutHeaderProps> = ({ sticky = true }) => {
   const { mode, setMode } = useContext(ColorModeContext);
-  const { data: user } = useGetIdentity<GrpcUser>();
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
 
   return (
     <AppBar position={sticky ? 'sticky' : 'relative'} elevation={0}>

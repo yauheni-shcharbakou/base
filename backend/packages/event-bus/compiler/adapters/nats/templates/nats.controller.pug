@@ -1,0 +1,58 @@
+- const streamName = `${kebabCase(`${data.service.hostName}_${data.service.id}`)}-stream`
+- const pattern = `Nats${data.service.patternName}`
+- const controller = `Nats${data.service.controllerName}`
+- const transport = `Nats${data.service.transportName}`
+|
+|const #{pattern} = {
+|
+each method in data.service.methods
+    - const eventPattern = kebabCase(method.eventId)
+    |   #{method.constantName}: {
+    |       pattern: '#{eventPattern}',
+    |       registerStream: (): void => {
+    |           globalStreamRegistry.append({ name: '#{streamName}', subjects: ['#{eventPattern}'] });
+    |       },
+    |   },
+    |
+|};
+|
+|export const #{transport} = {
+|   ...#{pattern},
+|   ControllerMethods: (): ClassDecorator => {
+|       const methodsDecorator = function(constructor: Function) {
+|
+each method in data.service.methods
+    - const eventPattern = kebabCase(method.eventId)
+
+    |           EventPattern('#{eventPattern}')(
+    |               constructor.prototype['#{method.handlerName}'],
+    |               '#{method.handlerName}',
+    |               Reflect.getOwnPropertyDescriptor(constructor.prototype, '#{method.handlerName}')
+    |           );
+    |           #{pattern}.#{method.constantName}.registerStream();
+    |
+|       };
+|       return applyDecorators(methodsDecorator);
+|   },
+|   EventBus: #{data.service.eventBusName},
+|} as const;
+|
+|export interface #{controller} {
+|
+each method in data.service.methods
+    |   #{method.handlerName}(
+    |       event: #{method.type},
+    |       context?: NatsJetStreamContext,
+    |   ): void | Promise<void> | Observable<void>;
+    |
+|}
+|
+each method in data.service.methods
+    |
+    |export interface Nats#{method.externalInterfaceName} {
+    |   #{method.externalHandlerName}(
+    |       event: #{method.type},
+    |       context?: NatsJetStreamContext,
+    |   ): void | Promise<void> | Observable<void>;
+    |}
+    |

@@ -4,16 +4,13 @@
     "build": {
       "inputs": [
         "src/**/*.ts",
-        ".eslintrc.js",
         "Dockerfile",
+        "eslint.config.mjs",
         "nest-cli.json",
         "package.json",
         "tsconfig*.json"
       ],
       "outputs": ["dist/**"]
-    },
-    "reset:modules": {
-      "inputs": ["package.json"]
     }
   }
 }

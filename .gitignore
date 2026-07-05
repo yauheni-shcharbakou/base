@@ -39,3 +39,7 @@ yarn-error.log*
 
 # IDE
 .idea
+
+# Claude
+.claude/settings.local.json
+.claude/plans

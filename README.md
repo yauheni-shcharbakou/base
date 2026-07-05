@@ -5,7 +5,7 @@ My personal website
 ### Requirements
 
 - Node.js 22.22.0+
-- pnpm 10.33.0
+- pnpm 11.0.9
 - Installed `protobuf` compiler (for development and gRPC compiler only)
 - Installed `docker` and `docker compose` (optional)
 
@@ -80,8 +80,8 @@ pnpm dev:frontend # only frontend stuff
 
 ```shell
 pnpm compile
-pnpm compile:grpc # run gRPC compiler
-pnpm compile:transport # run nats compiler
+pnpm compile:proto # run proto compiler
+pnpm compile:event-bus # run event-bus compiler
 ```
 
 ##### Commands for build
@@ -90,7 +90,7 @@ pnpm compile:transport # run nats compiler
 pnpm build
 pnpm build:backend # only backend stuff
 pnpm build:frontend # only frontend stuff
-pnpm build:grpc # only gRPC compiler packages
+pnpm build:proto # only proto compiler packages
 ```
 
 ##### Commands for run in production mode

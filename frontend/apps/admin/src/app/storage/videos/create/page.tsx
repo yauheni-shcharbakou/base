@@ -3,21 +3,24 @@
 import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { videoActionProvider } from '@/features/storage/providers';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
+import { videoActionProvider } from '@/features/storage/providers';
 import { getGenericVideTitle } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import { GrpcVideo } from '@packages/grpc';
-import React from 'react';
+import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
@@ -29,6 +32,8 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function VideoCreate() {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.VIDEO,
   });
@@ -37,28 +42,32 @@ export default function VideoCreate() {
     formState: { errors, isValid },
     control,
     setValue,
+    getValues,
     refineCore: { onFinish, formLoading },
     handleSubmit,
     watch,
   } = useValidatedForm(schema);
 
-  const fields = watch();
+  const parent = watch('parent');
+  const userId = watch('userId');
+  const file = watch('file');
 
-  const handleFileChange = (file?: File) => {
-    const fileName = file?.name ?? '';
+  const handleFileChange = (selectedFile?: File) => {
+    const fileName = selectedFile?.name ?? '';
 
-    if (!fields.name?.trim()) {
+    if (!getValues('name')?.trim()) {
       setValue('name', fileName);
     }
 
-    if (!fields.title?.trim()) {
+    if (!getValues('title')?.trim()) {
       setValue('title', getGenericVideTitle(fileName));
     }
   };
 
   const handleSave = async (data: Params) => {
-    const createdVideo = await handleUpload<GrpcVideo>(data.file, async () => {
+    const createdVideo = await handleUpload<BrowserStorage.Video>(data.file, async () => {
       return videoActionProvider.createOne(
+        data.userId,
         {
           file: data.file,
           title: data.title,
@@ -87,7 +96,21 @@ export default function VideoCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
+          <UserSelect
+            label="User"
+            fieldName="userId"
+            fieldErr={errors?.userId as FieldErr}
+            control={control}
+            defaultValue={user?.id}
+            required
+          />
+
+          <StorageObjectMetaFormSection
+            parent={parent}
+            control={control}
+            errors={errors}
+            userId={userId}
+          />
 
           <Card variant="outlined">
             <CardHeader title="Video metadata" />
@@ -120,7 +143,7 @@ export default function VideoCreate() {
               },
             }}
             fieldErr={errors?.file}
-            selected={fields.file}
+            selected={file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required

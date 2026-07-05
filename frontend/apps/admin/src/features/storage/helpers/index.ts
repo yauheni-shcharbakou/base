@@ -1,6 +1,6 @@
 import { ONE_KB_BYTES, ONE_MB_BYTES } from '@/common/constants';
 import { TextFieldProps } from '@mui/material';
-import { GrpcFileUploadStatus } from '@packages/grpc';
+import { BrowserStorage } from '@packages/proto';
 
 export const getFileSize = (sizeInBytes = 0): string => {
   if (!sizeInBytes) {
@@ -14,13 +14,13 @@ export const getFileSize = (sizeInBytes = 0): string => {
   return `${(sizeInBytes / ONE_KB_BYTES).toFixed(2)} KB`;
 };
 
-const colorByUploadStatus = new Map<GrpcFileUploadStatus, TextFieldProps['color']>([
-  [GrpcFileUploadStatus.READY, 'success'],
-  [GrpcFileUploadStatus.FAILED, 'error'],
-  [GrpcFileUploadStatus.PENDING, 'warning'],
+const colorByUploadStatus = new Map<BrowserStorage.FileUploadStatus, TextFieldProps['color']>([
+  [BrowserStorage.FileUploadStatus.READY, 'success'],
+  [BrowserStorage.FileUploadStatus.FAILED, 'error'],
+  [BrowserStorage.FileUploadStatus.PENDING, 'warning'],
 ]);
 
-export const getFileUploadStatusColor = (status?: GrpcFileUploadStatus) => {
+export const getFileUploadStatusColor = (status?: BrowserStorage.FileUploadStatus) => {
   if (!status) {
     return;
   }

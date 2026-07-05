@@ -3,20 +3,23 @@
 import { AppCreate, ControlledTextField } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { imageActionProvider } from '@/features/storage/providers';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
-  StorageUploader,
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
+  StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
+import { imageActionProvider } from '@/features/storage/providers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import { GrpcImage } from '@packages/grpc';
-import React from 'react';
+import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
@@ -27,12 +30,15 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function ImageCreate() {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
   });
 
   const {
     watch,
+    getValues,
     formState: { errors, isValid },
     control,
     setValue,
@@ -40,19 +46,22 @@ export default function ImageCreate() {
     handleSubmit,
   } = useValidatedForm(schema);
 
-  const fields = watch();
+  const parent = watch('parent');
+  const userId = watch('userId');
+  const file = watch('file');
 
-  const handleFileChange = (file?: File) => {
-    if (!fields.name?.trim()) {
-      setValue('name', file?.name ?? '');
+  const handleFileChange = (selectedFile?: File) => {
+    if (!getValues('name')?.trim()) {
+      setValue('name', selectedFile?.name ?? '');
     }
   };
 
   const handleSave = async (data: Params) => {
-    const createdImage = await handleUpload<GrpcImage>(
+    const createdImage = await handleUpload<BrowserStorage.Image>(
       data.file,
       async () => {
         return imageActionProvider.createOne(
+          data.userId,
           {
             file: data.file,
             alt: data.alt,
@@ -82,7 +91,21 @@ export default function ImageCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
+          <UserSelect
+            label="User"
+            fieldName="userId"
+            fieldErr={errors?.userId as FieldErr}
+            control={control}
+            defaultValue={user?.id}
+            required
+          />
+
+          <StorageObjectMetaFormSection
+            parent={parent}
+            control={control}
+            errors={errors}
+            userId={userId}
+          />
 
           <Card variant="outlined">
             <CardHeader title="Image metadata" />
@@ -112,7 +135,7 @@ export default function ImageCreate() {
               },
             }}
             fieldErr={errors?.file}
-            selected={fields.file}
+            selected={file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required

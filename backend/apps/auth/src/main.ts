@@ -1,6 +1,7 @@
-import { GRPC_MICROSERVICE_OPTIONS, NATS_MICROSERVICE_OPTIONS } from '@backend/transport';
+import { GRPC_MICROSERVICE_OPTIONS } from '@backend/grpc';
+import { NATS_MICROSERVICE_OPTIONS } from '@backend/nats';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from 'app.module';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

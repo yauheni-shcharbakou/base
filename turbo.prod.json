@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "concurrency": "10",
+  "envMode": "loose",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"]
+    },
+    "reset:modules": {
+      "cache": false
+    }
+  }
+}

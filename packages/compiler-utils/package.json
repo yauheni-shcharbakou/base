@@ -1,0 +1,27 @@
+{
+  "name": "@packages/compiler-utils",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../.prettierrc",
+    "build": "tsdown",
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@packages/configs": "workspace:*",
+    "@types/pug": "2.0.10",
+    "ts-morph": "28.0.0",
+    "pug": "3.0.4"
+  },
+  "peerDependencies": {
+    "@types/pug": "2.0.10",
+    "ts-morph": "28.0.0",
+    "pug": "3.0.4"
+  }
+}

@@ -2,10 +2,10 @@
 
 import { AppShow, RecordView, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
-import { GrpcUser } from '@packages/grpc';
+import type { BrowserAuth } from '@packages/proto';
 
 export default function UserShow() {
-  const { isLoading, record } = useResourceShow<GrpcUser>();
+  const { isLoading, record } = useResourceShow<BrowserAuth.User>();
 
   return (
     <AppShow isLoading={isLoading}>

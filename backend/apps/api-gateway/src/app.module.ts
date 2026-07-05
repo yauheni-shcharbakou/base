@@ -1,12 +1,17 @@
-import { GrpcModule, NatsModule } from '@backend/transport';
+import { GrpcModule } from '@backend/grpc';
+import { GrpcAuthTransport } from '@backend/proto';
+import { CommonModule } from '@common/common.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { FileModule } from '@modules/file/file.module';
+import { ImageModule } from '@modules/image/image.module';
+import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
+import { TempCodeModule } from '@modules/temp-code/temp-code.module';
+import { UserModule } from '@modules/user/user.module';
+import { VideoModule } from '@modules/video/video.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { GrpcAuthService } from '@backend/grpc';
-import { GrpcAccessModule } from 'common/services/grpc-access/grpc-access.module';
-import { config } from 'config';
-import { AuthModule } from 'modules/auth/auth.module';
-import { StorageModule } from 'modules/storage/storage.module';
+import { config } from './config';
 
 // TODO: add anti-sql injection decorators
 
@@ -27,13 +32,17 @@ import { StorageModule } from 'modules/storage/storage.module';
     GrpcModule.forRoot({
       host: 'apiGateway',
       appClientStrategy: {
-        auth: [GrpcAuthService.name],
+        auth: [GrpcAuthTransport.service],
       },
     }),
-    NatsModule.forRoot({ host: 'apiGateway', onlyEmitting: true }),
-    GrpcAccessModule,
+    CommonModule,
     AuthModule,
-    StorageModule,
+    FileModule,
+    ImageModule,
+    StorageObjectModule,
+    TempCodeModule,
+    UserModule,
+    VideoModule,
   ],
 })
 export class AppModule {}

@@ -7,24 +7,29 @@ import {
   ControlledTextField,
 } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
-import { folderActionProvider } from '@/features/storage/providers';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import { FolderSelect } from '@/features/storage/components';
+import { folderActionProvider } from '@/features/storage/providers';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { GrpcStorageObjectType } from '@packages/grpc';
-import React from 'react';
+import { BrowserAuth, BrowserStorage } from '@packages/proto';
+import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().nonempty(),
   name: zod.string().nonempty(),
   isPublic: zod.boolean(),
-  type: zod.enum(Object.values(GrpcStorageObjectType)),
+  type: zod.enum(Object.values(BrowserStorage.StorageObjectType)),
 };
 
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function StorageObjectCreate() {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const {
     formState: { errors },
     control,
@@ -32,13 +37,18 @@ export default function StorageObjectCreate() {
     setError,
     clearErrors,
     handleSubmit,
+    watch,
   } = useValidatedForm(schema);
 
+  const userId = watch('userId');
+
   const handleSave = async (data: Params) => {
-    if (data.type === GrpcStorageObjectType.FOLDER) {
+    if (data.type === BrowserStorage.StorageObjectType.FOLDER) {
       const hasFolderWithSameName = await folderActionProvider.isExistsFolder({
         parent: data.parent,
         name: data.name,
+        userId,
+        ids: [],
       });
 
       if (hasFolderWithSameName) {
@@ -57,13 +67,26 @@ export default function StorageObjectCreate() {
       isLoading={formLoading}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
-        <FolderSelect
-          label="Folder"
-          fieldName="parent"
-          fieldErr={errors?.parent}
-          control={control}
-          required
-        />
+        {user?.id && (
+          <>
+            <UserSelect
+              label="User"
+              fieldName="userId"
+              fieldErr={errors?.userId as FieldErr}
+              control={control}
+              defaultValue={user?.id}
+            />
+            <FolderSelect
+              label="Folder"
+              fieldName="parent"
+              fieldErr={errors?.parent as FieldErr}
+              control={control}
+              userId={userId}
+              required
+            />
+          </>
+        )}
+
         <ControlledTextField
           control={control}
           fieldName="name"
@@ -75,9 +98,9 @@ export default function StorageObjectCreate() {
         <ControlledSingleSelect
           control={control}
           fieldName="type"
-          defaultValue={GrpcStorageObjectType.FOLDER}
+          defaultValue={BrowserStorage.StorageObjectType.FOLDER}
           label="Type"
-          options={[GrpcStorageObjectType.FOLDER] /*Object.values(GrpcStorageObjectType) */}
+          options={[BrowserStorage.StorageObjectType.FOLDER]}
           required
         />
       </Box>

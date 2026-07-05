@@ -2,7 +2,6 @@
 
 import { checkAccess, login, logout, me } from '@/features/auth/actions';
 import type { AuthActionResponse, AuthProvider, OnErrorResponse } from '@refinedev/core';
-import _ from 'lodash';
 
 type LoginParams = {
   email: string;
@@ -18,10 +17,8 @@ export const authProvider: AuthProvider = {
   },
   logout: async () => logout(),
   onError: async (error: any): Promise<OnErrorResponse> => {
-    if (_.includes([401, 403], error.response?.status)) {
-      return {
-        logout: true,
-      };
+    if ([401, 403].includes(error.response?.status)) {
+      return { logout: true };
     }
 
     return { error };

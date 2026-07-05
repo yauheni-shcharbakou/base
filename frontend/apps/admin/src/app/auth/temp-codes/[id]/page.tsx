@@ -12,11 +12,11 @@ import { useResourceShow } from '@/common/hooks';
 import { ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import { AuthDatabaseEntity, Database } from '@packages/common';
-import { GrpcTempCode } from '@packages/grpc';
+import type { BrowserAuth } from '@packages/proto';
 import React from 'react';
 
 export default function TempCodeShow() {
-  const { isLoading, record } = useResourceShow<GrpcTempCode>();
+  const { isLoading, record } = useResourceShow<BrowserAuth.TempCode>();
 
   return (
     <AppShow isLoading={isLoading}>

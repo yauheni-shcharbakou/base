@@ -5,14 +5,14 @@ import { GridColumnsBuilder } from '@/common/utils';
 import { getFileSize } from '@/features/storage/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcFile } from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
 
 export default function FileList() {
-  const columns = useMemo<GridColDef<GrpcFile>[]>(
+  const columns = useMemo<GridColDef<BrowserStorage.File>[]>(
     () =>
-      new GridColumnsBuilder<GrpcFile>()
+      new GridColumnsBuilder<BrowserStorage.File>()
         .ref('userId', {
           headerName: 'User',
           database: Database.AUTH,

@@ -1,0 +1,13 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": ["src/**", "package.json", "tsconfig*.json", "tsdown.config.mts"],
+      "outputs": ["dist/**"]
+    },
+    "compile": {
+      "inputs": ["package.json", "tsconfig*.json", "pkg/**", "compiler/**"],
+      "outputs": ["src/**"]
+    }
+  }
+}

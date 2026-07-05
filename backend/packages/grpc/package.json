@@ -8,21 +8,28 @@
   "types": "./dist/index.d.cts",
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
-    "build": "pnpm format && tsdown src/index.ts --format cjs --dts",
-    "reset": "rm -rf .turbo dist src node_modules",
+    "build": "tsdown",
+    "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
-    "@grpc/grpc-js": "1.14.3",
-    "@nestjs/common": "11.1.19",
-    "@nestjs/microservices": "11.1.19",
-    "protobufjs": "7.5.5",
+    "@backend/common": "workspace:*",
+    "@backend/proto": "workspace:*",
+    "@grpc/grpc-js": "1.14.4",
+    "@nestjs/common": "11.1.27",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/microservices": "11.1.27",
+    "@packages/common": "workspace:*",
+    "@sweet-monads/either": "3.3.1",
+    "lodash": "4.18.1",
+    "protobufjs": "7.6.3",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
   "devDependencies": {
     "@packages/configs": "workspace:*",
-    "@packages/grpc": "workspace:*"
+    "@types/lodash": "4.17.23"
   }
 }

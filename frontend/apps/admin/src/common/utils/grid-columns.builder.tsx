@@ -89,7 +89,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     this.columns.push({
       ...this.getDefaultProps(field, 'dateTime'),
       renderCell: function render({ value }) {
-        return <DateField value={value} format="YYYY-MM-DDThh:mm:ssZ" />;
+        return <DateField value={value} format="YYYY-MM-DDTHH:mm:ssZ" />;
       },
       ...options,
     });

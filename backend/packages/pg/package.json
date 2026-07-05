@@ -1,0 +1,39 @@
+{
+  "name": "@backend/pg",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "dev": "pnpm build --watch",
+    "build": "tsdown",
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "@backend/common": "workspace:*",
+    "@backend/proto": "workspace:*",
+    "@mikro-orm/core": "7.0.15",
+    "@mikro-orm/decorators": "7.0.15",
+    "@mikro-orm/migrations": "7.0.15",
+    "@mikro-orm/nestjs": "7.0.1",
+    "@mikro-orm/postgresql": "7.0.15",
+    "@nestjs/common": "11.1.27",
+    "@nestjs/config": "4.0.4",
+    "@nestjs/core": "11.1.27",
+    "@packages/common": "workspace:*",
+    "@sweet-monads/either": "3.3.1",
+    "lodash": "4.18.1",
+    "nest-commander": "3.20.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@packages/configs": "workspace:*",
+    "@types/lodash": "4.17.23"
+  }
+}

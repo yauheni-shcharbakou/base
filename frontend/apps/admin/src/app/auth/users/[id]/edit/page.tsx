@@ -3,7 +3,7 @@
 import { AppEdit, ControlledSingleSelect, TextEditField } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
 import { Box } from '@mui/material';
-import { GrpcUserRole } from '@packages/grpc';
+import { BrowserAuth } from '@packages/proto';
 import React from 'react';
 import zod from 'zod';
 
@@ -18,7 +18,7 @@ export default function UserEdit() {
   } = useValidatedForm({
     email: zod.email().optional(),
     password: zod.string().min(8).optional(),
-    role: zod.enum(Object.values(GrpcUserRole)).optional(),
+    role: zod.enum(Object.values(BrowserAuth.UserRole)).optional(),
   });
 
   const entity = query?.data?.data;
@@ -45,7 +45,7 @@ export default function UserEdit() {
           fieldName="role"
           defaultValue={entity?.role}
           label="Role"
-          options={Object.values(GrpcUserRole)}
+          options={Object.values(BrowserAuth.UserRole)}
           required
         />
       </Box>

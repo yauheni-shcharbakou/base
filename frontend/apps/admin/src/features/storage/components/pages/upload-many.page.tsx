@@ -2,23 +2,26 @@
 
 import { AppCreate, ControlledSingleSelect } from '@/common/components';
 import { useValidatedForm } from '@/common/hooks';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
-  MultiUploadProgressBar,
-  StorageUploader,
   FailedItemsList,
-  StorageUploaderProps,
+  MultiUploadProgressBar,
   StorageObjectMetaFormSection,
+  StorageUploader,
+  StorageUploaderProps,
 } from '@/features/storage/components';
 import { useMultipleFileUpload } from '@/features/storage/hooks';
 import { StorageUploadItem } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { GrpcIdField } from '@packages/grpc';
-import { useInvalidate, useNavigation } from '@refinedev/core';
-import React, { useCallback, useMemo } from 'react';
+import { BrowserAuth, type BrowserCommon } from '@packages/proto';
+import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
+import { useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   isPublic: zod.boolean().optional(),
   files: zod.array(zod.file()),
@@ -27,18 +30,24 @@ const schema = {
 
 type Params = SchemaTypeOf<typeof schema>;
 
-type Props<Entity extends GrpcIdField & { uploadId: string }> = {
+type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
   fileResource: string;
   resource: string;
   batchSize: number;
   uploaderProps?: Pick<StorageUploaderProps, 'dropzoneProps' | 'maxFiles' | 'allowedTypes'>;
-  createFactory: (uploadItemsBatch: StorageUploadItem[], form: Params) => Promise<Entity[]>;
+  // Named with the `Action` suffix so Next's `'use client'` serializable-props check (71007)
+  // accepts this function prop. It runs on the client but orchestrates server actions
+  // (`*ActionProvider.createMany`); both this component and its consumers are `'use client'`,
+  // so passing it is safe.
+  createManyAction: (uploadItemsBatch: StorageUploadItem[], form: Params) => Promise<Entity[]>;
   fileRefField?: keyof Entity | string;
 };
 
-export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }>(
+export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId: string }>(
   props: Props<Entity>,
 ) => {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const {
     isUploading,
     uploadedCount,
@@ -48,8 +57,6 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
     handleDelete,
     addFiles,
   } = useMultipleFileUpload({ resource: props.fileResource });
-
-  const onDelete = useCallback(handleDelete, []);
 
   const batchSizeOptions = useMemo(() => {
     const options = [1, 5, 10, 20, 100];
@@ -81,10 +88,11 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
 
   const parent = watch('parent');
   const selectedFiles = watch('files');
+  const userId = watch('userId');
 
   const handleSave = async (data: Params) => {
     const isSuccess = await handleUpload<Entity>(
-      async (batch) => props.createFactory(batch, data),
+      async (batch) => props.createManyAction(batch, data),
       props.fileRefField as keyof Entity,
       data.batchSize,
     );
@@ -106,10 +114,22 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
+          {user?.id && (
+            <UserSelect
+              label="User"
+              fieldName="userId"
+              fieldErr={errors?.userId as FieldErr}
+              control={control}
+              defaultValue={user.id}
+              required
+            />
+          )}
+
           <StorageObjectMetaFormSection
             parent={parent}
             control={control}
             errors={errors}
+            userId={userId}
             excludeName
           />
 
@@ -144,7 +164,7 @@ export const UploadManyPage = <Entity extends GrpcIdField & { uploadId: string }
             <FailedItemsList
               failedItems={failedItems}
               isUploading={isUploading}
-              onDelete={onDelete}
+              onDelete={handleDelete}
             />
           </StorageUploader>
         </Stack>

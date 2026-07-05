@@ -1,6 +1,8 @@
-import { GrpcStorageObjectCreate } from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 
-export type StorageData = Partial<Pick<GrpcStorageObjectCreate, 'parent' | 'isPublic' | 'name'>>;
+export type StorageData = Partial<
+  Pick<BrowserStorage.StorageObjectCreate, 'parent' | 'isPublic' | 'name'>
+>;
 
 export type StorageUploadItem = {
   file: File;

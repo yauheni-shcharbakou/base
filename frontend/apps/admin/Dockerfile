@@ -7,16 +7,17 @@ ENV TURBO_TELEMETRY_DISABLED=1
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
-RUN corepack prepare pnpm@10.33.2 --activate
+RUN corepack prepare pnpm@11.9.0 --activate
 RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS prepare
-RUN pnpm add -g turbo@2.9.6
+RUN pnpm add -g turbo@2.10.2
 COPY . .
+COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune frontend.admin --docker
 
 FROM base AS builder

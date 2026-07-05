@@ -18,17 +18,13 @@ import { ExpandMore, OpenInBrowserOutlined } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import {
-  GrpcFileUploadStatus,
-  GrpcStorageObjectPopulated,
-  GrpcStorageObjectType,
-} from '@packages/grpc';
 import React, { useMemo } from 'react';
+import { BrowserStorage } from '@packages/proto';
 
 export default function StorageObjectShow() {
-  const { isLoading, record } = useResourceShow<GrpcStorageObjectPopulated>();
-  const isFileReady = record?.file?.uploadStatus === GrpcFileUploadStatus.READY;
-  const isVideo = record?.type === GrpcStorageObjectType.VIDEO;
+  const { isLoading, record } = useResourceShow<BrowserStorage.StorageObjectPopulated>();
+  const isFileReady = record?.file?.uploadStatus === BrowserStorage.FileUploadStatus.READY;
+  const isVideo = record?.type === BrowserStorage.StorageObjectType.VIDEO;
 
   const refs: RefButtonContainerProps['refs'] = useMemo(() => {
     const items: RefButtonContainerProps['refs'] = [

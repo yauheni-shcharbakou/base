@@ -10,13 +10,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
     const ip = await getServerPublicIp();
-
-    if (ip) {
-      authMeta.set('ip', ip);
-    }
-
-    const response = await videoGrpcRepository.getDownloadMap({ id, ids: [] }, authMeta);
-    const downloadData = response.items.get(id);
+    const response = await videoGrpcRepository.getDownloadMap({ id, ids: [], ip }, authMeta);
+    const downloadData = response.entries.get(id);
 
     if (!downloadData) {
       throw new Error("Can't get download url for video");

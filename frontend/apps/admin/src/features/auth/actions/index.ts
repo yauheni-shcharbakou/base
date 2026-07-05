@@ -1,7 +1,7 @@
 'use server';
 
 import { authService } from '@/features/auth/services';
-import { GrpcAuthLogin, GrpcUser } from '@frontend/grpc';
+import type { ClientAuth } from '@frontend/proto';
 import { type AuthActionResponse, CheckResponse } from '@refinedev/core';
 import _ from 'lodash';
 
@@ -25,7 +25,7 @@ export async function checkAccess(): Promise<CheckResponse> {
   }
 }
 
-export async function login(request: GrpcAuthLogin): Promise<AuthActionResponse> {
+export async function login(request: ClientAuth.AuthLogin): Promise<AuthActionResponse> {
   try {
     await authService.login(request);
     return { success: true };
@@ -59,7 +59,7 @@ export async function logout(): Promise<AuthActionResponse> {
   };
 }
 
-export async function me(): Promise<GrpcUser | null> {
+export async function me(): Promise<ClientAuth.User | null> {
   try {
     return authService.getCurrentUser();
   } catch (error) {

@@ -2,16 +2,16 @@
 
 import { ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
-import { GrpcTempCode } from '@packages/grpc';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database } from '@packages/common';
 import { DeleteButton, ShowButton } from '@refinedev/mui';
 import React, { useMemo } from 'react';
+import type { BrowserAuth } from '@packages/proto';
 
 export default function TempTokenList() {
-  const columns = useMemo<GridColDef<GrpcTempCode>[]>(
+  const columns = useMemo<GridColDef<BrowserAuth.TempCode>[]>(
     () =>
-      new GridColumnsBuilder<GrpcTempCode>()
+      new GridColumnsBuilder<BrowserAuth.TempCode>()
         .ref('userId', {
           database: Database.AUTH,
           resource: AuthDatabaseEntity.USER,

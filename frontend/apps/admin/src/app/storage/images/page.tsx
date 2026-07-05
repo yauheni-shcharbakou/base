@@ -4,13 +4,13 @@ import { CreateManyButton, ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcImagePopulated } from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 import React, { useMemo } from 'react';
 
 export default function ImageList() {
-  const columns = useMemo<GridColDef<GrpcImagePopulated>[]>(
+  const columns = useMemo<GridColDef<BrowserStorage.ImagePopulated>[]>(
     () =>
-      new GridColumnsBuilder<GrpcImagePopulated>()
+      new GridColumnsBuilder<BrowserStorage.ImagePopulated>()
         .ref('userId', {
           headerName: 'User',
           database: Database.AUTH,

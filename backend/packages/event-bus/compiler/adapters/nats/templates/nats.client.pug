@@ -1,0 +1,50 @@
+|
+|class NatsClientImpl {
+|   constructor(protected readonly client: NatsJetStreamClientProxy) {}
+|
+|   protected emitMany<T>(pattern: string, events: T[]): Observable<any[]> {
+|       const observables = events.map(event => this.client.emit(pattern, event));
+|       return concat(...observables).pipe(toArray());
+|   }
+|}
+|
+each service in data.services
+    |
+    |class Nats#{pascalCase(service.eventBusName)}ClientImpl extends NatsClientImpl implements #{service.eventBusName} {
+    |   constructor(protected readonly client: NatsJetStreamClientProxy) {
+    |       super(client);
+    |   }
+    |
+    each method in service.methods
+        - const eventPattern = kebabCase(method.eventId)
+        |
+        |   #{method.emitterName}(event: #{method.type}): Promise<any> {
+        |       return firstValueFrom(this.client.emit('#{eventPattern}', event));
+        |   }
+        |
+        |   #{method.emitterManyName}(events: #{method.type}[]): Promise<any[]> {
+        |       return lastValueFrom(this.emitMany('#{eventPattern}', events));
+        |   }
+        |
+    |}
+    |
+|
+|export class NatsClientFactory {
+|   private static clientsMap = new Map<Abstract<EventBus>, Type>([
+|
+each service in data.services
+    |     [#{service.eventBusName}, Nats#{pascalCase(service.eventBusName)}ClientImpl],
+    |
+|   ]);
+|
+|   static create(client: NatsJetStreamClientProxy, EventBusClass: Abstract<EventBus>): Type {
+|       const Client = this.clientsMap.get(EventBusClass);
+|
+|       if (!Client) {
+|           throw new Error(`Nats client for ${EventBusClass} not found`);
+|       }
+|
+|       return new Client(client);
+|   }
+|}
+|

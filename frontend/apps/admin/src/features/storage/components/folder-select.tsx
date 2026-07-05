@@ -6,7 +6,7 @@ import {
   SelectOption,
 } from '@/common/components';
 import { folderActionProvider } from '@/features/storage/providers';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FieldValues } from 'react-hook-form';
 
 type Props<V extends FieldValues = FieldValues, E = any, T = V> = Omit<
@@ -15,34 +15,44 @@ type Props<V extends FieldValues = FieldValues, E = any, T = V> = Omit<
 > & {
   defaultValue?: string;
   onOptionsLoaded?: (options?: SelectOption[]) => void;
-  id?: string;
+  excludeChildrenOf?: string;
+  userId?: string;
 };
 
 export const FolderSelect = <V extends FieldValues = FieldValues, E = any, T = V>({
   onOptionsLoaded,
-  id,
+  excludeChildrenOf,
+  userId,
   ...props
 }: Props<V, E, T>) => {
   const [options, setOptions] = useState<SelectOption[]>([]);
 
+  // Keep the latest callback in a ref so the fetch effect can invoke it without
+  // depending on it (it is usually an inline arrow that changes every render).
+  const onOptionsLoadedRef = useRef(onOptionsLoaded);
+
   useEffect(() => {
+    onOptionsLoadedRef.current = onOptionsLoaded;
+  });
+
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+
     folderActionProvider
-      .getUserFolders(id)
+      .getUserFolders(userId, excludeChildrenOf)
       .then((response) => {
-        setOptions(() => {
-          return response.map((folder) => ({ label: folder.folderPath, value: folder.id }));
-        });
+        const next = response.map((folder) => ({ label: folder.folderPath!, value: folder.id }));
+
+        setOptions(next);
+
+        if (next.length) {
+          onOptionsLoadedRef.current?.(next);
+        }
       })
       .catch(console.error);
-  }, []);
-
-  if (onOptionsLoaded) {
-    useEffect(() => {
-      if (options.length) {
-        onOptionsLoaded(options);
-      }
-    }, [options]);
-  }
+  }, [userId, excludeChildrenOf]);
 
   return <ControlledSingleSelect {...props} options={options} />;
 };

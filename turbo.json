@@ -16,11 +16,17 @@
       "dependsOn": ["^compile", "^build"]
     },
     "prod": {},
-    "format": {},
-    "lint": {},
+    "format": {
+      "cache": false
+    },
+    "lint": {
+      "cache": false
+    },
     "reset": {
       "cache": false
     },
-    "reset:modules": {}
+    "reset:modules": {
+      "cache": false
+    }
   }
 }

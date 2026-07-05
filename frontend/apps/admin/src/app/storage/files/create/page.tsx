@@ -3,20 +3,23 @@
 import { AppCreate } from '@/common/components';
 import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
-import { fileActionProvider } from '@/features/storage/providers';
+import { FieldErr } from '@/common/types';
+import { UserSelect } from '@/features/auth/components';
 import {
   SingleUploadProgressBar,
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
+import { fileActionProvider } from '@/features/storage/providers';
 import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import { GrpcFile } from '@packages/grpc';
-import React from 'react';
+import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
 const schema = {
+  userId: zod.string(),
   parent: zod.string().optional(),
   name: zod.string().optional(),
   isPublic: zod.boolean(),
@@ -26,12 +29,15 @@ const schema = {
 type Params = SchemaTypeOf<typeof schema>;
 
 export default function FileCreate() {
+  const { data: user } = useGetIdentity<BrowserAuth.User>();
+
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
   });
 
   const {
     watch,
+    getValues,
     formState: { errors, isValid },
     control,
     setValue,
@@ -39,17 +45,19 @@ export default function FileCreate() {
     handleSubmit,
   } = useValidatedForm(schema);
 
-  const fields = watch();
+  const parent = watch('parent');
+  const userId = watch('userId');
+  const file = watch('file');
 
-  const handleFileChange = (file?: File) => {
-    if (!fields.name?.trim()) {
-      setValue('name', file?.name ?? '');
+  const handleFileChange = (selectedFile?: File) => {
+    if (!getValues('name')?.trim()) {
+      setValue('name', selectedFile?.name ?? '');
     }
   };
 
   const handleSave = async (data: Params) => {
-    const createdFile = await handleUpload<GrpcFile>(data.file, async () => {
-      return fileActionProvider.createOne(data.file, {
+    const createdFile = await handleUpload<BrowserStorage.File>(data.file, async () => {
+      return fileActionProvider.createOne(data.userId, data.file, {
         parent: data.parent,
         name: data.name,
         isPublic: data.isPublic,
@@ -71,7 +79,21 @@ export default function FileCreate() {
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <StorageObjectMetaFormSection parent={fields.parent} control={control} errors={errors} />
+          <UserSelect
+            label="User"
+            fieldName="userId"
+            fieldErr={errors?.userId as FieldErr}
+            control={control}
+            defaultValue={user?.id}
+            required
+          />
+
+          <StorageObjectMetaFormSection
+            parent={parent}
+            control={control}
+            errors={errors}
+            userId={userId}
+          />
 
           <StorageUploader
             control={control}
@@ -83,7 +105,7 @@ export default function FileCreate() {
               },
             }}
             fieldErr={errors?.file}
-            selected={fields.file}
+            selected={file}
             isUploading={isUploading}
             onChange={handleFileChange}
             required

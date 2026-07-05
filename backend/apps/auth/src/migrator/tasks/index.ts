@@ -1,5 +1,5 @@
-import { MigrationTask } from '@backend/persistence';
+import { MigrationTask } from '@backend/common';
 import { Type } from '@nestjs/common';
-import { CreateAdminTask } from 'migrator/tasks/create-admin.task';
+import { CreateAdminTask } from './create-admin.task';
 
 export const migrationTasks: Type<MigrationTask>[] = [CreateAdminTask];

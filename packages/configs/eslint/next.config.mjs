@@ -3,6 +3,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import eslintPrettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -41,6 +42,16 @@ export default function nextConfig() {
       rules: {
         ...nextPlugin.configs.recommended.rules,
         ...nextPlugin.configs['core-web-vitals'].rules,
+      },
+    },
+    {
+      files: ['**/*.ts', '**/*.tsx'],
+      plugins: {
+        'react-hooks': reactHooksPlugin,
+      },
+      rules: {
+        'react-hooks/rules-of-hooks': 'error',
+        'react-hooks/exhaustive-deps': 'warn',
       },
     },
     eslintPrettierConfig,

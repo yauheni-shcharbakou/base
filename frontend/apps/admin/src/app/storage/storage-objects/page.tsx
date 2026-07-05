@@ -4,13 +4,13 @@ import { ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
-import { GrpcStorageObjectPopulated } from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 import React, { useMemo } from 'react';
 
 export default function StorageObjectList() {
-  const columns = useMemo<GridColDef<GrpcStorageObjectPopulated>[]>(
+  const columns = useMemo<GridColDef<BrowserStorage.StorageObjectPopulated>[]>(
     () =>
-      new GridColumnsBuilder<GrpcStorageObjectPopulated>()
+      new GridColumnsBuilder<BrowserStorage.StorageObjectPopulated>()
         .ref('userId', {
           headerName: 'User',
           database: Database.AUTH,

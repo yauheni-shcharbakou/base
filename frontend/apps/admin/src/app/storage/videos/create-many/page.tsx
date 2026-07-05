@@ -1,10 +1,9 @@
 'use client';
 
 import { ONE_GB_BYTES } from '@/common/constants';
-import { videoActionProvider } from '@/features/storage/providers';
 import { UploadManyPage } from '@/features/storage/components';
+import { videoActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
-import React from 'react';
 
 export default function VideoCreateMany() {
   return (
@@ -12,8 +11,8 @@ export default function VideoCreateMany() {
       resource={StorageDatabaseEntity.VIDEO}
       fileResource={StorageDatabaseEntity.VIDEO}
       batchSize={1}
-      createFactory={async (filesBatch, form) => {
-        return videoActionProvider.createMany(filesBatch, {
+      createManyAction={async (filesBatch, form) => {
+        return videoActionProvider.createMany(form.userId, filesBatch, {
           parent: form.parent,
           isPublic: form.isPublic,
         });

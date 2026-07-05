@@ -1,15 +1,15 @@
 import { getUserFolders, isExistsFolder } from '@/features/storage/actions';
-import {
-  GrpcStorageObjectExistsFolderRequest,
-  GrpcStorageObjectGetFoldersItem,
-} from '@packages/grpc';
+import type { BrowserStorage } from '@packages/proto';
 
 export class FolderActionProvider {
-  async isExistsFolder(request: GrpcStorageObjectExistsFolderRequest): Promise<boolean> {
-    return isExistsFolder(request);
+  async isExistsFolder(query: BrowserStorage.StorageObjectQuery): Promise<boolean> {
+    return isExistsFolder(query);
   }
 
-  async getUserFolders(id?: string): Promise<GrpcStorageObjectGetFoldersItem[]> {
-    return getUserFolders({ id });
+  async getUserFolders(
+    userId: string,
+    excludeChildrenOf?: string,
+  ): Promise<BrowserStorage.StorageObjectPopulated[]> {
+    return getUserFolders({ userId, excludeChildrenOf });
   }
 }
