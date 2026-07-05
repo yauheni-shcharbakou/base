@@ -3,7 +3,7 @@
   "private": true,
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "compile": "turbo run compile",
     "compile:proto": "turbo run compile --filter=@packages/proto",

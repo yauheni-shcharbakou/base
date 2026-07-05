@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — `feat/use-case-architecture`
+## [1.0.0] — 2026-07-06 — `feat/use-case-architecture`
 
 A full clean-architecture (hexagonal / use-case) redesign of the backend
 microservices, a rebuilt Protobuf and event-bus codegen pipeline, a migration to
