@@ -17,7 +17,7 @@ import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { BrowserAuth, type BrowserCommon } from '@packages/proto';
 import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
@@ -80,6 +80,7 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     control,
     refineCore: { formLoading },
     handleSubmit,
+    setValue,
   } = useValidatedForm(schema);
 
   const invalidate = useInvalidate();
@@ -102,6 +103,12 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
       list(props.resource);
     }
   };
+
+  useEffect(() => {
+    if (user?.id) {
+      setValue('userId', user.id);
+    }
+  }, [setValue, user?.id]);
 
   return (
     <AppCreate
