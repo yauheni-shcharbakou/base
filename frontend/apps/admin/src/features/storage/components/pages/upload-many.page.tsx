@@ -121,26 +121,27 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          {user && (
-            <>
-              <UserSelect
-                label="User"
-                fieldName="userId"
-                fieldErr={errors?.userId as FieldErr}
-                control={control}
-                defaultValue={user?.id}
-                required
-              />
+          <UserSelect
+            label="User"
+            fieldName="userId"
+            fieldErr={errors?.userId as FieldErr}
+            control={control}
+            defaultValue={user?.id}
+            required
+            onOptionsLoaded={(options) => {
+              if (user?.id && (options ?? []).some((option) => option.value === user.id)) {
+                setValue('userId', user?.id);
+              }
+            }}
+          />
 
-              <StorageObjectMetaFormSection
-                parent={parent}
-                control={control}
-                errors={errors}
-                userId={userId}
-                excludeName
-              />
-            </>
-          )}
+          <StorageObjectMetaFormSection
+            parent={parent}
+            control={control}
+            errors={errors}
+            userId={userId}
+            excludeName
+          />
 
           {!!itemsCount && (
             <ControlledSingleSelect
