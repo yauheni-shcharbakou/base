@@ -104,12 +104,6 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     }
   };
 
-  // useEffect(() => {
-  //   if (user?.id) {
-  //     setValue('userId', user.id);
-  //   }
-  // }, [setValue, user?.id]);
-
   return (
     <AppCreate
       saveButtonProps={{

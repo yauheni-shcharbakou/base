@@ -67,26 +67,22 @@ export default function StorageObjectCreate() {
       isLoading={formLoading}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
-        {user?.id && (
-          <>
-            <UserSelect
-              label="User"
-              fieldName="userId"
-              fieldErr={errors?.userId as FieldErr}
-              control={control}
-              defaultValue={user?.id}
-            />
-            <FolderSelect
-              label="Folder"
-              fieldName="parent"
-              fieldErr={errors?.parent as FieldErr}
-              control={control}
-              userId={userId}
-              required
-            />
-          </>
-        )}
-
+        <UserSelect
+          label="User"
+          fieldName="userId"
+          fieldErr={errors?.userId as FieldErr}
+          control={control}
+          defaultValue={user?.id}
+          required
+        />
+        <FolderSelect
+          label="Folder"
+          fieldName="parent"
+          fieldErr={errors?.parent as FieldErr}
+          control={control}
+          userId={userId}
+          required
+        />
         <ControlledTextField
           control={control}
           fieldName="name"
