@@ -17,7 +17,7 @@ import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { BrowserAuth, type BrowserCommon } from '@packages/proto';
 import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
@@ -104,39 +104,37 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     }
   };
 
-  useEffect(() => {
-    if (user?.id) {
-      setValue('userId', user.id);
-    }
-  }, [setValue, user?.id]);
-
   return (
     <AppCreate
       saveButtonProps={{
         onClick: handleSubmit(handleSave),
         disabled: formLoading || !isValid || isUploading,
       }}
-      isLoading={formLoading}
+      isLoading={formLoading || !user?.id}
       title={<Typography variant="h5">Create many {props.resource}</Typography>}
     >
       <Box component="form" sx={{ display: 'flex', flexDirection: 'column' }}>
         <Stack gap={2}>
-          <UserSelect
-            label="User"
-            fieldName="userId"
-            fieldErr={errors?.userId as FieldErr}
-            control={control}
-            defaultValue={user?.id}
-            required
-          />
+          {user?.id && (
+            <>
+              <UserSelect
+                label="User"
+                fieldName="userId"
+                fieldErr={errors?.userId as FieldErr}
+                control={control}
+                defaultValue={user?.id}
+                required
+              />
 
-          <StorageObjectMetaFormSection
-            parent={parent}
-            control={control}
-            errors={errors}
-            userId={userId}
-            excludeName
-          />
+              <StorageObjectMetaFormSection
+                parent={parent}
+                control={control}
+                errors={errors}
+                userId={userId}
+                excludeName
+              />
+            </>
+          )}
 
           {!!itemsCount && (
             <ControlledSingleSelect
