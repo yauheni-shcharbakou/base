@@ -1,3 +1,4 @@
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import {
   StorageFileCreateData,
   StorageFileService,
@@ -5,14 +6,12 @@ import {
 import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
-import { AxiosError, AxiosInstance } from 'axios';
-import https from 'https';
 import moment from 'moment';
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
-import { FILE_HTTP_CLIENT } from '../constants/http.tokens';
+import { FILE_S3_CLIENT } from '../constants/client.tokens';
 
 @Injectable()
 export class BunnyStorageFileServiceImpl implements StorageFileService {
@@ -22,25 +21,8 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
 
   constructor(
     private readonly configService: ConfigService<BunnyStorageConfig>,
-    @Inject(FILE_HTTP_CLIENT) private readonly httpClient: AxiosInstance,
+    @Inject(FILE_S3_CLIENT) private readonly s3Client: S3Client,
   ) {
-    this.httpClient.interceptors.response.use(undefined, (axiosError: AxiosError) => {
-      this.logger.error(
-        'Bunny storage API error: ',
-        JSON.stringify(
-          {
-            url: axiosError.config?.url,
-            method: axiosError.config?.method,
-            response: axiosError.response?.data,
-          },
-          null,
-          2,
-        ),
-      );
-
-      throw axiosError;
-    });
-
     this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
     this.isDev = this.configService.getOrThrow('isDevelopment', { infer: true });
   }
@@ -53,48 +35,33 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
 
   async deleteFile(providerId: string): Promise<Either<InternalServerErrorException, boolean>> {
     try {
-      await this.httpClient.delete(providerId);
+      await this.s3Client.send(
+        new DeleteObjectCommand({ Bucket: this.storageConfig.s3.bucket, Key: providerId }),
+      );
       return right(true);
     } catch (err) {
+      this.logger.error(`Bunny storage delete failed for ${providerId}`, err?.stack);
       return left(new InternalServerErrorException("Can't delete file from bunny storage"));
     }
   }
 
-  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
-    const { apiUrl, apiKey } = this.storageConfig;
-    const url = new URL(`${apiUrl}/${providerId}`);
-
-    return new Promise<boolean>((resolve) => {
-      const req = https.request(
-        {
-          hostname: url.hostname,
-          path: url.pathname,
-          method: 'PUT',
-          headers: {
-            AccessKey: apiKey,
-            'Content-Type': 'application/octet-stream',
-            'Content-Length': fileSize.toString(),
-          },
-        },
-        (res) => {
-          res.on('data', () => {});
-          res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
-        },
+  async uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
+    try {
+      // A single streamed PutObject: the SDK needs the length up front to send a stream unchunked.
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.storageConfig.s3.bucket,
+          Key: providerId,
+          Body: upload$,
+          ContentLength: fileSize,
+          ContentType: 'application/octet-stream',
+        }),
       );
-
-      req.on('error', (err) => {
-        this.logger.error('Upload error', err.message, err.stack);
-        resolve(false);
-      });
-
-      upload$.on('error', (err) => {
-        if (!req.destroyed) {
-          req.destroy(err);
-        }
-      });
-
-      upload$.pipe(req);
-    });
+      return true;
+    } catch (err) {
+      this.logger.error(`Bunny storage upload failed for ${providerId}`, err?.stack);
+      return false;
+    }
   }
 
   getFileSignedUrl(providerId: string, ip?: string): Either<Error, string> {

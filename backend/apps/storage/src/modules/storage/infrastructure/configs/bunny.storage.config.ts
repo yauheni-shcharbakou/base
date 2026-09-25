@@ -3,8 +3,15 @@ import { validateEnv } from '@packages/common';
 import zod from 'zod';
 
 const env = validateEnv({
+  // The S3-enabled storage zone: its name is the bucket and the S3 access key id, its password
+  // (Storage > Access) is both the S3 secret and the HTTP API AccessKey.
+  BUNNY_STORAGE_ZONE: zod.string(),
   BUNNY_STORAGE_API_KEY: zod.string(),
+  BUNNY_STORAGE_S3_REGION: zod
+    .enum(['de', 'ny', 'uk', 'se', 'sg', 'la', 'jh', 'syd'])
+    .default('de'),
 
+  // The pull zone serving the storage zone — its own name, not necessarily the storage zone's.
   BUNNY_STORAGE_CDN_ZONE: zod.string(),
   BUNNY_STORAGE_CDN_PRIVATE_KEY: zod.string(),
   BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES: zod.coerce.number().default(10),
@@ -29,8 +36,13 @@ export const bunnyStorageConfig = () => {
     ...common,
     bunny: {
       storage: {
-        apiUrl: `https://storage.bunnycdn.com/${env.BUNNY_STORAGE_CDN_ZONE}`,
-        apiKey: env.BUNNY_STORAGE_API_KEY,
+        s3: {
+          endpoint: `https://${env.BUNNY_STORAGE_S3_REGION}-s3.storage.bunnycdn.com`,
+          region: env.BUNNY_STORAGE_S3_REGION,
+          bucket: env.BUNNY_STORAGE_ZONE,
+          accessKeyId: env.BUNNY_STORAGE_ZONE,
+          secretAccessKey: env.BUNNY_STORAGE_API_KEY,
+        },
         rootDir: common.isDevelopment ? 'dev' : 'prod',
         cdn: {
           url: `https://${env.BUNNY_STORAGE_CDN_ZONE}.b-cdn.net`,

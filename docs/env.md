@@ -239,25 +239,31 @@ The public half must match the one `backend.api-gateway` verifies with. `ADMIN_E
 
 <!-- env-table:start src=backend/apps/storage/src/config.ts,backend/apps/storage/src/modules/storage/infrastructure/configs/bunny.storage.config.ts -->
 
-| Variable                               | Type        | Default      | Source                    |
-| -------------------------------------- | ----------- | ------------ | ------------------------- |
-| `STORAGE_PENDING_FILE_TTL_HOURS`       | number      | `24`         | `config.ts`               |
-| `BUNNY_STORAGE_API_KEY`                | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_ZONE`               | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_PRIVATE_KEY`        | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES` | number      | `10`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_API_KEY`                 | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_READ_ONLY_API_KEY`       | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_LIBRARY_ID`              | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_ZONE`                | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_PRIVATE_KEY`         | string      | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`  | number      | `60`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`  | number ≥ 60 | `120`        | `bunny.storage.config.ts` |
+| Variable                               | Type                                                          | Default      | Source                    |
+| -------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
+| `STORAGE_PENDING_FILE_TTL_HOURS`       | number                                                        | `24`         | `config.ts`               |
+| `BUNNY_STORAGE_ZONE`                   | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_API_KEY`                | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_S3_REGION`              | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_ZONE`               | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_PRIVATE_KEY`        | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES` | number                                                        | `10`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_API_KEY`                 | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_READ_ONLY_API_KEY`       | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_LIBRARY_ID`              | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_ZONE`                | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_PRIVATE_KEY`         | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`  | number                                                        | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`  | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
 
 <!-- env-table:end -->
 
 Two Bunny products, credentialed separately: **Storage** (files) and **Stream** (video). The CDN
 private keys sign time-limited URLs, expiring after the matching `*_EXPIRES_IN_MINUTES`.
+Storage is written over its S3-compatible API, which Bunny enables only on a zone created with it:
+`BUNNY_STORAGE_ZONE` is that zone's name (bucket and access key id), `BUNNY_STORAGE_API_KEY` its
+password, and `BUNNY_STORAGE_CDN_ZONE` the pull zone in front of it — a separate name, since the
+pull zone outlives a move to a new storage zone.
 `AUTH_GRPC_URL` is set for this service even though the runtime never calls auth — the migrator's
 `create-root-folders` task talks to it over gRPC.
 

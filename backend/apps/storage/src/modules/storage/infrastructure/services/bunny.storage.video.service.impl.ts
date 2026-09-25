@@ -14,7 +14,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import { createHash } from 'node:crypto';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
-import { VIDEO_HTTP_CLIENT } from '../constants/http.tokens';
+import { VIDEO_HTTP_CLIENT } from '../constants/client.tokens';
 import { BunnyUpdateBody, BunnyVideo, BunnyVideoList } from '../types/bunny.types';
 
 @Injectable()

@@ -8,7 +8,7 @@ The media / file storage microservice, backed by **Bunny CDN**. gRPC host `stora
 
 ## Modules (`src/modules/`)
 
-- **storage** — provider abstraction over Bunny (no DB, no controller). `StorageFileService` → Bunny **Storage** API, `StorageVideoService` → Bunny **Stream** API, each via its own axios client (`FILE_HTTP_CLIENT` / `VIDEO_HTTP_CLIENT`). `bunnyStorageConfig` builds API URLs, signed CDN URLs (private key + expiry), and `rootDir` = `dev`/`prod`. Exports the two services.
+- **storage** — provider abstraction over Bunny (no DB, no controller). `StorageFileService` → Bunny **Storage** over its S3-compatible API (`FILE_S3_CLIENT`, an `S3Client` — path-style, checksums only `WHEN_REQUIRED`), `StorageVideoService` → Bunny **Stream** API over axios (`VIDEO_HTTP_CLIENT`). `bunnyStorageConfig` builds the S3 endpoint, API URLs, signed CDN URLs (private key + expiry), and `rootDir` = `dev`/`prod`. The storage zone (`BUNNY_STORAGE_ZONE`) and the pull zone serving it (`BUNNY_STORAGE_CDN_ZONE`) are named separately. Exports the two services.
 - **storage-object** — a virtual folder tree (`folderPath`, `isPublic`, `isFolder`). Event bus (`RedisStorageObjectController`, consumer id `storage.storage-object`): on `auth.user.create` → create the user's root folder; on `storage-object.parentUpdate` → cascade `folderPath`/`isPublic` to children. Emits `parentUpdate`. Exports `StorageObjectValidationService`.
   - **The root folder is unique per user and undeletable.** Uniqueness is a partial unique index (`storage-objects_root_folder_unique` on `user_id where is_folder and parent_id is null`, declared as `@Index({ expression })` on the entity) rather than a read-then-write check — the `auth.user.create` handler is at-least-once, so two replicas (or a stalled BullMQ job) can run it concurrently. `StorageObjectCreateRootFolderUseCase` keeps an `isExists` fast path but treats a `ConflictException` from `saveOne` as success and returns any other error as `left`, which the controller rethrows so the job is retried. `StorageObjectDeleteOneUseCase` rejects a folder with no parent.
 - **file** — plain files (Bunny Storage); upload + hourly `FileCleanupUseCase` cron, whose age cutoff comes from `STORAGE_PENDING_FILE_TTL_HOURS` (a video legitimately stays `PENDING` for as long as its TUS authorization window). The cron owns provider cleanup for **every** media type, because `image`/`video` rows are FK-cascaded off the file row: it reads the stale rows with their `video` relation, deletes them by the ids it just read, then purges each object — Bunny Stream by `video.providerId`, Bunny Storage by the file's own `providerId`, which is set for plain files and images but never for a video. A provider that refuses a delete is logged and leaves an orphan object; the row is gone either way. `RedisFileController` (consumer id `storage.file`) consumes three cross-host `video` events and maps each onto `uploadStatus`: `uploaded` → `UPLOADED`, `uploadFinish` → `READY`, `uploadFail` → `FAILED` — video uploads always create a companion file row. **`UPLOADED` is written only over `PENDING`**, and the query enforces it rather than a read-then-write: the three events sit in three independent queues with independent retry ladders and no ordering between them, so a redelivered `uploaded` can land after `uploadFinish` and would otherwise demote a `READY` row. A miss is the normal outcome there, so the `NotFound` left is swallowed instead of burning ten BullMQ attempts. The cleanup cron sweeps `PENDING`/`FAILED` **only** — `UPLOADED` means an encode is in flight, and a row whose terminal webhook never arrives is rescued by the hourly video sync, not deleted.
@@ -38,14 +38,16 @@ listener serves is public**; the signature guard, not the router, is what limits
 
 ## Config / env
 
-`config.ts` declares `STORAGE_PENDING_FILE_TTL_HOURS`; everything else lives in the storage module's Bunny config — eleven `BUNNY_STORAGE_*` / `BUNNY_STREAM_*` variables, seven of them required. Those plus the env of the packages it wires: [docs/env.md](../../../docs/env.md).
+`config.ts` declares `STORAGE_PENDING_FILE_TTL_HOURS`; everything else lives in the storage module's Bunny config — thirteen `BUNNY_STORAGE_*` / `BUNNY_STREAM_*` variables, eight of them required. Those plus the env of the packages it wires: [docs/env.md](../../../docs/env.md).
 
 ## Commands & gotchas
 
 ```bash
 pnpm start:dev        # nest start --watch service
-pnpm build / migrate (:new/:initial/:sql/:tasks) / lint
+pnpm build / typecheck / migrate (:new/:initial/:sql/:tasks) / lint
+pnpm storage:copy-zone  # one-off copy into a new storage zone — runbook in README.md
 ```
+- `scripts/` sits outside `src/`: `tsconfig.build.json` excludes it (otherwise `nest build` would emit `dist/src/main.js` and break `start:prod`), and `pnpm typecheck` is what type-checks it.
 - Event-bus handlers must stay idempotent (at-least-once redelivery, up to 10 BullMQ attempts).
 - Heavy cross-module wiring (`video` imports `file` + `storage-object` + `storage`) — check for cycles when adding deps.
 - `eslint.config.mjs` wires `@packages/configs` `layerGuard()` alongside `nestConfig` — same inward-only import guard as `auth`; keep new imports pointed inward (`interface → infrastructure → application → domain`).
