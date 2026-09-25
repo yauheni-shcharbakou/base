@@ -6,6 +6,7 @@ import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { FileMapper } from './application/mappers/file.mapper';
 import { FileCleanupUseCase } from './application/use-cases/file.cleanup.use-case';
+import { FileCompleteUploadUseCase } from './application/use-cases/file.complete-upload.use-case';
 import { FileCreateManyUseCase } from './application/use-cases/file.create-many.use-case';
 import { FileCreateOneUseCase } from './application/use-cases/file.create-one.use-case';
 import { FileDeleteUseCase } from './application/use-cases/file.delete.use-case';
@@ -13,7 +14,6 @@ import { FileGetDownloadMapUseCase } from './application/use-cases/file.get-down
 import { FileGetUrlMapUseCase } from './application/use-cases/file.get-url-map.use-case';
 import { FileGetUseCase } from './application/use-cases/file.get.use-case';
 import { FileUpdateUseCase } from './application/use-cases/file.update.use-case';
-import { FileUploadOneUseCase } from './application/use-cases/file.upload-one.use-case';
 import { FileRepository } from './domain/repositories/file.repository';
 import { PgFileRepositoryImpl } from './infrastructure/pg/repositories/pg.file.repository.impl';
 import { CronFileScheduler } from './interface/cron/cron.file.scheduler';
@@ -37,7 +37,7 @@ import { RedisFileController } from './interface/redis/redis.file.controller';
     FileGetUseCase,
     FileCreateOneUseCase,
     FileCreateManyUseCase,
-    FileUploadOneUseCase,
+    FileCompleteUploadUseCase,
     FileDeleteUseCase,
     FileCleanupUseCase,
     FileUpdateUseCase,

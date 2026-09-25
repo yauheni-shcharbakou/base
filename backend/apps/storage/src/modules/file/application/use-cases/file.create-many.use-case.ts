@@ -6,7 +6,7 @@ import {
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Either, left } from '@sweet-monads/either';
+import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { FileMapper } from '../mappers/file.mapper';
 
@@ -21,7 +21,7 @@ export class FileCreateManyUseCase {
 
   async execute(
     createData: NestStorage.FileCreateMany,
-  ): Promise<Either<Error, NestStorage.File[]>> {
+  ): Promise<Either<Error, NestStorage.FileCreated[]>> {
     const fileNames = new Set(_.map(createData.items, 'file.originalName'));
 
     if (fileNames.size !== createData.items.length) {
@@ -70,7 +70,27 @@ export class FileCreateManyUseCase {
         }),
       );
 
-      return this.fileRepository.saveAndPlaceMany(saveData);
+      const files = await this.fileRepository.saveAndPlaceMany(saveData);
+
+      if (files.isLeft()) {
+        return left(files.value);
+      }
+
+      // Every created file carries its own pre-signed PUT; the row already holds the key, type
+      // and size the signature binds.
+      return right(
+        await Promise.all(
+          _.map(files.value, async (file): Promise<NestStorage.FileCreated> => {
+            const upload = await this.storageFileService.getUploadUrl(file.providerId, file);
+
+            if (upload.isLeft()) {
+              throw upload.value;
+            }
+
+            return { file, upload: upload.value };
+          }),
+        ),
+      );
     } catch (error) {
       return left(error);
     }

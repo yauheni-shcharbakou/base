@@ -13,7 +13,7 @@ type CreateActionResponse<T> = { entity: T } | { error: string };
 
 export async function createFile(
   request: ClientStorage.FileCreateOne,
-): Promise<CreateActionResponse<ClientStorage.File>> {
+): Promise<CreateActionResponse<ClientStorage.FileCreated>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const entity = await fileGrpcRepository.createOne(request, metadata);
@@ -37,7 +37,7 @@ export async function createVideo(
 
 export async function createImage(
   request: ClientStorage.ImageCreateOne,
-): Promise<CreateActionResponse<ClientStorage.Image>> {
+): Promise<CreateActionResponse<ClientStorage.ImageCreated>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const entity = await imageGrpcRepository.createOne(request, metadata);

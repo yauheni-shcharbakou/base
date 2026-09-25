@@ -8,7 +8,7 @@
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
 import { StorageManyMeta, StorageMeta } from '../common/common.messages';
-import { FileCreate } from '../file/file.messages';
+import { FileCreate, FilePresignedUpload } from '../file/file.messages';
 import { Image } from './image';
 import { ImagePopulated } from './image.populates';
 
@@ -62,6 +62,19 @@ export interface ImageCreateMany {
 export interface ImageCreateManyWeb {
   storage?: StorageManyMeta;
   items: ImageCreateManyItem[];
+}
+
+/**
+ * The image's bytes go to its file row: upload with these credentials, then complete through
+ * `FileService.completeUpload` with the image's `fileId`.
+ */
+export interface ImageCreated {
+  image: Image;
+  upload: FilePresignedUpload;
+}
+
+export interface ImageCreatedArray {
+  items: ImageCreated[];
 }
 
 export interface ImageUpdateSet {
@@ -916,6 +929,150 @@ export const ImageCreateManyWeb: MessageFns<ImageCreateManyWeb> = {
         ? StorageManyMeta.fromPartial(object.storage)
         : undefined;
     message.items = object.items?.map((e) => ImageCreateManyItem.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseImageCreated(): ImageCreated {
+  return { image: undefined, upload: undefined };
+}
+
+export const ImageCreated: MessageFns<ImageCreated> = {
+  encode(message: ImageCreated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.image !== undefined) {
+      Image.encode(message.image, writer.uint32(10).fork()).join();
+    }
+    if (message.upload !== undefined) {
+      FilePresignedUpload.encode(message.upload, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ImageCreated {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImageCreated();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.image = Image.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.upload = FilePresignedUpload.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImageCreated {
+    return {
+      image: isSet(object.image) ? Image.fromJSON(object.image) : undefined,
+      upload: isSet(object.upload) ? FilePresignedUpload.fromJSON(object.upload) : undefined,
+    };
+  },
+
+  toJSON(message: ImageCreated): unknown {
+    const obj: any = {};
+    if (message.image !== undefined) {
+      obj.image = Image.toJSON(message.image);
+    }
+    if (message.upload !== undefined) {
+      obj.upload = FilePresignedUpload.toJSON(message.upload);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ImageCreated>, I>>(base?: I): ImageCreated {
+    return ImageCreated.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ImageCreated>, I>>(object: I): ImageCreated {
+    const message = createBaseImageCreated();
+    message.image =
+      object.image !== undefined && object.image !== null
+        ? Image.fromPartial(object.image)
+        : undefined;
+    message.upload =
+      object.upload !== undefined && object.upload !== null
+        ? FilePresignedUpload.fromPartial(object.upload)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseImageCreatedArray(): ImageCreatedArray {
+  return { items: [] };
+}
+
+export const ImageCreatedArray: MessageFns<ImageCreatedArray> = {
+  encode(message: ImageCreatedArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      ImageCreated.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ImageCreatedArray {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseImageCreatedArray();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(ImageCreated.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ImageCreatedArray {
+    return {
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => ImageCreated.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: ImageCreatedArray): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => ImageCreated.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ImageCreatedArray>, I>>(base?: I): ImageCreatedArray {
+    return ImageCreatedArray.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ImageCreatedArray>, I>>(object: I): ImageCreatedArray {
+    const message = createBaseImageCreatedArray();
+    message.items = object.items?.map((e) => ImageCreated.fromPartial(e)) || [];
     return message;
   },
 };

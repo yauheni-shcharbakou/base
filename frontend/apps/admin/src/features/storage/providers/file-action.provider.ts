@@ -2,8 +2,18 @@ import { createFile, createManyFiles } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
 import type { BrowserStorage } from '@packages/proto';
 
+/** A created file with the pre-signed PUT for its bytes, flattened like `CreatedVideo`. */
+export type CreatedFile = BrowserStorage.File & {
+  upload: BrowserStorage.FilePresignedUpload;
+};
+
+const flatten = ({ file, upload }: BrowserStorage.FileCreated): CreatedFile => ({
+  ...file!,
+  upload: upload!,
+});
+
 export class FileActionProvider {
-  async createOne(userId: string, file: File, storage?: StorageData): Promise<BrowserStorage.File> {
+  async createOne(userId: string, file: File, storage?: StorageData): Promise<CreatedFile> {
     const data: BrowserStorage.FileCreateOne = {
       file: {
         originalName: file.name,
@@ -27,14 +37,14 @@ export class FileActionProvider {
       throw new Error(response.error);
     }
 
-    return response.entity;
+    return flatten(response.entity);
   }
 
   async createMany(
     userId: string,
     items: StorageUploadItem[],
     storage?: Omit<StorageData, 'name'>,
-  ): Promise<BrowserStorage.File[]> {
+  ): Promise<CreatedFile[]> {
     const data: BrowserStorage.FileCreateMany = {
       items: items.map((item) => {
         return {
@@ -62,6 +72,6 @@ export class FileActionProvider {
       throw new Error(response.error);
     }
 
-    return response.data;
+    return response.data.map(flatten);
   }
 }

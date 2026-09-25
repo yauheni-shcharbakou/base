@@ -64,10 +64,30 @@ export interface FileCreateManyWeb {
   items: FileCreateManyItem[];
 }
 
-export interface FileUploadResponse {
-  entity?: File;
-  canSendChunks?: boolean;
-  ack?: boolean;
+/**
+ * Pre-signed credentials for a direct browser -> Bunny Storage PUT over its S3 API.
+ * The browser sends the file as the body of a PUT to `url` with `Content-Type: contentType` (a
+ * signed header, like the length), then calls `completeUpload` — Bunny Storage reports nothing
+ * back on its own. `expires` is unix seconds.
+ */
+export interface FilePresignedUpload {
+  url: string;
+  contentType: string;
+  expires: string;
+}
+
+export interface FileCreated {
+  file: File;
+  upload: FilePresignedUpload;
+}
+
+export interface FileCreatedArray {
+  items: FileCreated[];
+}
+
+export interface FileCompleteUpload {
+  id: string;
+  userId?: string;
 }
 
 wrappers['.google.protobuf.Timestamp'] = {

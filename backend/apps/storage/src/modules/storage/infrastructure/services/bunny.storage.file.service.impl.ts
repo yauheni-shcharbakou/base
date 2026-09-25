@@ -1,7 +1,16 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  S3ServiceException,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { NestStorage } from '@backend/proto';
 import {
   StorageFileCreateData,
   StorageFileService,
+  StorageFileUploadData,
 } from '@modules/storage/domain/services/storage.file.service';
 import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,7 +18,6 @@ import { Either, left, right } from '@sweet-monads/either';
 import moment from 'moment';
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
-import { PassThrough } from 'node:stream';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
 import { FILE_S3_CLIENT } from '../constants/client.tokens';
 
@@ -45,22 +53,55 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
     }
   }
 
-  async uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
+  async getUploadUrl(
+    providerId: string,
+    data: StorageFileUploadData,
+  ): Promise<Either<InternalServerErrorException, NestStorage.FilePresignedUpload>> {
+    const { bucket, uploadExpiresInMinutes } = this.storageConfig.s3;
+    const expiresIn = uploadExpiresInMinutes * 60;
+
     try {
-      // A single streamed PutObject: the SDK needs the length up front to send a stream unchunked.
-      await this.s3Client.send(
+      // Content-Type and Content-Length are signed headers: the browser must send exactly this
+      // type, and a body of any other length fails the signature. `completeUpload` still checks
+      // the stored size, since that is the one guarantee not left to the provider.
+      const url = await getSignedUrl(
+        this.s3Client,
         new PutObjectCommand({
-          Bucket: this.storageConfig.s3.bucket,
+          Bucket: bucket,
           Key: providerId,
-          Body: upload$,
-          ContentLength: fileSize,
-          ContentType: 'application/octet-stream',
+          ContentType: data.mimeType,
+          ContentLength: data.size,
         }),
+        { expiresIn },
       );
-      return true;
+
+      return right({
+        url,
+        contentType: data.mimeType,
+        expires: moment().add(expiresIn, 'seconds').unix().toString(),
+      });
     } catch (err) {
-      this.logger.error(`Bunny storage upload failed for ${providerId}`, err?.stack);
-      return false;
+      this.logger.error(`Bunny storage presign failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't sign a bunny storage upload"));
+    }
+  }
+
+  async getObjectSize(
+    providerId: string,
+  ): Promise<Either<InternalServerErrorException, number | null>> {
+    try {
+      const head = await this.s3Client.send(
+        new HeadObjectCommand({ Bucket: this.storageConfig.s3.bucket, Key: providerId }),
+      );
+
+      return right(head.ContentLength ?? null);
+    } catch (err) {
+      if (err instanceof S3ServiceException && err.$metadata.httpStatusCode === 404) {
+        return right(null);
+      }
+
+      this.logger.error(`Bunny storage head failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't read a file from bunny storage"));
     }
   }
 

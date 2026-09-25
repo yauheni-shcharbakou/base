@@ -2,7 +2,8 @@
 
 import { ONE_MB_BYTES } from '@/common/constants';
 import { UploadManyPage } from '@/features/storage/components';
-import { imageActionProvider } from '@/features/storage/providers';
+import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { CreatedImage, imageActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 
 export default function ImageCreateMany() {
@@ -18,6 +19,10 @@ export default function ImageCreateMany() {
         });
       }}
       fileRefField="fileId"
+      uploadFileAction={(file, entity) => {
+        const { fileId, upload } = entity as CreatedImage;
+        return uploadViaPresignedUrl(file, upload, fileId);
+      }}
       uploaderProps={{
         dropzoneProps: {
           maxSize: 100 * ONE_MB_BYTES,

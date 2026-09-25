@@ -10,7 +10,6 @@ import {
   CallOptions,
   ChannelCredentials,
   Client,
-  ClientDuplexStream,
   ClientOptions,
   ClientUnaryCall,
   makeGenericClientConstructor,
@@ -20,23 +19,18 @@ import {
 import { IdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { StringMap } from '../common/types';
-import {
-  DownloadMap,
-  GetUrlMap,
-  GetUrlMapShort,
-  UploadOne,
-  UploadOneShort,
-} from './common/common.messages';
+import { DownloadMap, GetUrlMap, GetUrlMapShort } from './common/common.messages';
 import { File } from './file/file';
 import {
-  FileArray,
+  FileCompleteUpload,
+  FileCreated,
+  FileCreatedArray,
   FileCreateMany,
   FileCreateManyWeb,
   FileCreateOne,
   FileCreateOneWeb,
   FileList,
   FileQuery,
-  FileUploadResponse,
 } from './file/file.messages';
 
 type FileServiceService = typeof FileServiceService;
@@ -85,8 +79,9 @@ const FileServiceService = {
     requestSerialize: (value: FileCreateOne): Buffer =>
       Buffer.from(FileCreateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateOne => FileCreateOne.decode(value),
-    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
-    responseDeserialize: (value: Buffer): File => File.decode(value),
+    responseSerialize: (value: FileCreated): Buffer =>
+      Buffer.from(FileCreated.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCreated => FileCreated.decode(value),
   },
   createMany: {
     path: '/storage.FileService/createMany' as const,
@@ -95,18 +90,19 @@ const FileServiceService = {
     requestSerialize: (value: FileCreateMany): Buffer =>
       Buffer.from(FileCreateMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateMany => FileCreateMany.decode(value),
-    responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
+    responseSerialize: (value: FileCreatedArray): Buffer =>
+      Buffer.from(FileCreatedArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCreatedArray => FileCreatedArray.decode(value),
   },
-  uploadOne: {
-    path: '/storage.FileService/uploadOne' as const,
-    requestStream: true as const,
-    responseStream: true as const,
-    requestSerialize: (value: UploadOne): Buffer => Buffer.from(UploadOne.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UploadOne => UploadOne.decode(value),
-    responseSerialize: (value: FileUploadResponse): Buffer =>
-      Buffer.from(FileUploadResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
+  completeUpload: {
+    path: '/storage.FileService/completeUpload' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FileCompleteUpload): Buffer =>
+      Buffer.from(FileCompleteUpload.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCompleteUpload => FileCompleteUpload.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   deleteOne: {
     path: '/storage.FileService/deleteOne' as const,
@@ -182,40 +178,49 @@ export interface GrpcFileServiceClient extends Client {
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateMany,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateMany,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateMany,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
-  uploadOne(): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOne, FileUploadResponse>;
-  uploadOne(
+  completeUpload(
+    request: FileCompleteUpload,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  completeUpload(
+    request: FileCompleteUpload,
     metadata: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOne, FileUploadResponse>;
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  completeUpload(
+    request: FileCompleteUpload,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
   deleteOne(
     request: FileQuery,
     callback: (error: ServiceError | null, response: File) => void,
@@ -285,8 +290,8 @@ export const GrpcFileServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: FileCreateOne) => Buffer;
       readonly requestDeserialize: (value: Buffer) => FileCreateOne;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
+      readonly responseSerialize: (value: FileCreated) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCreated;
     };
     readonly createMany: {
       readonly path: '/storage.FileService/createMany';
@@ -294,17 +299,17 @@ export const GrpcFileServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: FileCreateMany) => Buffer;
       readonly requestDeserialize: (value: Buffer) => FileCreateMany;
-      readonly responseSerialize: (value: FileArray) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileArray;
+      readonly responseSerialize: (value: FileCreatedArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCreatedArray;
     };
-    readonly uploadOne: {
-      readonly path: '/storage.FileService/uploadOne';
-      readonly requestStream: true;
-      readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOne) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOne;
-      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
+    readonly completeUpload: {
+      readonly path: '/storage.FileService/completeUpload';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileCompleteUpload) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCompleteUpload;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
     };
     readonly deleteOne: {
       readonly path: '/storage.FileService/deleteOne';
@@ -367,8 +372,9 @@ const FileAdminServiceService = {
     requestSerialize: (value: FileCreateOne): Buffer =>
       Buffer.from(FileCreateOne.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateOne => FileCreateOne.decode(value),
-    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
-    responseDeserialize: (value: Buffer): File => File.decode(value),
+    responseSerialize: (value: FileCreated): Buffer =>
+      Buffer.from(FileCreated.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCreated => FileCreated.decode(value),
   },
   createMany: {
     path: '/storage.FileAdminService/createMany' as const,
@@ -377,19 +383,18 @@ const FileAdminServiceService = {
     requestSerialize: (value: FileCreateMany): Buffer =>
       Buffer.from(FileCreateMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateMany => FileCreateMany.decode(value),
-    responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
+    responseSerialize: (value: FileCreatedArray): Buffer =>
+      Buffer.from(FileCreatedArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCreatedArray => FileCreatedArray.decode(value),
   },
-  uploadOne: {
-    path: '/storage.FileAdminService/uploadOne' as const,
-    requestStream: true as const,
-    responseStream: true as const,
-    requestSerialize: (value: UploadOneShort): Buffer =>
-      Buffer.from(UploadOneShort.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UploadOneShort => UploadOneShort.decode(value),
-    responseSerialize: (value: FileUploadResponse): Buffer =>
-      Buffer.from(FileUploadResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
+  completeUpload: {
+    path: '/storage.FileAdminService/completeUpload' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   deleteById: {
     path: '/storage.FileAdminService/deleteById' as const,
@@ -465,40 +470,49 @@ export interface GrpcFileAdminServiceClient extends Client {
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOne,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateMany,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateMany,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateMany,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
-  uploadOne(): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
-  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
-  uploadOne(
+  completeUpload(
+    request: IdField,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  completeUpload(
+    request: IdField,
     metadata: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  completeUpload(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
   deleteById(
     request: IdField,
     callback: (error: ServiceError | null, response: File) => void,
@@ -568,8 +582,8 @@ export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: FileCreateOne) => Buffer;
       readonly requestDeserialize: (value: Buffer) => FileCreateOne;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
+      readonly responseSerialize: (value: FileCreated) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCreated;
     };
     readonly createMany: {
       readonly path: '/storage.FileAdminService/createMany';
@@ -577,17 +591,17 @@ export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: FileCreateMany) => Buffer;
       readonly requestDeserialize: (value: Buffer) => FileCreateMany;
-      readonly responseSerialize: (value: FileArray) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileArray;
+      readonly responseSerialize: (value: FileCreatedArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCreatedArray;
     };
-    readonly uploadOne: {
-      readonly path: '/storage.FileAdminService/uploadOne';
-      readonly requestStream: true;
-      readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOneShort) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOneShort;
-      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
+    readonly completeUpload: {
+      readonly path: '/storage.FileAdminService/completeUpload';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
     };
     readonly deleteById: {
       readonly path: '/storage.FileAdminService/deleteById';
@@ -632,8 +646,9 @@ const FileWebServiceService = {
     requestSerialize: (value: FileCreateOneWeb): Buffer =>
       Buffer.from(FileCreateOneWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateOneWeb => FileCreateOneWeb.decode(value),
-    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
-    responseDeserialize: (value: Buffer): File => File.decode(value),
+    responseSerialize: (value: FileCreated): Buffer =>
+      Buffer.from(FileCreated.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCreated => FileCreated.decode(value),
   },
   createMany: {
     path: '/storage.FileWebService/createMany' as const,
@@ -642,19 +657,18 @@ const FileWebServiceService = {
     requestSerialize: (value: FileCreateManyWeb): Buffer =>
       Buffer.from(FileCreateManyWeb.encode(value).finish()),
     requestDeserialize: (value: Buffer): FileCreateManyWeb => FileCreateManyWeb.decode(value),
-    responseSerialize: (value: FileArray): Buffer => Buffer.from(FileArray.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileArray => FileArray.decode(value),
+    responseSerialize: (value: FileCreatedArray): Buffer =>
+      Buffer.from(FileCreatedArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCreatedArray => FileCreatedArray.decode(value),
   },
-  uploadOne: {
-    path: '/storage.FileWebService/uploadOne' as const,
-    requestStream: true as const,
-    responseStream: true as const,
-    requestSerialize: (value: UploadOneShort): Buffer =>
-      Buffer.from(UploadOneShort.encode(value).finish()),
-    requestDeserialize: (value: Buffer): UploadOneShort => UploadOneShort.decode(value),
-    responseSerialize: (value: FileUploadResponse): Buffer =>
-      Buffer.from(FileUploadResponse.encode(value).finish()),
-    responseDeserialize: (value: Buffer): FileUploadResponse => FileUploadResponse.decode(value),
+  completeUpload: {
+    path: '/storage.FileWebService/completeUpload' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdField): Buffer => Buffer.from(IdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
+    responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
+    responseDeserialize: (value: Buffer): File => File.decode(value),
   },
   deleteById: {
     path: '/storage.FileWebService/deleteById' as const,
@@ -700,40 +714,49 @@ export interface GrpcFileWebServiceClient extends Client {
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOneWeb,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOneWeb,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createOne(
     request: FileCreateOneWeb,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: File) => void,
+    callback: (error: ServiceError | null, response: FileCreated) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateManyWeb,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateManyWeb,
     metadata: Metadata,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
   createMany(
     request: FileCreateManyWeb,
     metadata: Metadata,
     options: Partial<CallOptions>,
-    callback: (error: ServiceError | null, response: FileArray) => void,
+    callback: (error: ServiceError | null, response: FileCreatedArray) => void,
   ): ClientUnaryCall;
-  uploadOne(): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
-  uploadOne(options: Partial<CallOptions>): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
-  uploadOne(
+  completeUpload(
+    request: IdField,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  completeUpload(
+    request: IdField,
     metadata: Metadata,
-    options?: Partial<CallOptions>,
-  ): ClientDuplexStream<UploadOneShort, FileUploadResponse>;
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
+  completeUpload(
+    request: IdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: File) => void,
+  ): ClientUnaryCall;
   deleteById(
     request: IdField,
     callback: (error: ServiceError | null, response: File) => void,
@@ -785,8 +808,8 @@ export const GrpcFileWebServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: FileCreateOneWeb) => Buffer;
       readonly requestDeserialize: (value: Buffer) => FileCreateOneWeb;
-      readonly responseSerialize: (value: File) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => File;
+      readonly responseSerialize: (value: FileCreated) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCreated;
     };
     readonly createMany: {
       readonly path: '/storage.FileWebService/createMany';
@@ -794,17 +817,17 @@ export const GrpcFileWebServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: FileCreateManyWeb) => Buffer;
       readonly requestDeserialize: (value: Buffer) => FileCreateManyWeb;
-      readonly responseSerialize: (value: FileArray) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileArray;
+      readonly responseSerialize: (value: FileCreatedArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCreatedArray;
     };
-    readonly uploadOne: {
-      readonly path: '/storage.FileWebService/uploadOne';
-      readonly requestStream: true;
-      readonly responseStream: true;
-      readonly requestSerialize: (value: UploadOneShort) => Buffer;
-      readonly requestDeserialize: (value: Buffer) => UploadOneShort;
-      readonly responseSerialize: (value: FileUploadResponse) => Buffer;
-      readonly responseDeserialize: (value: Buffer) => FileUploadResponse;
+    readonly completeUpload: {
+      readonly path: '/storage.FileWebService/completeUpload';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdField;
+      readonly responseSerialize: (value: File) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => File;
     };
     readonly deleteById: {
       readonly path: '/storage.FileWebService/deleteById';
@@ -902,8 +925,8 @@ export class GrpcFileRepository {
     request: FileCreateOne,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
+  ): Promise<FileCreated> {
+    return new Promise<FileCreated>((resolve, reject) => {
       this.client.createOne(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -918,9 +941,25 @@ export class GrpcFileRepository {
     request: FileCreateMany,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<FileArray> {
-    return new Promise<FileArray>((resolve, reject) => {
+  ): Promise<FileCreatedArray> {
+    return new Promise<FileCreatedArray>((resolve, reject) => {
       this.client.createMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  completeUpload(
+    request: FileCompleteUpload,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.completeUpload(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -1030,8 +1069,8 @@ export class GrpcFileAdminRepository {
     request: FileCreateOne,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
+  ): Promise<FileCreated> {
+    return new Promise<FileCreated>((resolve, reject) => {
       this.client.createOne(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -1046,9 +1085,25 @@ export class GrpcFileAdminRepository {
     request: FileCreateMany,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<FileArray> {
-    return new Promise<FileArray>((resolve, reject) => {
+  ): Promise<FileCreatedArray> {
+    return new Promise<FileCreatedArray>((resolve, reject) => {
       this.client.createMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  completeUpload(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.completeUpload(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -1126,8 +1181,8 @@ export class GrpcFileWebRepository {
     request: FileCreateOneWeb,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
+  ): Promise<FileCreated> {
+    return new Promise<FileCreated>((resolve, reject) => {
       this.client.createOne(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
@@ -1142,9 +1197,25 @@ export class GrpcFileWebRepository {
     request: FileCreateManyWeb,
     metadata: Metadata = new Metadata(),
     options: Partial<CallOptions> = {},
-  ): Promise<FileArray> {
-    return new Promise<FileArray>((resolve, reject) => {
+  ): Promise<FileCreatedArray> {
+    return new Promise<FileCreatedArray>((resolve, reject) => {
       this.client.createMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  completeUpload(
+    request: IdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      this.client.completeUpload(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

@@ -41,9 +41,8 @@ type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
   // so passing it is safe.
   createManyAction: (uploadItemsBatch: StorageUploadItem[], form: Params) => Promise<Entity[]>;
   // Same `Action`-suffix reason as `createManyAction`: it is a client function, not a server one.
-  // Passed through to the hook so video can upload straight to the provider instead of POSTing
-  // multipart to a route handler.
-  uploadFileAction?: UploadFileAction;
+  // Passed through to the hook — how each file's bytes go straight to the provider.
+  uploadFileAction: UploadFileAction;
   fileRefField?: keyof Entity | string;
 };
 

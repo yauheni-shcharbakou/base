@@ -11,10 +11,11 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
-import { imageActionProvider } from '@/features/storage/providers';
+import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { CreatedImage, imageActionProvider } from '@/features/storage/providers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import type { BrowserAuth } from '@packages/proto';
 import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
@@ -34,6 +35,12 @@ export default function ImageCreate() {
 
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
+    // Straight from the browser to Bunny Storage; the image's bytes belong to its file row, so the
+    // upload is confirmed by `fileId`.
+    uploadFileAction: (file, entity, options) => {
+      const { fileId, upload } = entity as CreatedImage;
+      return uploadViaPresignedUrl(file, upload, fileId, options);
+    },
   });
 
   const {
@@ -57,27 +64,25 @@ export default function ImageCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdImage = await handleUpload<BrowserStorage.Image>(
-      data.file,
-      async () => {
-        return imageActionProvider.createOne(
-          data.userId,
-          {
-            file: data.file,
-            alt: data.alt,
-          },
-          {
-            parent: data.parent,
-            name: data.name,
-            isPublic: data.isPublic,
-          },
-        );
-      },
-      'fileId',
-    );
+    const createdImage = await handleUpload<CreatedImage>(data.file, async () => {
+      return imageActionProvider.createOne(
+        data.userId,
+        {
+          file: data.file,
+          alt: data.alt,
+        },
+        {
+          parent: data.parent,
+          name: data.name,
+          isPublic: data.isPublic,
+        },
+      );
+    });
 
     if (createdImage) {
-      await onFinish(createdImage as any);
+      // The signed URL is spent by now — it has no business in Refine's record.
+      const { upload, ...image } = createdImage;
+      await onFinish(image as any);
     }
   };
 

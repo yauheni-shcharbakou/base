@@ -31,10 +31,10 @@ export class ImageDeleteOneUseCase {
     }
 
     const hooks: Promise<any>[] = [this.eventBus.emitDelete(deletedImage.value)];
-    const isFileReady = image.value.file.uploadStatus === NestStorage.FileUploadStatus.READY;
+    // Not gated on READY — the bytes of a direct upload can land before it is completed.
     const providerId = image.value.file.providerId;
 
-    if (isFileReady && providerId) {
+    if (providerId) {
       hooks.push(this.storageFileService.deleteFile(providerId));
     }
 

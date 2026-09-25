@@ -11,29 +11,6 @@ message DownloadMap {
   map<string, DownloadData> entries = 1;
 }
 
-message UploadOneFilter {
-  string id = 1;
-  optional string userId = 2;
-}
-
-message UploadOneFilterShort {
-  string id = 1;
-}
-
-message UploadOne {
-  oneof payload {
-    UploadOneFilter filter = 1;
-    bytes chunk = 2;
-  }
-}
-
-message UploadOneShort {
-  oneof payload {
-    UploadOneFilterShort filter = 1;
-    bytes chunk = 2;
-  }
-}
-
 message StorageMeta {
   string name = 1;
   bool isPublic = 2;

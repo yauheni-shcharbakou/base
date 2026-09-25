@@ -72,10 +72,30 @@ export interface FileCreateManyWeb {
   items: FileCreateManyItem[];
 }
 
-export interface FileUploadResponse {
-  entity?: File;
-  canSendChunks?: boolean;
-  ack?: boolean;
+/**
+ * Pre-signed credentials for a direct browser -> Bunny Storage PUT over its S3 API.
+ * The browser sends the file as the body of a PUT to `url` with `Content-Type: contentType` (a
+ * signed header, like the length), then calls `completeUpload` — Bunny Storage reports nothing
+ * back on its own. `expires` is unix seconds.
+ */
+export interface FilePresignedUpload {
+  url: string;
+  contentType: string;
+  expires: string;
+}
+
+export interface FileCreated {
+  file: File;
+  upload: FilePresignedUpload;
+}
+
+export interface FileCreatedArray {
+  items: FileCreated[];
+}
+
+export interface FileCompleteUpload {
+  id: string;
+  userId?: string;
 }
 
 function createBaseFileQuery(): FileQuery {
@@ -986,28 +1006,28 @@ export const FileCreateManyWeb: MessageFns<FileCreateManyWeb> = {
   },
 };
 
-function createBaseFileUploadResponse(): FileUploadResponse {
-  return { entity: undefined, canSendChunks: undefined, ack: undefined };
+function createBaseFilePresignedUpload(): FilePresignedUpload {
+  return { url: '', contentType: '', expires: '' };
 }
 
-export const FileUploadResponse: MessageFns<FileUploadResponse> = {
-  encode(message: FileUploadResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.entity !== undefined) {
-      File.encode(message.entity, writer.uint32(10).fork()).join();
+export const FilePresignedUpload: MessageFns<FilePresignedUpload> = {
+  encode(message: FilePresignedUpload, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.url !== '') {
+      writer.uint32(10).string(message.url);
     }
-    if (message.canSendChunks !== undefined) {
-      writer.uint32(16).bool(message.canSendChunks);
+    if (message.contentType !== '') {
+      writer.uint32(18).string(message.contentType);
     }
-    if (message.ack !== undefined) {
-      writer.uint32(24).bool(message.ack);
+    if (message.expires !== '') {
+      writer.uint32(26).string(message.expires);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): FileUploadResponse {
+  decode(input: BinaryReader | Uint8Array, length?: number): FilePresignedUpload {
     const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseFileUploadResponse();
+    const message = createBaseFilePresignedUpload();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -1016,23 +1036,23 @@ export const FileUploadResponse: MessageFns<FileUploadResponse> = {
             break;
           }
 
-          message.entity = File.decode(reader, reader.uint32());
+          message.url = reader.string();
           continue;
         }
         case 2: {
-          if (tag !== 16) {
+          if (tag !== 18) {
             break;
           }
 
-          message.canSendChunks = reader.bool();
+          message.contentType = reader.string();
           continue;
         }
         case 3: {
-          if (tag !== 24) {
+          if (tag !== 26) {
             break;
           }
 
-          message.ack = reader.bool();
+          message.expires = reader.string();
           continue;
         }
       }
@@ -1044,41 +1064,256 @@ export const FileUploadResponse: MessageFns<FileUploadResponse> = {
     return message;
   },
 
-  fromJSON(object: any): FileUploadResponse {
+  fromJSON(object: any): FilePresignedUpload {
     return {
-      entity: isSet(object.entity) ? File.fromJSON(object.entity) : undefined,
-      canSendChunks: isSet(object.canSendChunks)
-        ? globalThis.Boolean(object.canSendChunks)
-        : undefined,
-      ack: isSet(object.ack) ? globalThis.Boolean(object.ack) : undefined,
+      url: isSet(object.url) ? globalThis.String(object.url) : '',
+      contentType: isSet(object.contentType) ? globalThis.String(object.contentType) : '',
+      expires: isSet(object.expires) ? globalThis.String(object.expires) : '',
     };
   },
 
-  toJSON(message: FileUploadResponse): unknown {
+  toJSON(message: FilePresignedUpload): unknown {
     const obj: any = {};
-    if (message.entity !== undefined) {
-      obj.entity = File.toJSON(message.entity);
+    if (message.url !== '') {
+      obj.url = message.url;
     }
-    if (message.canSendChunks !== undefined) {
-      obj.canSendChunks = message.canSendChunks;
+    if (message.contentType !== '') {
+      obj.contentType = message.contentType;
     }
-    if (message.ack !== undefined) {
-      obj.ack = message.ack;
+    if (message.expires !== '') {
+      obj.expires = message.expires;
     }
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<FileUploadResponse>, I>>(base?: I): FileUploadResponse {
-    return FileUploadResponse.fromPartial(base ?? ({} as any));
+  create<I extends Exact<DeepPartial<FilePresignedUpload>, I>>(base?: I): FilePresignedUpload {
+    return FilePresignedUpload.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<FileUploadResponse>, I>>(object: I): FileUploadResponse {
-    const message = createBaseFileUploadResponse();
-    message.entity =
-      object.entity !== undefined && object.entity !== null
-        ? File.fromPartial(object.entity)
+  fromPartial<I extends Exact<DeepPartial<FilePresignedUpload>, I>>(
+    object: I,
+  ): FilePresignedUpload {
+    const message = createBaseFilePresignedUpload();
+    message.url = object.url ?? '';
+    message.contentType = object.contentType ?? '';
+    message.expires = object.expires ?? '';
+    return message;
+  },
+};
+
+function createBaseFileCreated(): FileCreated {
+  return { file: undefined, upload: undefined };
+}
+
+export const FileCreated: MessageFns<FileCreated> = {
+  encode(message: FileCreated, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.file !== undefined) {
+      File.encode(message.file, writer.uint32(10).fork()).join();
+    }
+    if (message.upload !== undefined) {
+      FilePresignedUpload.encode(message.upload, writer.uint32(18).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FileCreated {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileCreated();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.file = File.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.upload = FilePresignedUpload.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileCreated {
+    return {
+      file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
+      upload: isSet(object.upload) ? FilePresignedUpload.fromJSON(object.upload) : undefined,
+    };
+  },
+
+  toJSON(message: FileCreated): unknown {
+    const obj: any = {};
+    if (message.file !== undefined) {
+      obj.file = File.toJSON(message.file);
+    }
+    if (message.upload !== undefined) {
+      obj.upload = FilePresignedUpload.toJSON(message.upload);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileCreated>, I>>(base?: I): FileCreated {
+    return FileCreated.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileCreated>, I>>(object: I): FileCreated {
+    const message = createBaseFileCreated();
+    message.file =
+      object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
+    message.upload =
+      object.upload !== undefined && object.upload !== null
+        ? FilePresignedUpload.fromPartial(object.upload)
         : undefined;
-    message.canSendChunks = object.canSendChunks ?? undefined;
-    message.ack = object.ack ?? undefined;
+    return message;
+  },
+};
+
+function createBaseFileCreatedArray(): FileCreatedArray {
+  return { items: [] };
+}
+
+export const FileCreatedArray: MessageFns<FileCreatedArray> = {
+  encode(message: FileCreatedArray, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      FileCreated.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FileCreatedArray {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileCreatedArray();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(FileCreated.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileCreatedArray {
+    return {
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => FileCreated.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: FileCreatedArray): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => FileCreated.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileCreatedArray>, I>>(base?: I): FileCreatedArray {
+    return FileCreatedArray.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileCreatedArray>, I>>(object: I): FileCreatedArray {
+    const message = createBaseFileCreatedArray();
+    message.items = object.items?.map((e) => FileCreated.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseFileCompleteUpload(): FileCompleteUpload {
+  return { id: '', userId: undefined };
+}
+
+export const FileCompleteUpload: MessageFns<FileCompleteUpload> = {
+  encode(message: FileCompleteUpload, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== '') {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(18).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FileCompleteUpload {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileCompleteUpload();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileCompleteUpload {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
+    };
+  },
+
+  toJSON(message: FileCompleteUpload): unknown {
+    const obj: any = {};
+    if (message.id !== '') {
+      obj.id = message.id;
+    }
+    if (message.userId !== undefined) {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileCompleteUpload>, I>>(base?: I): FileCompleteUpload {
+    return FileCompleteUpload.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileCompleteUpload>, I>>(object: I): FileCompleteUpload {
+    const message = createBaseFileCompleteUpload();
+    message.id = object.id ?? '';
+    message.userId = object.userId ?? undefined;
     return message;
   },
 };

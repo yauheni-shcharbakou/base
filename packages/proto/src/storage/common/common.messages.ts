@@ -20,25 +20,6 @@ export interface DownloadMap_EntriesEntry {
   value: DownloadData;
 }
 
-export interface UploadOneFilter {
-  id: string;
-  userId?: string;
-}
-
-export interface UploadOneFilterShort {
-  id: string;
-}
-
-export interface UploadOne {
-  filter?: UploadOneFilter;
-  chunk?: Uint8Array<ArrayBufferLike>;
-}
-
-export interface UploadOneShort {
-  filter?: UploadOneFilterShort;
-  chunk?: Uint8Array<ArrayBufferLike>;
-}
-
 export interface StorageMeta {
   name: string;
   isPublic: boolean;

@@ -67,6 +67,17 @@ message ImageCreateManyWeb {
   repeated ImageCreateManyItem items = 2;
 }
 
+// The image's bytes go to its file row: upload with these credentials, then complete through
+// `FileService.completeUpload` with the image's `fileId`.
+message ImageCreated {
+  Image image = 1;
+  file.FilePresignedUpload upload = 2;
+}
+
+message ImageCreatedArray {
+  repeated ImageCreated items = 1;
+}
+
 // update
 
 message ImageUpdateSet {

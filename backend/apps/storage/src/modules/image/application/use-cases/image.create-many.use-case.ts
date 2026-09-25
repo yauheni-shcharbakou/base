@@ -7,7 +7,7 @@ import {
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Either, left } from '@sweet-monads/either';
+import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 
 @Injectable()
@@ -21,12 +21,16 @@ export class ImageCreateManyUseCase {
 
   async execute(
     createData: NestStorage.ImageCreateMany,
-  ): Promise<Either<Error, NestStorage.Image[]>> {
+  ): Promise<Either<Error, NestStorage.ImageCreated[]>> {
     const fileNames = new Set(_.map(createData.items, 'file.originalName'));
 
     if (fileNames.size !== createData.items.length) {
       return left(new BadRequestException('Names of created files should be unique'));
     }
+
+    // An `Image` does not carry its file's key, so each item's upload is signed while the key is
+    // still in hand and matched back to the saved image by `uploadId`.
+    const uploadByUploadId = new Map<string, NestStorage.FilePresignedUpload>();
 
     try {
       const saveData: ImageSaveAndPlace[] = await Promise.all(
@@ -39,6 +43,14 @@ export class ImageCreateManyUseCase {
           if (providerId.isLeft()) {
             throw providerId.value;
           }
+
+          const upload = await this.storageFileService.getUploadUrl(providerId.value, item.file);
+
+          if (upload.isLeft()) {
+            throw upload.value;
+          }
+
+          uploadByUploadId.set(item.uploadId, upload.value);
 
           const createItem: ImageSaveAndPlace = {
             image: {
@@ -73,7 +85,15 @@ export class ImageCreateManyUseCase {
         }),
       );
 
-      return this.imageRepository.saveAndPlaceMany(saveData);
+      const images = await this.imageRepository.saveAndPlaceMany(saveData);
+
+      if (images.isLeft()) {
+        return left(images.value);
+      }
+
+      return right(
+        _.map(images.value, (image) => ({ image, upload: uploadByUploadId.get(image.uploadId) })),
+      );
     } catch (error) {
       return left(error);
     }

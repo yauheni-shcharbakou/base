@@ -2,7 +2,8 @@
 
 import { ONE_MB_BYTES } from '@/common/constants';
 import { UploadManyPage } from '@/features/storage/components';
-import { fileActionProvider } from '@/features/storage/providers';
+import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 
 export default function FileCreateMany() {
@@ -16,6 +17,10 @@ export default function FileCreateMany() {
           parent: form.parent,
           isPublic: form.isPublic,
         });
+      }}
+      uploadFileAction={(file, entity) => {
+        const { id, upload } = entity as CreatedFile;
+        return uploadViaPresignedUrl(file, upload, id);
       }}
       uploaderProps={{
         dropzoneProps: {

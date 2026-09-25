@@ -6,7 +6,7 @@
 
 /* eslint-disable */
 import type { StorageManyMeta, StorageMeta } from '../common/common.messages';
-import type { FileCreate } from '../file/file.messages';
+import type { FileCreate, FilePresignedUpload } from '../file/file.messages';
 import type { Image } from './image';
 import type { ImagePopulated } from './image.populates';
 
@@ -60,6 +60,19 @@ export interface ImageCreateMany {
 export interface ImageCreateManyWeb {
   storage?: StorageManyMeta;
   items: ImageCreateManyItem[];
+}
+
+/**
+ * The image's bytes go to its file row: upload with these credentials, then complete through
+ * `FileService.completeUpload` with the image's `fileId`.
+ */
+export interface ImageCreated {
+  image: Image;
+  upload: FilePresignedUpload;
+}
+
+export interface ImageCreatedArray {
+  items: ImageCreated[];
 }
 
 export interface ImageUpdateSet {

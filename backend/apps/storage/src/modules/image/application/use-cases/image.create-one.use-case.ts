@@ -7,7 +7,7 @@ import {
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { Injectable } from '@nestjs/common';
-import { Either, left } from '@sweet-monads/either';
+import { Either, left, right } from '@sweet-monads/either';
 
 @Injectable()
 export class ImageCreateOneUseCase {
@@ -18,7 +18,9 @@ export class ImageCreateOneUseCase {
     private readonly storageObjectValidationService: StorageObjectValidationService,
   ) {}
 
-  async execute(createData: NestStorage.ImageCreateOne): Promise<Either<Error, NestStorage.Image>> {
+  async execute(
+    createData: NestStorage.ImageCreateOne,
+  ): Promise<Either<Error, NestStorage.ImageCreated>> {
     const providerId = await this.storageFileService.createFile({
       ...createData.file,
       userId: createData.userId,
@@ -54,6 +56,19 @@ export class ImageCreateOneUseCase {
       saveData.storageObject = validationResult.value;
     }
 
-    return this.imageRepository.saveAndPlaceOne(saveData);
+    const image = await this.imageRepository.saveAndPlaceOne(saveData);
+
+    if (image.isLeft()) {
+      return left(image.value);
+    }
+
+    // The bytes go straight to Bunny; the caller completes the upload by the image's `fileId`.
+    const upload = await this.storageFileService.getUploadUrl(providerId.value, createData.file);
+
+    if (upload.isLeft()) {
+      return left(upload.value);
+    }
+
+    return right({ image: image.value, upload: upload.value });
   }
 }

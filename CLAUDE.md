@@ -175,7 +175,9 @@ the gateway's guard is [ADR-0011](docs/adr/0011-identity-cached-in-auth.md).
 Bunny Stream status webhook. Video bytes no longer cross the backend at all — the browser uploads
 straight to Bunny with pre-signed TUS credentials the create call returns, and that callback is how
 an upload's outcome gets back in ([ADR-0014](docs/adr/0014-video-uploads-bypass-the-backend.md)).
-Files and images still stream through the gRPC `uploadOne` path.
+File and image bytes take the same shortcut to Bunny Storage — a pre-signed S3 PUT, then an
+explicit `completeUpload` call in place of the webhook Storage does not have
+([ADR-0015](docs/adr/0015-file-uploads-presigned-s3-put.md)). No RPC streams bytes any more.
 
 ## Frontend admin
 

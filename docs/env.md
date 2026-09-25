@@ -239,22 +239,23 @@ The public half must match the one `backend.api-gateway` verifies with. `ADMIN_E
 
 <!-- env-table:start src=backend/apps/storage/src/config.ts,backend/apps/storage/src/modules/storage/infrastructure/configs/bunny.storage.config.ts -->
 
-| Variable                               | Type                                                          | Default      | Source                    |
-| -------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
-| `STORAGE_PENDING_FILE_TTL_HOURS`       | number                                                        | `24`         | `config.ts`               |
-| `BUNNY_STORAGE_ZONE`                   | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_API_KEY`                | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_S3_REGION`              | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_ZONE`               | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_PRIVATE_KEY`        | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES` | number                                                        | `10`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_API_KEY`                 | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_READ_ONLY_API_KEY`       | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_LIBRARY_ID`              | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_ZONE`                | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_PRIVATE_KEY`         | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`  | number                                                        | `60`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`  | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
+| Variable                                  | Type                                                          | Default      | Source                    |
+| ----------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
+| `STORAGE_PENDING_FILE_TTL_HOURS`          | number                                                        | `24`         | `config.ts`               |
+| `BUNNY_STORAGE_ZONE`                      | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_API_KEY`                   | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_S3_REGION`                 | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES` | number ≥ 1, ≤ 10_080                                          | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_ZONE`                  | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_PRIVATE_KEY`           | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`    | number                                                        | `10`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_API_KEY`                    | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_READ_ONLY_API_KEY`          | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_LIBRARY_ID`                 | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_ZONE`                   | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_PRIVATE_KEY`            | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`     | number                                                        | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`     | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
 
 <!-- env-table:end -->
 
@@ -305,7 +306,6 @@ domain events.
 | `BACKEND_GRPC_URL` | string | `0.0.0.0:8000`    |
 | `DEFAULT_EMAIL`    | email  | `admin@gmail.com` |
 | `DEFAULT_PASSWORD` | string | `string123`       |
-| `CHUNK_SIZE_MB`    | number | `1`               |
 
 Plus the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
 
@@ -314,4 +314,4 @@ Plus the shared shape `NodeValidationSchema` from `@packages/common`, tabulated 
 Read by `ConfigService` on the **Next server**, never in the browser — none of them is a
 `NEXT_PUBLIC_*`, and `BACKEND_GRPC_URL` must not become one: `@grpc/grpc-js` is a Node client and
 the gRPC call runs in a server action. `DEFAULT_EMAIL` / `DEFAULT_PASSWORD` prefill the login form
-and are read only while `NODE_ENV` is `development`. `CHUNK_SIZE_MB` sizes the chunked upload.
+and are read only while `NODE_ENV` is `development`.

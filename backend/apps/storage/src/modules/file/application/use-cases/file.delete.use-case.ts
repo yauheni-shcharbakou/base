@@ -21,11 +21,12 @@ export class FileDeleteUseCase extends DeleteUseCase<NestStorage.File, NestStora
       return;
     }
 
-    const isFileReady = result.value.uploadStatus === NestStorage.FileUploadStatus.READY;
+    // Not gated on READY: with a direct upload the bytes can land before `completeUpload` runs,
+    // and deleting an absent key is a no-op.
     const providerId = result.value.providerId;
 
-    if (isFileReady && providerId) {
-      await this.storageFileService.deleteFile(result.value.providerId);
+    if (providerId) {
+      await this.storageFileService.deleteFile(providerId);
     }
   }
 }

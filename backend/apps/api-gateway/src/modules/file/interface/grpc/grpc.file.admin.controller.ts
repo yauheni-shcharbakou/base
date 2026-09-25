@@ -9,11 +9,9 @@ import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
 import { GetUrlMapShortDto } from '@common/application/dto/storage/get-url-map.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
-import { GrpcStreamMethod } from '@common/interface/grpc/decorators/grpc.stream-method.decorator';
 import { FileCreateManyDto } from '@modules/file/application/dto/file.create-many.dto';
 import { FileCreateOneDto } from '@modules/file/application/dto/file.create.dto';
 import { FileProxyService } from '@modules/file/application/services/file.proxy.service';
-import { Observable } from 'rxjs';
 
 @AdminGrpcController()
 @GrpcFileAdminTransport.ControllerMethods()
@@ -41,20 +39,18 @@ export class GrpcFileAdminController implements GrpcFileAdminServiceController {
   }
 
   @ValidateGrpcPayload(FileCreateOneDto)
-  createOne(request: NestStorage.FileCreateOne): Promise<NestStorage.File> {
+  createOne(request: NestStorage.FileCreateOne): Promise<NestStorage.FileCreated> {
     return this.fileService.createOne(request);
   }
 
   @ValidateGrpcPayload(FileCreateManyDto)
-  createMany(request: NestStorage.FileCreateMany): Promise<NestStorage.FileArray> {
+  createMany(request: NestStorage.FileCreateMany): Promise<NestStorage.FileCreatedArray> {
     return this.fileService.createMany(request);
   }
 
-  @GrpcStreamMethod()
-  uploadOne(
-    request$: Observable<NestStorage.UploadOneShort>,
-  ): Observable<NestStorage.FileUploadResponse> {
-    return this.fileService.uploadOne(request$);
+  @ValidateGrpcPayload(IdFieldDto)
+  completeUpload({ id }: NestCommon.IdField): Promise<NestStorage.File> {
+    return this.fileService.completeUpload(id);
   }
 
   @ValidateGrpcPayload(IdFieldDto)

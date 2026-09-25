@@ -1,7 +1,7 @@
 import { GrpcRxPipe, InjectGrpcService } from '@backend/grpc';
 import { GrpcFileServiceClient, GrpcFileTransport, NestCommon, NestStorage } from '@backend/proto';
 import { Injectable } from '@nestjs/common';
-import { firstValueFrom, map, Observable, tap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { FileMapper } from '../mappers/file.mapper';
 
 @Injectable()
@@ -36,38 +36,18 @@ export class FileProxyService {
     return firstValueFrom(this.fileClient.getList(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  createOne(request: NestStorage.FileCreateOne): Promise<NestStorage.File> {
+  createOne(request: NestStorage.FileCreateOne): Promise<NestStorage.FileCreated> {
     return firstValueFrom(this.fileClient.createOne(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  createMany(request: NestStorage.FileCreateMany): Promise<NestStorage.FileArray> {
+  createMany(request: NestStorage.FileCreateMany): Promise<NestStorage.FileCreatedArray> {
     return firstValueFrom(this.fileClient.createMany(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  uploadOne(
-    request$: Observable<NestStorage.UploadOneShort>,
-    userId?: string,
-  ): Observable<NestStorage.FileUploadResponse> {
-    const sanitizedRequest$ = request$.pipe(
-      map((message: NestStorage.UploadOne) => {
-        if (message.filter && userId) {
-          message.filter.userId = userId;
-        }
-
-        return message;
-      }),
-      tap({
-        next: (message) => {
-          if (message.chunk) {
-            setTimeout(() => {
-              delete message.chunk;
-            }, 0);
-          }
-        },
-      }),
+  completeUpload(id: string, userId?: string): Promise<NestStorage.File> {
+    return firstValueFrom(
+      this.fileClient.completeUpload({ id, userId }).pipe(GrpcRxPipe.rpcException),
     );
-
-    return this.fileClient.uploadOne(sanitizedRequest$);
   }
 
   deleteOne(query: Partial<NestStorage.FileQuery>): Promise<NestStorage.File> {

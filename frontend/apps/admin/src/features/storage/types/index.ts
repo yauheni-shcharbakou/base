@@ -2,8 +2,9 @@ import type { BrowserCommon, BrowserStorage } from '@packages/proto';
 import type { BaseRecord } from '@refinedev/core';
 
 /**
- * How a selected file's bytes leave the browser. The upload hooks default to a multipart POST at
- * the resource's own route handler; video overrides this to upload straight to Bunny over TUS.
+ * How a selected file's bytes leave the browser — always straight to the provider, with the
+ * credentials the create call returned: Bunny Stream over TUS for video, a pre-signed Bunny Storage
+ * PUT plus a confirmation for files and images. The Next server never carries the bytes.
  *
  * Named with the `Action` suffix so Next's `'use client'` serializable-props check (71007) accepts
  * it as a component prop — it runs on the client and is not a server action. The entity stays
@@ -24,6 +25,6 @@ export type StorageUploadItem = {
   uploadId: string;
   entityId?: string;
   // The record the create call returned. Kept alongside the id because a retry skips creation,
-  // and a TUS upload needs the credentials that came with the entity, not just its id.
+  // and the upload needs the credentials that came with the entity, not just its id.
   entity?: BrowserCommon.IdField & { uploadId: string };
 };

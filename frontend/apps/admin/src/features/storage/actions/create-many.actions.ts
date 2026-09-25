@@ -13,7 +13,7 @@ type CreateActionResponse<T> = { data: T } | { error: string };
 
 export async function createManyFiles(
   request: ClientStorage.FileCreateMany,
-): Promise<CreateActionResponse<ClientStorage.File[]>> {
+): Promise<CreateActionResponse<ClientStorage.FileCreated[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const response = await fileGrpcRepository.createMany(request, metadata);
@@ -25,7 +25,7 @@ export async function createManyFiles(
 
 export async function createManyImages(
   request: ClientStorage.ImageCreateMany,
-): Promise<CreateActionResponse<ClientStorage.Image[]>> {
+): Promise<CreateActionResponse<ClientStorage.ImageCreated[]>> {
   try {
     const metadata = await authService.getAuthMetadata();
     const response = await imageGrpcRepository.createMany(request, metadata);

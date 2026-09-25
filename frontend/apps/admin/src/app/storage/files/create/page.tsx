@@ -11,10 +11,11 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
-import { fileActionProvider } from '@/features/storage/providers';
+import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import type { BrowserAuth } from '@packages/proto';
 import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
@@ -33,6 +34,11 @@ export default function FileCreate() {
 
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
+    // Straight from the browser to Bunny Storage, then confirmed — nothing passes through Next.
+    uploadFileAction: (file, entity, options) => {
+      const { id, upload } = entity as CreatedFile;
+      return uploadViaPresignedUrl(file, upload, id, options);
+    },
   });
 
   const {
@@ -56,7 +62,7 @@ export default function FileCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdFile = await handleUpload<BrowserStorage.File>(data.file, async () => {
+    const createdFile = await handleUpload<CreatedFile>(data.file, async () => {
       return fileActionProvider.createOne(data.userId, data.file, {
         parent: data.parent,
         name: data.name,
@@ -65,7 +71,9 @@ export default function FileCreate() {
     });
 
     if (createdFile) {
-      await onFinish(createdFile as any);
+      // The signed URL is spent by now — it has no business in Refine's record.
+      const { upload, ...entity } = createdFile;
+      await onFinish(entity as any);
     }
   };
 

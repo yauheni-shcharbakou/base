@@ -33,7 +33,6 @@
     "@refinedev/react-hook-form": "5.0.4",
     "@sweet-monads/either": "catalog:",
     "axios": "catalog:",
-    "busboy": "1.6.0",
     "change-case-all": "catalog:",
     "js-cookie": "3.0.8",
     "lodash": "catalog:",
@@ -49,7 +48,6 @@
   "devDependencies": {
     "@packages/configs": "workspace:*",
     "@refinedev/cli": "2.16.52",
-    "@types/busboy": "1.5.4",
     "@types/js-cookie": "3.0.6",
     "@types/lodash": "catalog:",
     "@types/react": "19.2.9",

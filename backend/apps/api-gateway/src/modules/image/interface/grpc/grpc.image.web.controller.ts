@@ -22,7 +22,7 @@ export class GrpcImageWebController implements GrpcImageWebServiceController {
   createOne(
     { file, storage, image }: NestStorage.ImageCreateOneWeb,
     @GrpcUserId() userId: string,
-  ): Promise<NestStorage.Image> {
+  ): Promise<NestStorage.ImageCreated> {
     return this.imageService.createOne({ userId, file, storage, image });
   }
 
@@ -30,7 +30,7 @@ export class GrpcImageWebController implements GrpcImageWebServiceController {
   createMany(
     { items, storage }: NestStorage.ImageCreateManyWeb,
     @GrpcUserId() userId: string,
-  ): Promise<NestStorage.ImageArray> {
+  ): Promise<NestStorage.ImageCreatedArray> {
     return this.imageService.createMany({ userId, items, storage });
   }
 

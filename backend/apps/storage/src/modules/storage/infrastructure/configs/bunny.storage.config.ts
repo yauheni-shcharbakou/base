@@ -10,6 +10,10 @@ const env = validateEnv({
   BUNNY_STORAGE_S3_REGION: zod
     .enum(['de', 'ny', 'uk', 'se', 'sg', 'la', 'jh', 'syd'])
     .default('de'),
+  // How long a pre-signed PUT URL stays valid. Checked when the request starts, not when it ends,
+  // but a batch signs every file up front and uploads them one by one — the last file of a large
+  // batch starts late. Bunny accepts up to 7 days.
+  BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES: zod.coerce.number().min(1).max(10_080).default(60),
 
   // The pull zone serving the storage zone — its own name, not necessarily the storage zone's.
   BUNNY_STORAGE_CDN_ZONE: zod.string(),
@@ -42,6 +46,7 @@ export const bunnyStorageConfig = () => {
           bucket: env.BUNNY_STORAGE_ZONE,
           accessKeyId: env.BUNNY_STORAGE_ZONE,
           secretAccessKey: env.BUNNY_STORAGE_API_KEY,
+          uploadExpiresInMinutes: env.BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES,
         },
         rootDir: common.isDevelopment ? 'dev' : 'prod',
         cdn: {

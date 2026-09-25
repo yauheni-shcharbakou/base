@@ -3,7 +3,7 @@ import type { BrowserStorage } from '@packages/proto';
 import { Upload } from 'tus-js-client';
 
 // tus-js-client defaults to a single unbounded request, which throws away the whole point of a
-// resumable upload. Not `CHUNK_SIZE_MB`: that sizes the 1 MB gRPC frames of the file upload path.
+// resumable upload.
 const TUS_CHUNK_SIZE_BYTES = 20 * ONE_MB_BYTES;
 
 type Options = {

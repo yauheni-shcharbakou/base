@@ -12,7 +12,8 @@ import { IdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { Image } from './image/image';
 import {
-  ImageArray,
+  ImageCreated,
+  ImageCreatedArray,
   ImageCreateMany,
   ImageCreateManyWeb,
   ImageCreateOne,
@@ -29,9 +30,9 @@ export interface GrpcImageServiceClient {
 
   getList(request: GetList, metadata?: Metadata): Observable<ImageList>;
 
-  createOne(request: ImageCreateOne, metadata?: Metadata): Observable<Image>;
+  createOne(request: ImageCreateOne, metadata?: Metadata): Observable<ImageCreated>;
 
-  createMany(request: ImageCreateMany, metadata?: Metadata): Observable<ImageArray>;
+  createMany(request: ImageCreateMany, metadata?: Metadata): Observable<ImageCreatedArray>;
 
   updateOne(request: ImageUpdateOne, metadata?: Metadata): Observable<Image>;
 
@@ -46,12 +47,15 @@ export interface GrpcImageServiceController {
 
   getList(request: GetList, ...args: any[]): Promise<ImageList> | Observable<ImageList> | ImageList;
 
-  createOne(request: ImageCreateOne, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+  createOne(
+    request: ImageCreateOne,
+    ...args: any[]
+  ): Promise<ImageCreated> | Observable<ImageCreated> | ImageCreated;
 
   createMany(
     request: ImageCreateMany,
     ...args: any[]
-  ): Promise<ImageArray> | Observable<ImageArray> | ImageArray;
+  ): Promise<ImageCreatedArray> | Observable<ImageCreatedArray> | ImageCreatedArray;
 
   updateOne(request: ImageUpdateOne, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 
@@ -85,9 +89,9 @@ export interface GrpcImageAdminServiceClient {
 
   getList(request: GetList, metadata?: Metadata): Observable<ImageList>;
 
-  createOne(request: ImageCreateOne, metadata?: Metadata): Observable<Image>;
+  createOne(request: ImageCreateOne, metadata?: Metadata): Observable<ImageCreated>;
 
-  createMany(request: ImageCreateMany, metadata?: Metadata): Observable<ImageArray>;
+  createMany(request: ImageCreateMany, metadata?: Metadata): Observable<ImageCreatedArray>;
 
   updateById(request: ImageUpdateById, metadata?: Metadata): Observable<Image>;
 
@@ -102,12 +106,15 @@ export interface GrpcImageAdminServiceController {
 
   getList(request: GetList, ...args: any[]): Promise<ImageList> | Observable<ImageList> | ImageList;
 
-  createOne(request: ImageCreateOne, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+  createOne(
+    request: ImageCreateOne,
+    ...args: any[]
+  ): Promise<ImageCreated> | Observable<ImageCreated> | ImageCreated;
 
   createMany(
     request: ImageCreateMany,
     ...args: any[]
-  ): Promise<ImageArray> | Observable<ImageArray> | ImageArray;
+  ): Promise<ImageCreatedArray> | Observable<ImageCreatedArray> | ImageCreatedArray;
 
   updateById(request: ImageUpdateById, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 
@@ -141,9 +148,9 @@ function ImageAdminServiceControllerMethods() {
 }
 
 export interface GrpcImageWebServiceClient {
-  createOne(request: ImageCreateOneWeb, metadata?: Metadata): Observable<Image>;
+  createOne(request: ImageCreateOneWeb, metadata?: Metadata): Observable<ImageCreated>;
 
-  createMany(request: ImageCreateManyWeb, metadata?: Metadata): Observable<ImageArray>;
+  createMany(request: ImageCreateManyWeb, metadata?: Metadata): Observable<ImageCreatedArray>;
 
   updateById(request: ImageUpdateById, metadata?: Metadata): Observable<Image>;
 
@@ -151,12 +158,15 @@ export interface GrpcImageWebServiceClient {
 }
 
 export interface GrpcImageWebServiceController {
-  createOne(request: ImageCreateOneWeb, ...args: any[]): Promise<Image> | Observable<Image> | Image;
+  createOne(
+    request: ImageCreateOneWeb,
+    ...args: any[]
+  ): Promise<ImageCreated> | Observable<ImageCreated> | ImageCreated;
 
   createMany(
     request: ImageCreateManyWeb,
     ...args: any[]
-  ): Promise<ImageArray> | Observable<ImageArray> | ImageArray;
+  ): Promise<ImageCreatedArray> | Observable<ImageCreatedArray> | ImageCreatedArray;
 
   updateById(request: ImageUpdateById, ...args: any[]): Promise<Image> | Observable<Image> | Image;
 

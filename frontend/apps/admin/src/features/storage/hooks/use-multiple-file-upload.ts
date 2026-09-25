@@ -1,6 +1,5 @@
 'use client';
 
-import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
 import { StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
@@ -10,9 +9,8 @@ import type { BrowserCommon } from '@packages/proto';
 
 type Params = {
   resource: string;
-  // Same override as in `useSingleFileUpload`: video replaces the multipart POST with a direct
-  // TUS upload to the provider.
-  uploadFileAction?: UploadFileAction;
+  // Same as in `useSingleFileUpload`: how each file's bytes leave the browser.
+  uploadFileAction: UploadFileAction;
 };
 
 type Entity = BrowserCommon.IdField & { uploadId: string };
@@ -158,25 +156,11 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
           }
 
           try {
-            if (uploadFileAction) {
-              if (!entity) {
-                throw new Error(`Upload credentials for ${file.name} are missing`);
-              }
-
-              await uploadFileAction(file, entity);
-              handleFinish(uploadItem.uploadId);
-              continue;
+            if (!entity) {
+              throw new Error(`Upload credentials for ${file.name} are missing`);
             }
 
-            const formData = new FormData();
-            formData.append('file', file);
-
-            await internalHttpClient.post(`${resource}/${entityId}/upload`, formData, {
-              timeout: 0,
-              maxBodyLength: Infinity,
-              maxContentLength: Infinity,
-            });
-
+            await uploadFileAction(file, entity);
             handleFinish(uploadItem.uploadId);
           } catch (err) {
             open?.({
