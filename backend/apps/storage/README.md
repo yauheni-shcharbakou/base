@@ -53,6 +53,8 @@
 
 `API key` => env `BUNNY_STREAM_API_KEY`
 
+`Read-only API key` => env `BUNNY_STREAM_READ_ONLY_API_KEY`
+
 #### CDN > Security > General (stream-related CDN)
 
 - [x] `Block root path access`
