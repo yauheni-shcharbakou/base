@@ -55,6 +55,13 @@
 
 `Read-only API key` => env `BUNNY_STREAM_READ_ONLY_API_KEY`
 
+`Webhook URL` => `https://<storage-domain>/webhooks/bunny/stream`
+
+For local development use a separate library whose webhook points at the ngrok static domain:
+`https://<NGROK_DOMAIN>/webhooks/bunny/stream`. The tunnel starts with `pnpm docker:local` once
+`NGROK_AUTHTOKEN` and `NGROK_DOMAIN` are set in the root `.env`. A library has exactly one webhook
+URL, so sharing it with production would divert production's callbacks to your machine.
+
 #### CDN > Security > General (stream-related CDN)
 
 - [x] `Block root path access`

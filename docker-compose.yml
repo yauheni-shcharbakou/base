@@ -84,6 +84,43 @@ services:
       - local
       - all
 
+  # Public tunnel to the host's backend.storage webhook listener, so Bunny Stream can deliver status
+  # callbacks during local development. The domain is the account's static ngrok domain, so the
+  # webhook URL in the Bunny library is set once and never changes. Without NGROK_AUTHTOKEN and
+  # NGROK_DOMAIN the container exits cleanly and the rest of the local stack is unaffected.
+  ngrok:
+    image: ngrok/ngrok:3
+    # Bounded: a wrong authtoken or a foreign domain fails the same way on every attempt.
+    restart: on-failure:5
+    container_name: base-ngrok
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+      NGROK_DOMAIN: ${NGROK_DOMAIN:-}
+      NGROK_UPSTREAM: ${NGROK_UPSTREAM:-host.docker.internal:9002}
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        if [ -z "$$NGROK_AUTHTOKEN" ] || [ -z "$$NGROK_DOMAIN" ]; then
+          echo "NGROK_AUTHTOKEN or NGROK_DOMAIN is not set, tunnel skipped."
+          exit 0
+        fi
+        exec ngrok http "$$NGROK_UPSTREAM" \
+          --config /var/lib/ngrok/ngrok.yml \
+          --authtoken "$$NGROK_AUTHTOKEN" \
+          --url "https://$$NGROK_DOMAIN" \
+          --log stdout
+    ports:
+      # Request inspector: every webhook Bunny sends is visible and replayable at localhost:4040.
+      - '4040:4040'
+    extra_hosts:
+      # Resolves on Linux too; Docker Desktop provides it natively.
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - public_network
+    profiles:
+      - local
+      - all
+
   backend.auth:
     build:
       context: .
@@ -97,8 +134,8 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://admin:password123@postgres:5432
       AUTH_GRPC_URL: 0.0.0.0:8001
-      JWT_ACCESS_PRIVATE_KEY_BASE64: ${JWT_ACCESS_PRIVATE_KEY_BASE64}
-      JWT_ACCESS_PUBLIC_KEY_BASE64: ${JWT_ACCESS_PUBLIC_KEY_BASE64}
+      JWT_ACCESS_PRIVATE_KEY_BASE64: ${JWT_ACCESS_PRIVATE_KEY_BASE64:-}
+      JWT_ACCESS_PUBLIC_KEY_BASE64: ${JWT_ACCESS_PUBLIC_KEY_BASE64:-}
       REFRESH_JWT_SECRET: string123
       ADMIN_EMAIL: admin@gmail.com
       ADMIN_PASSWORD: string123
@@ -135,15 +172,15 @@ services:
       STORAGE_GRPC_URL: 0.0.0.0:8002
       # NATS_URL: nats://nats:4222
       REDIS_URL: redis://redis:6379
-      BUNNY_STORAGE_API_KEY: ${BUNNY_STORAGE_API_KEY}
-      BUNNY_STORAGE_CDN_ZONE: ${BUNNY_STORAGE_CDN_ZONE}
-      BUNNY_STORAGE_CDN_PRIVATE_KEY: ${BUNNY_STORAGE_CDN_PRIVATE_KEY}
+      BUNNY_STORAGE_API_KEY: ${BUNNY_STORAGE_API_KEY:-}
+      BUNNY_STORAGE_CDN_ZONE: ${BUNNY_STORAGE_CDN_ZONE:-}
+      BUNNY_STORAGE_CDN_PRIVATE_KEY: ${BUNNY_STORAGE_CDN_PRIVATE_KEY:-}
       BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES: 10
-      BUNNY_STREAM_API_KEY: ${BUNNY_STREAM_API_KEY}
-      BUNNY_STREAM_READ_ONLY_API_KEY: ${BUNNY_STREAM_READ_ONLY_API_KEY}
-      BUNNY_STREAM_LIBRARY_ID: ${BUNNY_STREAM_LIBRARY_ID}
-      BUNNY_STREAM_CDN_ZONE: ${BUNNY_STREAM_CDN_ZONE}
-      BUNNY_STREAM_CDN_PRIVATE_KEY: ${BUNNY_STREAM_CDN_PRIVATE_KEY}
+      BUNNY_STREAM_API_KEY: ${BUNNY_STREAM_API_KEY:-}
+      BUNNY_STREAM_READ_ONLY_API_KEY: ${BUNNY_STREAM_READ_ONLY_API_KEY:-}
+      BUNNY_STREAM_LIBRARY_ID: ${BUNNY_STREAM_LIBRARY_ID:-}
+      BUNNY_STREAM_CDN_ZONE: ${BUNNY_STREAM_CDN_ZONE:-}
+      BUNNY_STREAM_CDN_PRIVATE_KEY: ${BUNNY_STREAM_CDN_PRIVATE_KEY:-}
       BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES: 60
       BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES: 120
       STORAGE_PENDING_FILE_TTL_HOURS: 24
@@ -172,7 +209,7 @@ services:
       API_GATEWAY_GRPC_URL: 0.0.0.0:8000
       AUTH_GRPC_URL: backend.auth:8001
       STORAGE_GRPC_URL: backend.storage:8002
-      JWT_ACCESS_PUBLIC_KEY_BASE64: ${JWT_ACCESS_PUBLIC_KEY_BASE64}
+      JWT_ACCESS_PUBLIC_KEY_BASE64: ${JWT_ACCESS_PUBLIC_KEY_BASE64:-}
     networks:
       - private_network
       - public_network
