@@ -24,7 +24,7 @@ export class ImageDeleteOneUseCase {
       return image;
     }
 
-    const deletedImage = await this.imageRepository.deleteById(image.value.id);
+    const deletedImage = await this.imageRepository.deleteWithFile(image.value.id);
 
     if (deletedImage.isLeft()) {
       return deletedImage;

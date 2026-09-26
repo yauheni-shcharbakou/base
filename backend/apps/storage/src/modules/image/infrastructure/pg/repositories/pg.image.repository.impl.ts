@@ -11,6 +11,7 @@ import {
   ImageRepository,
   ImageSaveAndPlace,
 } from '@modules/image/domain/repositories/image.repository';
+import { NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { PgImageMapper } from '../mappers/pg.image.mapper';
 
@@ -108,6 +109,27 @@ export class PgImageRepositoryImpl
       return right(images);
     } catch (error) {
       return left(error);
+    }
+  }
+
+  // The image hangs off its file row, not the other way round: `images.file_id` cascades from
+  // `files`, so deleting the image alone left the file row behind — for good once it was READY,
+  // since the cleanup cron sweeps PENDING/FAILED only. Both go in one flush (the image first, as
+  // the FK owner); the storage object follows through the database cascade.
+  async deleteWithFile(id: string): Promise<Either<NotFoundException, NestStorage.Image>> {
+    try {
+      const image = await this.repository.findOne({ id });
+
+      if (!image) {
+        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+      }
+
+      const file = this.em.getReference(PgFileEntity, image.file.id);
+      await this.em.remove([image, file]).flush();
+
+      return right(this.mapper.stringify(image));
+    } catch (error) {
+      return left(error as NotFoundException);
     }
   }
 }

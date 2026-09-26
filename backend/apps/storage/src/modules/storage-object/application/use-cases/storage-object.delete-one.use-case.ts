@@ -49,8 +49,7 @@ export class StorageObjectDeleteOneUseCase {
       return deletedEntity;
     }
 
-    // The READY check lives inside the branches below, not here: the two providers differ in when
-    // the object starts existing, so one gate cannot serve both.
+    // No READY gate for either provider: a provider id alone means there may be something to purge.
     switch (entity.value.type) {
       case NestStorage.StorageObjectType.VIDEO: {
         // A Bunny Stream object exists from `createVideo` onward, so its guid alone is proof there
@@ -66,12 +65,11 @@ export class StorageObjectDeleteOneUseCase {
       }
       case NestStorage.StorageObjectType.FILE:
       case NestStorage.StorageObjectType.IMAGE: {
-        // A Bunny Storage object only exists once the bytes were PUT, which is exactly what READY
-        // records; before that `providerId` is just a planned path with nothing behind it.
-        const isFileReady = entity.value.file?.uploadStatus === NestStorage.FileUploadStatus.READY;
+        // Not gated on READY either: with a direct upload the bytes can land before
+        // `completeUpload` runs, and deleting an absent key is a no-op (ADR-0015).
         const providerId = entity.value.file?.providerId;
 
-        if (!isFileReady || !providerId) {
+        if (!providerId) {
           break;
         }
 

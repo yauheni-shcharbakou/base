@@ -22,7 +22,7 @@ export class VideoDeleteOneUseCase {
       return video;
     }
 
-    const deletedVideo = await this.videoRepository.deleteById(video.value.id);
+    const deletedVideo = await this.videoRepository.deleteWithFile(video.value.id);
     // The Bunny guid lives on the video, not on its backing file row — `file.providerId` names an
     // object in Bunny Storage (plain files and images) and stays unset for a video, so reading it
     // here left every video behind at the provider.
