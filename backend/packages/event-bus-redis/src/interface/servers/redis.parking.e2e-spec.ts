@@ -1,18 +1,18 @@
-import { EventBusHost } from '@backend/event-bus';
-import { NestStorage } from '@backend/proto';
+import { EventBusHost, FilePurgeType } from '@backend/event-bus';
+import type { FilePurgeEvent } from '@backend/event-bus';
 import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Payload } from '@nestjs/microservices';
 import { Test } from '@nestjs/testing';
 import IORedis from 'ioredis';
-import { RedisImageEventController, RedisImageTransport } from '@/generated';
+import { RedisFileEventController, RedisFileTransport } from '@/generated';
 import { REDIS_MICROSERVICE_OPTIONS } from '@/infrastructure';
 import { RedisModule } from '@/redis.module';
 import { RedisController } from '../decorators';
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
-const EVENT_ID = 'storage.image.delete';
-const CONSUMER_ID = 'storage.e2e-image';
+const EVENT_ID = 'storage.file.purge';
+const CONSUMER_ID = 'storage.e2e-file';
 const PARKING_KEY = `event-bus-e2e:parked:${EVENT_ID}`;
 const SUBSCRIPTION_KEY = `event-bus-e2e:subs:${EVENT_ID}`;
 
@@ -20,12 +20,12 @@ const SUBSCRIPTION_KEY = `event-bus-e2e:subs:${EVENT_ID}`;
 // each other even when jest runs them in parallel.
 const describeWithServer = process.env.REDIS_E2E_SERVER === '1' ? describe : describe.skip;
 
-const received: NestStorage.Image[] = [];
+const received: FilePurgeEvent[] = [];
 
 @RedisController({ consumer: CONSUMER_ID })
-@RedisImageTransport.ControllerMethods()
-class ImageController implements RedisImageEventController {
-  onDelete(@Payload() event: NestStorage.Image): void {
+@RedisFileTransport.ControllerMethods()
+class FileController implements RedisFileEventController {
+  onPurge(@Payload() event: FilePurgeEvent): void {
     received.push(event);
   }
 }
@@ -51,7 +51,7 @@ const startEmitter = async (): Promise<INestApplication> => {
     imports: [
       ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
       RedisModule.forRoot({ host: EventBusHost.STORAGE, onlyEmitting: true }),
-      RedisModule.forFeature({ EventBus: RedisImageTransport.EventBus }),
+      RedisModule.forFeature({ EventBus: RedisFileTransport.EventBus }),
     ],
   }).compile();
 
@@ -68,7 +68,7 @@ const startSubscriber = async (): Promise<INestApplication> => {
       ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
       RedisModule.forRoot({ host: EventBusHost.STORAGE }),
     ],
-    controllers: [ImageController],
+    controllers: [FileController],
   }).compile();
 
   const app = moduleRef.createNestApplication();
@@ -81,16 +81,10 @@ const startSubscriber = async (): Promise<INestApplication> => {
 };
 
 describeWithServer('Redis parking (live server)', () => {
-  const image = {
-    id: '01JE2EPARK000000000000000',
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-    width: 100,
-    height: 50,
-    alt: 'parked',
-    userId: '01JE2EUSER000000000000000',
-    fileId: '01JE2EFILE000000000000000',
-    uploadId: '01JE2EUPLOAD00000000000000',
-  } satisfies NestStorage.Image;
+  const purge = {
+    type: FilePurgeType.FILE,
+    providerId: 'dev/01JE2EUSER000000000000000/parked.png',
+  } satisfies FilePurgeEvent;
 
   let probe: IORedis;
   let parkedBeforeReplay: string[];
@@ -112,7 +106,7 @@ describeWithServer('Redis parking (live server)', () => {
 
     // 1. Emit while nobody is subscribed — the first-boot race, reproduced.
     const emitter = await startEmitter();
-    await emitter.get(RedisImageTransport.EventBus).emitDelete(image);
+    await emitter.get(RedisFileTransport.EventBus).emitPurge(purge);
 
     await waitFor(async () => (await probe.llen(PARKING_KEY)) > 0);
 
@@ -129,7 +123,7 @@ describeWithServer('Redis parking (live server)', () => {
   it('parks the event instead of dropping it', () => {
     expect(parkedBeforeReplay).toHaveLength(1);
     expect(JSON.parse(parkedBeforeReplay[0])).toMatchObject({
-      data: { id: image.id, alt: 'parked' },
+      data: purge,
     });
   });
 
@@ -153,8 +147,7 @@ describeWithServer('Redis parking (live server)', () => {
 
     it('replays the parked event into the new consumer queue', () => {
       expect(received).toHaveLength(1);
-      // JSON end to end, so the Date arrives as an ISO string.
-      expect(received[0]).toEqual(JSON.parse(JSON.stringify(image)));
+      expect(received[0]).toEqual(purge);
     });
 
     it('publishes the subscription so later events skip the parking entirely', async () => {

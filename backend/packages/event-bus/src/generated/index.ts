@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { StorageObjectParentUpdateEvent } from '@/strategy/events';
+import { FilePurgeEvent, StorageObjectParentUpdateEvent } from '@/strategy/events';
 import type { NestAuth, NestStorage } from '@backend/proto';
 
 export abstract class EventBus {}
@@ -10,10 +10,10 @@ export abstract class UserEventBus extends EventBus {
   abstract emitManyCreate(events: NestAuth.User[]): Promise<any[]>;
 }
 
-export abstract class ImageEventBus extends EventBus {
-  abstract emitDelete(event: NestStorage.Image): Promise<any>;
+export abstract class FileEventBus extends EventBus {
+  abstract emitPurge(event: FilePurgeEvent): Promise<any>;
 
-  abstract emitManyDelete(events: NestStorage.Image[]): Promise<any[]>;
+  abstract emitManyPurge(events: FilePurgeEvent[]): Promise<any[]>;
 }
 
 export abstract class StorageObjectEventBus extends EventBus {

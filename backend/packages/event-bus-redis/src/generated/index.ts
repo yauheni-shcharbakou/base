@@ -3,7 +3,8 @@ import { RedisQueueClient } from '@/infrastructure/clients';
 import { RedisJobContext } from '@/interface/contexts';
 import {
   EventBus,
-  ImageEventBus,
+  FileEventBus,
+  FilePurgeEvent,
   StorageObjectEventBus,
   StorageObjectParentUpdateEvent,
   UserEventBus,
@@ -54,14 +55,14 @@ export interface RedisUserCreateEventHandler {
   ): void | Promise<void> | Observable<void>;
 }
 
-const RedisImageEventPattern = {
-  DELETE: {
-    pattern: 'storage.image.delete',
+const RedisFileEventPattern = {
+  PURGE: {
+    pattern: 'storage.file.purge',
   },
 };
 
-export const RedisImageTransport = {
-  ...RedisImageEventPattern,
+export const RedisFileTransport = {
+  ...RedisFileEventPattern,
   /**
    * Binds the service's own events. The patterns stay bare event ids here —
    * `@RedisController({ consumer })` rewrites them into `<eventId>@<consumerId>`
@@ -69,27 +70,27 @@ export const RedisImageTransport = {
    */
   ControllerMethods: (): ClassDecorator => {
     const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage.image.delete')(
-        constructor.prototype['onDelete'],
-        'onDelete',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onDelete'),
+      EventPattern('storage.file.purge')(
+        constructor.prototype['onPurge'],
+        'onPurge',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onPurge'),
       );
     };
     return applyDecorators(methodsDecorator);
   },
-  EventBus: ImageEventBus,
+  EventBus: FileEventBus,
 } as const;
 
-export interface RedisImageEventController {
-  onDelete(
-    event: NestStorage.Image,
+export interface RedisFileEventController {
+  onPurge(
+    event: FilePurgeEvent,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
 }
 
-export interface RedisImageDeleteEventHandler {
-  onImageDelete(
-    event: NestStorage.Image,
+export interface RedisFilePurgeEventHandler {
+  onFilePurge(
+    event: FilePurgeEvent,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -230,17 +231,17 @@ class RedisUserEventBusClientImpl extends RedisClientImpl implements UserEventBu
   }
 }
 
-class RedisImageEventBusClientImpl extends RedisClientImpl implements ImageEventBus {
+class RedisFileEventBusClientImpl extends RedisClientImpl implements FileEventBus {
   constructor(protected readonly client: RedisQueueClient) {
     super(client);
   }
 
-  emitDelete(event: NestStorage.Image): Promise<any> {
-    return this.client.emit('storage.image.delete', event);
+  emitPurge(event: FilePurgeEvent): Promise<any> {
+    return this.client.emit('storage.file.purge', event);
   }
 
-  emitManyDelete(events: NestStorage.Image[]): Promise<any[]> {
-    return this.client.emitMany('storage.image.delete', events);
+  emitManyPurge(events: FilePurgeEvent[]): Promise<any[]> {
+    return this.client.emitMany('storage.file.purge', events);
   }
 }
 
@@ -294,7 +295,7 @@ class RedisVideoEventBusClientImpl extends RedisClientImpl implements VideoEvent
 export class RedisClientFactory {
   private static clientsMap = new Map<Abstract<EventBus>, Type>([
     [UserEventBus, RedisUserEventBusClientImpl],
-    [ImageEventBus, RedisImageEventBusClientImpl],
+    [FileEventBus, RedisFileEventBusClientImpl],
     [StorageObjectEventBus, RedisStorageObjectEventBusClientImpl],
     [VideoEventBus, RedisVideoEventBusClientImpl],
   ]);
@@ -317,7 +318,7 @@ export class RedisClientFactory {
 export const REDIS_HOST_EVENTS: Record<string, readonly string[]> = {
   auth: ['auth.user.create'],
   storage: [
-    'storage.image.delete',
+    'storage.file.purge',
     'storage.storage.object.parent.update',
     'storage.video.uploaded',
     'storage.video.upload.finish',

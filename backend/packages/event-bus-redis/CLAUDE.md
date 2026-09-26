@@ -224,7 +224,7 @@ pnpm test:e2e
   mediator's fan-out is visible for what it is, and the only coverage of the `failedReason` chain:
   the failing controller walks its attempts and the spec reads the message back out of the `failed`
   set.
-- `redis.parking.e2e-spec.ts` reproduces the first-boot race on `storage.image.delete`: an
+- `redis.parking.e2e-spec.ts` reproduces the first-boot race on `storage.file.purge`: an
   `onlyEmitting` app emits with nobody subscribed, a second app registers for the first time and gets
   the replay, a third restart gets nothing.
 - `test/redis-server.setup.js` is a jest `globalSetup`, not a `beforeAll`, for two reasons that both

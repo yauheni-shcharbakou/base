@@ -1,3 +1,4 @@
+import { RedisFileTransport, RedisModule } from '@backend/event-bus-redis';
 import { PgModule } from '@backend/pg';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
@@ -5,6 +6,7 @@ import { StorageObjectModule } from '@modules/storage-object/storage-object.modu
 import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { FileMapper } from './application/mappers/file.mapper';
+import { FilePurgeService } from './application/services/file.purge.service';
 import { FileCleanupUseCase } from './application/use-cases/file.cleanup.use-case';
 import { FileCompleteUploadUseCase } from './application/use-cases/file.complete-upload.use-case';
 import { FileCreateManyUseCase } from './application/use-cases/file.create-many.use-case';
@@ -23,6 +25,7 @@ import { RedisFileController } from './interface/redis/redis.file.controller';
 @Module({
   imports: [
     PgModule.forFeature(PgFileEntity, PgStorageObjectEntity),
+    RedisModule.forFeature({ EventBus: RedisFileTransport.EventBus }),
     StorageModule,
     StorageObjectModule,
   ],
@@ -32,6 +35,7 @@ import { RedisFileController } from './interface/redis/redis.file.controller';
       useClass: PgFileRepositoryImpl,
     },
     FileMapper,
+    FilePurgeService,
     FileGetUrlMapUseCase,
     FileGetDownloadMapUseCase,
     FileGetUseCase,
@@ -44,6 +48,6 @@ import { RedisFileController } from './interface/redis/redis.file.controller';
     CronFileScheduler,
   ],
   controllers: [GrpcFileController, RedisFileController],
-  exports: [FileMapper],
+  exports: [FileMapper, FilePurgeService],
 })
 export class FileModule {}

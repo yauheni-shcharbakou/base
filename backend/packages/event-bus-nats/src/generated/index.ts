@@ -5,7 +5,8 @@ import { globalStreamRegistry } from '@/infrastructure/utils';
 import { NatsMessageContext } from '@/interface/contexts';
 import {
   EventBus,
-  ImageEventBus,
+  FileEventBus,
+  FilePurgeEvent,
   StorageObjectEventBus,
   StorageObjectParentUpdateEvent,
   UserEventBus,
@@ -60,20 +61,20 @@ export interface NatsUserCreateEventHandler {
   ): void | Promise<void> | Observable<void>;
 }
 
-const NatsImageEventPattern = {
-  DELETE: {
-    pattern: 'storage-image-delete',
+const NatsFileEventPattern = {
+  PURGE: {
+    pattern: 'storage-file-purge',
     registerStream: (): void => {
       globalStreamRegistry.append({
-        name: 'storage-image-stream',
-        subjects: ['storage-image-delete'],
+        name: 'storage-file-stream',
+        subjects: ['storage-file-purge'],
       });
     },
   },
 };
 
-export const NatsImageTransport = {
-  ...NatsImageEventPattern,
+export const NatsFileTransport = {
+  ...NatsFileEventPattern,
   /**
    * Binds the service's own events. The patterns stay bare subjects here —
    * `@NatsController({ consumer })` rewrites them into `<subject>@<consumerId>`,
@@ -81,28 +82,28 @@ export const NatsImageTransport = {
    */
   ControllerMethods: (): ClassDecorator => {
     const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage-image-delete')(
-        constructor.prototype['onDelete'],
-        'onDelete',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onDelete'),
+      EventPattern('storage-file-purge')(
+        constructor.prototype['onPurge'],
+        'onPurge',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onPurge'),
       );
-      NatsImageEventPattern.DELETE.registerStream();
+      NatsFileEventPattern.PURGE.registerStream();
     };
     return applyDecorators(methodsDecorator);
   },
-  EventBus: ImageEventBus,
+  EventBus: FileEventBus,
 } as const;
 
-export interface NatsImageEventController {
-  onDelete(
-    event: NestStorage.Image,
+export interface NatsFileEventController {
+  onPurge(
+    event: FilePurgeEvent,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
 }
 
-export interface NatsImageDeleteEventHandler {
-  onImageDelete(
-    event: NestStorage.Image,
+export interface NatsFilePurgeEventHandler {
+  onFilePurge(
+    event: FilePurgeEvent,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -271,17 +272,17 @@ class NatsUserEventBusClientImpl extends NatsClientImpl implements UserEventBus 
   }
 }
 
-class NatsImageEventBusClientImpl extends NatsClientImpl implements ImageEventBus {
+class NatsFileEventBusClientImpl extends NatsClientImpl implements FileEventBus {
   constructor(protected readonly client: NatsJetStreamClient) {
     super(client);
   }
 
-  emitDelete(event: NestStorage.Image): Promise<any> {
-    return this.client.emit('storage-image-delete', event);
+  emitPurge(event: FilePurgeEvent): Promise<any> {
+    return this.client.emit('storage-file-purge', event);
   }
 
-  emitManyDelete(events: NestStorage.Image[]): Promise<any[]> {
-    return this.client.emitMany('storage-image-delete', events);
+  emitManyPurge(events: FilePurgeEvent[]): Promise<any[]> {
+    return this.client.emitMany('storage-file-purge', events);
   }
 }
 
@@ -332,7 +333,7 @@ class NatsVideoEventBusClientImpl extends NatsClientImpl implements VideoEventBu
 export class NatsClientFactory {
   private static clientsMap = new Map<Abstract<EventBus>, Type>([
     [UserEventBus, NatsUserEventBusClientImpl],
-    [ImageEventBus, NatsImageEventBusClientImpl],
+    [FileEventBus, NatsFileEventBusClientImpl],
     [StorageObjectEventBus, NatsStorageObjectEventBusClientImpl],
     [VideoEventBus, NatsVideoEventBusClientImpl],
   ]);
@@ -362,8 +363,8 @@ export const NATS_HOST_STREAMS: Record<string, readonly NatsStreamData[]> = {
   ],
   storage: [
     {
-      name: 'storage-image-stream',
-      subjects: ['storage-image-delete'],
+      name: 'storage-file-stream',
+      subjects: ['storage-file-purge'],
     },
     {
       name: 'storage-storage-object-stream',

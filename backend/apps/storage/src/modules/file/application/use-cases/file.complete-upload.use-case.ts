@@ -1,4 +1,6 @@
+import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
@@ -18,6 +20,7 @@ export class FileCompleteUploadUseCase {
   constructor(
     private readonly fileRepository: FileRepository,
     private readonly storageFileService: StorageFileService,
+    private readonly filePurgeService: FilePurgeService,
   ) {}
 
   async execute({
@@ -59,7 +62,7 @@ export class FileCompleteUploadUseCase {
       await this.fileRepository.updateById(id, {
         set: { uploadStatus: NestStorage.FileUploadStatus.FAILED },
       });
-      await this.storageFileService.deleteFile(providerId);
+      await this.filePurgeService.purge([{ type: FilePurgeType.FILE, providerId }]);
 
       return left(new BadRequestException(`Uploaded ${storedSize.value} bytes, expected ${size}`));
     }

@@ -42,3 +42,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0013](0013-event-bus-fails-loud.md) | The event bus fails loudly where the cache fails soft | Accepted | `@backend/event-bus-redis`, `@backend/cache`, backend apps |
 | [0014](0014-video-uploads-bypass-the-backend.md) | Video bytes go browser → Bunny directly, and the callback lands on storage | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin` |
 | [0015](0015-file-uploads-presigned-s3-put.md) | File and image bytes go browser → Bunny Storage over a pre-signed S3 PUT, confirmed by a call | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin` |
+| [0016](0016-provider-purge-over-the-event-bus.md) | Provider objects are purged over the event bus, and deleted storage objects are swept by a cron | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis` |

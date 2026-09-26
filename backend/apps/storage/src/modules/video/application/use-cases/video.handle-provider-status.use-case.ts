@@ -1,5 +1,6 @@
-import { VideoEventBus } from '@backend/event-bus';
+import { FilePurgeType, VideoEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
 import { VideoRepository } from '@modules/video/domain/repositories/video.repository';
 import { Injectable, Logger } from '@nestjs/common';
@@ -39,6 +40,7 @@ export class VideoHandleProviderStatusUseCase {
     private readonly videoRepository: VideoRepository,
     private readonly storageVideoService: StorageVideoService,
     private readonly eventBus: VideoEventBus,
+    private readonly filePurgeService: FilePurgeService,
   ) {}
 
   // Bunny redelivers a status and repeats FINISHED, so this has to stay idempotent: every branch
@@ -114,7 +116,7 @@ export class VideoHandleProviderStatusUseCase {
     // upload status, the same way the streaming upload used to on error.
     await Promise.allSettled([
       this.eventBus.emitUploadFail(video),
-      this.storageVideoService.deleteVideo(video.providerId),
+      this.filePurgeService.purge([{ type: FilePurgeType.VIDEO, providerId: video.providerId }]),
     ]);
 
     this.logger.warn(`Video ${video.id} failed with provider status ${statusName}`);

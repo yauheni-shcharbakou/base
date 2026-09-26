@@ -2,6 +2,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { StoragePurgeUseCase } from './application/use-cases/storage.purge.use-case';
 import { StorageFileService } from './domain/services/storage.file.service';
 import { StorageVideoService } from './domain/services/storage.video.service';
 import {
@@ -11,6 +12,7 @@ import {
 import { FILE_S3_CLIENT, VIDEO_HTTP_CLIENT } from './infrastructure/constants/client.tokens';
 import { BunnyStorageFileServiceImpl } from './infrastructure/services/bunny.storage.file.service.impl';
 import { BunnyStorageVideoServiceImpl } from './infrastructure/services/bunny.storage.video.service.impl';
+import { RedisStorageController } from './interface/redis/redis.storage.controller';
 
 @Module({
   imports: [ConfigModule.forFeature(bunnyStorageConfig)],
@@ -59,7 +61,9 @@ import { BunnyStorageVideoServiceImpl } from './infrastructure/services/bunny.st
       provide: StorageVideoService,
       useClass: BunnyStorageVideoServiceImpl,
     },
+    StoragePurgeUseCase,
   ],
+  controllers: [RedisStorageController],
   exports: [StorageFileService, StorageVideoService],
 })
 export class StorageModule {}

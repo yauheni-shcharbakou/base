@@ -1,5 +1,6 @@
+import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
-import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { VideoRepository } from '@modules/video/domain/repositories/video.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
@@ -8,7 +9,7 @@ import { Either } from '@sweet-monads/either';
 export class VideoDeleteOneUseCase {
   constructor(
     private readonly videoRepository: VideoRepository,
-    private readonly storageVideoService: StorageVideoService,
+    private readonly filePurgeService: FilePurgeService,
   ) {}
 
   async execute(
@@ -37,7 +38,7 @@ export class VideoDeleteOneUseCase {
       return deletedVideo;
     }
 
-    await this.storageVideoService.deleteVideo(providerId);
+    await this.filePurgeService.purge([{ type: FilePurgeType.VIDEO, providerId }]);
     return video;
   }
 }

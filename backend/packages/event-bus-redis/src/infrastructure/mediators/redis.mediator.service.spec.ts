@@ -80,14 +80,14 @@ describe('RedisMediatorService', () => {
   describe('workers', () => {
     it('runs one worker per event the host owns', async () => {
       const deps = buildDeps();
-      const mediator = buildMediator(deps, ['storage.image.delete', 'storage.video.upload.finish']);
+      const mediator = buildMediator(deps, ['storage.file.purge', 'storage.video.upload.finish']);
 
       expect(mediator.getWorkerCount()).toBe(2);
 
       await mediator.onApplicationBootstrap();
 
       expect(workerInstances.map((worker) => worker.name)).toEqual([
-        'storage.image.delete',
+        'storage.file.purge',
         'storage.video.upload.finish',
       ]);
     });

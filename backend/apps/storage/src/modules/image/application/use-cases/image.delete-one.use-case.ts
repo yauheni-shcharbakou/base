@@ -1,7 +1,7 @@
-import { ImageEventBus } from '@backend/event-bus';
+import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
-import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 
@@ -9,8 +9,7 @@ import { Either } from '@sweet-monads/either';
 export class ImageDeleteOneUseCase {
   constructor(
     private readonly imageRepository: ImageRepository,
-    private readonly storageFileService: StorageFileService,
-    private readonly eventBus: ImageEventBus,
+    private readonly filePurgeService: FilePurgeService,
   ) {}
 
   async execute(
@@ -30,15 +29,13 @@ export class ImageDeleteOneUseCase {
       return deletedImage;
     }
 
-    const hooks: Promise<any>[] = [this.eventBus.emitDelete(deletedImage.value)];
     // Not gated on READY — the bytes of a direct upload can land before it is completed.
     const providerId = image.value.file.providerId;
 
     if (providerId) {
-      hooks.push(this.storageFileService.deleteFile(providerId));
+      await this.filePurgeService.purge([{ type: FilePurgeType.FILE, providerId }]);
     }
 
-    await Promise.allSettled(hooks);
     return image;
   }
 }

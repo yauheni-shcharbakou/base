@@ -1,5 +1,5 @@
 import type { NestAuth, NestStorage } from '@backend/proto';
-import { StorageObjectParentUpdateEvent } from './events';
+import { FilePurgeEvent, StorageObjectParentUpdateEvent } from './events';
 
 /**
  * @description Add new events with their types here
@@ -19,8 +19,10 @@ export interface EventBusStrategy {
     };
   };
   storage: {
-    image: {
-      delete: NestStorage.Image;
+    // Deletes one object from the provider once its rows are gone. The storage module consumes it,
+    // so a provider that refuses a delete is retried instead of leaving an orphan behind.
+    file: {
+      purge: FilePurgeEvent;
     };
     storageObject: {
       parentUpdate: StorageObjectParentUpdateEvent;

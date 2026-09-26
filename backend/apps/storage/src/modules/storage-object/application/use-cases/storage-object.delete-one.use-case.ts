@@ -1,25 +1,28 @@
 import { NestStorage } from '@backend/proto';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
-import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
-import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-import { Either, left } from '@sweet-monads/either';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { Either, left, right } from '@sweet-monads/either';
 
+/**
+ * Deletes a folder or a leaf by marking it — and, for a folder, everything under it — deleted. That
+ * hides it from the tree at once; the rows, and the objects at the provider, are removed later by
+ * the cleanup crons: the file cleanup takes the media under a deleted storage object (the leaf row
+ * goes with its file through the FK cascade), the storage-object cleanup takes the emptied folders.
+ * No restore — the mark exists so a large folder is deleted in one statement, not to be undone.
+ */
 @Injectable()
 export class StorageObjectDeleteOneUseCase {
-  constructor(
-    private readonly storageObjectRepository: StorageObjectRepository,
-    private readonly storageFileService: StorageFileService,
-    private readonly storageVideoService: StorageVideoService,
-  ) {}
+  constructor(private readonly storageObjectRepository: StorageObjectRepository) {}
 
   async execute(
     query: Partial<NestStorage.StorageObjectQuery>,
   ): Promise<Either<HttpException, NestStorage.StorageObject>> {
-    const entity = await this.storageObjectRepository.getOne<NestStorage.StorageObjectPopulated>(
-      query,
-      { populate: ['file', 'video'] },
-    );
+    const entity = await this.storageObjectRepository.getOne({ ...query, isDeleted: false });
 
     if (entity.isLeft()) {
       return entity;
@@ -31,55 +34,12 @@ export class StorageObjectDeleteOneUseCase {
       return left(new BadRequestException("You can't delete the root folder"));
     }
 
-    if (entity.value.isFolder) {
-      const hasFiles = await this.storageObjectRepository.isExists({ parent: entity.value.id });
+    const marked = await this.storageObjectRepository.markDeletedWithDescendants(entity.value.id);
 
-      if (hasFiles) {
-        return left(new BadRequestException("You can't delete folder with files"));
-      }
+    if (marked.isLeft()) {
+      return left(new InternalServerErrorException(marked.value.message));
     }
 
-    const deletedEntity = await this.storageObjectRepository.updateById(entity.value.id, {
-      set: {
-        isDeleted: true,
-      },
-    });
-
-    if (deletedEntity.isLeft() || deletedEntity.value.isFolder) {
-      return deletedEntity;
-    }
-
-    // No READY gate for either provider: a provider id alone means there may be something to purge.
-    switch (entity.value.type) {
-      case NestStorage.StorageObjectType.VIDEO: {
-        // A Bunny Stream object exists from `createVideo` onward, so its guid alone is proof there
-        // is something to delete — see the video delete use-case.
-        const providerId = entity.value.video?.providerId;
-
-        if (!providerId) {
-          break;
-        }
-
-        await this.storageVideoService.deleteVideo(providerId);
-        break;
-      }
-      case NestStorage.StorageObjectType.FILE:
-      case NestStorage.StorageObjectType.IMAGE: {
-        // Not gated on READY either: with a direct upload the bytes can land before
-        // `completeUpload` runs, and deleting an absent key is a no-op (ADR-0015).
-        const providerId = entity.value.file?.providerId;
-
-        if (!providerId) {
-          break;
-        }
-
-        await this.storageFileService.deleteFile(providerId);
-        break;
-      }
-      default:
-        break;
-    }
-
-    return deletedEntity;
+    return right(entity.value);
   }
 }

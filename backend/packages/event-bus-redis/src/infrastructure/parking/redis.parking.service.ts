@@ -16,8 +16,8 @@ export type RedisParkingParams = {
  *
  * Dropping them — the previous behaviour — silently loses the events emitted between the
  * first deploy of a new consumer and the moment it publishes its subscription. Failing the
- * job instead is not an option either: an event with no subscriber at all
- * (`storage.image.delete`) would exhaust its ten attempts and fill the DLQ. So the job is
+ * job instead is not an option either: an event with no subscriber at all would exhaust its
+ * ten attempts and fill the DLQ. So the job is
  * completed and its payload is parked, then replayed into a consumer's queue the first time
  * that consumer registers.
  *

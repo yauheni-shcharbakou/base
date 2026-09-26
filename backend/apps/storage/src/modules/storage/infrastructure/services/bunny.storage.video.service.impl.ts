@@ -102,6 +102,12 @@ export class BunnyStorageVideoServiceImpl implements StorageVideoService {
       await this.httpClient.delete(`videos/${providerId}`);
       return right(true);
     } catch (e) {
+      // Already gone is the outcome a delete wants. The purge consumer retries every failure, so
+      // treating a 404 as one would burn every attempt on a video that no longer exists.
+      if ((e as AxiosError)?.response?.status === 404) {
+        return right(true);
+      }
+
       return left(new InternalServerErrorException("Can't delete video from bunny stream"));
     }
   }
