@@ -12,8 +12,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Database } from '@packages/common';
 import { config } from './config';
 
-// TODO: implement deletion for folders with files
-
 @Module({
   imports: [
     ScheduleModule.forRoot(),
