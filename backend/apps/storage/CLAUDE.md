@@ -48,7 +48,11 @@ listener serves is public**; the signature guard, not the router, is what limits
 pnpm start:dev        # nest start --watch service
 pnpm build / typecheck / migrate (:new/:initial/:sql/:tasks) / lint
 pnpm storage:copy-zone  # one-off copy into a new storage zone — runbook in README.md
+pnpm test             # jest: use-cases and services, ports mocked
+pnpm test:e2e         # node:test: the deletion paths against Postgres (`pnpm docker:local`)
 ```
+- **Two runners.** `src/**/*.spec.ts` is Jest. `test/*.e2e-spec.ts` runs on `node:test` under ts-node, because it drives the real repositories and Jest cannot load MikroORM. Those specs cover the FK cascades, the subtree mark, the bottom-up folder delete, both sweeps of the file cleanup (stale uploads by status and TTL, media under a deleted object), and a whole folder delete end to end. `test/pg.e2e.ts` points them at a `storage_e2e` database it wipes and migrates from `src/migrator/migrations` on every run, and skips the suite when no server answers. Open the connection in a `before` hook, never in an async `describe` body: `node:test` exits 0 on an error thrown there.
+  > **Why not Jest:** [docs/adr/0017-database-specs-on-node-test.md](../../../docs/adr/0017-database-specs-on-node-test.md)
 - `scripts/` sits outside `src/`: `tsconfig.build.json` excludes it (otherwise `nest build` would emit `dist/src/main.js` and break `start:prod`), and `pnpm typecheck` is what type-checks it.
 - Event-bus handlers must stay idempotent (at-least-once redelivery, up to 10 BullMQ attempts).
 - Heavy cross-module wiring (`video` imports `file` + `storage-object` + `storage`) — check for cycles when adding deps.

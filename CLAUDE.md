@@ -89,9 +89,12 @@ Database migrations run inside a service directory — see `backend/CLAUDE.md`.
 file: `pnpm test -- path/to/file.spec.ts`). A package with no `*.spec.ts` under `src/` has no
 suite — there is no central list. Both turbo tasks depend on `^build`, because specs import
 sibling packages through their built `dist`; `test:e2e` is `cache: false` — whether a suite runs or
-skips depends on a reachable broker, which turbo cannot hash. The backend apps carry a jest config
-but no specs yet, so their `test`/`test:e2e` scripts pass `--passWithNoTests` to keep the repo-wide
-run green — **drop the flag from a service the moment it gets its first spec.**
+skips depends on a reachable broker or database, which turbo cannot hash. A backend app whose suite
+is still empty passes `--passWithNoTests` in that script to keep the repo-wide run green (both of
+`api-gateway`'s, `auth`'s `test:e2e`) — **drop the flag the moment the suite gets its first spec.**
+**Nothing that loads MikroORM runs under Jest:** MikroORM 7 is ESM-only and Jest's runtime has no
+`require(esm)`. A database spec runs on `node:test` instead — `backend.storage`'s `test:e2e` is the
+template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
 
 **Lint & strictness.**
 

@@ -25,7 +25,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
+    "test:e2e": "node --no-experimental-strip-types -r ts-node/register/transpile-only -r tsconfig-paths/register --test \"test/*.e2e-spec.ts\"",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
