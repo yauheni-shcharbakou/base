@@ -10,7 +10,6 @@ export default function ImageCreateMany() {
   return (
     <UploadManyPage
       resource={StorageDatabaseEntity.IMAGE}
-      fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
       createManyAction={async (filesBatch, form) => {
         return imageActionProvider.createMany(form.userId, filesBatch, {
@@ -18,7 +17,6 @@ export default function ImageCreateMany() {
           isPublic: form.isPublic,
         });
       }}
-      fileRefField="fileId"
       uploadFileAction={(file, entity) => {
         const { fileId, upload } = entity as CreatedImage;
         return uploadViaPresignedUrl(file, upload, fileId);

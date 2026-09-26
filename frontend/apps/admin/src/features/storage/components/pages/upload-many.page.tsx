@@ -12,10 +12,10 @@ import {
   StorageUploaderProps,
 } from '@/features/storage/components';
 import { useMultipleFileUpload } from '@/features/storage/hooks';
-import { StorageUploadItem, UploadFileAction } from '@/features/storage/types';
+import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { BrowserAuth, type BrowserCommon } from '@packages/proto';
+import { BrowserAuth } from '@packages/proto';
 import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
 import { useMemo } from 'react';
 import zod from 'zod';
@@ -30,8 +30,7 @@ const schema = {
 
 type Params = SchemaTypeOf<typeof schema>;
 
-type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
-  fileResource: string;
+type Props<Entity extends CreatedUploadEntity> = {
   resource: string;
   batchSize: number;
   uploaderProps?: Pick<StorageUploaderProps, 'dropzoneProps' | 'maxFiles' | 'allowedTypes'>;
@@ -43,12 +42,9 @@ type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
   // Same `Action`-suffix reason as `createManyAction`: it is a client function, not a server one.
   // Passed through to the hook — how each file's bytes go straight to the provider.
   uploadFileAction: UploadFileAction;
-  fileRefField?: keyof Entity | string;
 };
 
-export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId: string }>(
-  props: Props<Entity>,
-) => {
+export const UploadManyPage = <Entity extends CreatedUploadEntity>(props: Props<Entity>) => {
   const { data: user } = useGetIdentity<BrowserAuth.User>();
 
   const {
@@ -60,7 +56,7 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     handleDelete,
     addFiles,
   } = useMultipleFileUpload({
-    resource: props.fileResource,
+    resource: props.resource,
     uploadFileAction: props.uploadFileAction,
   });
 
@@ -100,7 +96,6 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
   const handleSave = async (data: Params) => {
     const isSuccess = await handleUpload<Entity>(
       async (batch) => props.createManyAction(batch, data),
-      props.fileRefField as keyof Entity,
       data.batchSize,
     );
 

@@ -10,7 +10,6 @@ export default function VideoCreateMany() {
   return (
     <UploadManyPage
       resource={StorageDatabaseEntity.VIDEO}
-      fileResource={StorageDatabaseEntity.VIDEO}
       batchSize={1}
       createManyAction={async (filesBatch, form) => {
         return videoActionProvider.createMany(form.userId, filesBatch, {

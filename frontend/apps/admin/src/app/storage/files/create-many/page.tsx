@@ -10,7 +10,6 @@ export default function FileCreateMany() {
   return (
     <UploadManyPage
       resource={StorageDatabaseEntity.FILE}
-      fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
       createManyAction={async (filesBatch, form) => {
         return fileActionProvider.createMany(form.userId, filesBatch, {

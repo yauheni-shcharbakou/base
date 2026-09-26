@@ -20,11 +20,20 @@ export type StorageData = Partial<
   Pick<BrowserStorage.StorageObjectCreate, 'parent' | 'isPublic' | 'name'>
 >;
 
+/**
+ * What the multi-upload hook needs from a created record: which selected file it answers, and when
+ * the credentials it came with stop working. `expires` is unix seconds for both the Bunny Stream
+ * TUS signature and the pre-signed Bunny Storage PUT.
+ */
+export type CreatedUploadEntity = BrowserCommon.IdField & {
+  uploadId: string;
+  upload: { expires: string };
+};
+
 export type StorageUploadItem = {
   file: File;
   uploadId: string;
-  entityId?: string;
-  // The record the create call returned. Kept alongside the id because a retry skips creation,
-  // and the upload needs the credentials that came with the entity, not just its id.
-  entity?: BrowserCommon.IdField & { uploadId: string };
+  // The record the create call returned, credentials included. Its presence is what lets a retry
+  // skip creation — until those credentials expire, when the item is created afresh.
+  entity?: CreatedUploadEntity;
 };

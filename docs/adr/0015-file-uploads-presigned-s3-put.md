@@ -74,10 +74,12 @@ Rejected alternatives:
 - **An abandoned upload is the cleanup cron's job,** as before. A PUT that landed but was never
   confirmed stays `PENDING` until `STORAGE_PENDING_FILE_TTL_HOURS`, and the cron then deletes the
   row and the object.
-- **A retry reuses the credentials of its first attempt.** The multi-upload hook keeps the created
-  entity so that a retry skips creation. A retry after `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES`
-  therefore fails with an expired signature, and the fix is to upload afresh. A batch signs every
-  file up front, which is why the default window is an hour rather than minutes.
+- **A retry reuses the credentials of its first attempt while they are still good.** The
+  multi-upload hook keeps the created entity so that a retry skips creation and leaves no second
+  row. Once `upload.expires` is within a few minutes, the retry drops that entity and creates the
+  item afresh, and the stale row is left to the cleanup cron. The same rule covers video's TUS
+  signature, which carries the same `expires`. A batch signs every file up front, which is why the
+  default window is an hour rather than minutes.
 - **Dependence on a preview API.** Bunny's S3 layer is in preview: CORS is fixed at `*`, the zone
   allows 500 requests per second, and some error codes differ from AWS. If presigned PUTs
   regress, the fallback is the server-side streamed `PutObject` of the zone-move commit, which
