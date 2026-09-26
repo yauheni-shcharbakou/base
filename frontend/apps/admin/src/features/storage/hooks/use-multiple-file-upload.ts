@@ -2,6 +2,7 @@
 
 import { getErrorMessage } from '@/common/helpers';
 import { deleteOne } from '@/features/grpc/actions';
+import { attachCreatedEntities, planUploadBatch } from '@/features/storage/helpers/upload-batch';
 import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
 import { useCallback, useState } from 'react';
@@ -16,15 +17,6 @@ type Params = {
 
 type StorageUploadMap = {
   [id: string]: StorageUploadItem;
-};
-
-// Credentials this close to expiry are not worth reusing: the pre-signed PUT is only checked when
-// the request starts, but a TUS upload is checked on every PATCH and could die halfway through.
-const CREDENTIALS_EXPIRY_MARGIN_MS = 5 * 60 * 1000;
-
-const hasUsableCredentials = (entity: CreatedUploadEntity): boolean => {
-  const expiresAt = Number(entity.upload.expires) * 1000;
-  return Number.isFinite(expiresAt) && expiresAt - CREDENTIALS_EXPIRY_MARGIN_MS > Date.now();
 };
 
 export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) => {
@@ -153,31 +145,14 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
       for (let i = 0; i < ids.length; i += batchSize) {
         const batch = ids.slice(i, i + batchSize).map((uploadId) => uploadMap[uploadId]);
 
-        const createItems = batch.filter(({ entity }) => !entity || !hasUsableCredentials(entity));
+        const { toCreate, reused: entityByUploadId } = planUploadBatch(batch);
 
-        const entityByUploadId = new Map<string, CreatedUploadEntity>(
-          batch
-            .filter(({ entity }) => entity && hasUsableCredentials(entity))
-            .map(({ uploadId, entity }) => [uploadId, entity!]),
-        );
-
-        if (createItems.length) {
+        if (toCreate.length) {
           try {
-            const entities = await createCallback(createItems);
+            const entities = await createCallback(toCreate);
 
             entities.forEach((entity) => entityByUploadId.set(entity.uploadId, entity));
-
-            setUploadMap((prev) => {
-              const newMap = { ...prev };
-
-              for (const entity of entities) {
-                if (newMap[entity.uploadId]) {
-                  newMap[entity.uploadId] = { ...newMap[entity.uploadId], entity };
-                }
-              }
-
-              return newMap;
-            });
+            setUploadMap((prev) => attachCreatedEntities(prev, entities));
           } catch (error) {
             // The items stay in the map without an entity, so the next attempt creates them. The
             // rest of the batch and the batches after it still go ahead.

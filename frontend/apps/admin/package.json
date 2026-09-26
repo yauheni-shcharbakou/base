@@ -10,6 +10,7 @@
     "start": "refine start",
     "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "refine": "refine",
+    "test": "jest",
     "reset": "rm -rf .next .turbo node_modules",
     "reset:modules": "rm -rf node_modules"
   },
@@ -48,10 +49,32 @@
   "devDependencies": {
     "@packages/configs": "workspace:*",
     "@refinedev/cli": "2.16.52",
+    "@types/jest": "catalog:",
     "@types/js-cookie": "3.0.6",
     "@types/lodash": "catalog:",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.2",
-    "cross-env": "10.1.0"
+    "cross-env": "10.1.0",
+    "jest": "catalog:",
+    "ts-jest": "catalog:"
+  },
+  "jest": {
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "commonjs",
+            "target": "ES2021"
+          }
+        }
+      ]
+    },
+    "testEnvironment": "node"
   }
 }
