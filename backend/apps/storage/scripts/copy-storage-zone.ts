@@ -26,6 +26,7 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3';
 import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { ReadableStream } from 'node:stream/web';
 import { parseArgs } from 'node:util';
@@ -264,7 +265,7 @@ const run = async () => {
   process.stdout.write('\n');
 
   if (problems.length) {
-    const reportPath = `copy-storage-zone.${mode}.json`;
+    const reportPath = join(__dirname, `copy-storage-zone.${mode}.json`);
     writeFileSync(reportPath, JSON.stringify(problems, null, 2));
     console.log(`${problems.length} keys need attention → ${reportPath}`);
   }
