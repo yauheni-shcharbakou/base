@@ -6,9 +6,11 @@ import {
   ULIDField,
 } from '@common/application/decorators/field.decorator.dto';
 import { UpdateByIdRequestDto } from '@common/application/dto/grpc-types.dto';
+import { IsStorageObjectName } from '@common/application/dto/storage/storage-meta.dto';
 
 class StorageObjectUpdateSetDto implements NestStorage.StorageObjectUpdateSet {
   @StringField({ required: false })
+  @IsStorageObjectName()
   name?: string;
 
   @BooleanField({ required: false })

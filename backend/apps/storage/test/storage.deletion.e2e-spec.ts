@@ -1,6 +1,6 @@
 import './pg.e2e';
 import { FileEventBus, FilePurgeEvent, FilePurgeType } from '@backend/event-bus';
-import { NestStorage } from '@backend/proto';
+import { NestCommon, NestStorage } from '@backend/proto';
 import { Config } from '@/config';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
@@ -8,19 +8,25 @@ import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entit
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { FileCleanupUseCase } from '@modules/file/application/use-cases/file.cleanup.use-case';
+import { StorageObjectPlacementService } from '@modules/storage-object/application/services/storage-object.placement.service';
+import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { PgFileRepositoryImpl } from '@modules/file/infrastructure/pg/repositories/pg.file.repository.impl';
 import { PgImageRepositoryImpl } from '@modules/image/infrastructure/pg/repositories/pg.image.repository.impl';
 import { StorageObjectCleanupUseCase } from '@modules/storage-object/application/use-cases/storage-object.cleanup.use-case';
+import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { PgVideoRepositoryImpl } from '@modules/video/infrastructure/pg/repositories/pg.video.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
+import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { left } from '@sweet-monads/either';
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
 import { startOrm } from './pg.e2e';
 
 const USER_ID = '01JQ0000000000000000000000';
+const OTHER_USER_ID = '01JQ0000000000000000000009';
 
 type Table = 'files' | 'images' | 'videos' | 'storage-objects';
 
@@ -111,7 +117,13 @@ describe('storage deletion against Postgres', () => {
     providerId,
   });
 
-  const placement = (parent: string) => ({ name: 'object.bin', isPublic: false, parent });
+  // A name of its own for every leaf: names are unique per folder, and the database enforces it.
+  let leafCount = 0;
+  const placement = (parent: string) => ({
+    name: `object-${++leafCount}.bin`,
+    isPublic: false,
+    parent,
+  });
 
   const placeFile = async (
     parent: string,
@@ -174,6 +186,292 @@ describe('storage deletion against Postgres', () => {
 
   const purgeKeys = (events: FilePurgeEvent[]) =>
     events.map(({ type, providerId }) => `${type}:${providerId}`).sort();
+
+  // A media create places its row under the owner's tree lock; the repository's own transaction has
+  // to join the lock's, or the lock would be released before the row it guards is written.
+  describe('placeLeaves', () => {
+    const placementService = () =>
+      new StorageObjectPlacementService(
+        storageObjectRepository,
+        new StorageObjectValidationService(storageObjectRepository),
+      );
+
+    withDb('saves a placed file in the lock’s transaction, and rolls back with it', async () => {
+      const result = await placementService().placeLeaves(
+        {
+          userId: USER_ID,
+          parent: root,
+          type: NestStorage.StorageObjectType.FILE,
+          names: ['object.bin'],
+        },
+        async (leaves) => {
+          const saved = await fileRepository.saveAndPlaceOne({
+            file: { ...fileMeta('dev/file'), userId: USER_ID, uploadId: 'upload' },
+            storageObject: leaves?.[0],
+          });
+          assert.ok(saved.isRight());
+
+          return left(new Error('refused after the save'));
+        },
+      );
+
+      assert.equal(result.isLeft() && result.value.message, 'refused after the save');
+      assert.equal(await count('files'), 0);
+      assert.equal(await count('storage-objects', 'is_folder = false'), 0);
+    });
+
+    withDb('places a leaf with the folder’s visibility and a free name', async () => {
+      await placeFile(root, 'dev/first');
+      await em
+        .getConnection()
+        .execute('update "storage-objects" set is_public = true where id = ?', [root]);
+
+      const file = await placementService().placeLeaves(
+        {
+          userId: USER_ID,
+          parent: root,
+          type: NestStorage.StorageObjectType.FILE,
+          names: [`object-${leafCount}.bin`],
+        },
+        (leaves) =>
+          fileRepository.saveAndPlaceOne({
+            file: { ...fileMeta('dev/second'), userId: USER_ID, uploadId: 'upload' },
+            storageObject: leaves?.[0],
+          }),
+      );
+
+      assert.ok(file.isRight());
+      assert.equal(
+        await count('storage-objects', 'file_id = ? and is_public and name = ?', [
+          file.value.id,
+          `object-${leafCount} (1).bin`,
+        ]),
+        1,
+      );
+    });
+  });
+
+  // A leaf created over media that already exists. Deleting a leaf deletes the media under it, so a
+  // leaf over another user's media would let its owner delete that media.
+  describe('placing existing media', () => {
+    const createOne = () =>
+      new StorageObjectCreateOneUseCase(
+        storageObjectRepository,
+        new StorageObjectValidationService(storageObjectRepository),
+      );
+
+    const leafRequest = (
+      type: NestStorage.StorageObjectType,
+      media: Partial<Record<'file' | 'image' | 'video', string>>,
+    ): NestStorage.StorageObjectCreate => ({
+      name: `object-${++leafCount}.bin`,
+      isPublic: false,
+      parent: root,
+      userId: USER_ID,
+      type,
+      ...media,
+    });
+
+    const unplacedFile = async (userId: string, providerId: string) =>
+      (
+        await fileRepository.saveAndPlaceOne({
+          file: { ...fileMeta(providerId), userId, uploadId: 'upload' },
+        })
+      ).unwrap();
+
+    withDb('refuses another user’s file, which the cleanup then leaves alone', async () => {
+      const foreign = await unplacedFile(OTHER_USER_ID, 'dev/foreign');
+
+      const created = await createOne().execute(
+        leafRequest(NestStorage.StorageObjectType.FILE, { file: foreign.id }),
+      );
+
+      assert.ok(created.isLeft() && created.value.message === 'File not found');
+      assert.equal(await count('storage-objects', 'file_id = ?', [foreign.id]), 0);
+
+      await storageObjectRepository.markDeletedWithDescendants(root);
+      await fileCleanup().execute();
+
+      assert.equal(await exists('files', foreign.id), true);
+      assert.deepEqual(purged, []);
+    });
+
+    withDb('places the owner’s file, and deleting the leaf deletes the file', async () => {
+      const own = await unplacedFile(USER_ID, 'dev/own');
+
+      const leaf = (
+        await createOne().execute(leafRequest(NestStorage.StorageObjectType.FILE, { file: own.id }))
+      ).unwrap();
+
+      await storageObjectRepository.markDeletedWithDescendants(leaf.id);
+      await fileCleanup().execute();
+
+      assert.equal(await exists('files', own.id), false);
+      assert.deepEqual(purgeKeys(purged), [`${FilePurgeType.FILE}:dev/own`]);
+    });
+
+    withDb('places an image together with the file behind it', async () => {
+      const image = (
+        await imageRepository.saveAndPlaceOne({
+          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          file: fileMeta('dev/image'),
+        })
+      ).unwrap();
+
+      const leaf = await createOne().execute(
+        leafRequest(NestStorage.StorageObjectType.IMAGE, { image: image.id }),
+      );
+
+      assert.ok(leaf.isRight());
+      assert.equal(
+        await count('storage-objects', 'image_id = ? and file_id = ?', [image.id, image.fileId]),
+        1,
+      );
+    });
+
+    withDb('refuses media placed already, and a file behind an image', async () => {
+      const placed = await placeFile(root, 'dev/placed');
+      const image = await placeImage(root, 'dev/image');
+
+      const again = await createOne().execute(
+        leafRequest(NestStorage.StorageObjectType.FILE, { file: placed.id }),
+      );
+      const backing = await createOne().execute(
+        leafRequest(NestStorage.StorageObjectType.FILE, { file: image.fileId }),
+      );
+
+      assert.ok(again.isLeft() && again.value instanceof BadRequestException);
+      assert.ok(backing.isLeft() && backing.value instanceof BadRequestException);
+    });
+
+    // An image's status is its backing file's.
+    withDb('refuses a file or an image whose upload is not READY', async () => {
+      const pending = (
+        await fileRepository.saveAndPlaceOne({
+          file: {
+            ...fileMeta('dev/pending', NestStorage.FileUploadStatus.PENDING),
+            userId: USER_ID,
+            uploadId: 'upload',
+          },
+        })
+      ).unwrap();
+      const image = (
+        await imageRepository.saveAndPlaceOne({
+          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          file: fileMeta('dev/image', NestStorage.FileUploadStatus.FAILED),
+        })
+      ).unwrap();
+
+      const file = await createOne().execute(
+        leafRequest(NestStorage.StorageObjectType.FILE, { file: pending.id }),
+      );
+      const placedImage = await createOne().execute(
+        leafRequest(NestStorage.StorageObjectType.IMAGE, { image: image.id }),
+      );
+
+      assert.ok(file.isLeft() && file.value.message === 'This file is not uploaded yet');
+      assert.ok(
+        placedImage.isLeft() && placedImage.value.message === 'This image is not uploaded yet',
+      );
+    });
+  });
+
+  // What a media picker asks for: the owner's media that nothing places yet and that is READY.
+  // `getList` answers a failed query with an empty page, so every case expects rows back.
+  describe('media lists', () => {
+    const filter = (field: string, value: string | boolean): NestCommon.LogicalFilter => ({
+      field,
+      operator: NestCommon.LogicalOperator.eq,
+      ...(typeof value === 'boolean' ? { boolean: value } : { string: value }),
+    });
+
+    const placeable = (isPlaced = false) => [
+      filter('userId', USER_ID),
+      filter('isPlaced', isPlaced),
+      filter('uploadStatus', NestStorage.FileUploadStatus.READY),
+    ];
+
+    const ids = (page: { items: { id: string }[] }) => page.items.map(({ id }) => id).sort();
+
+    const unplaced = async (
+      userId: string,
+      providerId: string,
+      status = NestStorage.FileUploadStatus.READY,
+    ) =>
+      (
+        await fileRepository.saveAndPlaceOne({
+          file: { ...fileMeta(providerId, status), userId, uploadId: 'upload' },
+        })
+      ).unwrap();
+
+    withDb('lists the owner’s unplaced READY files only', async () => {
+      const free = await unplaced(USER_ID, 'dev/free');
+      const placed = await placeFile(root, 'dev/placed');
+      await unplaced(OTHER_USER_ID, 'dev/foreign');
+      await unplaced(USER_ID, 'dev/pending', NestStorage.FileUploadStatus.PENDING);
+
+      em.clear();
+      const unplacedPage = await fileRepository.getList({ logicalFilters: placeable() });
+      const placedPage = await fileRepository.getList({ logicalFilters: placeable(true) });
+
+      assert.deepEqual(ids(unplacedPage), [free.id]);
+      assert.deepEqual(ids(placedPage), [placed.id]);
+    });
+
+    // A file behind an image or a video is placed through that media, never as a file.
+    withDb('leaves out a file that backs an image or a video', async () => {
+      const free = await unplaced(USER_ID, 'dev/free');
+      const image = (
+        await imageRepository.saveAndPlaceOne({
+          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          file: fileMeta('dev/image'),
+        })
+      ).unwrap();
+
+      em.clear();
+      const plain = await fileRepository.getList({
+        logicalFilters: [...placeable(), filter('isBacking', false)],
+      });
+      const backing = await fileRepository.getList({
+        logicalFilters: [...placeable(), filter('isBacking', true)],
+      });
+
+      assert.deepEqual(ids(plain), [free.id]);
+      assert.deepEqual(ids(backing), [image.fileId]);
+    });
+
+    withDb('filters images and videos on their backing file’s status', async () => {
+      const image = (
+        await imageRepository.saveAndPlaceOne({
+          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          file: fileMeta('dev/image'),
+        })
+      ).unwrap();
+      await imageRepository.saveAndPlaceOne({
+        image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+        file: fileMeta('dev/pending-image', NestStorage.FileUploadStatus.PENDING),
+      });
+      await placeImage(root, 'dev/placed-image');
+
+      const video = (
+        await videoRepository.saveAndPlaceOne({
+          video: { title: 'video', providerId: 'guid', userId: USER_ID, uploadId: 'upload' },
+          file: fileMeta(undefined),
+        })
+      ).unwrap();
+      await videoRepository.saveAndPlaceOne({
+        video: { title: 'video', providerId: 'encoding', userId: USER_ID, uploadId: 'upload' },
+        file: fileMeta(undefined, NestStorage.FileUploadStatus.UPLOADED),
+      });
+
+      em.clear();
+      const images = await imageRepository.getList({ logicalFilters: placeable() });
+      const videos = await videoRepository.getList({ logicalFilters: placeable() });
+
+      assert.deepEqual(ids(images), [image.id]);
+      assert.deepEqual(ids(videos), [video.id]);
+    });
+  });
 
   describe('deleteWithFile', () => {
     withDb('takes an image’s file row and storage object with it', async () => {
@@ -288,8 +586,8 @@ describe('storage deletion against Postgres', () => {
       for (const expected of [c, b, a]) {
         assert.equal((await storageObjectRepository.deleteEmptyDeletedFolders()).unwrap(), 1);
         assert.equal(await exists('storage-objects', expected), false);
-        // `parent_id` is `on delete set null`: a parent removed first would orphan its child
-        // into a root.
+        // Never a parent first: `parent_id` is `on delete no action`, so that would fail the
+        // statement — and before, under `set null`, turned the child into a second root.
         assert.equal(await count('storage-objects', 'parent_id is null'), 1);
       }
 

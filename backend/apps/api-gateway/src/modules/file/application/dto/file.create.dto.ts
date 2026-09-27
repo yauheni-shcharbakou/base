@@ -5,12 +5,17 @@ import {
   StringField,
   ULIDField,
 } from '@common/application/decorators/field.decorator.dto';
-import { StorageMetaDto } from '@common/application/dto/storage/storage-meta.dto';
+import {
+  IsStorageObjectName,
+  StorageMetaDto,
+} from '@common/application/dto/storage/storage-meta.dto';
 import { OmitType } from '@nestjs/swagger';
 import { IsPositive } from 'class-validator';
 
 export class FileCreateDto implements NestStorage.FileCreate {
+  // A placed batch names each leaf after its file.
   @StringField()
+  @IsStorageObjectName()
   originalName: string;
 
   @NumberField()

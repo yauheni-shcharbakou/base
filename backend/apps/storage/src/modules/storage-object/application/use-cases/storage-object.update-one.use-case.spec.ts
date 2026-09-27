@@ -2,12 +2,13 @@ import { NestStorage } from '@backend/proto';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import { StorageObjectUpdateOneUseCase } from './storage-object.update-one.use-case';
 
 const folder = {
   id: 'folder-1',
+  userId: 'owner',
   name: 'docs',
   isFolder: true,
   isPublic: false,
@@ -30,7 +31,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((work: () => Promise<unknown>) => work()),
+      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
       getOne: jest.fn().mockResolvedValue(right(folder)),
       getAllChildrenIds: jest.fn().mockResolvedValue(right(new Set(['child-folder']))),
       updateAndCascadePublic: jest.fn().mockResolvedValue(right(folder)),
@@ -52,7 +53,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
     const result = await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
 
     expect(result.isRight()).toBe(true);
-    expect(validation.validatePlacement).toHaveBeenCalledWith('target', folder.id);
+    expect(validation.validatePlacement).toHaveBeenCalledWith('target', 'owner', folder.id);
     expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
       set: { parent: 'target', isPublic: true },
     });
@@ -77,9 +78,9 @@ describe('StorageObjectUpdateOneUseCase', () => {
       expect(result.isRight()).toBe(true);
       expect(validation.validateNameIsFree).toHaveBeenCalledWith({
         id: folder.id,
+        userId: 'owner',
         name: 'papers',
         parent: folder.parentId,
-        isFolder: true,
       });
       expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
         set: { name: 'papers' },
@@ -91,9 +92,9 @@ describe('StorageObjectUpdateOneUseCase', () => {
 
       expect(validation.validateNameIsFree).toHaveBeenCalledWith({
         id: folder.id,
+        userId: 'owner',
         name: folder.name,
         parent: 'target',
-        isFolder: true,
       });
     });
 
@@ -102,9 +103,9 @@ describe('StorageObjectUpdateOneUseCase', () => {
 
       expect(validation.validateNameIsFree).toHaveBeenCalledWith({
         id: folder.id,
+        userId: 'owner',
         name: 'papers',
         parent: 'target',
-        isFolder: true,
       });
       expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
         set: { name: 'papers', parent: 'target', isPublic: true },
@@ -115,13 +116,13 @@ describe('StorageObjectUpdateOneUseCase', () => {
     it('refuses a taken name and writes nothing', async () => {
       const file = { ...folder, name: 'a.txt', isFolder: false } as StorageObject;
       repository.getOne.mockResolvedValue(right(file));
-      validation.validateNameIsFree.mockResolvedValue(left(new BadRequestException()));
+      validation.validateNameIsFree.mockResolvedValue(left(new ConflictException()));
 
       const result = await useCase.execute(byId(file.id), { set: { name: 'b.txt' } });
 
-      expect(result.isLeft() && result.value).toBeInstanceOf(BadRequestException);
+      expect(result.isLeft() && result.value).toBeInstanceOf(ConflictException);
       expect(validation.validateNameIsFree).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'b.txt', isFolder: false }),
+        expect.objectContaining({ name: 'b.txt' }),
       );
       expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
     });
@@ -170,15 +171,17 @@ describe('StorageObjectUpdateOneUseCase', () => {
     expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
   });
 
-  // Two opposite moves checked outside it would both pass and close a cycle together.
-  it('reads, checks and writes only inside the tree lock', async () => {
+  // Two opposite moves checked outside it would both pass and close a cycle together. The one read
+  // before it only names whose tree to lock; the owner never changes, so it cannot go stale.
+  it('checks and writes only inside the owner’s tree lock', async () => {
     const failure = new Error('connection lost');
     repository.withTreeLock.mockResolvedValue(left(failure));
 
     const result = await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
 
     expect(result.isLeft() && result.value).toBe(failure);
-    expect(repository.getOne).not.toHaveBeenCalled();
+    expect(repository.withTreeLock).toHaveBeenCalledWith('owner', expect.any(Function));
+    expect(repository.getOne).toHaveBeenCalledTimes(1);
     expect(repository.getAllChildrenIds).not.toHaveBeenCalled();
     expect(validation.validatePlacement).not.toHaveBeenCalled();
     expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
@@ -193,12 +196,22 @@ describe('StorageObjectUpdateOneUseCase', () => {
     expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
   });
 
-  it('reports a missing object as not found', async () => {
+  it('reports a missing object as not found, without taking a lock', async () => {
     repository.getOne.mockResolvedValue(left(new NotFoundException()));
 
     const result = await useCase.execute(byId('missing'), { set: { isPublic: true } });
 
     expect(result.isLeft() && result.value).toBeInstanceOf(NotFoundException);
+    expect(repository.withTreeLock).not.toHaveBeenCalled();
     expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
+  });
+
+  // A deleted object waits for the cleanup; moving it back into a live folder would not revive it.
+  it('looks only among objects that are not deleted', async () => {
+    await useCase.execute(byId(folder.id), { set: { name: 'papers' } });
+
+    expect(repository.getOne).toHaveBeenCalledTimes(2);
+    expect(repository.getOne).toHaveBeenNthCalledWith(1, { ...byId(folder.id), isDeleted: false });
+    expect(repository.getOne).toHaveBeenNthCalledWith(2, { ...byId(folder.id), isDeleted: false });
   });
 });

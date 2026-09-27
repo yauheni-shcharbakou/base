@@ -1,6 +1,6 @@
 # 0019 — Writes to the storage-object tree run under one advisory lock
 
-**Status:** Accepted (2026-09-27)
+**Status:** Superseded in part by 0021 (2026-09-27) — the lock key is per owner, and creates take it
 **Applies to:** `backend.storage`
 
 ## Context

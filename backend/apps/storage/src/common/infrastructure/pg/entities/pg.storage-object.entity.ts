@@ -4,18 +4,25 @@ import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entit
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { Collection, Ref } from '@mikro-orm/core';
 import {
+  Check,
   Formula,
   Index,
   ManyToOne,
   OneToMany,
   OneToOne,
   Property,
+  Unique,
 } from '@mikro-orm/decorators/legacy';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageDatabaseEntity } from '@packages/common';
 import { PgFileEntity } from './pg.file.entity';
 
 export const ROOT_FOLDER_UNIQUE_INDEX = 'storage-objects_root_folder_unique';
+export const NAME_UNIQUE_INDEX = 'storage-objects_name_unique';
+export const OWNER_ID_UNIQUE = 'storage-objects_owner_id_unique';
+export const PARENT_OWNER_FOREIGN_KEY = 'storage-objects_parent_owner_foreign';
+
+const TABLE = StorageDatabaseEntity.STORAGE_OBJECT;
 
 // Moves check for a cycle under the tree lock, so only a row written outside the service can close
 // one; the bound keeps a read of such a row from recursing forever. Real trees are nowhere near
@@ -31,39 +38,84 @@ const MAX_FOLDER_DEPTH = 64;
   name: ROOT_FOLDER_UNIQUE_INDEX,
   expression:
     `create unique index "${ROOT_FOLDER_UNIQUE_INDEX}" ` +
-    `on "${StorageDatabaseEntity.STORAGE_OBJECT}" ("user_id") ` +
+    `on "${TABLE}" ("user_id") ` +
     `where "is_folder" = true and "parent_id" is null`,
 })
-@PgSchema({ tableName: StorageDatabaseEntity.STORAGE_OBJECT })
+/**
+ * A name is unique among a folder's live objects, folders and files alike. Creates and edits check
+ * it under the owner's tree lock; this is the backstop for a row written any other way. A deleted
+ * object drops out of it and frees its name at once.
+ */
+@Index({
+  name: NAME_UNIQUE_INDEX,
+  expression:
+    `create unique index "${NAME_UNIQUE_INDEX}" ` +
+    `on "${TABLE}" ("parent_id", "name") ` +
+    `where "is_deleted" = false`,
+})
+/**
+ * The target of `storage-objects_parent_owner_foreign`, which the migration declares in SQL —
+ * `(user_id, parent_id) references (user_id, id)`: a parent is always a row of the same owner, so no
+ * `parent` link crosses two users' trees, whoever writes the row. MikroORM cannot express a foreign
+ * key onto a non-primary key, which is why `parent` creates none of its own. `user_id` leads, so
+ * this also serves every lookup by owner.
+ */
+@Unique({ name: OWNER_ID_UNIQUE, properties: ['userId', 'id'] })
+@Check({ name: 'storage-objects_parent_not_self_check', expression: '"parent_id" <> "id"' })
+@Check({
+  name: 'storage-objects_is_folder_check',
+  expression: `"is_folder" = ("type" = '${NestStorage.StorageObjectType.FOLDER}')`,
+})
+// A leaf is always placed; only a root folder has no parent.
+@Check({
+  name: 'storage-objects_leaf_placed_check',
+  expression: '"is_folder" or "parent_id" is not null',
+})
+// `folderPath` joins names with '/', so a name holding one would read as two levels. Only the root
+// folder is nameless.
+@Check({
+  name: 'storage-objects_name_check',
+  expression: `strpos("name", '/') = 0 and ("name" <> '' or "parent_id" is null)`,
+})
+@PgSchema({ tableName: TABLE })
 export class PgStorageObjectEntity
   extends PgEntity<'children' | 'isDeleted' | 'fileId' | 'imageId' | 'videoId' | 'parentId'>
   implements StorageObject
 {
-  @Property({ index: true })
+  // Never changes after insert: the tree lock is keyed by it and read before the lock is taken.
+  // Lookups by owner use the leading column of `storage-objects_owner_id_unique`.
+  @Property()
   userId: string;
 
-  @Property({ index: true })
+  // No single-column index on `name` or the flags below: none is selective on its own, and an
+  // index on a column the subtree `UPDATE`s rewrite (`is_public`, `is_deleted`) rules out a HOT
+  // update for every row they touch. Names are found through the per-folder unique index.
+  @Property()
   name: string;
 
-  @Property({ index: true, default: false })
+  @Property({ default: false })
   isPublic: boolean;
 
-  @Property({ index: true, default: false })
+  @Property({ default: false })
   isFolder: boolean;
 
-  @Property({ index: true, default: false })
+  @Property({ default: false })
   isDeleted = false;
 
-  @PgProp.Enum({ enum: NestStorage.StorageObjectType, index: true })
+  @PgProp.Enum({ enum: NestStorage.StorageObjectType })
   type: NestStorage.StorageObjectType;
 
   // Indexed for the subtree walks (the `isPublic` cascade, the delete mark, the cleanup sweep),
-  // which step down one level at a time by `parent_id`.
+  // which step down one level at a time by `parent_id`. Its foreign key is the owner-scoped
+  // `storage-objects_parent_owner_foreign` (see the class), declared in the migration, and it is
+  // `no action` on delete: folders go leaves first, so a parent deleted ahead of a child is a bug to
+  // fail on, not a subfolder to turn silently into a second root.
   @ManyToOne({
     entity: () => PgStorageObjectEntity,
     nullable: true,
     ref: true,
     index: true,
+    createForeignKeyConstraint: false,
   })
   parent?: Ref<PgStorageObjectEntity>;
 

@@ -1,5 +1,5 @@
 import { PgRepositoryImpl } from '@backend/pg';
-import { NestCommon } from '@backend/proto';
+import { NestCommon, NestStorage } from '@backend/proto';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { Logger } from '@nestjs/common';
 import { LockMode, QueryResult } from '@mikro-orm/core';
@@ -8,6 +8,9 @@ import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
   StorageObjectCreate,
+  StorageObjectLeafType,
+  StorageObjectMedia,
+  StorageObjectMediaQuery,
   StorageObjectQuery,
   StorageObjectRepository,
   StorageObjectUpdate,
@@ -17,10 +20,18 @@ import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { PgStorageObjectMapper } from '../mappers/pg.storage-object.mapper';
 
-// One key for every user's tree. A key per user would stop two opposite moves from closing a cycle
-// only if no `parent` link crossed two users, and placement does not check the owner. Tree writes
-// are rare admin actions, so one queue for all of them costs nothing measurable.
+// The lock's first key; the owner's id is the second. A per-owner key is enough to stop two
+// opposite moves from closing a cycle because no `parent` link crosses two users: placement
+// refuses another user's folder, and `storage-objects_parent_owner_foreign` refuses such a row
+// whoever writes it. Two owners whose ids hash alike only queue behind each other.
 const TREE_LOCK = `${StorageDatabaseEntity.STORAGE_OBJECT}.tree`;
+
+// The storage-object column that references each kind of media.
+const MEDIA_COLUMN: Record<StorageObjectLeafType, string> = {
+  [NestStorage.StorageObjectType.FILE]: 'file_id',
+  [NestStorage.StorageObjectType.IMAGE]: 'image_id',
+  [NestStorage.StorageObjectType.VIDEO]: 'video_id',
+};
 
 // Carries a `left` out of `em.transactional`, which rolls back only when its callback throws.
 class TreeWriteRejected extends Error {
@@ -76,7 +87,10 @@ export class PgStorageObjectRepositoryImpl
     }
   }
 
-  async withTreeLock<T>(work: () => Promise<Either<Error, T>>): Promise<Either<Error, T>> {
+  async withTreeLock<T>(
+    userId: string,
+    work: () => Promise<Either<Error, T>>,
+  ): Promise<Either<Error, T>> {
     try {
       // Repository calls inside `work` join this transaction through MikroORM's transaction
       // context. `clear` gives it an empty identity map, so no check reads an entity cached before
@@ -85,7 +99,10 @@ export class PgStorageObjectRepositoryImpl
         async (em) => {
           // Transaction-scoped: the commit or the rollback releases it, so it never outlives `work`.
           // A waiter holds its pool connection while it waits.
-          await em.execute('select pg_advisory_xact_lock(hashtext(?))', [TREE_LOCK]);
+          await em.execute('select pg_advisory_xact_lock(hashtext(?), hashtext(?))', [
+            TREE_LOCK,
+            userId,
+          ]);
 
           const result = await work();
 
@@ -143,8 +160,15 @@ export class PgStorageObjectRepositoryImpl
 
       return right(updated);
     } catch (error) {
-      this.logger.error(`Failed to update storage object ${id}`, error);
-      return left(error);
+      // A rename onto a taken name, written past the service's check, is a conflict like the
+      // check's own refusal — not a server error.
+      const repositoryError = this.toRepositoryError(error);
+
+      if (repositoryError === error) {
+        this.logger.error(`Failed to update storage object ${id}`, error);
+      }
+
+      return left(repositoryError);
     }
   }
 
@@ -204,10 +228,10 @@ export class PgStorageObjectRepositoryImpl
     }
   }
 
-  // Leaves first, never a parent before its children: `parent_id` is `on delete set null`, so a
-  // folder deleted ahead of a subfolder would turn that subfolder into a second root and trip the
-  // root-folder unique index. Each call removes the current bottom level; a folder still holding a
-  // file the file cleanup has not reached yet simply waits for a later run.
+  // Leaves first, never a parent before its children: `storage-objects_parent_owner_foreign` is
+  // `on delete no action`, so a folder deleted ahead of a subfolder fails the statement. Each call
+  // removes the current bottom level; a folder still holding a file the file cleanup has not
+  // reached yet simply waits for a later run.
   async deleteEmptyDeletedFolders(): Promise<Either<Error, number>> {
     const table = StorageDatabaseEntity.STORAGE_OBJECT;
 
@@ -223,6 +247,49 @@ export class PgStorageObjectRepositoryImpl
       return right(result.affectedRows);
     } catch (error) {
       this.logger.error('Failed to delete empty deleted folders', error);
+      return left(error);
+    }
+  }
+
+  // An image or a video is placed together with its backing file, so either reference counts.
+  async getMediaToPlace({
+    type,
+    id,
+    userId,
+  }: StorageObjectMediaQuery): Promise<Either<Error, StorageObjectMedia | undefined>> {
+    const objects = StorageDatabaseEntity.STORAGE_OBJECT;
+    const files = StorageDatabaseEntity.FILE;
+    const images = StorageDatabaseEntity.IMAGE;
+    const videos = StorageDatabaseEntity.VIDEO;
+
+    const sql =
+      type === NestStorage.StorageObjectType.FILE
+        ? `
+          SELECT m.id AS "fileId",
+            EXISTS (SELECT 1 FROM "${objects}" s WHERE s.file_id = m.id) AS "isPlaced",
+            EXISTS (SELECT 1 FROM "${images}" i WHERE i.file_id = m.id)
+              OR EXISTS (SELECT 1 FROM "${videos}" v WHERE v.file_id = m.id) AS "isBacking",
+            m.upload_status AS "uploadStatus"
+          FROM "${files}" m
+          WHERE m.id = ? AND m.user_id = ?;
+        `
+        : `
+          SELECT m.file_id AS "fileId",
+            EXISTS (
+              SELECT 1 FROM "${objects}" s WHERE s.${MEDIA_COLUMN[type]} = m.id OR s.file_id = m.file_id
+            ) AS "isPlaced",
+            false AS "isBacking",
+            f.upload_status AS "uploadStatus"
+          FROM "${type === NestStorage.StorageObjectType.IMAGE ? images : videos}" m
+          INNER JOIN "${files}" f ON f.id = m.file_id
+          WHERE m.id = ? AND m.user_id = ?;
+        `;
+
+    try {
+      const [media] = await this.em.execute<StorageObjectMedia[]>(sql, [id, userId]);
+      return right(media);
+    } catch (error) {
+      this.logger.error(`Failed to read the ${type} ${id} to place`, error);
       return left(error);
     }
   }

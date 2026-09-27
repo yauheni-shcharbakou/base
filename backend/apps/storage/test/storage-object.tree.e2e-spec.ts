@@ -1,11 +1,14 @@
 import './pg.e2e';
 import { NestStorage } from '@backend/proto';
+import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
+import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
+import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
@@ -13,6 +16,7 @@ import { setTimeout } from 'node:timers/promises';
 import { startOrm } from './pg.e2e';
 
 const USER_ID = '01JQ0000000000000000000001';
+const OTHER_USER_ID = '01JQ0000000000000000000002';
 
 // What the gRPC reads populate: the path next to the to-one media relations.
 const POPULATE = ['file', 'image', 'video', 'folderPath'] as const;
@@ -27,6 +31,8 @@ describe('storage-object tree against Postgres', () => {
   let em: EntityManager;
   let repository: PgStorageObjectRepositoryImpl;
   let updateOne: StorageObjectUpdateOneUseCase;
+  let createOne: StorageObjectCreateOneUseCase;
+  let deleteOne: StorageObjectDeleteOneUseCase;
 
   // Every statement the ORM sends; a spec resets it to measure what one call costs.
   let statements: string[] = [];
@@ -42,10 +48,10 @@ describe('storage-object tree against Postgres', () => {
 
     em = orm.em;
     repository = new PgStorageObjectRepositoryImpl(em.getRepository(PgStorageObjectEntity));
-    updateOne = new StorageObjectUpdateOneUseCase(
-      repository,
-      new StorageObjectValidationService(repository),
-    );
+    const validation = new StorageObjectValidationService(repository);
+    updateOne = new StorageObjectUpdateOneUseCase(repository, validation);
+    createOne = new StorageObjectCreateOneUseCase(repository, validation);
+    deleteOne = new StorageObjectDeleteOneUseCase(repository);
   });
 
   after(() => orm?.close());
@@ -72,13 +78,15 @@ describe('storage-object tree against Postgres', () => {
     name,
     parent,
     isFolder = true,
+    userId = USER_ID,
   }: {
     name: string;
     parent?: string;
     isFolder?: boolean;
+    userId?: string;
   }): Promise<string> => {
     const object = em.create(PgStorageObjectEntity, {
-      userId: USER_ID,
+      userId,
       name,
       type: isFolder ? NestStorage.StorageObjectType.FOLDER : NestStorage.StorageObjectType.FILE,
       isFolder,
@@ -88,6 +96,22 @@ describe('storage-object tree against Postgres', () => {
 
     await em.persist(object).flush();
     return object.id;
+  };
+
+  // An unplaced file of the owner, for a leaf created over existing media.
+  const createFile = async (): Promise<string> => {
+    const file = em.create(PgFileEntity, {
+      userId: USER_ID,
+      originalName: 'a.txt',
+      mimeType: 'text/plain',
+      size: 1,
+      extension: 'txt',
+      uploadStatus: NestStorage.FileUploadStatus.READY,
+      uploadId: 'upload',
+    } as never);
+
+    await em.persist(file).flush();
+    return file.id;
   };
 
   const createFolder = (name: string, parent: string) => createObject({ name, parent });
@@ -123,13 +147,13 @@ describe('storage-object tree against Postgres', () => {
   // Takes the tree lock and keeps it until `release` — so a spec can line writes up behind it and
   // know they are queued, not merely started. Release it in a `finally`: a failed assertion that
   // leaves the transaction open hangs the run on closing the pool instead of failing it.
-  const holdTreeLock = async () => {
+  const holdTreeLock = async (userId = USER_ID) => {
     let entered!: () => void;
     let open!: () => void;
     const inside = new Promise<void>((resolve) => (entered = resolve));
     const gate = new Promise<void>((resolve) => (open = resolve));
 
-    const done = repository.withTreeLock(async () => {
+    const done = repository.withTreeLock(userId, async () => {
       entered();
       await gate;
       return right(undefined);
@@ -165,6 +189,12 @@ describe('storage-object tree against Postgres', () => {
   };
 
   const byId = (id: string): NestStorage.StorageObjectQuery => ({ id, ids: [] });
+
+  const createRequest = (
+    name: string,
+    parent: string,
+    type = NestStorage.StorageObjectType.FOLDER,
+  ): NestStorage.StorageObjectCreate => ({ name, parent, type, userId: USER_ID, isPublic: false });
 
   describe('folderPath', () => {
     withDb('derives every path from the tree: root, nested folders, none for a leaf', async () => {
@@ -364,8 +394,8 @@ describe('storage-object tree against Postgres', () => {
       const moved = await updateOne.execute(byId(docs), { set: { parent: archive } });
       const renamed = await updateOne.execute(byId(file), { set: { name: 'b.txt' } });
 
-      assert.ok(moved.isLeft() && moved.value instanceof BadRequestException);
-      assert.ok(renamed.isLeft() && renamed.value instanceof BadRequestException);
+      assert.ok(moved.isLeft() && moved.value instanceof ConflictException);
+      assert.ok(renamed.isLeft() && renamed.value instanceof ConflictException);
       assert.equal((await paths([docs])).get(docs), '/docs/', 'the refused move wrote nothing');
     });
 
@@ -385,7 +415,7 @@ describe('storage-object tree against Postgres', () => {
       const first = await holdTreeLock();
       let secondRan = false;
 
-      const second = repository.withTreeLock(() => {
+      const second = repository.withTreeLock(USER_ID, () => {
         secondRan = true;
         return Promise.resolve(right(undefined));
       });
@@ -435,13 +465,212 @@ describe('storage-object tree against Postgres', () => {
     withDb('rolls back what the work wrote when it returns a left', async () => {
       const docs = await createFolder('docs', root);
 
-      const result = await repository.withTreeLock(async () => {
+      const result = await repository.withTreeLock(USER_ID, async () => {
         await repository.updateAndCascadePublic(docs, { set: { isPublic: true } });
         return left(new Error('refused after the write'));
       });
 
       assert.equal(result.isLeft() && result.value.message, 'refused after the write');
       assert.deepEqual(await publicIds(), []);
+    });
+  });
+
+  // A user's tree is closed: nothing is created in, or moved into, another user's folder — by the
+  // service's checks, and by the database for a row written any other way.
+  describe('owner', () => {
+    let otherRoot: string;
+
+    beforeEach(async () => {
+      if (!orm) {
+        return;
+      }
+
+      otherRoot = await createObject({ name: '', userId: OTHER_USER_ID });
+    });
+
+    withDb('refuses to move an object into another user’s folder', async () => {
+      const docs = await createFolder('docs', root);
+
+      const moved = await updateOne.execute(byId(docs), { set: { parent: otherRoot } });
+
+      assert.ok(moved.isLeft() && moved.value instanceof NotFoundException);
+      assert.equal((await paths([docs])).get(docs), '/docs/');
+    });
+
+    withDb('refuses to create an object in another user’s folder', async () => {
+      const created = await createOne.execute(createRequest('docs', otherRoot));
+
+      assert.ok(created.isLeft() && created.value instanceof NotFoundException);
+      assert.equal(await read(() => repository.count({ parent: otherRoot })), 0);
+    });
+
+    // Placement once accepted a deleted parent: the object stayed live under it, where nothing
+    // shows it and the folder cleanup never removes its folder.
+    withDb('refuses a deleted folder as a parent, for a create and for a move', async () => {
+      const trash = await createFolder('trash', root);
+      const docs = await createFolder('docs', root);
+      await repository.markDeletedWithDescendants(trash);
+
+      const created = await createOne.execute(createRequest('new', trash));
+      const moved = await updateOne.execute(byId(docs), { set: { parent: trash } });
+
+      assert.ok(created.isLeft() && created.value instanceof NotFoundException);
+      assert.ok(moved.isLeft() && moved.value instanceof NotFoundException);
+    });
+
+    // A public folder makes its content public; in a private one the caller chooses.
+    withDb(
+      'makes a new object public in a public folder, or when asked in a private one',
+      async () => {
+        const asked = await createOne.execute({ ...createRequest('asked', root), isPublic: true });
+        const privateOne = await createOne.execute(createRequest('private', root));
+        await repository.updateAndCascadePublic(root, { set: { isPublic: true } });
+        const inherited = await createOne.execute(createRequest('inherited', root));
+
+        assert.equal(asked.unwrap().isPublic, true);
+        assert.equal(privateOne.unwrap().isPublic, false);
+        assert.equal(inherited.unwrap().isPublic, true);
+      },
+    );
+
+    // One rule for both kinds: a file's name takes a folder's, and a folder's a file's.
+    withDb('refuses a folder named like a file in the same folder', async () => {
+      await createObject({ name: 'docs', parent: root, isFolder: false });
+
+      const created = await createOne.execute(createRequest('docs', root));
+
+      assert.ok(created.isLeft() && created.value instanceof ConflictException);
+    });
+
+    withDb('checks a name only against the owner’s own objects', async () => {
+      await createObject({ name: 'docs', parent: otherRoot, userId: OTHER_USER_ID });
+
+      const created = await createOne.execute(createRequest('docs', root));
+
+      assert.equal(created.unwrap().name, 'docs');
+    });
+
+    withDb(
+      'the database refuses a parent of another owner, however the row is written',
+      async () => {
+        const docs = await createFolder('docs', root);
+
+        await assert.rejects(
+          em
+            .getConnection()
+            .execute('update "storage-objects" set parent_id = ? where id = ?', [otherRoot, docs]),
+          /storage-objects_parent_owner_foreign/,
+        );
+      },
+    );
+  });
+
+  describe('database constraints', () => {
+    withDb('refuse a second live object of one name in a folder, whatever its kind', async () => {
+      await createFolder('docs', root);
+
+      await assert.rejects(createFolder('docs', root), /storage-objects_name_unique/);
+      em.clear();
+      await assert.rejects(
+        createObject({ name: 'docs', parent: root, isFolder: false }),
+        /storage-objects_name_unique/,
+      );
+    });
+
+    withDb('free a deleted object’s name at once', async () => {
+      const file = await createObject({ name: 'docs', parent: root, isFolder: false });
+      await repository.markDeletedWithDescendants(file);
+
+      await createFolder('docs', root);
+    });
+
+    // Past the service's check, the index still answers a rename onto a taken name — as the same
+    // conflict the check gives, not as a server error.
+    withDb('answer a write past the name check with a conflict', async () => {
+      await createFolder('docs', root);
+      const drafts = await createFolder('drafts', root);
+
+      const renamed = await repository.updateAndCascadePublic(drafts, { set: { name: 'docs' } });
+
+      assert.ok(renamed.isLeft() && renamed.value instanceof ConflictException);
+    });
+
+    // `no action`, not `set null`: a parent deleted first used to turn its child into a root.
+    withDb('refuse to delete a folder that still has a child', async () => {
+      const docs = await createFolder('docs', root);
+      await createFolder('drafts', docs);
+
+      await assert.rejects(
+        em.getConnection().execute('delete from "storage-objects" where id = ?', [docs]),
+        /storage-objects_parent_owner_foreign/,
+      );
+    });
+
+    withDb('refuse a name holding a slash, which would read as two levels', async () => {
+      await assert.rejects(createFolder('a/b', root), /storage-objects_name_check/);
+    });
+  });
+
+  // The lock is per owner: the same key queues, another owner's never does.
+  describe('tree lock per owner', () => {
+    withDb('does not hold one owner’s write behind another’s', async () => {
+      const lock = await holdTreeLock(USER_ID);
+
+      try {
+        const other = await Promise.race([
+          repository.withTreeLock(OTHER_USER_ID, () => Promise.resolve(right('ran'))),
+          setTimeout(5_000, left(new Error('queued behind another owner'))),
+        ]);
+
+        assert.equal(other.unwrap(), 'ran');
+      } finally {
+        await lock.release();
+      }
+    });
+
+    // Queued behind the deletion of its parent, a create finds the parent gone instead of placing
+    // a live object under a deleted folder.
+    withDb('refuses a create queued behind the deletion of its parent', async () => {
+      const docs = await createFolder('docs', root);
+      const lock = await holdTreeLock();
+
+      const deleted = deleteOne.execute({ id: docs });
+      let created: ReturnType<typeof createOne.execute>;
+
+      try {
+        await untilQueued(1);
+        created = createOne.execute(createRequest('drafts', docs));
+        await untilQueued(2);
+      } finally {
+        await lock.release();
+      }
+
+      assert.equal((await deleted).isRight(), true);
+      const result = await created;
+      assert.ok(result.isLeft() && result.value instanceof NotFoundException);
+    });
+
+    withDb('gives two creates of one file name two names', async () => {
+      const files = [await createFile(), await createFile()];
+      const lock = await holdTreeLock();
+
+      const creates = Promise.all(
+        files.map((file) =>
+          createOne.execute({
+            ...createRequest('a.txt', root, NestStorage.StorageObjectType.FILE),
+            file,
+          }),
+        ),
+      );
+
+      try {
+        await untilQueued(2);
+      } finally {
+        await lock.release();
+      }
+
+      const names = (await creates).map((result) => result.unwrap().name).sort();
+      assert.deepEqual(names, ['a (1).txt', 'a.txt']);
     });
   });
 

@@ -837,7 +837,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "unique": false,
+          "unique": true,
           "length": 255,
           "precision": null,
           "scale": null,
@@ -895,44 +895,24 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "is_deleted"
-          ],
+          "columnNames": [],
           "composite": false,
           "constraint": false,
-          "keyName": "storage-objects_is_deleted_index",
+          "keyName": "storage-objects_name_unique",
           "primary": false,
-          "unique": false
+          "unique": false,
+          "expression": "create unique index \"storage-objects_name_unique\" on \"storage-objects\" (\"parent_id\", \"name\") where \"is_deleted\" = false"
         },
         {
           "columnNames": [
-            "is_folder"
+            "user_id",
+            "id"
           ],
-          "composite": false,
-          "constraint": false,
-          "keyName": "storage-objects_is_folder_index",
+          "composite": true,
+          "constraint": true,
+          "keyName": "storage-objects_owner_id_unique",
           "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "is_public"
-          ],
-          "composite": false,
-          "constraint": false,
-          "keyName": "storage-objects_is_public_index",
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "name"
-          ],
-          "composite": false,
-          "constraint": false,
-          "keyName": "storage-objects_name_index",
-          "primary": false,
-          "unique": false
+          "unique": true
         },
         {
           "columnNames": [
@@ -965,26 +945,6 @@
         },
         {
           "columnNames": [
-            "type"
-          ],
-          "composite": false,
-          "constraint": false,
-          "keyName": "storage-objects_type_index",
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
-            "user_id"
-          ],
-          "composite": false,
-          "constraint": false,
-          "keyName": "storage-objects_user_id_index",
-          "primary": false,
-          "unique": false
-        },
-        {
-          "columnNames": [
             "video_id"
           ],
           "composite": false,
@@ -995,6 +955,26 @@
         }
       ],
       "checks": [
+        {
+          "name": "storage-objects_is_folder_check",
+          "expression": "\"is_folder\" = (\"type\" = 'FOLDER')",
+          "definition": "check (\"is_folder\" = (\"type\" = 'FOLDER'))"
+        },
+        {
+          "name": "storage-objects_leaf_placed_check",
+          "expression": "\"is_folder\" or \"parent_id\" is not null",
+          "definition": "check (\"is_folder\" or \"parent_id\" is not null)"
+        },
+        {
+          "name": "storage-objects_name_check",
+          "expression": "strpos(\"name\", '/') = 0 and (\"name\" <> '' or \"parent_id\" is null)",
+          "definition": "check (strpos(\"name\", '/') = 0 and (\"name\" <> '' or \"parent_id\" is null))"
+        },
+        {
+          "name": "storage-objects_parent_not_self_check",
+          "expression": "\"parent_id\" <> \"id\"",
+          "definition": "check (\"parent_id\" <> \"id\")"
+        },
         {
           "name": "storage-objects_type_check",
           "expression": "\"type\" in ('FOLDER', 'FILE', 'IMAGE', 'VIDEO')",
@@ -1026,18 +1006,6 @@
           ],
           "referencedTableName": "public.images",
           "deleteRule": "cascade"
-        },
-        "storage-objects_parent_id_foreign": {
-          "columnNames": [
-            "parent_id"
-          ],
-          "constraintName": "storage-objects_parent_id_foreign",
-          "localTableName": "public.storage-objects",
-          "referencedColumnNames": [
-            "id"
-          ],
-          "referencedTableName": "public.storage-objects",
-          "deleteRule": "set null"
         },
         "storage-objects_video_id_foreign": {
           "columnNames": [

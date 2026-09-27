@@ -4,7 +4,7 @@ import {
   ImageRepository,
   ImageSaveAndPlace,
 } from '@modules/image/domain/repositories/image.repository';
-import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
+import { StorageObjectPlacementService } from '@modules/storage-object/application/services/storage-object.placement.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
@@ -16,7 +16,7 @@ export class ImageCreateManyUseCase {
     private readonly imageRepository: ImageRepository,
     private readonly storageFileService: StorageFileService,
     private readonly fileMapper: FileMapper,
-    private readonly storageObjectValidationService: StorageObjectValidationService,
+    private readonly storageObjectPlacementService: StorageObjectPlacementService,
   ) {}
 
   async execute(
@@ -52,7 +52,7 @@ export class ImageCreateManyUseCase {
 
           uploadByUploadId.set(item.uploadId, upload.value);
 
-          const createItem: ImageSaveAndPlace = {
+          return {
             image: {
               ...item.image,
               userId: createData.userId,
@@ -63,29 +63,24 @@ export class ImageCreateManyUseCase {
               providerId: providerId.value,
             }),
           };
-
-          if (createData.storage) {
-            const name = await this.storageObjectValidationService.validateObjectName({
-              name: item.file.originalName,
-              type: NestStorage.StorageObjectType.IMAGE,
-              parent: createData.storage.parent,
-            });
-
-            if (name.isLeft()) {
-              throw name.value;
-            }
-
-            createItem.storageObject = {
-              ...createData.storage,
-              name: name.value,
-            };
-          }
-
-          return createItem;
         }),
       );
 
-      const images = await this.imageRepository.saveAndPlaceMany(saveData);
+      const images = await this.storageObjectPlacementService.placeLeaves(
+        createData.storage
+          ? {
+              userId: createData.userId,
+              parent: createData.storage.parent,
+              isPublic: createData.storage.isPublic,
+              type: NestStorage.StorageObjectType.IMAGE,
+              names: _.map(createData.items, 'file.originalName'),
+            }
+          : undefined,
+        (leaves) =>
+          this.imageRepository.saveAndPlaceMany(
+            _.map(saveData, (item, index) => ({ ...item, storageObject: leaves?.[index] })),
+          ),
+      );
 
       if (images.isLeft()) {
         return left(images.value);

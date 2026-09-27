@@ -1,6 +1,7 @@
 import { PgModule } from '@backend/pg';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { Module } from '@nestjs/common';
+import { StorageObjectPlacementService } from './application/services/storage-object.placement.service';
 import { StorageObjectValidationService } from './application/services/storage-object.validation.service';
 import { StorageObjectCleanupUseCase } from './application/use-cases/storage-object.cleanup.use-case';
 import { StorageObjectCreateOneUseCase } from './application/use-cases/storage-object.create-one.use-case';
@@ -24,6 +25,7 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
       useClass: PgStorageObjectRepositoryImpl,
     },
     StorageObjectValidationService,
+    StorageObjectPlacementService,
     StorageObjectIsExistsUseCase,
     StorageObjectGetUseCase,
     StorageObjectGetFoldersUseCase,
@@ -35,6 +37,6 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
     CronStorageObjectScheduler,
   ],
   controllers: [GrpcStorageObjectController, RedisStorageObjectController],
-  exports: [StorageObjectValidationService],
+  exports: [StorageObjectValidationService, StorageObjectPlacementService],
 })
 export class StorageObjectModule {}

@@ -1,5 +1,5 @@
 import './pg.e2e';
-import { NestStorage } from '@backend/proto';
+import { NestCommon, NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
@@ -9,7 +9,12 @@ import { PgImageRepositoryImpl } from '@modules/image/infrastructure/pg/reposito
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { PgVideoRepositoryImpl } from '@modules/video/infrastructure/pg/repositories/pg.video.repository.impl';
 import { MikroORM } from '@mikro-orm/postgresql';
-import { ConflictException, HttpException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
@@ -140,5 +145,88 @@ describe('storage repository errors against Postgres', () => {
       ConflictException,
       'Storage object already exists',
     );
+  });
+
+  // A list that fails is an error, never an empty page, which would read as "nothing matches".
+  describe('getList', () => {
+    const invalid = 'Storage object list: unknown field noSuchField';
+
+    withDb('refuses a filter on an unknown field as a bad request', async () => {
+      await assert.rejects(
+        storageObjectRepository.getList({
+          logicalFilters: [
+            { field: 'noSuchField', operator: NestCommon.LogicalOperator.eq, string: 'x' },
+          ],
+        }),
+        (error) => error instanceof BadRequestException && error.message === invalid,
+      );
+    });
+
+    withDb('refuses a sort on an unknown field as a bad request', async () => {
+      await assert.rejects(
+        storageObjectRepository.getList({
+          sorters: [{ field: 'noSuchField', order: NestCommon.Sort.asc }],
+        }),
+        (error) => error instanceof BadRequestException && error.message === invalid,
+      );
+    });
+
+    withDb('passes any other failure on as it is', async () => {
+      await assert.rejects(
+        storageObjectRepository.getList({
+          logicalFilters: [
+            { field: 'createdAt', operator: NestCommon.LogicalOperator.eq, string: 'not a date' },
+          ],
+        }),
+        (error) => !(error instanceof HttpException),
+      );
+    });
+  });
+
+  // A failed bulk write is thrown, never a `false` that reads as "nothing matched".
+  describe('updateMany and deleteMany', () => {
+    const folder = (name: string, parent?: string) =>
+      storageObjectRepository.saveOne({
+        userId: USER_ID,
+        name,
+        type: NestStorage.StorageObjectType.FOLDER,
+        isFolder: true,
+        isPublic: false,
+        ...(parent ? { parent } : {}),
+      });
+
+    withDb('report whether anything matched', async () => {
+      const root = (await folder('')).unwrap();
+
+      assert.equal(await storageObjectRepository.updateMany({ ids: [MISSING_ID] }, {}), false);
+      assert.equal(await storageObjectRepository.deleteMany({ ids: [MISSING_ID] }), false);
+      assert.equal(
+        await storageObjectRepository.updateMany({ ids: [root.id] }, { set: { isPublic: true } }),
+        true,
+      );
+    });
+
+    // The parent key is `on delete no action`: a folder with a child cannot go first.
+    withDb('deleteMany throws what the database refused', async () => {
+      const root = (await folder('')).unwrap();
+      (await folder('docs', root.id)).unwrap();
+      orm.em.clear();
+
+      await assert.rejects(
+        storageObjectRepository.deleteMany({ ids: [root.id] }),
+        /storage-objects_parent_owner_foreign/,
+      );
+    });
+
+    withDb('updateMany throws what the database refused', async () => {
+      const root = (await folder('')).unwrap();
+      const docs = (await folder('docs', root.id)).unwrap();
+      orm.em.clear();
+
+      await assert.rejects(
+        storageObjectRepository.updateMany({ ids: [docs.id] }, { set: { name: 'a/b' } }),
+        /storage-objects_name_check/,
+      );
+    });
   });
 });

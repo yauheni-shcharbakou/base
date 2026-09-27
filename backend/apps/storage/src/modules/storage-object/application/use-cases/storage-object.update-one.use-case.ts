@@ -14,9 +14,12 @@ import { StorageObjectValidationService } from '../services/storage-object.valid
  * tree on read. Only `isPublic` is stored per row, and the repository writes a folder's new value
  * over its subtree in the same transaction as the folder itself.
  *
- * The whole read-check-write runs under the tree lock. Without it, two opposite moves (A into B,
- * B into A) each pass the descendant check before either commits, and together close a cycle.
- * A move also reads its new parent's `isPublic` after any visibility change queued before it.
+ * An object moves only within its owner's tree — the new parent must be the owner's own live
+ * folder, whoever makes the call, an admin included.
+ *
+ * The whole read-check-write runs under the owner's tree lock. Without it, two opposite moves
+ * (A into B, B into A) each pass the descendant check before either commits, and together close a
+ * cycle. A move also reads its new parent's `isPublic` after any visibility change queued before it.
  */
 @Injectable()
 export class StorageObjectUpdateOneUseCase {
@@ -48,6 +51,7 @@ export class StorageObjectUpdateOneUseCase {
 
       const placeData = await this.storageObjectValidationService.validatePlacement(
         updateData.set.parent,
+        entity.userId,
         entity.id,
       );
 
@@ -68,9 +72,9 @@ export class StorageObjectUpdateOneUseCase {
     if (parent && (name !== entity.name || parent !== entity.parentId)) {
       const freeName = await this.storageObjectValidationService.validateNameIsFree({
         id: entity.id,
+        userId: entity.userId,
         name,
         parent,
-        isFolder: entity.isFolder,
       });
 
       if (freeName.isLeft()) {
@@ -89,8 +93,20 @@ export class StorageObjectUpdateOneUseCase {
     query: NestStorage.StorageObjectQuery,
     updateData: NestStorage.StorageObjectUpdate,
   ): Promise<Either<Error, NestStorage.StorageObject>> {
-    return this.storageObjectRepository.withTreeLock(async () => {
-      const storageObject = await this.storageObjectRepository.getOne(query);
+    // A deleted object is hidden and waits for the cleanup; it is not edited, moved back into a
+    // live folder included.
+    const liveQuery = { ...query, isDeleted: false };
+
+    // Read once before the lock only to learn whose tree to lock — an owner never changes, so the
+    // value cannot go stale. Everything else is read again under the lock.
+    const owner = await this.storageObjectRepository.getOne(liveQuery);
+
+    if (owner.isLeft()) {
+      return left(owner.value);
+    }
+
+    return this.storageObjectRepository.withTreeLock(owner.value.userId, async () => {
+      const storageObject = await this.storageObjectRepository.getOne(liveQuery);
 
       if (storageObject.isLeft()) {
         return left(storageObject.value);

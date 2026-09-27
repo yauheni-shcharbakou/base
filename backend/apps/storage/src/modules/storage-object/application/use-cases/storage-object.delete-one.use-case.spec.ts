@@ -11,6 +11,7 @@ import { StorageObjectDeleteOneUseCase } from './storage-object.delete-one.use-c
 
 const folder = {
   id: 'folder-1',
+  userId: 'owner',
   isFolder: true,
   parentId: 'root',
   type: NestStorage.StorageObjectType.FOLDER,
@@ -27,7 +28,7 @@ describe('StorageObjectDeleteOneUseCase', () => {
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((work: () => Promise<unknown>) => work()),
+      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
       getOne: jest.fn().mockResolvedValue(right(folder)),
       markDeletedWithDescendants: jest.fn().mockResolvedValue(right(3)),
     };
@@ -76,15 +77,17 @@ describe('StorageObjectDeleteOneUseCase', () => {
   });
 
   // A move could otherwise take an object out of the subtree, or put one in, between the read of the
-  // subtree and the mark.
-  it('reads and marks only inside the tree lock', async () => {
+  // subtree and the mark; a create could place a live object in a folder being marked. The read
+  // before the lock only names whose tree to lock.
+  it('marks only inside the owner’s tree lock', async () => {
     const failure = new Error('connection lost');
     repository.withTreeLock.mockResolvedValue(left(failure));
 
     const result = await useCase.execute({ id: folder.id });
 
     expect(result.isLeft() && result.value).toBe(failure);
-    expect(repository.getOne).not.toHaveBeenCalled();
+    expect(repository.withTreeLock).toHaveBeenCalledWith('owner', expect.any(Function));
+    expect(repository.getOne).toHaveBeenCalledTimes(1);
     expect(repository.markDeletedWithDescendants).not.toHaveBeenCalled();
   });
 

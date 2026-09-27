@@ -1,9 +1,18 @@
 import { PgMapper } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import {
+  isBackingFilter,
+  isPlacedFilter,
+} from '@common/infrastructure/pg/factories/pg.media.filters';
 import { ObjectQuery } from '@mikro-orm/core';
 
 export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestStorage.FileQuery> {
+  protected readonly computedFilters = {
+    isPlaced: isPlacedFilter<PgFileEntity>(),
+    isBacking: isBackingFilter<PgFileEntity>(),
+  };
+
   transformQuery({
     mimeTypes,
     userIds,

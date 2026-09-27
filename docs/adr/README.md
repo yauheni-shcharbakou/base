@@ -45,5 +45,6 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0016](0016-provider-purge-over-the-event-bus.md) | Provider objects are purged over the event bus, and deleted storage objects are swept by a cron | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis` |
 | [0017](0017-database-specs-on-node-test.md) | Database specs run on `node:test` against a migrated Postgres, not on Jest | Accepted | `backend.storage` |
 | [0018](0018-folder-paths-computed-on-read.md) | Folder paths are computed on read, and a folder's visibility cascades in its own transaction | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis`, `@backend/event-bus-nats` |
-| [0019](0019-tree-writes-under-one-advisory-lock.md) | Writes to the storage-object tree run under one advisory lock | Accepted | `backend.storage` |
+| [0019](0019-tree-writes-under-one-advisory-lock.md) | Writes to the storage-object tree run under one advisory lock | Superseded in part by 0021 | `backend.storage` |
 | [0020](0020-server-action-failures-as-values.md) | Admin server actions return their failure as a value, and the gateway keeps the callee's status | Accepted | `frontend.admin`, `@backend/grpc`, `backend.api-gateway` |
+| [0021](0021-storage-tree-closed-per-owner.md) | A user's storage tree is closed, and its writes queue per owner | Accepted | `backend.storage`, `backend.api-gateway` |

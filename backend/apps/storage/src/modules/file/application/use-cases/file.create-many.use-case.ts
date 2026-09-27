@@ -3,7 +3,7 @@ import {
   FileRepository,
   FileSaveAndPlace,
 } from '@modules/file/domain/repositories/file.repository';
-import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
+import { StorageObjectPlacementService } from '@modules/storage-object/application/services/storage-object.placement.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
@@ -16,7 +16,7 @@ export class FileCreateManyUseCase {
     private readonly fileRepository: FileRepository,
     private readonly storageFileService: StorageFileService,
     private readonly fileMapper: FileMapper,
-    private readonly storageObjectValidationService: StorageObjectValidationService,
+    private readonly storageObjectPlacementService: StorageObjectPlacementService,
   ) {}
 
   async execute(
@@ -29,8 +29,8 @@ export class FileCreateManyUseCase {
     }
 
     try {
-      const saveData: FileSaveAndPlace[] = await Promise.all(
-        _.map(createData.items, async (item): Promise<FileSaveAndPlace> => {
+      const fileData = await Promise.all(
+        _.map(createData.items, async (item) => {
           const providerId = await this.storageFileService.createFile({
             ...item.file,
             userId: createData.userId,
@@ -40,37 +40,33 @@ export class FileCreateManyUseCase {
             throw providerId.value;
           }
 
-          const createItem: FileSaveAndPlace = {
-            file: this.fileMapper.toCreateData({
-              ...item.file,
-              userId: createData.userId,
-              providerId: providerId.value,
-              uploadId: item.uploadId,
-            }),
-          };
-
-          if (createData.storage) {
-            const name = await this.storageObjectValidationService.validateObjectName({
-              name: item.file.originalName,
-              type: NestStorage.StorageObjectType.FILE,
-              parent: createData.storage.parent,
-            });
-
-            if (name.isLeft()) {
-              throw name.value;
-            }
-
-            createItem.storageObject = {
-              ...createData.storage,
-              name: name.value,
-            };
-          }
-
-          return createItem;
+          return this.fileMapper.toCreateData({
+            ...item.file,
+            userId: createData.userId,
+            providerId: providerId.value,
+            uploadId: item.uploadId,
+          });
         }),
       );
 
-      const files = await this.fileRepository.saveAndPlaceMany(saveData);
+      const files = await this.storageObjectPlacementService.placeLeaves(
+        createData.storage
+          ? {
+              userId: createData.userId,
+              parent: createData.storage.parent,
+              isPublic: createData.storage.isPublic,
+              type: NestStorage.StorageObjectType.FILE,
+              names: _.map(createData.items, 'file.originalName'),
+            }
+          : undefined,
+        (leaves) =>
+          this.fileRepository.saveAndPlaceMany(
+            _.map(fileData, (file, index): FileSaveAndPlace => ({
+              file,
+              storageObject: leaves?.[index],
+            })),
+          ),
+      );
 
       if (files.isLeft()) {
         return left(files.value);
