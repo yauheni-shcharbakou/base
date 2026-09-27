@@ -15,19 +15,3 @@ export async function getUserFolders(
     return [];
   }
 }
-
-export async function isExistsStorageObject(
-  query: ClientStorage.StorageObjectQuery,
-): Promise<boolean> {
-  try {
-    const metadata = await authService.getAuthMetadata();
-    const result = await storageObjectGrpcRepository.isExists(query, metadata);
-    return result.value;
-  } catch (error) {
-    return false;
-  }
-}
-
-export async function isExistsFolder(query: ClientStorage.StorageObjectQuery): Promise<boolean> {
-  return isExistsStorageObject({ ...query, type: ClientStorage.StorageObjectType.FOLDER });
-}

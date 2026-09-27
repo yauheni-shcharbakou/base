@@ -6,15 +6,17 @@ import {
   ControlledSingleSelect,
   ControlledTextField,
 } from '@/common/components';
-import { useValidatedForm } from '@/common/hooks';
 import { FieldErr } from '@/common/types';
 import { UserSelect } from '@/features/auth/components';
-import { FolderSelect } from '@/features/storage/components';
-import { folderActionProvider } from '@/features/storage/providers';
+import { SelectOption } from '@/common/components';
+import { FolderSelect, MediaSelect } from '@/features/storage/components';
+import { isLeafType, MEDIA_BY_TYPE } from '@/features/storage/helpers';
+import { useStorageObjectForm } from '@/features/storage/hooks';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { BrowserAuth, BrowserStorage } from '@packages/proto';
 import { useGetIdentity } from '@refinedev/core';
+import { useEffect, useState } from 'react';
 import zod from 'zod';
 
 const schema = {
@@ -23,6 +25,8 @@ const schema = {
   name: zod.string().nonempty(),
   isPublic: zod.boolean(),
   type: zod.enum(Object.values(BrowserStorage.StorageObjectType)),
+  // The id of the file, image or video a leaf places; sent in the field its type names.
+  media: zod.string().optional(),
 };
 
 type Params = SchemaTypeOf<typeof schema>;
@@ -34,31 +38,50 @@ export default function StorageObjectCreate() {
     formState: { errors },
     control,
     refineCore: { formLoading, onFinish },
-    setError,
-    clearErrors,
     handleSubmit,
     watch,
-  } = useValidatedForm(schema);
+    getValues,
+    setValue,
+    setError,
+  } = useStorageObjectForm(schema);
 
   const userId = watch('userId');
+  const type = watch('type');
+  const media = watch('media');
 
-  const handleSave = async (data: Params) => {
-    if (data.type === BrowserStorage.StorageObjectType.FOLDER) {
-      const hasFolderWithSameName = await folderActionProvider.isExistsFolder({
-        parent: data.parent,
-        name: data.name,
-        userId,
-        ids: [],
-      });
+  const [mediaOptions, setMediaOptions] = useState<SelectOption[]>([]);
 
-      if (hasFolderWithSameName) {
-        setError('name', { type: 'manual', message: 'Choose another name for folder' });
-        return;
-      }
+  // Another owner or another type lists other media: a pick from the old list no longer applies.
+  useEffect(() => {
+    setValue('media', '');
+  }, [userId, type, setValue]);
+
+  // A leaf is usually named after what it places; a name typed already is kept.
+  useEffect(() => {
+    const picked = mediaOptions.find((option) => option.value === media);
+
+    if (picked && !getValues('name')) {
+      setValue('name', picked.label, { shouldValidate: true });
+    }
+  }, [media, mediaOptions, getValues, setValue]);
+
+  // No name check here: the backend refuses a taken name, and `useStorageObjectForm` shows that
+  // refusal on the field. Choosing the media is only what the form needs filled in; whether the
+  // backend accepts it is its call.
+  const handleSave = ({ media: mediaId, ...data }: Params) => {
+    if (!isLeafType(data.type)) {
+      return onFinish(data);
     }
 
-    clearErrors('name');
-    await onFinish(data);
+    if (!mediaId) {
+      setError('media', {
+        type: 'required',
+        message: `Choose a ${MEDIA_BY_TYPE[data.type].field}`,
+      });
+      return;
+    }
+
+    return onFinish({ ...data, [MEDIA_BY_TYPE[data.type].field]: mediaId });
   };
 
   return (
@@ -99,11 +122,25 @@ export default function StorageObjectCreate() {
         <ControlledSingleSelect
           control={control}
           fieldName="type"
+          fieldErr={errors?.type as FieldErr}
           defaultValue={BrowserStorage.StorageObjectType.FOLDER}
           label="Type"
-          options={[BrowserStorage.StorageObjectType.FOLDER]}
+          options={Object.values(BrowserStorage.StorageObjectType)}
           required
         />
+        {isLeafType(type) && (
+          <MediaSelect
+            key={type}
+            label={MEDIA_BY_TYPE[type].label}
+            fieldName="media"
+            fieldErr={errors?.media as FieldErr}
+            control={control}
+            type={type}
+            userId={userId}
+            onOptionsLoaded={setMediaOptions}
+            required
+          />
+        )}
       </Box>
     </AppCreate>
   );

@@ -1,9 +1,8 @@
 'use client';
 
 import { AppEdit, ControlledBooleanField, TextEditField } from '@/common/components';
-import { useValidatedForm } from '@/common/hooks';
 import { FolderSelect } from '@/features/storage/components';
-import { folderActionProvider } from '@/features/storage/providers';
+import { useStorageObjectForm } from '@/features/storage/hooks';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
@@ -25,10 +24,8 @@ export default function StorageObjectEdit() {
     control,
     register,
     handleSubmit,
-    clearErrors,
-    setError,
     setValue,
-  } = useValidatedForm<typeof schema, BrowserStorage.StorageObject>(schema);
+  } = useStorageObjectForm<typeof schema, BrowserStorage.StorageObject>(schema);
 
   useEffect(() => {
     if (formLoading) {
@@ -45,8 +42,6 @@ export default function StorageObjectEdit() {
 
     const isNameChanged = !!data.name && data.name !== entity?.name;
     const isParentChanged = !!data.parent && data.parent !== entity?.parentId;
-    const parent = data.parent || entity?.parentId;
-    const name = data.name || entity?.name;
 
     if (isNameChanged) {
       updateData.name = data.name;
@@ -56,27 +51,8 @@ export default function StorageObjectEdit() {
       updateData.parent = data.parent;
     }
 
-    // A move needs the check as much as a rename: the name has to be free in the target folder, and
-    // the backend refuses a taken name for a file as well as a folder. Its refusal reaches the page
-    // only as a notification, so the name is checked first, to show the error on the field. A name
-    // taken between this check and the save still ends in that notification.
-    if (entity && (isNameChanged || isParentChanged) && parent && name) {
-      const isNameTaken = await folderActionProvider.isNameTaken({
-        parent,
-        name,
-        userId: entity.userId,
-        ids: [],
-        isFolder: entity.isFolder,
-      });
-
-      if (isNameTaken) {
-        const kind = entity.isFolder ? 'folder' : 'file';
-        setError('name', { type: 'manual', message: `Choose another name for ${kind}` });
-        return;
-      }
-    }
-
-    clearErrors('name');
+    // No name check here: the backend refuses a taken name — on a move as on a rename — and
+    // `useStorageObjectForm` shows that refusal on the field.
     await onFinish(updateData);
   };
 

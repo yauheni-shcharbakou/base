@@ -2,6 +2,8 @@ import { ONE_KB_BYTES, ONE_MB_BYTES } from '@/common/constants';
 import { TextFieldProps } from '@mui/material';
 import { BrowserStorage } from '@packages/proto';
 
+export * from './media-options';
+export * from './name-conflict';
 export * from './presigned-upload';
 
 export const getFileSize = (sizeInBytes = 0): string => {
