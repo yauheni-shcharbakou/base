@@ -6,11 +6,11 @@ import { Ctx, Payload } from '@nestjs/microservices';
 import { Test } from '@nestjs/testing';
 import { Job } from 'bullmq';
 import IORedis from 'ioredis';
-import { RedisUserEventController, RedisUserTransport } from '@/generated';
+import { RedisUserCreateEventHandler, RedisUserTransport } from '@/generated';
 import { REDIS_CLIENT, REDIS_MICROSERVICE_OPTIONS, RedisQueueClient } from '@/infrastructure';
 import { RedisModule } from '@/redis.module';
 import { RedisJobContext } from '../contexts';
-import { RedisController } from '../decorators';
+import { RedisController, RedisEvent } from '../decorators';
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 const EVENT_ID = 'auth.user.create';
@@ -42,28 +42,30 @@ const record = (bucket: keyof typeof recorder, event: NestAuth.User, context: Re
 };
 
 // Three controllers, one event, three consumer ids — the shape the mediator exists for. BullMQ
-// hands a job to exactly one worker, so without the fan-out stage these three would share it.
+// hands a job to exactly one worker, so without the fan-out stage these three would share it. Each
+// subscribes to that one event with `@RedisEvent`, as the services do: `ControllerMethods()` would
+// bind every event of the service, and a class lacking a handler for one fails to load.
 
 @RedisController({ consumer: 'storage.file' })
-@RedisUserTransport.ControllerMethods()
-class FileController implements RedisUserEventController {
-  onCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext): void {
+class FileController implements RedisUserCreateEventHandler {
+  @RedisEvent(RedisUserTransport.CREATE)
+  onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext): void {
     record('file', event, context);
   }
 }
 
 @RedisController({ consumer: 'storage.storage-object' })
-@RedisUserTransport.ControllerMethods()
-class StorageObjectController implements RedisUserEventController {
-  onCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext): void {
+class StorageObjectController implements RedisUserCreateEventHandler {
+  @RedisEvent(RedisUserTransport.CREATE)
+  onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext): void {
     record('object', event, context);
   }
 }
 
 @RedisController({ consumer: 'storage.failing' })
-@RedisUserTransport.ControllerMethods()
-class FailingController implements RedisUserEventController {
-  onCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext): void {
+class FailingController implements RedisUserCreateEventHandler {
+  @RedisEvent(RedisUserTransport.CREATE)
+  onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext): void {
     record('failing', event, context);
 
     throw new Error('handler blew up');

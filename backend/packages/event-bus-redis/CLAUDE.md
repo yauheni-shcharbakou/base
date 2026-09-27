@@ -103,6 +103,10 @@ export class RedisFileController
 }
 ```
 
+- **`ControllerMethods()` binds every event of its service**, so the class needs a handler for each —
+  one it lacks throws a `TypeError` at class load (Nest's `EventPattern` reads the missing method's
+  descriptor), and a new event in the strategy breaks every such class. To take a subset, subscribe
+  per event with `@RedisEvent` and the `Redis<Service><Event>EventHandler` interface, as `backend.storage` does.
 - `consumer` is the controller's system-wide id (`<host>.<module>`), the second half of its queue
   names. Declared once, in `@RedisController`.
 - **Keep `@RedisController` above the transport decorator.** It runs last (class decorators apply

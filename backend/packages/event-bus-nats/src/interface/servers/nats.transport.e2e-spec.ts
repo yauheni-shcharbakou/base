@@ -7,11 +7,11 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { Ctx, Payload } from '@nestjs/microservices';
 import { Test } from '@nestjs/testing';
-import { NatsUserEventController, NatsUserTransport } from '@/generated';
+import { NatsUserCreateEventHandler, NatsUserTransport } from '@/generated';
 import { NATS_MICROSERVICE_OPTIONS } from '@/infrastructure';
 import { NatsModule } from '@/nats.module';
 import { NatsMessageContext } from '../contexts';
-import { NatsController } from '../decorators';
+import { NatsController, NatsEvent } from '../decorators';
 
 const NATS_URL = process.env.NATS_URL ?? 'nats://localhost:4222';
 const STREAM = 'auth-user-stream';
@@ -42,28 +42,30 @@ const record = (
 
 // Three controllers, one event, three consumer ids — the shape the whole adapter exists for.
 // None of them acks: that is `NatsControllerInterceptor`'s job, and proving it does it is half
-// the point of this suite.
+// the point of this suite. Each subscribes to that one event with `@NatsEvent`:
+// `ControllerMethods()` would bind every event of the service, and a class lacking a handler for
+// one fails to load.
 
 @NatsController({ consumer: 'storage.file' })
-@NatsUserTransport.ControllerMethods()
-class FileController implements NatsUserEventController {
-  onCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext): void {
+class FileController implements NatsUserCreateEventHandler {
+  @NatsEvent(NatsUserTransport.CREATE)
+  onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext): void {
     record('file', event, context);
   }
 }
 
 @NatsController({ consumer: 'storage.storage-object' })
-@NatsUserTransport.ControllerMethods()
-class StorageObjectController implements NatsUserEventController {
-  onCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext): void {
+class StorageObjectController implements NatsUserCreateEventHandler {
+  @NatsEvent(NatsUserTransport.CREATE)
+  onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext): void {
     record('object', event, context);
   }
 }
 
 @NatsController({ consumer: 'storage.failing' })
-@NatsUserTransport.ControllerMethods()
-class FailingController implements NatsUserEventController {
-  onCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext): void {
+class FailingController implements NatsUserCreateEventHandler {
+  @NatsEvent(NatsUserTransport.CREATE)
+  onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext): void {
     record('failing', event, context);
 
     throw new Error('handler blew up');
@@ -143,10 +145,11 @@ describeWithBroker('NATS transport (live broker)', () => {
     await probe?.close();
   });
 
+  // With every subject of the host, not only the one this suite emits.
   it('declares the stream the emitting host owns', async () => {
     const info = await manager.streams.info(STREAM);
 
-    expect(info.config.subjects).toEqual(['auth-user-create']);
+    expect(info.config.subjects).toEqual(['auth-user-create', 'auth-user-delete']);
     expect(info.state.messages).toBe(1);
   });
 
