@@ -40,14 +40,18 @@ export const packageGenerator = (plop: PlopTypes.NodePlopAPI) => {
     ],
     actions: (answers?: PlopTypes.Answers) => {
       const chosenType: string = answers?.['type'] || 'default';
-      const typeTemplatesRoot = join(__dirname, 'templates', chosenType);
+      // Relative, so plop resolves it against the plopfile (`turbo/generators`). Not `__dirname`:
+      // turbo bundles the generators into one file, which makes it `turbo/generators` too, and a
+      // path that matches nothing still ends in "Success!" with 0 files added.
+      const typeTemplatesRoot = `package/templates/${chosenType}`;
 
       return [
         {
           type: 'addMany',
           destination: packageRootByType.get(chosenType)!,
           base: typeTemplatesRoot,
-          templateFiles: [typeTemplatesRoot, join(typeTemplatesRoot, '.*')],
+          templateFiles: `${typeTemplatesRoot}/**/*`,
+          globOptions: { dot: true },
         },
       ];
     },
