@@ -75,7 +75,7 @@ A package that needs an external the factory cannot see is a package with an und
   }
   ```
 - Composition roots (`*.module.ts`, `main.ts`) sit outside any `<layer>/` directory, so they're exempt and may freely wire concrete implementations together.
-- Consumers: `backend/packages/event-bus-nats`, `backend/packages/event-bus-redis`, `backend/packages/pg`, `backend/packages/mongo`, `backend/apps/auth`, `backend/apps/storage`. All wire it the same way, alongside `nestConfig`:
+- Consumers: `backend/packages/{cache,event-bus-nats,event-bus-redis,pg,mongo}`, `backend/apps/{auth,storage,api-gateway}`, and the backend template of `pnpm gen:package`. All wire it the same way, alongside `nestConfig`:
   ```js
   // backend/*/eslint.config.mjs
   import nestConfig from '@packages/configs/eslint/nest.config.mjs';

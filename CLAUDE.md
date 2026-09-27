@@ -30,7 +30,7 @@ You may compact aggressively:
 
 ## Overview
 
-Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microservices (backend) and a Next.js/Refine admin panel (frontend), wired together by Protobuf codegen and a Redis/BullMQ event bus. Requires Node ≥22.22, pnpm 11.0.9, and `protoc` (only for proto compilation).
+Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microservices (backend) and a Next.js/Refine admin panel (frontend), wired together by Protobuf codegen and a Redis/BullMQ event bus. Requires Node ≥22.22, pnpm 11.9.0 (pinned by `packageManager`), and `protoc` (only for proto compilation).
 
 ## Workspaces & naming
 
