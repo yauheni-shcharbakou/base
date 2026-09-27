@@ -942,9 +942,18 @@ importers:
       '@packages/configs':
         specifier: workspace:*
         version: link:../../../packages/configs
+      '@types/jest':
+        specifier: 'catalog:'
+        version: 30.0.0
       '@types/lodash':
         specifier: 'catalog:'
         version: 4.17.24
+      jest:
+        specifier: 'catalog:'
+        version: 30.3.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.19.17)(typescript@5.9.3))
+      ts-jest:
+        specifier: 'catalog:'
+        version: 29.4.9(@babel/core@7.29.7)(@jest/transform@30.3.0)(@jest/types@30.4.1)(babel-jest@30.3.0(@babel/core@7.29.7))(jest-util@30.4.1)(jest@30.3.0(@types/node@22.19.17)(babel-plugin-macros@3.1.0))(typescript@5.9.3)
 
   backend/packages/mongo:
     dependencies:

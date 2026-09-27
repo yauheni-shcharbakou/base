@@ -1,5 +1,5 @@
 import { HttpExceptionMapper } from '@backend/common';
-import { status as GrpcStatus } from '@grpc/grpc-js';
+import { status as GrpcStatus, type ServiceError } from '@grpc/grpc-js';
 import { HttpException } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import _ from 'lodash';
@@ -37,9 +37,25 @@ export class GrpcExceptionMapper {
       });
     }
 
+    // A failed outbound call: grpc-js rejects with the status the callee sent, and it goes on as is.
+    // Wrapped as UNKNOWN, the callee's status would be lost to every client of the gateway.
+    if (this.isServiceError(exception)) {
+      return new RpcException({ code: exception.code, details: exception.details });
+    }
+
     return new RpcException({
       code: GrpcStatus.UNKNOWN,
       details: exception?.['message'] ?? 'Unknown exception',
     });
+  }
+
+  private static isServiceError(exception: unknown): exception is ServiceError {
+    return (
+      exception instanceof Error &&
+      'code' in exception &&
+      'details' in exception &&
+      _.isNumber(exception.code) &&
+      _.isString(exception.details)
+    );
   }
 }

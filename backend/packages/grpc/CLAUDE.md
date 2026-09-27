@@ -24,13 +24,19 @@ The gRPC loader reads the original `.proto` files at runtime from `PROTO_PATH = 
 
 - Decorators: `@GrpcController()` (= `Controller` + `GrpcExceptionFilter`), `@ValidateGrpcPayload(Dto)`, `@InjectGrpcService(name)`, `@InjectGrpcClient(name)`.
 - `GrpcRxPipe`: `rpcException`, `proxy(mapper?)`, `unwrapEither`, `toArrayItems`, `toMapEntries`.
-- Exception path: `GrpcExceptionFilter` → `GrpcExceptionMapper` (Error → RpcException) + `GrpcStatusCodeMapper` / `GrpcMetadataMapper`.
+- Exception path: `GrpcExceptionFilter` → `GrpcExceptionMapper` (Error → RpcException) + `GrpcStatusCodeMapper`.
+  - A grpc-js `ServiceError` from a downstream call passes through with its own `code` and `details`. Only an error with no status becomes `UNKNOWN`.
+  - `GrpcStatusCodeMapper` holds **two tables**. gRPC → HTTP is the canonical mapping, `HTTP_STATUS_BY_GRPC_STATUS` from `@packages/common` — the same table the admin's `GrpcErrorMapper` reads. HTTP → gRPC is its own table: the general code where the canonical one pairs a status with several (400 → `INVALID_ARGUMENT`, 500 → `INTERNAL`), 409 → `ALREADY_EXISTS` (a `ConflictException` here is a unique violation), and the statuses Nest has an exception for, paired by meaning (410, 412, 422, 502, 504, …). A status missing from it goes out as `INTERNAL`.
+  - Never derive one table from the other: several codes share an HTTP status (`UNKNOWN`, `INTERNAL` and `DATA_LOSS` are all 500), so an inversion lets the later one win. `grpc.status-code.mapper.spec.ts` pins both tables and round-trips every code, listing the five that may not come back (`UNKNOWN`, `FAILED_PRECONDITION`, `ABORTED`, `OUT_OF_RANGE`, `DATA_LOSS`).
+
+  > **Why the callee's status is kept:** [docs/adr/0020-server-action-failures-as-values.md](../../../docs/adr/0020-server-action-failures-as-values.md)
 
 ## Commands
 
 ```bash
 pnpm build            # tsdown → dist (cjs + d.ts)
 pnpm dev              # tsdown --watch
+pnpm test             # jest: the exception and status-code mappers
 pnpm lint             # eslint --fix
 pnpm format / reset
 ```
