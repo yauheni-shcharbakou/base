@@ -28,7 +28,7 @@ Unlike `@backend/pg`, `core/` has **no `interface/` layer** — Mongo has no per
 
 - `MongoModule.forRoot({ database })` — connects Mongoose (`DATABASE_URL`, `dbName` from the `Database` enum), installs `MongoIdPlugin` globally, and binds `DatabaseRunnerService` → `EmptyDatabaseRunnerServiceImpl` (Mongo path has **no transactional isolation**).
 - `MongoModule.forFeature(...entities)` — registers entities as models via `convertEntitiesToMongoDefinitions` (model name = the entity's `collection`).
-- `MongoRepositoryImpl<Doc, Entity, …>` — abstract `implements DatabaseRepository`; concrete service repositories extend it. Maps `UpdateOf` `{ set, remove, inc }` → Mongo `$set` / `$unset` / `$inc`, returns `Either`, errors → `NotFoundException`. A subclass declares the abstract `resourceName` and builds a miss with `this.notFound()`, the same rule as `@backend/pg` (its `CLAUDE.md` has the reason).
+- `MongoRepositoryImpl<Doc, Entity, …>` — abstract `implements DatabaseRepository`; concrete service repositories extend it. Maps `UpdateOf` `{ set, remove, inc }` → Mongo `$set` / `$unset` / `$inc`, returns `Either`, errors → `NotFoundException`. A subclass declares the abstract `resourceName` and builds a miss with `this.notFound()`, the same rule as `@backend/pg` (its `CLAUDE.md` has the reason). `getList` and `distinct` fail loudly the same way too: logged (`toFailure`) and thrown, never an empty page or set.
 - Entity building blocks: `MongoEntity` (base `Document` with `id`/`createdAt`/`updatedAt`), `@MongoSchema({ collection })` (forces `timestamps` + `virtuals`), `@MongoProp`, `MongoMapper` (doc ↔ entity, query transform).
 - `MongoIdPlugin` — rewrites `_id` → string `id` and strips `__v` in `toJSON`/`toObject`.
 
@@ -41,6 +41,7 @@ Mongo migrations are **data tasks only** — there are no schema migrations (unl
 ```bash
 pnpm build            # tsdown → dist (cjs + d.ts)
 pnpm dev              # tsdown --watch
+pnpm typecheck        # tsc --noEmit (the tsdown build does not check types)
 pnpm lint             # eslint --fix
 pnpm format / reset
 ```

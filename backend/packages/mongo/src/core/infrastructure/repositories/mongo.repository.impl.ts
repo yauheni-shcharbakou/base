@@ -37,6 +37,13 @@ export abstract class MongoRepositoryImpl<
     protected readonly mapper: MongoMapper<Doc, Entity, Query> = new MongoMapper(),
   ) {}
 
+  // A failed read is thrown, never answered with an empty page or set that reads as "nothing
+  // matched". Logged here because the transport reports it only as an unknown error.
+  protected toFailure(action: string, error: unknown): Error {
+    logger.error(`Failed to ${action} ${this.resourceName}`, error);
+    return error as Error;
+  }
+
   protected notFound(): NotFoundException {
     return new NotFoundException(`${this.resourceName} not found`);
   }
@@ -76,8 +83,7 @@ export abstract class MongoRepositoryImpl<
       return new Set(_.reject(values, _.isNil));
     } catch (error) {
       // Never an empty set: that reads as "no values", and hides a broken query.
-      logger.error(`Failed to read distinct ${property} of ${this.resourceName}`, error);
-      throw error;
+      throw this.toFailure(`read distinct ${property} of`, error);
     }
   }
 
@@ -149,7 +155,8 @@ export abstract class MongoRepositoryImpl<
         total,
       };
     } catch (error) {
-      return { items: [], total: 0 };
+      // Never an empty page: that reads as "nothing matches", and hides a broken filter.
+      throw this.toFailure('list', error);
     }
   }
 
