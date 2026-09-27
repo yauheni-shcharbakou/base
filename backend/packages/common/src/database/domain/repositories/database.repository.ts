@@ -47,9 +47,11 @@ export abstract class DatabaseRepository<
     query: Partial<Query>,
     updateData: Update,
   ): Promise<Either<NotFoundException, Entity>>;
+  /** `false` when nothing matched; a failure is thrown, never reported as `false`. */
   abstract updateMany(query: Partial<Query>, updateData: Update): Promise<boolean>;
   abstract deleteById(id: string): Promise<Either<NotFoundException, Entity>>;
   abstract deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>>;
+  /** `false` when nothing matched; a failure is thrown, never reported as `false`. */
   abstract deleteMany(query?: Partial<Query>): Promise<boolean>;
 
   abstract bulkUpdate(updates: BulkUpdate<Entity>[]): Promise<Either<Error, boolean>>;

@@ -54,10 +54,20 @@ export class FileCleanupUseCase {
       return;
     }
 
-    const isDeleted = await this.fileRepository.deleteMany({ ids: _.map(files, 'id') });
+    // Caught here rather than in the scheduler, so a failed sweep does not stop the other one. A
+    // failure deletes nothing — one flush — so nothing is purged either.
+    let isDeleted: boolean;
 
+    try {
+      isDeleted = await this.fileRepository.deleteMany({ ids: _.map(files, 'id') });
+    } catch (error) {
+      this.logger.error(`Failed to drop ${files.length} file(s): ${reason}`, error);
+      return;
+    }
+
+    // The rows were gone already: whoever deleted them purged their objects.
     if (!isDeleted) {
-      this.logger.error(`Failed to drop ${files.length} file(s): ${reason}`);
+      this.logger.warn(`None of ${files.length} file(s) left to drop: ${reason}`);
       return;
     }
 
