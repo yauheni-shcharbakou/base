@@ -2,6 +2,7 @@
 
 import { getErrorMessage } from '@/common/helpers';
 import { deleteOne } from '@/features/grpc/actions';
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { attachCreatedEntities, planUploadBatch } from '@/features/storage/helpers/upload-batch';
 import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
@@ -38,7 +39,9 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
       const entities = items.flatMap(({ entity }) => (entity ? [entity] : []));
 
       const results = await Promise.allSettled(
-        entities.map((entity) => deleteOne({ resource, id: entity.id })),
+        entities.map(async (entity) =>
+          unwrapActionResult(await deleteOne({ resource, id: entity.id })),
+        ),
       );
 
       const failed = results.filter((result) => result.status === 'rejected');

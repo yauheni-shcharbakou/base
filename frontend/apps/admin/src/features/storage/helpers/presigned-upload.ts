@@ -1,3 +1,4 @@
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { completeFileUpload } from '@/features/storage/actions';
 import type { BrowserStorage } from '@packages/proto';
 import axios from 'axios';
@@ -30,9 +31,5 @@ export const uploadViaPresignedUrl = async (
     },
   });
 
-  const response = await completeFileUpload(fileId);
-
-  if ('error' in response) {
-    throw new Error(response.error);
-  }
+  unwrapActionResult(await completeFileUpload(fileId));
 };

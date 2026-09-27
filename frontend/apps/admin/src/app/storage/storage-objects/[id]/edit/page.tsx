@@ -56,9 +56,10 @@ export default function StorageObjectEdit() {
       updateData.parent = data.parent;
     }
 
-    // A move needs the check as much as a rename: the name has to be free in the target folder. The
-    // backend refuses a taken name for a file too, and a server action's error reaches the page
-    // without its message in production — so both are checked here, to show it on the field.
+    // A move needs the check as much as a rename: the name has to be free in the target folder, and
+    // the backend refuses a taken name for a file as well as a folder. Its refusal reaches the page
+    // only as a notification, so the name is checked first, to show the error on the field. A name
+    // taken between this check and the save still ends in that notification.
     if (entity && (isNameChanged || isParentChanged) && parent && name) {
       const isNameTaken = await folderActionProvider.isNameTaken({
         parent,

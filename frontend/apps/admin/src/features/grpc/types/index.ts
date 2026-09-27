@@ -52,3 +52,19 @@ export interface GrpcUpdateOne<
 > extends GrpcUpdateById<Entity> {
   resource: string;
 }
+
+/**
+ * What the page may know of a failed server action: the `message` and `statusCode` of Refine's
+ * `HttpError`.
+ */
+export type ActionError = {
+  message: string;
+  statusCode: number;
+};
+
+/**
+ * A server action's outcome, failure included. A production build strips the message of an error
+ * thrown in a server action — the client gets a generic one and a `digest` — so the actions return
+ * their failure (`runAction`) and the client throws it again (`unwrapActionResult`).
+ */
+export type ActionResult<T> = { ok: true; value: T } | { ok: false; error: ActionError };

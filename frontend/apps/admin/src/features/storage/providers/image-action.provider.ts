@@ -1,3 +1,4 @@
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { getImageDimensions } from '@/features/image/helpers';
 import { createImage, createManyImages } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
@@ -45,13 +46,7 @@ export class ImageActionProvider {
       };
     }
 
-    const response = await createImage(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return flatten(response.entity);
+    return flatten(unwrapActionResult(await createImage(data)));
   }
 
   async createMany(
@@ -88,12 +83,6 @@ export class ImageActionProvider {
       };
     }
 
-    const response = await createManyImages(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return response.data.map(flatten);
+    return unwrapActionResult(await createManyImages(data)).map(flatten);
   }
 }

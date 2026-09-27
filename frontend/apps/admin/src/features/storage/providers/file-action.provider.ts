@@ -1,3 +1,4 @@
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { createFile, createManyFiles } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
 import type { BrowserStorage } from '@packages/proto';
@@ -31,13 +32,7 @@ export class FileActionProvider {
       };
     }
 
-    const response = await createFile(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return flatten(response.entity);
+    return flatten(unwrapActionResult(await createFile(data)));
   }
 
   async createMany(
@@ -66,12 +61,6 @@ export class FileActionProvider {
       };
     }
 
-    const response = await createManyFiles(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return response.data.map(flatten);
+    return unwrapActionResult(await createManyFiles(data)).map(flatten);
   }
 }

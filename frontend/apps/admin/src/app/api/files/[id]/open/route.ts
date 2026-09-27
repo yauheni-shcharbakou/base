@@ -1,5 +1,6 @@
-import { getErrorMessage, getRequestIp } from '@/common/helpers';
+import { getRequestIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
+import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -15,7 +16,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const url = response.entries.get(id);
 
     if (!url) {
-      throw new Error("Can't get signed url for file");
+      return NextResponse.json(
+        { message: 'No URL for this file: it does not exist or has not finished uploading' },
+        { status: 404 },
+      );
     }
 
     const redirectUrl = new URL(url);
@@ -28,6 +32,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
-    return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
+    return errorResponse(error);
   }
 }

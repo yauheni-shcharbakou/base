@@ -1,9 +1,15 @@
 'use server';
 
 import { authService } from '@/features/auth/services';
+import { runAction } from '@/features/grpc/helpers/run-action';
 import { grpcDataMapper } from '@/features/grpc/mappers';
 import { grpcDataService } from '@/features/grpc/services';
-import { GrpcCreateOne, GrpcSingleEntityAction, GrpcUpdateOne } from '@/features/grpc/types';
+import {
+  ActionResult,
+  GrpcCreateOne,
+  GrpcSingleEntityAction,
+  GrpcUpdateOne,
+} from '@/features/grpc/types';
 import {
   BaseRecord,
   CreateResponse,
@@ -16,20 +22,22 @@ import {
 
 export async function getOne<Entity extends BaseRecord = BaseRecord>(
   request: GrpcSingleEntityAction,
-): Promise<GetOneResponse<Entity>> {
-  const metadata = await authService.getAuthMetadata();
+): Promise<ActionResult<GetOneResponse<Entity>>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
 
-  const entity = await grpcDataService
-    .getRepository<Entity>(request.resource)
-    .getById({ id: request.id.toString() }, metadata);
+    const entity = await grpcDataService
+      .getRepository<Entity>(request.resource)
+      .getById({ id: request.id.toString() }, metadata);
 
-  return { data: entity };
+    return { data: entity };
+  });
 }
 
 export async function getList<Entity extends BaseRecord = BaseRecord>(
   params: GetListParams,
-): Promise<GetListResponse<Entity>> {
-  try {
+): Promise<ActionResult<GetListResponse<Entity>>> {
+  return runAction(async () => {
     const metadata = await authService.getAuthMetadata();
 
     const result = await grpcDataService
@@ -37,47 +45,47 @@ export async function getList<Entity extends BaseRecord = BaseRecord>(
       .getList(grpcDataMapper.convertGetListParams(params), metadata);
 
     return { data: result.items, total: result.total };
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error);
-    }
-
-    return { data: [], total: 0 };
-  }
+  });
 }
 
 export async function createOne<Entity extends BaseRecord = BaseRecord>(
   request: GrpcCreateOne<Entity>,
-): Promise<CreateResponse<Entity>> {
-  const metadata = await authService.getAuthMetadata();
+): Promise<ActionResult<CreateResponse<Entity>>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
 
-  const entity = await grpcDataService
-    .getRepository<Entity>(request.resource)
-    .createOne(request.create, metadata);
+    const entity = await grpcDataService
+      .getRepository<Entity>(request.resource)
+      .createOne(request.create, metadata);
 
-  return { data: entity };
+    return { data: entity };
+  });
 }
 
 export async function updateOne<Entity extends BaseRecord = BaseRecord>(
   request: GrpcUpdateOne<Entity>,
-): Promise<UpdateResponse<Entity>> {
-  const metadata = await authService.getAuthMetadata();
+): Promise<ActionResult<UpdateResponse<Entity>>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
 
-  const entity = await grpcDataService
-    .getRepository<Entity>(request.resource)
-    .updateById({ id: request.id.toString(), update: request.update }, metadata);
+    const entity = await grpcDataService
+      .getRepository<Entity>(request.resource)
+      .updateById({ id: request.id.toString(), update: request.update }, metadata);
 
-  return { data: entity };
+    return { data: entity };
+  });
 }
 
 export async function deleteOne<Entity extends BaseRecord = BaseRecord>(
   request: GrpcSingleEntityAction,
-): Promise<DeleteOneResponse<Entity>> {
-  const metadata = await authService.getAuthMetadata();
+): Promise<ActionResult<DeleteOneResponse<Entity>>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
 
-  const entity = await grpcDataService
-    .getRepository<Entity>(request.resource)
-    .deleteById({ id: request.id.toString() }, metadata);
+    const entity = await grpcDataService
+      .getRepository<Entity>(request.resource)
+      .deleteById({ id: request.id.toString() }, metadata);
 
-  return { data: entity };
+    return { data: entity };
+  });
 }

@@ -1,5 +1,6 @@
-import { getErrorMessage, getServerPublicIp } from '@/common/helpers';
+import { getServerPublicIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
+import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { videoGrpcRepository } from '@/features/grpc/repositories';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -14,7 +15,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const downloadData = response.entries.get(id);
 
     if (!downloadData) {
-      throw new Error("Can't get download url for video");
+      return NextResponse.json(
+        {
+          message:
+            'No download URL for this video: it does not exist or has not finished uploading',
+        },
+        { status: 404 },
+      );
     }
 
     const videoResponse = await fetch(downloadData.url, { headers: request.headers });
@@ -27,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     if (!videoResponse.body) {
-      return NextResponse.json({ error: 'Empty video' }, { status: 400 });
+      return NextResponse.json({ message: 'Empty video' }, { status: 502 });
     }
 
     const headers = new Headers();
@@ -44,6 +51,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return new NextResponse(videoResponse.body, { status: 200, headers });
   } catch (error) {
-    return NextResponse.json({ message: getErrorMessage(error) }, { status: 500 });
+    return errorResponse(error);
   }
 }

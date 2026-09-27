@@ -1,3 +1,4 @@
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { createManyVideos, createVideo } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
 import { getGenericVideTitle } from '@/features/video/helpers';
@@ -45,13 +46,7 @@ export class VideoActionProvider {
       };
     }
 
-    const response = await createVideo(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return flatten(response.entity);
+    return flatten(unwrapActionResult(await createVideo(data)));
   }
 
   async createMany(
@@ -83,12 +78,6 @@ export class VideoActionProvider {
       };
     }
 
-    const response = await createManyVideos(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return response.data.map(flatten);
+    return unwrapActionResult(await createManyVideos(data)).map(flatten);
   }
 }
