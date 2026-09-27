@@ -13,6 +13,7 @@
     "dev": "pnpm build --watch",
     "compile": "tsx compiler/main.ts",
     "build": "pnpm format:generated --log-level error && tsdown",
+    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "jest --config ./test/jest-e2e.json",

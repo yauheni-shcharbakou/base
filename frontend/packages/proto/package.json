@@ -11,6 +11,7 @@
     "format": "prettier src --write --config ../../../.prettierrc",
     "dev": "pnpm build --watch",
     "build": "pnpm format --log-level error && tsdown",
+    "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },

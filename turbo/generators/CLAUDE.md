@@ -20,7 +20,7 @@ Two prompts: **name** (no slashes/spaces) and **type** (`default` | `backend` | 
 
 ## Templates (`package/templates/<type>/`)
 
-All three extend the `@packages/configs` tsconfig/eslint presets and build with `tsdown`. Differences:
+All three extend the `@packages/configs` tsconfig/eslint presets, build with `tsdown`, and declare `typecheck` (`tsc --noEmit` — tsdown does not check types). Differences:
 - **default** — minimal `@packages/*`: esm + cjs, no `lint` script, no eslint config, no runtime deps. `format` path is `../../`.
 - **backend** — `@backend/*`: nest tsconfig preset + `eslint.config.mjs` + `lint`; deps `@backend/proto`, `@nestjs/common`, `@nestjs/config`, `@packages/common`, `reflect-metadata`, `rxjs`; cjs-only (no `module`).
 - **frontend** — `@frontend/*`: esm + cjs, eslint + `lint`, dep `@packages/common`.
