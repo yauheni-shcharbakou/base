@@ -17,6 +17,18 @@ export type StorageObjectCreateValidated = Omit<StorageObjectCreate, 'parent'> &
   parent: string;
 };
 
+/** Where a renamed or moved object ends up. */
+export type StorageObjectNameTarget = {
+  /** The object itself, which never clashes with its own name. */
+  id: string;
+  name: string;
+  parent: string;
+  isFolder: boolean;
+};
+
+const FOLDER_NAME_TAKEN = 'Folder name should be unique across the folder';
+const FILE_NAME_TAKEN = 'File name should be unique across the folder';
+
 @Injectable()
 export class StorageObjectValidationService {
   constructor(private readonly storageObjectRepository: StorageObjectRepository) {}
@@ -42,18 +54,36 @@ export class StorageObjectValidationService {
     return right({ isPublic: parentFolder.value.isPublic });
   }
 
+  /**
+   * For a rename or a move: the name must be free in the folder the object ends up in. Taken means
+   * what create treats as taken, so an update never produces a name create would not. Unlike create,
+   * a taken file name is refused rather than suffixed: an edit applies the name it was given or fails.
+   */
+  async validateNameIsFree(
+    target: StorageObjectNameTarget,
+  ): Promise<Either<HttpException, string>> {
+    const isTaken = await this.isNameTaken(target);
+
+    if (isTaken) {
+      return left(new BadRequestException(target.isFolder ? FOLDER_NAME_TAKEN : FILE_NAME_TAKEN));
+    }
+
+    return right(target.name);
+  }
+
+  /** For a create: a taken folder name is refused, a taken file name gets a ` (n)` suffix. */
   async validateObjectName(
     createData: Pick<NestStorage.StorageObjectCreate, 'name' | 'type' | 'parent'>,
   ): Promise<Either<HttpException, string>> {
     if (createData.type === NestStorage.StorageObjectType.FOLDER) {
-      const isExistsFolderWithSameName = await this.storageObjectRepository.isExists({
-        parent: createData.parent,
+      const isTaken = await this.isNameTaken({
         name: createData.name,
-        type: NestStorage.StorageObjectType.FOLDER,
+        parent: createData.parent,
+        isFolder: true,
       });
 
-      if (isExistsFolderWithSameName) {
-        return left(new BadRequestException('Folder name should be unique across the folder'));
+      if (isTaken) {
+        return left(new BadRequestException(FOLDER_NAME_TAKEN));
       }
 
       return right(createData.name);
@@ -64,6 +94,7 @@ export class StorageObjectValidationService {
     const fileNames = await this.storageObjectRepository.distinct('name', {
       parent: createData.parent,
       nameStartsWith: parsedName.name,
+      isDeleted: false,
     });
 
     const escapeRegexp = /[.*+?^${}()|[\]\\]/g;
@@ -127,6 +158,23 @@ export class StorageObjectValidationService {
       isPublic: placement.value.isPublic,
       name: name.value,
       isFolder: createData.type === NestStorage.StorageObjectType.FOLDER,
+    });
+  }
+
+  // A folder's name is taken by another folder; a file's by any object, as the create-time suffix
+  // counts every sibling. Deleted objects are hidden and on their way out, so their names are free.
+  private isNameTaken({
+    id,
+    name,
+    parent,
+    isFolder,
+  }: Omit<StorageObjectNameTarget, 'id'> & { id?: string }): Promise<boolean> {
+    return this.storageObjectRepository.isExists({
+      parent,
+      name,
+      isDeleted: false,
+      ...(isFolder ? { type: NestStorage.StorageObjectType.FOLDER } : {}),
+      ...(id ? { excludeIds: [id] } : {}),
     });
   }
 }

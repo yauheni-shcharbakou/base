@@ -46,6 +46,7 @@ export default function StorageObjectEdit() {
     const isNameChanged = !!data.name && data.name !== entity?.name;
     const isParentChanged = !!data.parent && data.parent !== entity?.parentId;
     const parent = data.parent || entity?.parentId;
+    const name = data.name || entity?.name;
 
     if (isNameChanged) {
       updateData.name = data.name;
@@ -55,16 +56,21 @@ export default function StorageObjectEdit() {
       updateData.parent = data.parent;
     }
 
-    if (entity?.isFolder && isNameChanged && parent) {
-      const hasFolderWithSameName = await folderActionProvider.isExistsFolder({
+    // A move needs the check as much as a rename: the name has to be free in the target folder. The
+    // backend refuses a taken name for a file too, and a server action's error reaches the page
+    // without its message in production — so both are checked here, to show it on the field.
+    if (entity && (isNameChanged || isParentChanged) && parent && name) {
+      const isNameTaken = await folderActionProvider.isNameTaken({
         parent,
-        name: data.name!,
-        userId: entity?.userId,
+        name,
+        userId: entity.userId,
         ids: [],
+        isFolder: entity.isFolder,
       });
 
-      if (hasFolderWithSameName) {
-        setError('name', { type: 'manual', message: 'Choose another name for folder' });
+      if (isNameTaken) {
+        const kind = entity.isFolder ? 'folder' : 'file';
+        setError('name', { type: 'manual', message: `Choose another name for ${kind}` });
         return;
       }
     }

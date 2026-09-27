@@ -33,16 +33,6 @@ export class StorageObjectUpdateOneUseCase {
       set: _.pick(updateData.set ?? {}, ['isPublic']),
     };
 
-    if (updateData.set?.name) {
-      const name = await this.storageObjectValidationService.validateObjectName(entity);
-
-      if (name.isLeft()) {
-        return left(name.value);
-      }
-
-      update.set.name = name.value;
-    }
-
     if (updateData.set?.parent) {
       if (entity.isFolder) {
         const childrenIds = await this.storageObjectRepository.getAllChildrenIds(entity.id);
@@ -67,6 +57,29 @@ export class StorageObjectUpdateOneUseCase {
 
       update.set.parent = updateData.set.parent;
       update.set.isPublic = placeData.value.isPublic;
+    }
+
+    // An empty name or parent means "unchanged", like an absent one.
+    const name = updateData.set?.name || entity.name;
+    const parent = updateData.set?.parent || entity.parentId;
+
+    // On a move as well as a rename: the name has to be free where the object ends up. Nothing to
+    // check when neither changes, or for a root folder, which has no folder to clash in.
+    if (parent && (name !== entity.name || parent !== entity.parentId)) {
+      const freeName = await this.storageObjectValidationService.validateNameIsFree({
+        id: entity.id,
+        name,
+        parent,
+        isFolder: entity.isFolder,
+      });
+
+      if (freeName.isLeft()) {
+        return left(freeName.value);
+      }
+    }
+
+    if (name !== entity.name) {
+      update.set.name = name;
     }
 
     return right(update);

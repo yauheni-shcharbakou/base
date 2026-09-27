@@ -338,6 +338,48 @@ describe('storage-object tree against Postgres', () => {
     });
   });
 
+  // Through the use case and the real queries: the name check once matched the object itself.
+  describe('rename and move', () => {
+    const createFile = (name: string, parent: string) =>
+      createObject({ name, parent, isFolder: false });
+
+    withDb('renames a folder and a file to the names they were given', async () => {
+      const docs = await createFolder('docs', root);
+      const file = await createFile('a.txt', docs);
+
+      const folderRenamed = await updateOne.execute(byId(docs), { set: { name: 'papers' } });
+      const fileRenamed = await updateOne.execute(byId(file), { set: { name: 'b.txt' } });
+
+      assert.equal(folderRenamed.unwrap().name, 'papers');
+      assert.equal(fileRenamed.unwrap().name, 'b.txt');
+    });
+
+    withDb('refuses a name the target folder already has, on a move and on a rename', async () => {
+      const docs = await createFolder('docs', root);
+      const archive = await createFolder('archive', root);
+      await createFolder('docs', archive);
+      await createFile('b.txt', docs);
+      const file = await createFile('a.txt', docs);
+
+      const moved = await updateOne.execute(byId(docs), { set: { parent: archive } });
+      const renamed = await updateOne.execute(byId(file), { set: { name: 'b.txt' } });
+
+      assert.ok(moved.isLeft() && moved.value instanceof BadRequestException);
+      assert.ok(renamed.isLeft() && renamed.value instanceof BadRequestException);
+      assert.equal((await paths([docs])).get(docs), '/docs/', 'the refused move wrote nothing');
+    });
+
+    withDb('frees the name of a deleted object at once', async () => {
+      const docs = await createFolder('docs', root);
+      const drafts = await createFolder('drafts', root);
+      await repository.markDeletedWithDescendants(docs);
+
+      const renamed = await updateOne.execute(byId(drafts), { set: { name: 'docs' } });
+
+      assert.equal(renamed.unwrap().name, 'docs');
+    });
+  });
+
   describe('withTreeLock', () => {
     withDb('queues a second tree write until the first one ends', async () => {
       const first = await holdTreeLock();

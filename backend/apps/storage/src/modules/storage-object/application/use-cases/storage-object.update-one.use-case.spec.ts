@@ -25,7 +25,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
     getAllChildrenIds: jest.Mock;
     updateAndCascadePublic: jest.Mock;
   };
-  let validation: { validatePlacement: jest.Mock; validateObjectName: jest.Mock };
+  let validation: { validatePlacement: jest.Mock; validateNameIsFree: jest.Mock };
   let useCase: StorageObjectUpdateOneUseCase;
 
   beforeEach(() => {
@@ -38,7 +38,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
 
     validation = {
       validatePlacement: jest.fn().mockResolvedValue(right({ isPublic: true })),
-      validateObjectName: jest.fn(),
+      validateNameIsFree: jest.fn(({ name }: { name: string }) => Promise.resolve(right(name))),
     };
 
     useCase = new StorageObjectUpdateOneUseCase(
@@ -62,8 +62,91 @@ describe('StorageObjectUpdateOneUseCase', () => {
     await useCase.execute(byId(folder.id), { set: { isPublic: true } });
 
     expect(validation.validatePlacement).not.toHaveBeenCalled();
+    expect(validation.validateNameIsFree).not.toHaveBeenCalled();
     expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
       set: { isPublic: true },
+    });
+  });
+
+  describe('name', () => {
+    // The new name, checked in the folder the object stays in, with the object itself left out —
+    // checking the current name would find the object and refuse every folder rename.
+    it('renames after checking the new name in the same folder', async () => {
+      const result = await useCase.execute(byId(folder.id), { set: { name: 'papers' } });
+
+      expect(result.isRight()).toBe(true);
+      expect(validation.validateNameIsFree).toHaveBeenCalledWith({
+        id: folder.id,
+        name: 'papers',
+        parent: folder.parentId,
+        isFolder: true,
+      });
+      expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
+        set: { name: 'papers' },
+      });
+    });
+
+    it('checks the unchanged name in the target folder on a move', async () => {
+      await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
+
+      expect(validation.validateNameIsFree).toHaveBeenCalledWith({
+        id: folder.id,
+        name: folder.name,
+        parent: 'target',
+        isFolder: true,
+      });
+    });
+
+    it('checks the new name in the target folder on a rename with a move', async () => {
+      await useCase.execute(byId(folder.id), { set: { name: 'papers', parent: 'target' } });
+
+      expect(validation.validateNameIsFree).toHaveBeenCalledWith({
+        id: folder.id,
+        name: 'papers',
+        parent: 'target',
+        isFolder: true,
+      });
+      expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
+        set: { name: 'papers', parent: 'target', isPublic: true },
+      });
+    });
+
+    // Refused, not suffixed, for a file as for a folder: an edit applies the name it was given.
+    it('refuses a taken name and writes nothing', async () => {
+      const file = { ...folder, name: 'a.txt', isFolder: false } as StorageObject;
+      repository.getOne.mockResolvedValue(right(file));
+      validation.validateNameIsFree.mockResolvedValue(left(new BadRequestException()));
+
+      const result = await useCase.execute(byId(file.id), { set: { name: 'b.txt' } });
+
+      expect(result.isLeft() && result.value).toBeInstanceOf(BadRequestException);
+      expect(validation.validateNameIsFree).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'b.txt', isFolder: false }),
+      );
+      expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
+    });
+
+    // An edit form sends its fields back as they are; an existing duplicate must not block it.
+    it('checks nothing and writes no name when neither the name nor the folder changes', async () => {
+      await useCase.execute(byId(folder.id), {
+        set: { name: folder.name, isPublic: true },
+      });
+
+      expect(validation.validateNameIsFree).not.toHaveBeenCalled();
+      expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
+        set: { isPublic: true },
+      });
+    });
+
+    it('renames a root folder without a check, as it has no folder to clash in', async () => {
+      repository.getOne.mockResolvedValue(right({ ...folder, parentId: undefined }));
+
+      await useCase.execute(byId(folder.id), { set: { name: 'home' } });
+
+      expect(validation.validateNameIsFree).not.toHaveBeenCalled();
+      expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
+        set: { name: 'home' },
+      });
     });
   });
 
