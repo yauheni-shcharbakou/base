@@ -21,5 +21,3 @@ export interface UserIdField {
 export interface UserField {
   user: string;
 }
-
-export const _PACKAGE_NAME = '';

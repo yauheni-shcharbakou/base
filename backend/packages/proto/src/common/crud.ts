@@ -65,5 +65,3 @@ export interface Sorter {
   field: string;
   order: Sort;
 }
-
-export const _PACKAGE_NAME = '';

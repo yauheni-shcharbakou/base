@@ -22,5 +22,3 @@ export interface StringMapEntriesEntry {
 export interface StringArray {
   items: string[];
 }
-
-export const _PACKAGE_NAME = '';

@@ -35,8 +35,6 @@ export interface GetList {
   pagination?: Pagination;
 }
 
-export const _PACKAGE_NAME = '';
-
 wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };
