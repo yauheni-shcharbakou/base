@@ -37,7 +37,8 @@
     },
     // Cacheable, unlike lint and format: it writes nothing and is a pure function of the sources
     // turbo already hashes. Only workspaces whose code no build step type-checks need it — a
-    // package whose `build` runs tsc or tsdown is checked there.
+    // package whose `build` runs tsc is checked there. tsdown is not: its declaration emit builds
+    // through type errors, so a tsdown package declares this task to be checked at all.
     "typecheck": {
       "dependsOn": ["^build"]
     },

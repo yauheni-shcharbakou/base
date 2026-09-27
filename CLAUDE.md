@@ -61,7 +61,7 @@ pnpm build                    # build everything (runs ^compile then ^build)
 pnpm build:backend.auth       # one service
 pnpm test                     # unit suites of every package that has them
 pnpm test:e2e                 # e2e suites; each skips itself when its server is unreachable
-pnpm typecheck                # tsc --noEmit for the three codegen packages (see below)
+pnpm typecheck                # tsc --noEmit where no build checks types (see below)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm docker:local             # postgres + redis only (for local dev against real infra)
@@ -102,7 +102,7 @@ template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
 - The one substantive rule it enforces is `import-x/no-extraneous-dependencies`: a package must declare what it imports, and `src/` may not use devDependencies. The admin's `nextConfig` carries it too.
 - No ESLint config at all: `@packages/{common,proto,compiler-utils,configs}`, `@backend/proto`, `@frontend/proto`.
 - TypeScript `strict` is **on** for `@packages/*` / `@frontend/*` / admin, **off** for backend apps and `@backend/packages/*`.
-- **`compiler/` code is type-checked by nothing unless the package says so.** `tsx` strips types without checking them, and a `build` covers `src/` alone (`@packages/env-docs` has no build at all). The three codegen packages — `@packages/proto`, `@backend/event-bus`, `@packages/env-docs` — therefore declare a `typecheck` task running `tsc --noEmit` over their whole tsconfig; a fourth compiler needs the same task, not the assumption that `compile` covers it.
+- **Code is type-checked by nothing unless the package says so.** `tsx` strips types without checking them, and a tsdown `build` does too — its declaration emit builds straight through a type error. The three codegen packages — `@packages/proto`, `@backend/event-bus`, `@packages/env-docs` — therefore declare a `typecheck` task running `tsc --noEmit` over their whole tsconfig, `compiler/` included, and so do `@backend/pg` and `@backend/mongo`; a fourth compiler, or another tsdown package, needs the same task, not the assumption that `compile` or `build` covers it.
 
 ## Code navigation (LSP vs grep)
 

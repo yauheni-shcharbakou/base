@@ -86,7 +86,9 @@ export abstract class PgRepositoryImpl<
   // caller's mistake, named back in the 400. MikroORM would refuse it too, but with a plain `Error`
   // naming the ORM class.
   protected findUnknownListFields(request: DatabaseRepositoryGetList<Query>): string[] {
-    const properties = this.em.getMetadata().get(this.repository.getEntityName()).properties;
+    const properties = this.em
+      .getMetadata()
+      .getByClassName(this.repository.getEntityName()).properties;
     return this.mapper.listFields(request).filter((field) => !(field in properties));
   }
 
