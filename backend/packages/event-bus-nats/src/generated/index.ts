@@ -22,6 +22,12 @@ const NatsUserEventPattern = {
       globalStreamRegistry.append({ name: 'auth-user-stream', subjects: ['auth-user-create'] });
     },
   },
+  DELETE: {
+    pattern: 'auth-user-delete',
+    registerStream: (): void => {
+      globalStreamRegistry.append({ name: 'auth-user-stream', subjects: ['auth-user-delete'] });
+    },
+  },
 };
 
 export const NatsUserTransport = {
@@ -39,6 +45,12 @@ export const NatsUserTransport = {
         Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onCreate'),
       );
       NatsUserEventPattern.CREATE.registerStream();
+      EventPattern('auth-user-delete')(
+        constructor.prototype['onDelete'],
+        'onDelete',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onDelete'),
+      );
+      NatsUserEventPattern.DELETE.registerStream();
     };
     return applyDecorators(methodsDecorator);
   },
@@ -50,10 +62,21 @@ export interface NatsUserEventController {
     event: NestAuth.User,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
+  onDelete(
+    event: NestAuth.User,
+    context?: NatsMessageContext,
+  ): void | Promise<void> | Observable<void>;
 }
 
 export interface NatsUserCreateEventHandler {
   onUserCreate(
+    event: NestAuth.User,
+    context?: NatsMessageContext,
+  ): void | Promise<void> | Observable<void>;
+}
+
+export interface NatsUserDeleteEventHandler {
+  onUserDelete(
     event: NestAuth.User,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
@@ -221,6 +244,14 @@ class NatsUserEventBusClientImpl extends NatsClientImpl implements UserEventBus 
   emitManyCreate(events: NestAuth.User[]): Promise<any[]> {
     return this.client.emitMany('auth-user-create', events);
   }
+
+  emitDelete(event: NestAuth.User): Promise<any> {
+    return this.client.emit('auth-user-delete', event);
+  }
+
+  emitManyDelete(events: NestAuth.User[]): Promise<any[]> {
+    return this.client.emitMany('auth-user-delete', events);
+  }
 }
 
 class NatsFileEventBusClientImpl extends NatsClientImpl implements FileEventBus {
@@ -294,7 +325,7 @@ export const NATS_HOST_STREAMS: Record<string, readonly NatsStreamData[]> = {
   auth: [
     {
       name: 'auth-user-stream',
-      subjects: ['auth-user-create'],
+      subjects: ['auth-user-create', 'auth-user-delete'],
     },
   ],
   storage: [

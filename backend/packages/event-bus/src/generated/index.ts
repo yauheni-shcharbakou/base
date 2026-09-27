@@ -8,6 +8,10 @@ export abstract class UserEventBus extends EventBus {
   abstract emitCreate(event: NestAuth.User): Promise<any>;
 
   abstract emitManyCreate(events: NestAuth.User[]): Promise<any[]>;
+
+  abstract emitDelete(event: NestAuth.User): Promise<any>;
+
+  abstract emitManyDelete(events: NestAuth.User[]): Promise<any[]>;
 }
 
 export abstract class FileEventBus extends EventBus {

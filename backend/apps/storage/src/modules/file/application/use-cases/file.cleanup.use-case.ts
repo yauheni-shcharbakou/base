@@ -1,6 +1,6 @@
 import { NestStorage } from '@backend/proto';
 import { Config } from '@/config';
-import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
+import { FileDropService } from '@modules/file/application/services/file.drop.service';
 import { FileRepository, FileWithVideo } from '@modules/file/domain/repositories/file.repository';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +18,7 @@ export class FileCleanupUseCase {
 
   constructor(
     private readonly fileRepository: FileRepository,
-    private readonly filePurgeService: FilePurgeService,
+    private readonly fileDropService: FileDropService,
     configService: ConfigService<Config>,
   ) {
     this.ttlHours = configService.getOrThrow('pendingFileTtlHours', { infer: true });
@@ -46,32 +46,26 @@ export class FileCleanupUseCase {
     return _.take(files, SWEEP_LIMIT);
   }
 
-  // Deleting the ids just read, rather than re-running the query, keeps the rows and their provider
-  // objects in step: what leaves the database here is exactly what is purged. The image or video
-  // row and the storage object go with each file row through the FK cascade.
   private async drop(reason: string, files: FileWithVideo[]): Promise<void> {
     if (!files.length) {
       return;
     }
 
-    // Caught here rather than in the scheduler, so a failed sweep does not stop the other one. A
-    // failure deletes nothing — one flush — so nothing is purged either.
+    // Caught here rather than in the scheduler, so a failed sweep does not stop the other one.
     let isDeleted: boolean;
 
     try {
-      isDeleted = await this.fileRepository.deleteMany({ ids: _.map(files, 'id') });
+      isDeleted = await this.fileDropService.drop(files);
     } catch (error) {
       this.logger.error(`Failed to drop ${files.length} file(s): ${reason}`, error);
       return;
     }
 
-    // The rows were gone already: whoever deleted them purged their objects.
     if (!isDeleted) {
       this.logger.warn(`None of ${files.length} file(s) left to drop: ${reason}`);
       return;
     }
 
-    await this.filePurgeService.purgeFiles(files);
     this.logger.log(`Dropped ${files.length} file(s): ${reason}`);
   }
 }

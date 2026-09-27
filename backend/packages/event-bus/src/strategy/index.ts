@@ -16,6 +16,8 @@ export interface EventBusStrategy {
   auth: {
     user: {
       create: NestAuth.User;
+      // Storage marks the user's tree deleted and drops every media the user owns, placed or not.
+      delete: NestAuth.User;
     };
   };
   storage: {

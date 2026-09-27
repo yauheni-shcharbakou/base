@@ -1,12 +1,15 @@
-import { NestStorage } from '@backend/proto';
+import { NestAuth, NestStorage } from '@backend/proto';
 import {
   RedisController,
   RedisEvent,
+  RedisUserDeleteEventHandler,
+  RedisUserTransport,
   RedisVideoTransport,
   RedisVideoUploadedEventHandler,
   RedisVideoUploadFailEventHandler,
   RedisVideoUploadFinishEventHandler,
 } from '@backend/event-bus-redis';
+import { FileDeleteByOwnerUseCase } from '@modules/file/application/use-cases/file.delete-by-owner.use-case';
 import { FileUpdateUseCase } from '@modules/file/application/use-cases/file.update.use-case';
 
 @RedisController({ consumer: 'storage.file' })
@@ -14,9 +17,13 @@ export class RedisFileController
   implements
     RedisVideoUploadedEventHandler,
     RedisVideoUploadFinishEventHandler,
-    RedisVideoUploadFailEventHandler
+    RedisVideoUploadFailEventHandler,
+    RedisUserDeleteEventHandler
 {
-  constructor(private readonly updateUseCase: FileUpdateUseCase) {}
+  constructor(
+    private readonly updateUseCase: FileUpdateUseCase,
+    private readonly deleteByOwnerUseCase: FileDeleteByOwnerUseCase,
+  ) {}
 
   @RedisEvent(RedisVideoTransport.UPLOADED)
   async onVideoUploaded(event: NestStorage.Video): Promise<void> {
@@ -48,5 +55,15 @@ export class RedisFileController
         uploadStatus: NestStorage.FileUploadStatus.READY,
       },
     });
+  }
+
+  @RedisEvent(RedisUserTransport.DELETE)
+  async onUserDelete(event: NestAuth.User): Promise<void> {
+    const result = await this.deleteByOwnerUseCase.execute(event.id);
+
+    // Thrown so BullMQ retries: the user is gone, so nothing else ever reaches the rest.
+    if (result.isLeft()) {
+      throw result.value;
+    }
   }
 }

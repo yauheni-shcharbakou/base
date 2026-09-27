@@ -34,6 +34,8 @@ export abstract class StorageObjectRepository extends DatabaseRepository<
   ): Promise<Either<Error, StorageObject>>;
   /** Marks the object and everything under it deleted, in one statement. Returns the row count. */
   abstract markDeletedWithDescendants(id: string): Promise<Either<Error, number>>;
+  /** Every user that owns a live object — a user whose tree is marked deleted drops out. */
+  abstract getLiveOwnerIds(): Promise<string[]>;
   /** Hard-deletes deleted folders that no longer have children. Returns the row count. */
   abstract deleteEmptyDeletedFolders(): Promise<Either<Error, number>>;
   /**
@@ -70,6 +72,8 @@ export interface StorageObjectMedia {
 export interface StorageObjectQuery extends Partial<NestStorage.StorageObjectQuery> {
   nameStartsWith?: string;
   isFolder?: boolean;
+  /** Only the object without a parent, which is a user's root folder. */
+  isRoot?: boolean;
   excludeIds?: string[];
   isDeleted?: boolean;
 }

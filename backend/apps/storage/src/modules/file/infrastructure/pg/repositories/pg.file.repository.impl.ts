@@ -11,6 +11,7 @@ import {
   FileSaveAndPlace,
   FileWithVideo,
 } from '@modules/file/domain/repositories/file.repository';
+import { StorageDatabaseEntity } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { PgFileMapper } from '../mappers/pg.file.mapper';
 
@@ -100,6 +101,20 @@ export class PgFileRepositoryImpl
       { storageObject: { isDeleted: true } } as FilterQuery<PgFileEntity>,
       { populate: ['video'], limit },
     );
+
+    return this.mapper.stringifyMany(entities) as FileWithVideo[];
+  }
+
+  async getOwnerIds(): Promise<string[]> {
+    const rows = await this.em.execute<{ user_id: string }[]>(
+      `SELECT DISTINCT user_id FROM "${StorageDatabaseEntity.FILE}"`,
+    );
+
+    return rows.map((row) => row.user_id);
+  }
+
+  async getManyByOwner(userId: string, limit: number): Promise<FileWithVideo[]> {
+    const entities = await this.repository.find({ userId }, { populate: ['video'], limit });
 
     return this.mapper.stringifyMany(entities) as FileWithVideo[];
   }

@@ -17,6 +17,9 @@ const RedisUserEventPattern = {
   CREATE: {
     pattern: 'auth.user.create',
   },
+  DELETE: {
+    pattern: 'auth.user.delete',
+  },
 };
 
 export const RedisUserTransport = {
@@ -33,6 +36,11 @@ export const RedisUserTransport = {
         'onCreate',
         Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onCreate'),
       );
+      EventPattern('auth.user.delete')(
+        constructor.prototype['onDelete'],
+        'onDelete',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onDelete'),
+      );
     };
     return applyDecorators(methodsDecorator);
   },
@@ -44,10 +52,21 @@ export interface RedisUserEventController {
     event: NestAuth.User,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
+  onDelete(
+    event: NestAuth.User,
+    context?: RedisJobContext,
+  ): void | Promise<void> | Observable<void>;
 }
 
 export interface RedisUserCreateEventHandler {
   onUserCreate(
+    event: NestAuth.User,
+    context?: RedisJobContext,
+  ): void | Promise<void> | Observable<void>;
+}
+
+export interface RedisUserDeleteEventHandler {
+  onUserDelete(
     event: NestAuth.User,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
@@ -187,6 +206,14 @@ class RedisUserEventBusClientImpl extends RedisClientImpl implements UserEventBu
   emitManyCreate(events: NestAuth.User[]): Promise<any[]> {
     return this.client.emitMany('auth.user.create', events);
   }
+
+  emitDelete(event: NestAuth.User): Promise<any> {
+    return this.client.emit('auth.user.delete', event);
+  }
+
+  emitManyDelete(events: NestAuth.User[]): Promise<any[]> {
+    return this.client.emitMany('auth.user.delete', events);
+  }
 }
 
 class RedisFileEventBusClientImpl extends RedisClientImpl implements FileEventBus {
@@ -256,7 +283,7 @@ export class RedisClientFactory {
  * mediator, which runs one fan-out worker per event queue listed here.
  */
 export const REDIS_HOST_EVENTS: Record<string, readonly string[]> = {
-  auth: ['auth.user.create'],
+  auth: ['auth.user.create', 'auth.user.delete'],
   storage: [
     'storage.file.purge',
     'storage.video.uploaded',

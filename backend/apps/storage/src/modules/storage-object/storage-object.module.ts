@@ -7,6 +7,7 @@ import { StorageObjectCleanupUseCase } from './application/use-cases/storage-obj
 import { StorageObjectCreateOneUseCase } from './application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectCreateRootFolderUseCase } from './application/use-cases/storage-object.create-root-folder.use-case';
 import { StorageObjectDeleteOneUseCase } from './application/use-cases/storage-object.delete-one.use-case';
+import { StorageObjectDeleteRootFolderUseCase } from './application/use-cases/storage-object.delete-root-folder.use-case';
 import { StorageObjectGetFoldersUseCase } from './application/use-cases/storage-object.get-folders.use-case';
 import { StorageObjectGetUseCase } from './application/use-cases/storage-object.get.use-case';
 import { StorageObjectIsExistsUseCase } from './application/use-cases/storage-object.is-exists.use-case';
@@ -32,11 +33,17 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
     StorageObjectDeleteOneUseCase,
     StorageObjectUpdateOneUseCase,
     StorageObjectCreateRootFolderUseCase,
+    StorageObjectDeleteRootFolderUseCase,
     StorageObjectCreateOneUseCase,
     StorageObjectCleanupUseCase,
     CronStorageObjectScheduler,
   ],
   controllers: [GrpcStorageObjectController, RedisStorageObjectController],
-  exports: [StorageObjectValidationService, StorageObjectPlacementService],
+  exports: [
+    StorageObjectValidationService,
+    StorageObjectPlacementService,
+    StorageObjectRepository,
+    StorageObjectDeleteRootFolderUseCase,
+  ],
 })
 export class StorageObjectModule {}

@@ -5,6 +5,7 @@ import { RedisModule } from '@backend/event-bus-redis';
 import { FileModule } from '@modules/file/file.module';
 import { ImageModule } from '@modules/image/image.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
+import { UserModule } from '@modules/user/user.module';
 import { VideoModule } from '@modules/video/video.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -23,6 +24,7 @@ import { config } from './config';
     StorageObjectModule,
     ImageModule,
     VideoModule,
+    UserModule,
   ],
 })
 export class AppModule {}

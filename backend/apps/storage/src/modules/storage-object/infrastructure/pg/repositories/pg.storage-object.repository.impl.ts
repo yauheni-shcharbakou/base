@@ -228,6 +228,14 @@ export class PgStorageObjectRepositoryImpl
     }
   }
 
+  async getLiveOwnerIds(): Promise<string[]> {
+    const rows = await this.em.execute<{ user_id: string }[]>(
+      `SELECT DISTINCT user_id FROM "${StorageDatabaseEntity.STORAGE_OBJECT}" WHERE is_deleted = false`,
+    );
+
+    return rows.map((row) => row.user_id);
+  }
+
   // Leaves first, never a parent before its children: `storage-objects_parent_owner_foreign` is
   // `on delete no action`, so a folder deleted ahead of a subfolder fails the statement. Each call
   // removes the current bottom level; a folder still holding a file the file cleanup has not

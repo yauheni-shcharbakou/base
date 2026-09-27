@@ -265,8 +265,8 @@ Storage is written over its S3-compatible API, which Bunny enables only on a zon
 `BUNNY_STORAGE_ZONE` is that zone's name (bucket and access key id), `BUNNY_STORAGE_API_KEY` its
 password, and `BUNNY_STORAGE_CDN_ZONE` the pull zone in front of it — a separate name, since the
 pull zone outlives a move to a new storage zone.
-`AUTH_GRPC_URL` is set for this service even though the runtime never calls auth — the migrator's
-`create-root-folders` task talks to it over gRPC.
+`AUTH_GRPC_URL` points at auth for two callers: the migrator's `create-root-folders` task and the
+weekly sweep that drops the data of users auth no longer holds.
 
 The Stream library issues **two** keys and they are not interchangeable: `BUNNY_STREAM_API_KEY`
 writes (creating a video, signing its TUS upload), while `BUNNY_STREAM_READ_ONLY_API_KEY` is what

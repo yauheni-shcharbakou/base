@@ -20,4 +20,11 @@ export abstract class FileRepository extends DatabaseRepository<
   abstract saveAndPlaceMany(items: FileSaveAndPlace[]): Promise<Either<Error, NestStorage.File[]>>;
   /** Files whose storage object was deleted — the media half of the deleted-tree sweep. */
   abstract getManyInDeletedStorageObjects(limit: number): Promise<FileWithVideo[]>;
+  /**
+   * Files of one owner, placed or not. An image's and a video's backing file carries the media's
+   * owner, so this reaches every media the user holds.
+   */
+  abstract getManyByOwner(userId: string, limit: number): Promise<FileWithVideo[]>;
+  /** Every user that owns at least one file. */
+  abstract getOwnerIds(): Promise<string[]>;
 }

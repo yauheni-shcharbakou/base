@@ -14,6 +14,7 @@ export class PgStorageObjectMapper extends PgMapper<
     isPublic,
     isFolder,
     isDeleted,
+    isRoot,
     nameStartsWith,
     excludeIds,
     ...rest
@@ -30,6 +31,10 @@ export class PgStorageObjectMapper extends PgMapper<
 
     if (_.isBoolean(isDeleted)) {
       result.isDeleted = isDeleted;
+    }
+
+    if (_.isBoolean(isRoot)) {
+      result.parent = isRoot ? null : { $ne: null };
     }
 
     if (nameStartsWith) {

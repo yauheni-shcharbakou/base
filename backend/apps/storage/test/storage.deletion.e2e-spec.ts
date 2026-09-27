@@ -6,8 +6,10 @@ import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.sto
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
+import { FileDropService } from '@modules/file/application/services/file.drop.service';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { FileCleanupUseCase } from '@modules/file/application/use-cases/file.cleanup.use-case';
+import { FileDeleteByOwnerUseCase } from '@modules/file/application/use-cases/file.delete-by-owner.use-case';
 import { StorageObjectPlacementService } from '@modules/storage-object/application/services/storage-object.placement.service';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { PgFileRepositoryImpl } from '@modules/file/infrastructure/pg/repositories/pg.file.repository.impl';
@@ -15,6 +17,7 @@ import { PgImageRepositoryImpl } from '@modules/image/infrastructure/pg/reposito
 import { StorageObjectCleanupUseCase } from '@modules/storage-object/application/use-cases/storage-object.cleanup.use-case';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
+import { StorageObjectDeleteRootFolderUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-root-folder.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { PgVideoRepositoryImpl } from '@modules/video/infrastructure/pg/repositories/pg.video.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
@@ -170,7 +173,7 @@ describe('storage deletion against Postgres', () => {
   const TTL_HOURS = 24;
 
   const fileCleanup = () =>
-    new FileCleanupUseCase(fileRepository, filePurgeService, {
+    new FileCleanupUseCase(fileRepository, new FileDropService(fileRepository, filePurgeService), {
       getOrThrow: () => TTL_HOURS,
     } as unknown as ConfigService<Config>);
 
@@ -718,4 +721,122 @@ describe('storage deletion against Postgres', () => {
       ]);
     },
   );
+
+  // What `auth.user.delete` sets off: storage-object marks the tree, file drops every media the user
+  // owns — placed or not — and the folder cleanup then takes the emptied folders, the root last.
+  withDb(
+    'removes a deleted user’s tree and every media they own, and leaves other users alone',
+    async () => {
+      const folder = await createFolder('a', root);
+      await placeImage(folder, 'dev/image');
+      await placeVideo(root, 'video-guid');
+      await placeFile(folder, 'dev/placed');
+      await fileRepository.saveAndPlaceOne({
+        file: { ...fileMeta('dev/unplaced'), userId: USER_ID, uploadId: 'upload' },
+      });
+      await imageRepository.saveAndPlaceOne({
+        image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+        file: fileMeta('dev/unplaced-image'),
+      });
+
+      const otherRoot = em.create(PgStorageObjectEntity, {
+        userId: OTHER_USER_ID,
+        name: '',
+        type: NestStorage.StorageObjectType.FOLDER,
+        isFolder: true,
+        isPublic: false,
+      } as never);
+      await em.persist(otherRoot).flush();
+      const foreign = (
+        await fileRepository.saveAndPlaceOne({
+          file: { ...fileMeta('dev/foreign'), userId: OTHER_USER_ID, uploadId: 'upload' },
+          storageObject: placement(otherRoot.id),
+        })
+      ).unwrap();
+
+      const deleteRoot = new StorageObjectDeleteRootFolderUseCase(storageObjectRepository);
+      const deleteMedia = new FileDeleteByOwnerUseCase(
+        fileRepository,
+        new FileDropService(fileRepository, filePurgeService),
+      );
+      const folderCleanup = new StorageObjectCleanupUseCase(storageObjectRepository);
+
+      em.clear();
+      assert.ok((await deleteRoot.execute(USER_ID)).isRight());
+      em.clear();
+      const dropped = await deleteMedia.execute(USER_ID);
+      assert.ok(dropped.isRight() && dropped.value === 5);
+
+      // At-least-once: a redelivery of either half finds nothing left to do.
+      em.clear();
+      assert.ok((await deleteRoot.execute(USER_ID)).isRight());
+      const redelivered = await deleteMedia.execute(USER_ID);
+      assert.ok(redelivered.isRight() && redelivered.value === 0);
+
+      for (let pass = 0; pass < 3; pass += 1) {
+        em.clear();
+        await folderCleanup.execute();
+      }
+
+      assert.equal(await count('files', 'user_id = ?', [USER_ID]), 0);
+      assert.equal(await count('images'), 0);
+      assert.equal(await count('videos'), 0);
+      assert.equal(await count('storage-objects', 'user_id = ?', [USER_ID]), 0);
+
+      assert.equal(await exists('files', foreign.id), true);
+      assert.equal(
+        await count('storage-objects', 'user_id = ? and not is_deleted', [OTHER_USER_ID]),
+        2,
+      );
+
+      assert.deepEqual(purgeKeys(purged), [
+        `${FilePurgeType.FILE}:dev/image`,
+        `${FilePurgeType.FILE}:dev/placed`,
+        `${FilePurgeType.FILE}:dev/unplaced`,
+        `${FilePurgeType.FILE}:dev/unplaced-image`,
+        `${FilePurgeType.VIDEO}:video-guid`,
+      ]);
+    },
+  );
+
+  describe('owner ids', () => {
+    withDb('lists every file owner, and only owners of live storage objects', async () => {
+      await placeFile(root, 'dev/placed');
+      await fileRepository.saveAndPlaceOne({
+        file: { ...fileMeta('dev/foreign'), userId: OTHER_USER_ID, uploadId: 'upload' },
+      });
+      const otherRoot = em.create(PgStorageObjectEntity, {
+        userId: OTHER_USER_ID,
+        name: '',
+        type: NestStorage.StorageObjectType.FOLDER,
+        isFolder: true,
+        isPublic: false,
+      } as never);
+      await em.persist(otherRoot).flush();
+      await storageObjectRepository.markDeletedWithDescendants(otherRoot.id);
+
+      em.clear();
+      assert.deepEqual(
+        (await fileRepository.getOwnerIds()).sort(),
+        [USER_ID, OTHER_USER_ID].sort(),
+      );
+      assert.deepEqual(await storageObjectRepository.getLiveOwnerIds(), [USER_ID]);
+    });
+  });
+
+  describe('isRoot', () => {
+    withDb('finds the root folder only', async () => {
+      await createFolder('a', root);
+
+      em.clear();
+      const roots = await storageObjectRepository.getMany({ userId: USER_ID, isRoot: true });
+      const nonRoots = await storageObjectRepository.getMany({ userId: USER_ID, isRoot: false });
+
+      assert.deepEqual(
+        roots.map(({ id }) => id),
+        [root],
+      );
+      assert.equal(nonRoots.length, 1);
+    });
+  });
 });
