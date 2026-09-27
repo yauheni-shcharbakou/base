@@ -24,10 +24,20 @@ export abstract class MongoRepositoryImpl<
   Create = CreateOf<Entity>,
   Update = UpdateOf<Entity>,
 > implements DatabaseRepository<Entity, Query, Create, Update> {
+  /**
+   * What a client reads in this repository's errors ("Storage object not found"). A miss reaches
+   * the admin panel verbatim, so it names the resource, never the collection behind it.
+   */
+  protected abstract readonly resourceName: string;
+
   protected constructor(
     protected readonly model: Model<Doc>,
     protected readonly mapper: MongoMapper<Doc, Entity, Query> = new MongoMapper(),
   ) {}
+
+  protected notFound(): NotFoundException {
+    return new NotFoundException(`${this.resourceName} not found`);
+  }
 
   private getPopulate<E extends NestCommon.Entity = Entity>(options: OptionsOf<E> = {}) {
     if (!options.populate) {
@@ -95,7 +105,7 @@ export abstract class MongoRepositoryImpl<
       .exec();
 
     if (!entity) {
-      return left(new NotFoundException(`${this.model.modelName} not found`));
+      return left(this.notFound());
     }
 
     return right(this.mapper.stringify(entity) as unknown as E);
@@ -180,7 +190,7 @@ export abstract class MongoRepositoryImpl<
     const entity = await this.model.findOneAndDelete<Doc>(this.mapper.transformQuery(query)).exec();
 
     if (!entity) {
-      return left(new NotFoundException(`${this.model.modelName} not found`));
+      return left(this.notFound());
     }
 
     return right(this.mapper.stringify(entity));
@@ -224,7 +234,7 @@ export abstract class MongoRepositoryImpl<
       .exec();
 
     if (!entity) {
-      return left(new NotFoundException(`${this.model.modelName} not found`));
+      return left(this.notFound());
     }
 
     return right(this.mapper.stringify(entity));

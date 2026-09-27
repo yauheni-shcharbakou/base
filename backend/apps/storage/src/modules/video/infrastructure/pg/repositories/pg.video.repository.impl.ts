@@ -19,6 +19,8 @@ export class PgVideoRepositoryImpl
   extends PgRepositoryImpl<PgVideoEntity, NestStorage.Video, NestStorage.VideoQuery, VideoCreate>
   implements VideoRepository
 {
+  protected readonly resourceName = 'Video';
+
   constructor(
     @InjectRepository(PgVideoEntity) protected readonly repository: EntityRepository<PgVideoEntity>,
   ) {
@@ -121,7 +123,7 @@ export class PgVideoRepositoryImpl
       const video = await this.repository.findOne({ id });
 
       if (!video) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       const file = this.em.getReference(PgFileEntity, video.file.id);

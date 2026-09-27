@@ -19,6 +19,8 @@ export class PgImageRepositoryImpl
   extends PgRepositoryImpl<PgImageEntity, NestStorage.Image, NestStorage.ImageQuery, ImageCreate>
   implements ImageRepository
 {
+  protected readonly resourceName = 'Image';
+
   constructor(
     @InjectRepository(PgImageEntity) protected readonly repository: EntityRepository<PgImageEntity>,
   ) {
@@ -121,7 +123,7 @@ export class PgImageRepositoryImpl
       const image = await this.repository.findOne({ id });
 
       if (!image) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       const file = this.em.getReference(PgFileEntity, image.file.id);

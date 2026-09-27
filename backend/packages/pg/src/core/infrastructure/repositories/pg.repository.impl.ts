@@ -32,6 +32,12 @@ export abstract class PgRepositoryImpl<
 > implements DatabaseRepository<Entity, Query, Create, Update> {
   protected readonly em: EntityManager;
 
+  /**
+   * What a client reads in this repository's errors ("Storage object not found"). A miss reaches
+   * the admin panel verbatim, so it names the resource, never the ORM class behind it.
+   */
+  protected abstract readonly resourceName: string;
+
   protected constructor(
     protected readonly repository: EntityRepository<Doc>,
     protected readonly mapper: PgMapper<Doc, Entity, Query> = new PgMapper(),
@@ -68,10 +74,14 @@ export abstract class PgRepositoryImpl<
    */
   protected toRepositoryError(error: unknown): Error {
     if (error instanceof UniqueConstraintViolationException) {
-      return new ConflictException(`${this.repository.getEntityName()} already exists`);
+      return new ConflictException(`${this.resourceName} already exists`);
     }
 
     return error as Error;
+  }
+
+  protected notFound(): NotFoundException {
+    return new NotFoundException(`${this.resourceName} not found`);
   }
 
   protected getPopulate<E extends NestCommon.Entity = Entity>(options: OptionsOf<E> = {}) {
@@ -155,7 +165,7 @@ export abstract class PgRepositoryImpl<
       const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
       if (!entity) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       await this.em.remove(entity).flush();
@@ -221,7 +231,7 @@ export abstract class PgRepositoryImpl<
     const entity = await this.repository.findOne(this.mapper.transformQuery(query), { populate });
 
     if (!entity) {
-      return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+      return left(this.notFound());
     }
 
     return right(this.mapper.stringify(entity) as unknown as E);
@@ -302,7 +312,7 @@ export abstract class PgRepositoryImpl<
       const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
       if (!entity) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       const updatedEntity = this.convertUpdate(entity, updateData);

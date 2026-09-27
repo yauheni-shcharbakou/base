@@ -18,6 +18,8 @@ export class PgFileRepositoryImpl
   extends PgRepositoryImpl<PgFileEntity, NestStorage.File, NestStorage.FileQuery>
   implements FileRepository
 {
+  protected readonly resourceName = 'File';
+
   constructor(
     @InjectRepository(PgFileEntity) protected readonly repository: EntityRepository<PgFileEntity>,
   ) {

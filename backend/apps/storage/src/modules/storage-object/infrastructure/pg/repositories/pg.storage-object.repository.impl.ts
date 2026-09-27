@@ -1,7 +1,7 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestCommon } from '@backend/proto';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { LockMode, QueryResult } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
@@ -39,6 +39,7 @@ export class PgStorageObjectRepositoryImpl
   >
   implements StorageObjectRepository
 {
+  protected readonly resourceName = 'Storage object';
   private readonly logger = new Logger(PgStorageObjectRepositoryImpl.name);
 
   constructor(
@@ -137,7 +138,7 @@ export class PgStorageObjectRepositoryImpl
       });
 
       if (!updated) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       return right(updated);

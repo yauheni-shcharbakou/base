@@ -54,14 +54,15 @@ pnpm start:dev        # nest start --watch service
 pnpm build / typecheck / migrate (:new/:initial/:sql/:tasks) / lint
 pnpm storage:copy-zone  # one-off copy into a new storage zone — runbook in README.md
 pnpm test             # jest: use-cases and services, ports mocked
-pnpm test:e2e         # node:test: the deletion paths and the folder tree against Postgres (`pnpm docker:local`)
+pnpm test:e2e         # node:test: deletion paths, folder tree, repository errors against Postgres (`pnpm docker:local`)
 ```
 - **Two runners.** `src/**/*.spec.ts` is Jest. `test/*.e2e-spec.ts` runs on `node:test` under ts-node, because it drives the real repositories and Jest cannot load MikroORM. Those specs cover:
   - the FK cascades, the subtree mark and the bottom-up folder delete;
   - both sweeps of the file cleanup (stale uploads by status and TTL, media under a deleted object);
   - a whole folder delete end to end;
   - the folder tree: derived paths, the `isPublic` cascade, cycle termination, and the statement count of a populated page (the guard against an N+1 creeping into `folderPath`);
-  - the tree lock: a second write queues, two opposite moves let one through, a `left` rolls back.
+  - the tree lock: a second write queues, two opposite moves let one through, a `left` rolls back;
+  - the error text a client reads: every repository's miss and the root-folder conflict name the resource ("Storage object not found"), not the ORM class.
 
   `test/pg.e2e.ts` gives each spec its own `storage_e2e[_<name>]` database (`node --test` runs spec files in parallel processes, and each drops its schema), wipes and migrates it from `src/migrator/migrations` on every run, and skips the suite when no server answers. Open the connection in a `before` hook, never in an async `describe` body: `node:test` exits 0 on an error thrown there. A spec that holds a transaction open (the tree-lock specs) must release it in a `finally`: a failed assertion that leaves it open hangs the run on closing the pool instead of failing it.
   > **Why not Jest:** [docs/adr/0017-database-specs-on-node-test.md](../../../docs/adr/0017-database-specs-on-node-test.md)

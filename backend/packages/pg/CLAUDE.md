@@ -37,6 +37,8 @@ src/
 
 `PgRepositoryImpl<Doc, Entity, …>` `implements DatabaseRepository` over an `EntityManager`. `convertUpdate` maps `UpdateOf` `{ set, remove, inc }` → `assign` / `null` / `+=`. `updateMany`/`deleteMany` page in batches of 100; `bulkUpdate` groups by filter key and `$in`s. Returns `Either`; misses → `NotFoundException`; rows mapped via `PgMapper`.
 
+Every subclass declares the abstract `resourceName` ("Storage object", "User"), and a miss is built with `this.notFound()` — "Storage object not found", also the name in `toRepositoryError`'s "already exists". Clients read a 4xx message verbatim (the admin shows it in its notification), so it never names the ORM class: no `getEntityName()`, no `Pg…Entity` stripped of its affixes. The name is declared rather than looked up from the `*DatabaseEntity` table enums, which name tables in the plural and would need a second map to stay readable.
+
 `saveOne`/`saveMany` additionally run their `catch` through `toRepositoryError`, which turns a MikroORM `UniqueConstraintViolationException` into a `ConflictException`. Callers can then tell "this row already exists" from a real write failure — an at-least-once event handler treats the former as success and must retry on the latter (see `StorageObjectCreateRootFolderUseCase` in `backend.storage`).
 
 ## Entities & IDs
