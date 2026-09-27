@@ -11,7 +11,7 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { useSingleFileUpload } from '@/features/storage/hooks';
-import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { storageMetaSchema, uploadViaPresignedUrl } from '@/features/storage/helpers';
 import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
@@ -21,9 +21,8 @@ import zod from 'zod';
 
 const schema = {
   userId: zod.string(),
-  parent: zod.string().optional(),
+  ...storageMetaSchema,
   name: zod.string().optional(),
-  isPublic: zod.boolean(),
   file: zod.file(),
 };
 

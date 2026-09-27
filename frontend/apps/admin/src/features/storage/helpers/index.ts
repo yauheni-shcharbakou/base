@@ -5,6 +5,7 @@ import { BrowserStorage } from '@packages/proto';
 export * from './media-options';
 export * from './name-conflict';
 export * from './presigned-upload';
+export * from './storage-meta.schema';
 
 export const getFileSize = (sizeInBytes = 0): string => {
   if (!sizeInBytes) {

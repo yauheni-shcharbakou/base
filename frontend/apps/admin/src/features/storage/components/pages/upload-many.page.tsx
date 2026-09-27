@@ -11,6 +11,7 @@ import {
   StorageUploader,
   StorageUploaderProps,
 } from '@/features/storage/components';
+import { storageMetaSchema } from '@/features/storage/helpers';
 import { useMultipleFileUpload } from '@/features/storage/hooks';
 import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
@@ -22,8 +23,7 @@ import zod from 'zod';
 
 const schema = {
   userId: zod.string(),
-  parent: zod.string().optional(),
-  isPublic: zod.boolean().optional(),
+  ...storageMetaSchema,
   files: zod.array(zod.file()),
   batchSize: zod.number().min(1).max(100),
 };

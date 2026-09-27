@@ -57,7 +57,14 @@ export const StorageObjectMetaFormSection = <Values extends StorageMeta = Storag
                 label="Name"
               />
             )}
-            <ControlledBooleanField control={control} fieldName="isPublic" label="Public" />
+            {/* Unregistered with its checkbox, so dropping the folder drops a visibility picked for
+                it. `name` stays: the create pages fill it from the picked file, not the folder. */}
+            <ControlledBooleanField
+              control={control}
+              fieldName="isPublic"
+              label="Public"
+              controllerProps={{ shouldUnregister: true }}
+            />
           </>
         )}
       </CardContent>

@@ -10,6 +10,7 @@ import {
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
+import { storageMetaSchema } from '@/features/storage/helpers';
 import { useSingleFileUpload } from '@/features/storage/hooks';
 import { videoActionProvider, type CreatedVideo } from '@/features/storage/providers';
 import { getGenericVideTitle, uploadViaTus } from '@/features/video/helpers';
@@ -21,9 +22,8 @@ import zod from 'zod';
 
 const schema = {
   userId: zod.string(),
-  parent: zod.string().optional(),
+  ...storageMetaSchema,
   name: zod.string().optional(),
-  isPublic: zod.boolean(),
   title: zod.string(),
   description: zod.string().optional(),
   file: zod.file(),
