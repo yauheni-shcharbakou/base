@@ -69,7 +69,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     request: NestStorage.StorageObjectGetFolders,
   ): Observable<NestStorage.StorageObjectArray> {
     const stream$ = from(this.getFoldersUseCase.execute(request));
-    return stream$.pipe(GrpcRxPipe.toArrayItems);
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
   isExists(request: NestStorage.StorageObjectQuery): Observable<NestCommon.Boolean> {

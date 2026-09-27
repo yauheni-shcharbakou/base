@@ -9,7 +9,17 @@ export abstract class StorageObjectRepository extends DatabaseRepository<
   StorageObjectCreate,
   StorageObjectUpdate
 > {
-  abstract getAllChildrenIds(parent: string): Promise<Set<string>>;
+  /**
+   * The ids of every folder under `parent`. A failed walk is a `left`, never an empty set, which
+   * would read as "no descendants" and let a folder be moved into its own subtree.
+   */
+  abstract getAllChildrenIds(parent: string): Promise<Either<Error, Set<string>>>;
+  /**
+   * Runs `work` in one transaction that first takes the tree lock. Tree writes that check the tree
+   * first (a move, a visibility change, a deletion) run one at a time, so what `work` checked still
+   * holds when its write lands. A `left` from `work` rolls the transaction back.
+   */
+  abstract withTreeLock<T>(work: () => Promise<Either<Error, T>>): Promise<Either<Error, T>>;
   /**
    * Updates the object, and when it is a folder whose `isPublic` changes, writes the new value over
    * its whole subtree — in one transaction, so a folder and its content never disagree.

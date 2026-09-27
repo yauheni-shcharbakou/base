@@ -63,7 +63,7 @@ Alternatives:
   - The price is the deploy overlap. While the new container migrates and starts, the old container's writes that still set `folder_path` fail: folder create, move, and single media create.
   - `down()` re-adds the column and backfills it from the tree, so a rollback gets correct paths.
 - **Typing trap.** `getMany`, `getOne` and `getList` infer `E` from their arguments. Without the explicit `<NestStorage.StorageObjectPopulated>` generic, `'folderPath'` fails the `keyof` check of `populate`.
-- **Reads now recurse.** A `parent_id` cycle can only come from two concurrent opposite moves, and nothing serializes those yet. Such a cycle no longer hangs anything, but the paths it produces are nonsense until the rows are repaired.
+- **Reads now recurse.** A `parent_id` cycle no longer hangs anything, but the paths it produces are nonsense until the rows are repaired. Two concurrent opposite moves could close one; [0019](0019-tree-writes-under-one-advisory-lock.md) serializes them.
 - **Retiring the event leaves durable Redis state.** Subscriptions are never removed on their own (`@backend/event-bus-redis` `CLAUDE.md`, *Registries & parking*). After the deploy, remove by hand:
   - the subscription `event-bus:subs:storage.storage.object.parent.update`;
   - the BullMQ keys `bull:storage.storage.object.parent.update:*`;

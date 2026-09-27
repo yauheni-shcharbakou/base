@@ -18,11 +18,16 @@ const folder = {
 } as StorageObject;
 
 describe('StorageObjectDeleteOneUseCase', () => {
-  let repository: { getOne: jest.Mock; markDeletedWithDescendants: jest.Mock };
+  let repository: {
+    withTreeLock: jest.Mock;
+    getOne: jest.Mock;
+    markDeletedWithDescendants: jest.Mock;
+  };
   let useCase: StorageObjectDeleteOneUseCase;
 
   beforeEach(() => {
     repository = {
+      withTreeLock: jest.fn((work: () => Promise<unknown>) => work()),
       getOne: jest.fn().mockResolvedValue(right(folder)),
       markDeletedWithDescendants: jest.fn().mockResolvedValue(right(3)),
     };
@@ -67,6 +72,19 @@ describe('StorageObjectDeleteOneUseCase', () => {
     const result = await useCase.execute({ id: 'missing' });
 
     expect(result.isLeft() && result.value).toBeInstanceOf(NotFoundException);
+    expect(repository.markDeletedWithDescendants).not.toHaveBeenCalled();
+  });
+
+  // A move could otherwise take an object out of the subtree, or put one in, between the read of the
+  // subtree and the mark.
+  it('reads and marks only inside the tree lock', async () => {
+    const failure = new Error('connection lost');
+    repository.withTreeLock.mockResolvedValue(left(failure));
+
+    const result = await useCase.execute({ id: folder.id });
+
+    expect(result.isLeft() && result.value).toBe(failure);
+    expect(repository.getOne).not.toHaveBeenCalled();
     expect(repository.markDeletedWithDescendants).not.toHaveBeenCalled();
   });
 

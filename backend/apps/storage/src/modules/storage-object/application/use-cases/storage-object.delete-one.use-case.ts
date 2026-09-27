@@ -1,11 +1,6 @@
 import { NestStorage } from '@backend/proto';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
-import {
-  BadRequestException,
-  HttpException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 
 /**
@@ -14,6 +9,9 @@ import { Either, left, right } from '@sweet-monads/either';
  * the cleanup crons: the file cleanup takes the media under a deleted storage object (the leaf row
  * goes with its file through the FK cascade), the storage-object cleanup takes the emptied folders.
  * No restore — the mark exists so a large folder is deleted in one statement, not to be undone.
+ *
+ * Runs under the tree lock, like a move. Otherwise an object moved out of the folder while the mark
+ * runs could still be marked from the subtree the mark read, and one moved in could escape it.
  */
 @Injectable()
 export class StorageObjectDeleteOneUseCase {
@@ -21,25 +19,27 @@ export class StorageObjectDeleteOneUseCase {
 
   async execute(
     query: Partial<NestStorage.StorageObjectQuery>,
-  ): Promise<Either<HttpException, NestStorage.StorageObject>> {
-    const entity = await this.storageObjectRepository.getOne({ ...query, isDeleted: false });
+  ): Promise<Either<Error, NestStorage.StorageObject>> {
+    return this.storageObjectRepository.withTreeLock(async () => {
+      const entity = await this.storageObjectRepository.getOne({ ...query, isDeleted: false });
 
-    if (entity.isLeft()) {
-      return entity;
-    }
+      if (entity.isLeft()) {
+        return left(entity.value);
+      }
 
-    // The root folder is the anchor of the user's tree — every placement resolves through it, so it
-    // is not deletable. It is the only folder without a parent.
-    if (entity.value.isFolder && !entity.value.parentId) {
-      return left(new BadRequestException("You can't delete the root folder"));
-    }
+      // The root folder is the anchor of the user's tree — every placement resolves through it, so
+      // it is not deletable. It is the only folder without a parent.
+      if (entity.value.isFolder && !entity.value.parentId) {
+        return left(new BadRequestException("You can't delete the root folder"));
+      }
 
-    const marked = await this.storageObjectRepository.markDeletedWithDescendants(entity.value.id);
+      const marked = await this.storageObjectRepository.markDeletedWithDescendants(entity.value.id);
 
-    if (marked.isLeft()) {
-      return left(new InternalServerErrorException(marked.value.message));
-    }
+      if (marked.isLeft()) {
+        return left(new InternalServerErrorException(marked.value.message));
+      }
 
-    return right(entity.value);
+      return right(entity.value);
+    });
   }
 }

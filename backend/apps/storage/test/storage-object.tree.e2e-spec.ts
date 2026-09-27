@@ -1,10 +1,15 @@
 import './pg.e2e';
 import { NestStorage } from '@backend/proto';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
+import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
+import { BadRequestException } from '@nestjs/common';
+import { left, right } from '@sweet-monads/either';
 import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, it } from 'node:test';
+import { setTimeout } from 'node:timers/promises';
 import { startOrm } from './pg.e2e';
 
 const USER_ID = '01JQ0000000000000000000001';
@@ -21,6 +26,7 @@ describe('storage-object tree against Postgres', () => {
   let orm: MikroORM | undefined;
   let em: EntityManager;
   let repository: PgStorageObjectRepositoryImpl;
+  let updateOne: StorageObjectUpdateOneUseCase;
 
   // Every statement the ORM sends; a spec resets it to measure what one call costs.
   let statements: string[] = [];
@@ -36,6 +42,10 @@ describe('storage-object tree against Postgres', () => {
 
     em = orm.em;
     repository = new PgStorageObjectRepositoryImpl(em.getRepository(PgStorageObjectEntity));
+    updateOne = new StorageObjectUpdateOneUseCase(
+      repository,
+      new StorageObjectValidationService(repository),
+    );
   });
 
   after(() => orm?.close());
@@ -109,6 +119,52 @@ describe('storage-object tree against Postgres', () => {
     await fn();
     return statements.length;
   };
+
+  // Takes the tree lock and keeps it until `release` — so a spec can line writes up behind it and
+  // know they are queued, not merely started. Release it in a `finally`: a failed assertion that
+  // leaves the transaction open hangs the run on closing the pool instead of failing it.
+  const holdTreeLock = async () => {
+    let entered!: () => void;
+    let open!: () => void;
+    const inside = new Promise<void>((resolve) => (entered = resolve));
+    const gate = new Promise<void>((resolve) => (open = resolve));
+
+    const done = repository.withTreeLock(async () => {
+      entered();
+      await gate;
+      return right(undefined);
+    });
+
+    await inside;
+
+    return {
+      release: async () => {
+        open();
+        await done;
+      },
+    };
+  };
+
+  // Seen from outside, through `pg_locks`: the advisory locks this database waits for.
+  const untilQueued = async (count: number): Promise<void> => {
+    for (let attempt = 0; attempt < 500; attempt++) {
+      const [row] = await em.getConnection().execute<{ waiting: number }[]>(
+        `select count(*)::int as waiting from pg_locks
+         where locktype = 'advisory' and not granted
+           and database = (select oid from pg_database where datname = current_database())`,
+      );
+
+      if (row.waiting === count) {
+        return;
+      }
+
+      await setTimeout(10);
+    }
+
+    assert.fail(`${count} tree writes never queued on the lock`);
+  };
+
+  const byId = (id: string): NestStorage.StorageObjectQuery => ({ id, ids: [] });
 
   describe('folderPath', () => {
     withDb('derives every path from the tree: root, nested folders, none for a leaf', async () => {
@@ -282,7 +338,73 @@ describe('storage-object tree against Postgres', () => {
     });
   });
 
-  // Two concurrent opposite moves can close a `parent_id` cycle; no walk may run forever on one.
+  describe('withTreeLock', () => {
+    withDb('queues a second tree write until the first one ends', async () => {
+      const first = await holdTreeLock();
+      let secondRan = false;
+
+      const second = repository.withTreeLock(() => {
+        secondRan = true;
+        return Promise.resolve(right(undefined));
+      });
+
+      try {
+        await untilQueued(1);
+        assert.equal(secondRan, false);
+      } finally {
+        await first.release();
+      }
+
+      await second;
+      assert.equal(secondRan, true);
+    });
+
+    // The race the lock exists for: checked side by side, both moves would find the other folder
+    // outside their subtree, and together they would close a cycle.
+    withDb('lets one of two opposite moves through and refuses the other', async () => {
+      const a = await createFolder('a', root);
+      const b = await createFolder('b', root);
+
+      const lock = await holdTreeLock();
+      const moves = Promise.all([
+        updateOne.execute(byId(a), { set: { parent: b } }),
+        updateOne.execute(byId(b), { set: { parent: a } }),
+      ]);
+
+      try {
+        // Both queued before either has read the tree.
+        await untilQueued(2);
+      } finally {
+        await lock.release();
+      }
+
+      const results = await moves;
+      const tree = await paths([a, b]);
+
+      assert.equal(results.filter((result) => result.isRight()).length, 1);
+      assert.ok(results.find((result) => result.isLeft())?.value instanceof BadRequestException);
+      assert.ok(
+        (tree.get(a) === '/b/a/' && tree.get(b) === '/b/') ||
+          (tree.get(a) === '/a/' && tree.get(b) === '/a/b/'),
+        `one folder ends up inside the other, got ${JSON.stringify([...tree])}`,
+      );
+    });
+
+    withDb('rolls back what the work wrote when it returns a left', async () => {
+      const docs = await createFolder('docs', root);
+
+      const result = await repository.withTreeLock(async () => {
+        await repository.updateAndCascadePublic(docs, { set: { isPublic: true } });
+        return left(new Error('refused after the write'));
+      });
+
+      assert.equal(result.isLeft() && result.value.message, 'refused after the write');
+      assert.deepEqual(await publicIds(), []);
+    });
+  });
+
+  // Moves check for a cycle under the tree lock, but a row written outside the service can still
+  // close one; no walk may run forever on it.
   withDb('ends every walk on a parent cycle instead of recursing forever', async () => {
     const a = await createFolder('a', root);
     const b = await createFolder('b', a);
@@ -297,7 +419,7 @@ describe('storage-object tree against Postgres', () => {
     const marked = await repository.markDeletedWithDescendants(a);
 
     assert.equal(typeof cyclePaths.get(a), 'string');
-    assert.deepEqual([...children].sort(), [a, b].sort());
+    assert.deepEqual([...children.unwrap()].sort(), [a, b].sort());
     assert.equal(cascaded.isRight(), true);
     assert.deepEqual(await publicIds(), [a, b].sort());
     assert.equal(marked.unwrap(), 2);

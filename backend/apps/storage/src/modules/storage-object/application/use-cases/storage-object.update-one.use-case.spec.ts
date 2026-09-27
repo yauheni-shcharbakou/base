@@ -20,6 +20,7 @@ const byId = (id: string): NestStorage.StorageObjectQuery => ({ id, ids: [] });
 
 describe('StorageObjectUpdateOneUseCase', () => {
   let repository: {
+    withTreeLock: jest.Mock;
     getOne: jest.Mock;
     getAllChildrenIds: jest.Mock;
     updateAndCascadePublic: jest.Mock;
@@ -29,8 +30,9 @@ describe('StorageObjectUpdateOneUseCase', () => {
 
   beforeEach(() => {
     repository = {
+      withTreeLock: jest.fn((work: () => Promise<unknown>) => work()),
       getOne: jest.fn().mockResolvedValue(right(folder)),
-      getAllChildrenIds: jest.fn().mockResolvedValue(new Set(['child-folder'])),
+      getAllChildrenIds: jest.fn().mockResolvedValue(right(new Set(['child-folder']))),
       updateAndCascadePublic: jest.fn().mockResolvedValue(right(folder)),
     };
 
@@ -70,6 +72,32 @@ describe('StorageObjectUpdateOneUseCase', () => {
     const result = await useCase.execute(byId(folder.id), { set: { parent: 'child-folder' } });
 
     expect(result.isLeft() && result.value).toBeInstanceOf(BadRequestException);
+    expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
+  });
+
+  // An empty set would read as "no descendants" and let the folder into its own subtree.
+  it('refuses the move when the descendant walk fails', async () => {
+    const failure = new Error('connection lost');
+    repository.getAllChildrenIds.mockResolvedValue(left(failure));
+
+    const result = await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
+
+    expect(result.isLeft() && result.value).toBe(failure);
+    expect(validation.validatePlacement).not.toHaveBeenCalled();
+    expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
+  });
+
+  // Two opposite moves checked outside it would both pass and close a cycle together.
+  it('reads, checks and writes only inside the tree lock', async () => {
+    const failure = new Error('connection lost');
+    repository.withTreeLock.mockResolvedValue(left(failure));
+
+    const result = await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
+
+    expect(result.isLeft() && result.value).toBe(failure);
+    expect(repository.getOne).not.toHaveBeenCalled();
+    expect(repository.getAllChildrenIds).not.toHaveBeenCalled();
+    expect(validation.validatePlacement).not.toHaveBeenCalled();
     expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
   });
 

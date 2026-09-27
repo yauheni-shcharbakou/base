@@ -45,3 +45,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0016](0016-provider-purge-over-the-event-bus.md) | Provider objects are purged over the event bus, and deleted storage objects are swept by a cron | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis` |
 | [0017](0017-database-specs-on-node-test.md) | Database specs run on `node:test` against a migrated Postgres, not on Jest | Accepted | `backend.storage` |
 | [0018](0018-folder-paths-computed-on-read.md) | Folder paths are computed on read, and a folder's visibility cascades in its own transaction | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis`, `@backend/event-bus-nats` |
+| [0019](0019-tree-writes-under-one-advisory-lock.md) | Writes to the storage-object tree run under one advisory lock | Accepted | `backend.storage` |

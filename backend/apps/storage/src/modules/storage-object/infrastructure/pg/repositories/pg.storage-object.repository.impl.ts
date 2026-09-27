@@ -17,6 +17,18 @@ import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { PgStorageObjectMapper } from '../mappers/pg.storage-object.mapper';
 
+// One key for every user's tree. A key per user would stop two opposite moves from closing a cycle
+// only if no `parent` link crossed two users, and placement does not check the owner. Tree writes
+// are rare admin actions, so one queue for all of them costs nothing measurable.
+const TREE_LOCK = `${StorageDatabaseEntity.STORAGE_OBJECT}.tree`;
+
+// Carries a `left` out of `em.transactional`, which rolls back only when its callback throws.
+class TreeWriteRejected extends Error {
+  constructor(readonly reason: Error) {
+    super(reason.message);
+  }
+}
+
 export class PgStorageObjectRepositoryImpl
   extends PgRepositoryImpl<
     PgStorageObjectEntity,
@@ -36,7 +48,7 @@ export class PgStorageObjectRepositoryImpl
     super(repository, new PgStorageObjectMapper());
   }
 
-  async getAllChildrenIds(parent: string): Promise<Set<string>> {
+  async getAllChildrenIds(parent: string): Promise<Either<Error, Set<string>>> {
     const table = StorageDatabaseEntity.STORAGE_OBJECT;
 
     try {
@@ -56,10 +68,41 @@ export class PgStorageObjectRepositoryImpl
       `;
 
       const results = await this.em.execute<NestCommon.IdField[]>(sql, [parent]);
-      return new Set(_.map(results, (entity) => entity.id));
+      return right(new Set(_.map(results, (entity) => entity.id)));
     } catch (error) {
       this.logger.error(`Failed to resolve children ids for parent ${parent}`, error);
-      return new Set();
+      return left(error);
+    }
+  }
+
+  async withTreeLock<T>(work: () => Promise<Either<Error, T>>): Promise<Either<Error, T>> {
+    try {
+      // Repository calls inside `work` join this transaction through MikroORM's transaction
+      // context. `clear` gives it an empty identity map, so no check reads an entity cached before
+      // the lock was taken.
+      return await this.em.transactional(
+        async (em) => {
+          // Transaction-scoped: the commit or the rollback releases it, so it never outlives `work`.
+          // A waiter holds its pool connection while it waits.
+          await em.execute('select pg_advisory_xact_lock(hashtext(?))', [TREE_LOCK]);
+
+          const result = await work();
+
+          if (result.isLeft()) {
+            throw new TreeWriteRejected(result.value);
+          }
+
+          return result;
+        },
+        { clear: true },
+      );
+    } catch (error) {
+      if (error instanceof TreeWriteRejected) {
+        return left(error.reason);
+      }
+
+      this.logger.error('Failed to run a write under the tree lock', error);
+      return left(error);
     }
   }
 

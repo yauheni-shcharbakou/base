@@ -13,6 +13,10 @@ import { StorageObjectValidationService } from '../services/storage-object.valid
  * Nothing about a folder's path has to follow a move or a rename: `folderPath` is derived from the
  * tree on read. Only `isPublic` is stored per row, and the repository writes a folder's new value
  * over its subtree in the same transaction as the folder itself.
+ *
+ * The whole read-check-write runs under the tree lock. Without it, two opposite moves (A into B,
+ * B into A) each pass the descendant check before either commits, and together close a cycle.
+ * A move also reads its new parent's `isPublic` after any visibility change queued before it.
  */
 @Injectable()
 export class StorageObjectUpdateOneUseCase {
@@ -43,7 +47,11 @@ export class StorageObjectUpdateOneUseCase {
       if (entity.isFolder) {
         const childrenIds = await this.storageObjectRepository.getAllChildrenIds(entity.id);
 
-        if (childrenIds.has(updateData.set.parent)) {
+        if (childrenIds.isLeft()) {
+          return left(childrenIds.value);
+        }
+
+        if (childrenIds.value.has(updateData.set.parent)) {
           return left(new BadRequestException('Invalid parent'));
         }
       }
@@ -68,21 +76,23 @@ export class StorageObjectUpdateOneUseCase {
     query: NestStorage.StorageObjectQuery,
     updateData: NestStorage.StorageObjectUpdate,
   ): Promise<Either<Error, NestStorage.StorageObject>> {
-    const storageObject = await this.storageObjectRepository.getOne(query);
+    return this.storageObjectRepository.withTreeLock(async () => {
+      const storageObject = await this.storageObjectRepository.getOne(query);
 
-    if (storageObject.isLeft()) {
-      return storageObject;
-    }
+      if (storageObject.isLeft()) {
+        return left(storageObject.value);
+      }
 
-    const update = await this.transformUpdate(storageObject.value, updateData);
+      const update = await this.transformUpdate(storageObject.value, updateData);
 
-    if (update.isLeft()) {
-      return left(update.value);
-    }
+      if (update.isLeft()) {
+        return left(update.value);
+      }
 
-    return this.storageObjectRepository.updateAndCascadePublic(
-      storageObject.value.id,
-      update.value,
-    );
+      return this.storageObjectRepository.updateAndCascadePublic(
+        storageObject.value.id,
+        update.value,
+      );
+    });
   }
 }

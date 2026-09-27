@@ -17,8 +17,9 @@ import { PgFileEntity } from './pg.file.entity';
 
 export const ROOT_FOLDER_UNIQUE_INDEX = 'storage-objects_root_folder_unique';
 
-// A `parent_id` cycle can only come from two concurrent opposite moves; the bound keeps a read of
-// such a row from recursing forever. Real trees are nowhere near this deep.
+// Moves check for a cycle under the tree lock, so only a row written outside the service can close
+// one; the bound keeps a read of such a row from recursing forever. Real trees are nowhere near
+// this deep.
 const MAX_FOLDER_DEPTH = 64;
 
 /**
