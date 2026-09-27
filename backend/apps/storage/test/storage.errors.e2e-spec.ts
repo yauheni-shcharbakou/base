@@ -206,6 +206,17 @@ describe('storage repository errors against Postgres', () => {
       );
     });
 
+    // An omitted query is `{}`: the mapper destructures it, so `undefined` used to be a TypeError.
+    withDb('getMany takes no query', async () => {
+      const root = (await folder('')).unwrap();
+
+      const objects = await storageObjectRepository.getMany();
+      assert.deepEqual(
+        objects.map((object) => object.id),
+        [root.id],
+      );
+    });
+
     // The parent key is `on delete no action`: a folder with a child cannot go first.
     withDb('deleteMany throws what the database refused', async () => {
       const root = (await folder('')).unwrap();

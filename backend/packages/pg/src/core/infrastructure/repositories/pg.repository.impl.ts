@@ -142,7 +142,7 @@ export abstract class PgRepositoryImpl<
     return this.deleteOne({ id } as Partial<Query>);
   }
 
-  async deleteMany(query?: Partial<Query>): Promise<boolean> {
+  async deleteMany(query: Partial<Query> = {}): Promise<boolean> {
     const transformedQuery = this.mapper.transformQuery(query);
 
     let page = 1;
@@ -173,7 +173,7 @@ export abstract class PgRepositoryImpl<
     }
   }
 
-  async deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>> {
+  async deleteOne(query: Partial<Query> = {}): Promise<Either<NotFoundException, Entity>> {
     try {
       const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
@@ -232,7 +232,7 @@ export abstract class PgRepositoryImpl<
   }
 
   async getMany<E extends NestCommon.Entity = Entity>(
-    query?: Partial<Query>,
+    query: Partial<Query> = {},
     options: OptionsOf<E> = {},
   ): Promise<E[]> {
     const populate = this.getPopulate(options);
@@ -240,7 +240,7 @@ export abstract class PgRepositoryImpl<
 
     const entities = _.isEmpty(transformedQuery)
       ? await this.repository.findAll({ populate })
-      : await this.repository.find(this.mapper.transformQuery(query), { populate });
+      : await this.repository.find(transformedQuery, { populate });
 
     return this.mapper.stringifyMany(entities) as unknown as E[];
   }

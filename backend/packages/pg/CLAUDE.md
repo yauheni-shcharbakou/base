@@ -58,6 +58,6 @@ Every subclass declares the abstract `resourceName` ("Storage object", "User"), 
 ## Commands & gotchas
 
 ```bash
-pnpm build / dev / lint / format / reset
+pnpm build / dev / typecheck / lint / format / reset
 ```
 - `lodash` is declared in this package's deps, with `@types/lodash` in devDeps.
