@@ -2,6 +2,10 @@ import { getServerPublicIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
 import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
+import {
+  toDownloadResponseInit,
+  toUpstreamHeaders,
+} from '@/features/storage/helpers/download-proxy';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +27,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    const fileResponse = await fetch(downloadData.url, { headers: request.headers });
+    const fileResponse = await fetch(downloadData.url, {
+      headers: toUpstreamHeaders(request.headers),
+    });
 
     if (!fileResponse.ok) {
       return NextResponse.json(
@@ -36,19 +42,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Empty file' }, { status: 502 });
     }
 
-    const headers = new Headers();
-
-    const contentType = fileResponse.headers.get('content-type');
-    const contentLength = fileResponse.headers.get('content-length');
-
-    headers.set('Content-Disposition', `attachment; filename="${downloadData.fileName}"`);
-    headers.set('Content-Type', contentType || 'application/octet-stream');
-
-    if (contentLength) {
-      headers.set('Content-Length', contentLength);
-    }
-
-    return new NextResponse(fileResponse.body, { status: 200, headers });
+    return new NextResponse(
+      fileResponse.body,
+      toDownloadResponseInit(fileResponse, downloadData.fileName),
+    );
   } catch (error) {
     return errorResponse(error);
   }

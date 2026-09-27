@@ -2,6 +2,10 @@ import { getServerPublicIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
 import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { videoGrpcRepository } from '@/features/grpc/repositories';
+import {
+  toDownloadResponseInit,
+  toUpstreamHeaders,
+} from '@/features/storage/helpers/download-proxy';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +28,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    const videoResponse = await fetch(downloadData.url, { headers: request.headers });
+    const videoResponse = await fetch(downloadData.url, {
+      headers: toUpstreamHeaders(request.headers),
+    });
 
     if (!videoResponse.ok) {
       return NextResponse.json(
@@ -37,19 +43,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Empty video' }, { status: 502 });
     }
 
-    const headers = new Headers();
-
-    const contentType = videoResponse.headers.get('content-type');
-    const contentLength = videoResponse.headers.get('content-length');
-
-    headers.set('Content-Disposition', `attachment; filename="${downloadData.fileName}"`);
-    headers.set('Content-Type', contentType || 'application/octet-stream');
-
-    if (contentLength) {
-      headers.set('Content-Length', contentLength);
-    }
-
-    return new NextResponse(videoResponse.body, { status: 200, headers });
+    return new NextResponse(
+      videoResponse.body,
+      toDownloadResponseInit(videoResponse, downloadData.fileName),
+    );
   } catch (error) {
     return errorResponse(error);
   }
