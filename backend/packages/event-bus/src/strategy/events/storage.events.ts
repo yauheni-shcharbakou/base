@@ -1,10 +1,3 @@
-import { type NestStorage } from '@backend/proto';
-
-export interface StorageObjectParentUpdateEvent {
-  parent: string;
-  update: Partial<Pick<NestStorage.StorageObject, 'folderPath' | 'isPublic'>>;
-}
-
 /**
  * What a purge deletes, named by the kind of object rather than by the provider that stores it —
  * which provider holds a `FILE` or a `VIDEO` is the consumer's business.

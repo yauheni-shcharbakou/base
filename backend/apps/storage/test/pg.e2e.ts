@@ -29,19 +29,33 @@ const loadMigrations = () =>
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     .flatMap((file) => Object.values(require(join(MIGRATIONS_DIR, file)) as object));
 
+export interface StartOrmOptions {
+  /**
+   * Suffix of the spec's own database. `node --test` runs spec files in parallel processes, and each
+   * one drops and re-migrates its schema, so two specs sharing a database wipe each other's tables.
+   */
+  database?: string;
+  /** Receives every statement the ORM sends — for specs that assert how many a call costs. */
+  onQuery?: (message: string) => void;
+}
+
 /**
- * Connects to a freshly migrated `storage_e2e`, or returns `undefined` when there is no Postgres —
- * the suite then skips itself instead of failing, like the Redis e2e suites do.
+ * Connects to a freshly migrated `storage_e2e[_<database>]`, or returns `undefined` when there is no
+ * Postgres — the suite then skips itself instead of failing, like the Redis e2e suites do.
  */
-export const startOrm = async (): Promise<MikroORM | undefined> => {
+export const startOrm = async ({ database, onQuery }: StartOrmOptions = {}): Promise<
+  MikroORM | undefined
+> => {
   const orm = await MikroORM.init({
     clientUrl: process.env.DATABASE_URL,
-    dbName: E2E_DATABASE,
+    dbName: database ? `${E2E_DATABASE}_${database}` : E2E_DATABASE,
     entities: [PgFileEntity, PgStorageObjectEntity, PgImageEntity, PgVideoEntity],
     metadataProvider: ReflectMetadataProvider,
     forceUtcTimezone: true,
     // The specs drive the repositories directly, outside any request context.
     allowGlobalContext: true,
+    // Only the `query` namespace, so each call of the listener is exactly one statement.
+    ...(onQuery ? { debug: ['query' as const], logger: onQuery } : {}),
     extensions: [Migrator],
     migrations: {
       tableName: 'mikro_orm_migrations',

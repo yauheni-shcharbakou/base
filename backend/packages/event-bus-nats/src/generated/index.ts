@@ -7,8 +7,6 @@ import {
   EventBus,
   FileEventBus,
   FilePurgeEvent,
-  StorageObjectEventBus,
-  StorageObjectParentUpdateEvent,
   UserEventBus,
   VideoEventBus,
 } from '@backend/event-bus';
@@ -104,53 +102,6 @@ export interface NatsFileEventController {
 export interface NatsFilePurgeEventHandler {
   onFilePurge(
     event: FilePurgeEvent,
-    context?: NatsMessageContext,
-  ): void | Promise<void> | Observable<void>;
-}
-
-const NatsStorageObjectEventPattern = {
-  PARENT_UPDATE: {
-    pattern: 'storage-storage-object-parent-update',
-    registerStream: (): void => {
-      globalStreamRegistry.append({
-        name: 'storage-storage-object-stream',
-        subjects: ['storage-storage-object-parent-update'],
-      });
-    },
-  },
-};
-
-export const NatsStorageObjectTransport = {
-  ...NatsStorageObjectEventPattern,
-  /**
-   * Binds the service's own events. The patterns stay bare subjects here —
-   * `@NatsController({ consumer })` rewrites them into `<subject>@<consumerId>`,
-   * so it must be applied above this decorator.
-   */
-  ControllerMethods: (): ClassDecorator => {
-    const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage-storage-object-parent-update')(
-        constructor.prototype['onParentUpdate'],
-        'onParentUpdate',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onParentUpdate'),
-      );
-      NatsStorageObjectEventPattern.PARENT_UPDATE.registerStream();
-    };
-    return applyDecorators(methodsDecorator);
-  },
-  EventBus: StorageObjectEventBus,
-} as const;
-
-export interface NatsStorageObjectEventController {
-  onParentUpdate(
-    event: StorageObjectParentUpdateEvent,
-    context?: NatsMessageContext,
-  ): void | Promise<void> | Observable<void>;
-}
-
-export interface NatsStorageObjectParentUpdateEventHandler {
-  onStorageObjectParentUpdate(
-    event: StorageObjectParentUpdateEvent,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -286,20 +237,6 @@ class NatsFileEventBusClientImpl extends NatsClientImpl implements FileEventBus 
   }
 }
 
-class NatsStorageObjectEventBusClientImpl extends NatsClientImpl implements StorageObjectEventBus {
-  constructor(protected readonly client: NatsJetStreamClient) {
-    super(client);
-  }
-
-  emitParentUpdate(event: StorageObjectParentUpdateEvent): Promise<any> {
-    return this.client.emit('storage-storage-object-parent-update', event);
-  }
-
-  emitManyParentUpdate(events: StorageObjectParentUpdateEvent[]): Promise<any[]> {
-    return this.client.emitMany('storage-storage-object-parent-update', events);
-  }
-}
-
 class NatsVideoEventBusClientImpl extends NatsClientImpl implements VideoEventBus {
   constructor(protected readonly client: NatsJetStreamClient) {
     super(client);
@@ -334,7 +271,6 @@ export class NatsClientFactory {
   private static clientsMap = new Map<Abstract<EventBus>, Type>([
     [UserEventBus, NatsUserEventBusClientImpl],
     [FileEventBus, NatsFileEventBusClientImpl],
-    [StorageObjectEventBus, NatsStorageObjectEventBusClientImpl],
     [VideoEventBus, NatsVideoEventBusClientImpl],
   ]);
 
@@ -365,10 +301,6 @@ export const NATS_HOST_STREAMS: Record<string, readonly NatsStreamData[]> = {
     {
       name: 'storage-file-stream',
       subjects: ['storage-file-purge'],
-    },
-    {
-      name: 'storage-storage-object-stream',
-      subjects: ['storage-storage-object-parent-update'],
     },
     {
       name: 'storage-video-stream',

@@ -39,7 +39,6 @@ export class CreateRootFoldersTask implements MigrationTask {
         name: '',
         isPublic: false,
         isFolder: true,
-        folderPath: '/',
       });
 
       this.entityManager.persist(folder);

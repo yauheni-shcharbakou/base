@@ -681,22 +681,6 @@
           "enumItems": [],
           "mappedType": "string"
         },
-        "folder_path": {
-          "name": "folder_path",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": true,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
         "id": {
           "name": "id",
           "type": "varchar(255)",
@@ -853,7 +837,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "unique": true,
+          "unique": false,
           "length": 255,
           "precision": null,
           "scale": null,
@@ -952,6 +936,16 @@
         },
         {
           "columnNames": [
+            "parent_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "storage-objects_parent_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -961,15 +955,13 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": [],
           "composite": false,
           "constraint": false,
           "keyName": "storage-objects_root_folder_unique",
           "primary": false,
-          "unique": true,
-          "expression": "CREATE UNIQUE INDEX \"storage-objects_root_folder_unique\" ON public.\"storage-objects\" USING btree (user_id) WHERE ((is_folder = true) AND (parent_id IS NULL))"
+          "unique": false,
+          "expression": "create unique index \"storage-objects_root_folder_unique\" on \"storage-objects\" (\"user_id\") where \"is_folder\" = true and \"parent_id\" is null"
         },
         {
           "columnNames": [

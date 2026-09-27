@@ -90,11 +90,13 @@ Concrete adapter for the abstract ports of `@backend/event-bus`:
 
 ```ts
 @RedisController({ consumer: 'storage.file' })
-@RedisStorageObjectTransport.ControllerMethods()
-export class RedisStorageObjectController
-  implements RedisStorageObjectEventController, RedisUserCreateEventHandler
+@RedisVideoTransport.ControllerMethods()
+export class RedisFileController
+  implements RedisVideoEventController, RedisUserCreateEventHandler
 {
-  async onParentUpdate(event: StorageObjectParentUpdateEvent): Promise<void> {}
+  async onUploaded(event: NestStorage.Video): Promise<void> {}
+  async onUploadFinish(event: NestStorage.Video): Promise<void> {}
+  async onUploadFail(event: NestStorage.Video): Promise<void> {}
 
   @RedisEvent(RedisUserTransport.CREATE)
   async onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: RedisJobContext) {}

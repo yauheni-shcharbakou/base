@@ -1,29 +1,15 @@
-import { StorageObjectParentUpdateEvent } from '@backend/event-bus';
 import { NestAuth } from '@backend/proto';
 import {
   RedisController,
   RedisEvent,
-  RedisStorageObjectEventController,
-  RedisStorageObjectTransport,
   RedisUserCreateEventHandler,
   RedisUserTransport,
 } from '@backend/event-bus-redis';
 import { StorageObjectCreateRootFolderUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-root-folder.use-case';
-import { StorageObjectUpdateFolderChildrenUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-folder-children.use-case';
 
 @RedisController({ consumer: 'storage.storage-object' })
-@RedisStorageObjectTransport.ControllerMethods()
-export class RedisStorageObjectController
-  implements RedisStorageObjectEventController, RedisUserCreateEventHandler
-{
-  constructor(
-    private readonly createRootFolderUseCase: StorageObjectCreateRootFolderUseCase,
-    private readonly updateFolderChildrenUseCase: StorageObjectUpdateFolderChildrenUseCase,
-  ) {}
-
-  async onParentUpdate(event: StorageObjectParentUpdateEvent): Promise<void> {
-    await this.updateFolderChildrenUseCase.execute(event.parent, event.update);
-  }
+export class RedisStorageObjectController implements RedisUserCreateEventHandler {
+  constructor(private readonly createRootFolderUseCase: StorageObjectCreateRootFolderUseCase) {}
 
   @RedisEvent(RedisUserTransport.CREATE)
   async onUserCreate(event: NestAuth.User): Promise<void> {

@@ -8,8 +8,8 @@ import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import path from 'path';
 
+// A placement no longer carries a path: `folderPath` is derived from the tree on read.
 export type StorageObjectPlacement = {
-  folderPath: string | null;
   isPublic: boolean;
 };
 
@@ -21,11 +21,12 @@ export type StorageObjectCreateValidated = Omit<StorageObjectCreate, 'parent'> &
 export class StorageObjectValidationService {
   constructor(private readonly storageObjectRepository: StorageObjectRepository) {}
 
+  /** `objectId` is the object being moved, if it already exists — it cannot be its own parent. */
   async validatePlacement(
     parent: string,
-    storageObject: Pick<NestStorage.StorageObject, 'type' | 'name'> & { id?: string },
+    objectId?: string,
   ): Promise<Either<HttpException, StorageObjectPlacement>> {
-    if (storageObject.id && parent === storageObject.id) {
+    if (objectId && parent === objectId) {
       return left(new BadRequestException('Invalid parent'));
     }
 
@@ -38,14 +39,7 @@ export class StorageObjectValidationService {
       return left(new NotFoundException('Parent folder not found'));
     }
 
-    if (storageObject.type !== NestStorage.StorageObjectType.FOLDER) {
-      return right({ isPublic: parentFolder.value.isPublic, folderPath: null });
-    }
-
-    return right({
-      isPublic: parentFolder.value.isPublic,
-      folderPath: parentFolder.value.folderPath + storageObject.name + '/',
-    });
+    return right({ isPublic: parentFolder.value.isPublic });
   }
 
   async validateObjectName(
@@ -116,7 +110,7 @@ export class StorageObjectValidationService {
 
     const [name, placement] = await Promise.all([
       this.validateObjectName(_.pick(createData, ['name', 'type', 'parent'])),
-      this.validatePlacement(createData.parent, _.pick(createData, ['name', 'type'])),
+      this.validatePlacement(createData.parent),
     ]);
 
     if (name.isLeft()) {
@@ -130,7 +124,6 @@ export class StorageObjectValidationService {
     return right({
       ...createData,
       parent: createData.parent,
-      folderPath: placement.value.folderPath,
       isPublic: placement.value.isPublic,
       name: name.value,
       isFolder: createData.type === NestStorage.StorageObjectType.FOLDER,

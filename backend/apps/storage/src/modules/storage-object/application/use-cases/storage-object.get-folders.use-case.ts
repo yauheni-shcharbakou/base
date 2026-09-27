@@ -26,8 +26,10 @@ export class StorageObjectGetFoldersUseCase {
       query.excludeIds = Array.from(childrenIds);
     }
 
+    // A folder has no media to populate; its path is what the folder pickers show. One statement for
+    // every folder of the user — the path is a subquery of the same SELECT, not a query per row.
     return this.storageObjectRepository.getMany<NestStorage.StorageObjectPopulated>(query, {
-      populate: ['file', 'image', 'video'],
+      populate: ['folderPath'],
     });
   }
 }

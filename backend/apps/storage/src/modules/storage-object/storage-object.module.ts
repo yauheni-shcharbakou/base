@@ -1,7 +1,5 @@
 import { PgModule } from '@backend/pg';
-import { RedisModule, RedisStorageObjectTransport } from '@backend/event-bus-redis';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
-import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { StorageObjectValidationService } from './application/services/storage-object.validation.service';
 import { StorageObjectCleanupUseCase } from './application/use-cases/storage-object.cleanup.use-case';
@@ -11,7 +9,6 @@ import { StorageObjectDeleteOneUseCase } from './application/use-cases/storage-o
 import { StorageObjectGetFoldersUseCase } from './application/use-cases/storage-object.get-folders.use-case';
 import { StorageObjectGetUseCase } from './application/use-cases/storage-object.get.use-case';
 import { StorageObjectIsExistsUseCase } from './application/use-cases/storage-object.is-exists.use-case';
-import { StorageObjectUpdateFolderChildrenUseCase } from './application/use-cases/storage-object.update-folder-children.use-case';
 import { StorageObjectUpdateOneUseCase } from './application/use-cases/storage-object.update-one.use-case';
 import { StorageObjectRepository } from './domain/repositories/storage-object.repository';
 import { PgStorageObjectRepositoryImpl } from './infrastructure/pg/repositories/pg.storage-object.repository.impl';
@@ -20,11 +17,7 @@ import { GrpcStorageObjectController } from './interface/grpc/grpc.storage-objec
 import { RedisStorageObjectController } from './interface/redis/redis.storage-object.controller';
 
 @Module({
-  imports: [
-    PgModule.forFeature(PgStorageObjectEntity),
-    RedisModule.forFeature({ EventBus: RedisStorageObjectTransport.EventBus }),
-    StorageModule,
-  ],
+  imports: [PgModule.forFeature(PgStorageObjectEntity)],
   providers: [
     {
       provide: StorageObjectRepository,
@@ -37,7 +30,6 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
     StorageObjectDeleteOneUseCase,
     StorageObjectUpdateOneUseCase,
     StorageObjectCreateRootFolderUseCase,
-    StorageObjectUpdateFolderChildrenUseCase,
     StorageObjectCreateOneUseCase,
     StorageObjectCleanupUseCase,
     CronStorageObjectScheduler,

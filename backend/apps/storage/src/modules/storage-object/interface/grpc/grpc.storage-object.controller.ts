@@ -13,6 +13,15 @@ import { StorageObjectIsExistsUseCase } from '@modules/storage-object/applicatio
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { from, map, Observable } from 'rxjs';
 
+// `folderPath` is a lazy formula: listed here, it rides in the same SELECT as the rows and the
+// to-one media joins — one statement per call however many rows, never a query per row.
+const POPULATE: (keyof NestStorage.StorageObjectPopulated)[] = [
+  'file',
+  'image',
+  'video',
+  'folderPath',
+];
+
 @GrpcController()
 @GrpcStorageObjectTransport.ControllerMethods()
 export class GrpcStorageObjectController implements GrpcStorageObjectServiceController {
@@ -29,9 +38,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     const stream$ = from(
       this.getUseCase.getOne<NestStorage.StorageObjectPopulated>(
         { id: request.id, isDeleted: false },
-        {
-          populate: ['file', 'image', 'video'],
-        },
+        { populate: POPULATE },
       ),
     );
 
@@ -42,7 +49,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     const stream$ = from(
       this.getUseCase.getMany<NestStorage.StorageObjectPopulated>(
         { ...request, isDeleted: false },
-        { populate: ['file', 'image', 'video'] },
+        { populate: POPULATE },
       ),
     );
 
@@ -53,7 +60,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     return from(
       this.getUseCase.getList<NestStorage.StorageObjectPopulated>(
         { ...request, query: { isDeleted: false } },
-        { populate: ['file', 'image', 'video'] },
+        { populate: POPULATE },
       ),
     );
   }

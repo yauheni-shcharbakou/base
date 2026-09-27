@@ -37,7 +37,7 @@ pug stay out of their graph.
 `strategy/index.ts` exports the `EventBusStrategy` interface, shaped `[host][service][event]: PayloadType`
 (e.g. `auth.user.create: NestAuth.User`). To add an event, add a key here. Payloads are usually
 `@backend/proto` types; custom (non-proto) payloads go in `strategy/events/` (e.g.
-`StorageObjectParentUpdateEvent`) and are re-exported.
+`FilePurgeEvent`) and are re-exported.
 
 ## Bus-wide semantics
 

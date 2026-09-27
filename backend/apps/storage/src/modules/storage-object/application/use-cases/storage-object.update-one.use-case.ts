@@ -1,4 +1,3 @@
-import { StorageObjectEventBus, StorageObjectParentUpdateEvent } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
@@ -10,12 +9,16 @@ import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { StorageObjectValidationService } from '../services/storage-object.validation.service';
 
+/**
+ * Nothing about a folder's path has to follow a move or a rename: `folderPath` is derived from the
+ * tree on read. Only `isPublic` is stored per row, and the repository writes a folder's new value
+ * over its subtree in the same transaction as the folder itself.
+ */
 @Injectable()
 export class StorageObjectUpdateOneUseCase {
   constructor(
     private readonly storageObjectRepository: StorageObjectRepository,
     private readonly storageObjectValidationService: StorageObjectValidationService,
-    private readonly eventBus: StorageObjectEventBus,
   ) {}
 
   private async transformUpdate(
@@ -47,10 +50,7 @@ export class StorageObjectUpdateOneUseCase {
 
       const placeData = await this.storageObjectValidationService.validatePlacement(
         updateData.set.parent,
-        {
-          ..._.pick(entity, ['id', 'type']),
-          name: updateData.set.name ?? entity.name,
-        },
+        entity.id,
       );
 
       if (placeData.isLeft()) {
@@ -58,7 +58,6 @@ export class StorageObjectUpdateOneUseCase {
       }
 
       update.set.parent = updateData.set.parent;
-      update.set.folderPath = placeData.value.folderPath;
       update.set.isPublic = placeData.value.isPublic;
     }
 
@@ -81,30 +80,9 @@ export class StorageObjectUpdateOneUseCase {
       return left(update.value);
     }
 
-    const entity = await this.storageObjectRepository.updateById(
+    return this.storageObjectRepository.updateAndCascadePublic(
       storageObject.value.id,
       update.value,
     );
-
-    if (entity.isRight() && entity.value.isFolder) {
-      const sideEffectUpdate: StorageObjectParentUpdateEvent['update'] = {};
-
-      const isPublicChanged = storageObject.value.isPublic !== entity.value.isPublic;
-      const isFolderPathChanged = storageObject.value.folderPath !== entity.value.folderPath;
-
-      if (isPublicChanged) {
-        sideEffectUpdate.isPublic = entity.value.isPublic;
-      }
-
-      if (isFolderPathChanged) {
-        sideEffectUpdate.folderPath = entity.value.folderPath;
-      }
-
-      if (!_.isEmpty(sideEffectUpdate)) {
-        await this.eventBus.emitParentUpdate({ parent: entity.value.id, update: sideEffectUpdate });
-      }
-    }
-
-    return entity;
   }
 }

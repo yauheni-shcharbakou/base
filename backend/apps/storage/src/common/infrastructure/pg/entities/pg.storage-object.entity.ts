@@ -3,12 +3,23 @@ import { NestStorage } from '@backend/proto';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { Collection, Ref } from '@mikro-orm/core';
-import { Index, ManyToOne, OneToMany, OneToOne, Property } from '@mikro-orm/decorators/legacy';
+import {
+  Formula,
+  Index,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  Property,
+} from '@mikro-orm/decorators/legacy';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageDatabaseEntity } from '@packages/common';
 import { PgFileEntity } from './pg.file.entity';
 
 export const ROOT_FOLDER_UNIQUE_INDEX = 'storage-objects_root_folder_unique';
+
+// A `parent_id` cycle can only come from two concurrent opposite moves; the bound keeps a read of
+// such a row from recursing forever. Real trees are nowhere near this deep.
+const MAX_FOLDER_DEPTH = 64;
 
 /**
  * A user owns exactly one root folder. Enforced in the database rather than by a read-then-write
@@ -45,10 +56,13 @@ export class PgStorageObjectEntity
   @PgProp.Enum({ enum: NestStorage.StorageObjectType, index: true })
   type: NestStorage.StorageObjectType;
 
+  // Indexed for the subtree walks (the `isPublic` cascade, the delete mark, the cleanup sweep),
+  // which step down one level at a time by `parent_id`.
   @ManyToOne({
     entity: () => PgStorageObjectEntity,
     nullable: true,
     ref: true,
+    index: true,
   })
   parent?: Ref<PgStorageObjectEntity>;
 
@@ -78,7 +92,33 @@ export class PgStorageObjectEntity
     return this.file?.id;
   }
 
-  @Property({ nullable: true })
+  /**
+   * Derived from the tree on every read, never stored: '/' for a root folder, '/A/B/' for a nested
+   * one (the root's own name is not part of it), null for a leaf. Nothing has to be cascaded when a
+   * folder is moved or renamed, and no stored copy can drift from `parent_id`.
+   *
+   * Lazy — computed only where `populate: ['folderPath']` asks for it, as a correlated subquery in
+   * the same SELECT: a whole page is still one statement, never a query per row. The walk goes up by
+   * primary key, one lookup per level, and the CASE skips leaves and roots without running it.
+   */
+  @Formula(
+    (cols) => `(case
+      when not ${cols.isFolder} then null
+      when ${cols.parent} is null then '/'
+      else (
+        with recursive up (parent_id, path, depth) as (
+            select ${cols.parent}, ${cols.name}::text, 1
+          union all
+            select p.parent_id, p.name || '/' || up.path, up.depth + 1
+            from up
+            inner join "${StorageDatabaseEntity.STORAGE_OBJECT}" p on p.id = up.parent_id
+            where p.parent_id is not null and up.depth < ${MAX_FOLDER_DEPTH}
+        )
+        select '/' || path || '/' from up order by depth desc limit 1
+      )
+    end)`,
+    { lazy: true },
+  )
   folderPath?: string;
 
   @OneToOne({

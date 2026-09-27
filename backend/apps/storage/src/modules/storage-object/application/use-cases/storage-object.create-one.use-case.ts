@@ -21,10 +21,7 @@ export class StorageObjectCreateOneUseCase {
 
     const [name, placement] = await Promise.all([
       this.validationService.validateObjectName(_.pick(createData, ['name', 'type', 'parent'])),
-      this.validationService.validatePlacement(
-        createData.parent,
-        _.pick(createData, ['name', 'type']),
-      ),
+      this.validationService.validatePlacement(createData.parent),
     ]);
 
     if (name.isLeft()) {
@@ -37,7 +34,6 @@ export class StorageObjectCreateOneUseCase {
 
     return this.storageObjectRepository.saveOne({
       ...createData,
-      folderPath: placement.value.folderPath,
       isPublic: placement.value.isPublic,
       name: name.value,
       isFolder: createData.type === NestStorage.StorageObjectType.FOLDER,

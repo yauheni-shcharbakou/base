@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { FilePurgeEvent, StorageObjectParentUpdateEvent } from '@/strategy/events';
+import { FilePurgeEvent } from '@/strategy/events';
 import type { NestAuth, NestStorage } from '@backend/proto';
 
 export abstract class EventBus {}
@@ -14,12 +14,6 @@ export abstract class FileEventBus extends EventBus {
   abstract emitPurge(event: FilePurgeEvent): Promise<any>;
 
   abstract emitManyPurge(events: FilePurgeEvent[]): Promise<any[]>;
-}
-
-export abstract class StorageObjectEventBus extends EventBus {
-  abstract emitParentUpdate(event: StorageObjectParentUpdateEvent): Promise<any>;
-
-  abstract emitManyParentUpdate(events: StorageObjectParentUpdateEvent[]): Promise<any[]>;
 }
 
 export abstract class VideoEventBus extends EventBus {

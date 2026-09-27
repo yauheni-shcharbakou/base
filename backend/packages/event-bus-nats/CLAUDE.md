@@ -32,11 +32,13 @@ kebab-case `eventId` into subjects instead of using it verbatim as a queue name.
 
 ```ts
 @NatsController({ consumer: 'storage.file' })
-@NatsStorageObjectTransport.ControllerMethods()
-export class NatsStorageObjectController
-  implements NatsStorageObjectEventController, NatsUserCreateEventHandler
+@NatsVideoTransport.ControllerMethods()
+export class NatsFileController
+  implements NatsVideoEventController, NatsUserCreateEventHandler
 {
-  async onParentUpdate(event: StorageObjectParentUpdateEvent): Promise<void> {}
+  async onUploaded(event: NestStorage.Video): Promise<void> {}
+  async onUploadFinish(event: NestStorage.Video): Promise<void> {}
+  async onUploadFail(event: NestStorage.Video): Promise<void> {}
 
   @NatsEvent(NatsUserTransport.CREATE)
   async onUserCreate(@Payload() event: NestAuth.User, @Ctx() context: NatsMessageContext) {}

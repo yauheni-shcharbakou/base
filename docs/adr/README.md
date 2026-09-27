@@ -44,3 +44,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0015](0015-file-uploads-presigned-s3-put.md) | File and image bytes go browser → Bunny Storage over a pre-signed S3 PUT, confirmed by a call | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin` |
 | [0016](0016-provider-purge-over-the-event-bus.md) | Provider objects are purged over the event bus, and deleted storage objects are swept by a cron | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis` |
 | [0017](0017-database-specs-on-node-test.md) | Database specs run on `node:test` against a migrated Postgres, not on Jest | Accepted | `backend.storage` |
+| [0018](0018-folder-paths-computed-on-read.md) | Folder paths are computed on read, and a folder's visibility cascades in its own transaction | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis`, `@backend/event-bus-nats` |

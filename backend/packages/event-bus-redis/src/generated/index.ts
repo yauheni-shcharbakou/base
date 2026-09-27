@@ -5,8 +5,6 @@ import {
   EventBus,
   FileEventBus,
   FilePurgeEvent,
-  StorageObjectEventBus,
-  StorageObjectParentUpdateEvent,
   UserEventBus,
   VideoEventBus,
 } from '@backend/event-bus';
@@ -91,46 +89,6 @@ export interface RedisFileEventController {
 export interface RedisFilePurgeEventHandler {
   onFilePurge(
     event: FilePurgeEvent,
-    context?: RedisJobContext,
-  ): void | Promise<void> | Observable<void>;
-}
-
-const RedisStorageObjectEventPattern = {
-  PARENT_UPDATE: {
-    pattern: 'storage.storage.object.parent.update',
-  },
-};
-
-export const RedisStorageObjectTransport = {
-  ...RedisStorageObjectEventPattern,
-  /**
-   * Binds the service's own events. The patterns stay bare event ids here —
-   * `@RedisController({ consumer })` rewrites them into `<eventId>@<consumerId>`
-   * queue names, so it must be applied above this decorator.
-   */
-  ControllerMethods: (): ClassDecorator => {
-    const methodsDecorator = function (constructor: Function) {
-      EventPattern('storage.storage.object.parent.update')(
-        constructor.prototype['onParentUpdate'],
-        'onParentUpdate',
-        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onParentUpdate'),
-      );
-    };
-    return applyDecorators(methodsDecorator);
-  },
-  EventBus: StorageObjectEventBus,
-} as const;
-
-export interface RedisStorageObjectEventController {
-  onParentUpdate(
-    event: StorageObjectParentUpdateEvent,
-    context?: RedisJobContext,
-  ): void | Promise<void> | Observable<void>;
-}
-
-export interface RedisStorageObjectParentUpdateEventHandler {
-  onStorageObjectParentUpdate(
-    event: StorageObjectParentUpdateEvent,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -245,23 +203,6 @@ class RedisFileEventBusClientImpl extends RedisClientImpl implements FileEventBu
   }
 }
 
-class RedisStorageObjectEventBusClientImpl
-  extends RedisClientImpl
-  implements StorageObjectEventBus
-{
-  constructor(protected readonly client: RedisQueueClient) {
-    super(client);
-  }
-
-  emitParentUpdate(event: StorageObjectParentUpdateEvent): Promise<any> {
-    return this.client.emit('storage.storage.object.parent.update', event);
-  }
-
-  emitManyParentUpdate(events: StorageObjectParentUpdateEvent[]): Promise<any[]> {
-    return this.client.emitMany('storage.storage.object.parent.update', events);
-  }
-}
-
 class RedisVideoEventBusClientImpl extends RedisClientImpl implements VideoEventBus {
   constructor(protected readonly client: RedisQueueClient) {
     super(client);
@@ -296,7 +237,6 @@ export class RedisClientFactory {
   private static clientsMap = new Map<Abstract<EventBus>, Type>([
     [UserEventBus, RedisUserEventBusClientImpl],
     [FileEventBus, RedisFileEventBusClientImpl],
-    [StorageObjectEventBus, RedisStorageObjectEventBusClientImpl],
     [VideoEventBus, RedisVideoEventBusClientImpl],
   ]);
 
@@ -319,7 +259,6 @@ export const REDIS_HOST_EVENTS: Record<string, readonly string[]> = {
   auth: ['auth.user.create'],
   storage: [
     'storage.file.purge',
-    'storage.storage.object.parent.update',
     'storage.video.uploaded',
     'storage.video.upload.finish',
     'storage.video.upload.fail',

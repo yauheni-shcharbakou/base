@@ -1,5 +1,5 @@
 import type { NestAuth, NestStorage } from '@backend/proto';
-import { FilePurgeEvent, StorageObjectParentUpdateEvent } from './events';
+import { FilePurgeEvent } from './events';
 
 /**
  * @description Add new events with their types here
@@ -23,9 +23,6 @@ export interface EventBusStrategy {
     // so a provider that refuses a delete is retried instead of leaving an orphan behind.
     file: {
       purge: FilePurgeEvent;
-    };
-    storageObject: {
-      parentUpdate: StorageObjectParentUpdateEvent;
     };
     // Three stages, in order: `uploaded` = the bytes reached Bunny, `uploadFinish` = Bunny finished
     // encoding and the video is playable, `uploadFail` = it will never play. The file module

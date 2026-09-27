@@ -1,10 +1,10 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestCommon } from '@backend/proto';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
-import { Logger } from '@nestjs/common';
-import { QueryResult } from '@mikro-orm/core';
+import { Logger, NotFoundException } from '@nestjs/common';
+import { LockMode, QueryResult } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
-import { EntityRepository } from '@mikro-orm/postgresql';
+import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
   StorageObjectCreate,
@@ -46,7 +46,7 @@ export class PgStorageObjectRepositoryImpl
             FROM "${table}"
             WHERE parent_id = ?
 
-            UNION ALL
+            UNION
 
             SELECT e.id, e.parent_id, e.is_folder
             FROM "${table}" e
@@ -63,8 +63,77 @@ export class PgStorageObjectRepositoryImpl
     }
   }
 
+  async updateAndCascadePublic(
+    id: string,
+    update: StorageObjectUpdate,
+  ): Promise<Either<Error, StorageObject>> {
+    try {
+      const updated = await this.em.transactional(async (em) => {
+        // Locked and re-read, so two updates of the same folder decide whether `isPublic` changed
+        // one after the other, not both against the value from before either of them.
+        const entity = await em.findOne(
+          PgStorageObjectEntity,
+          { id },
+          { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
+        );
+
+        if (!entity) {
+          return undefined;
+        }
+
+        const wasPublic = entity.isPublic;
+
+        this.convertUpdate(entity, update);
+        await em.flush();
+
+        if (entity.isFolder && entity.isPublic !== wasPublic) {
+          await this.setPublicOnDescendants(em, id, entity.isPublic);
+        }
+
+        return this.mapper.stringify(entity);
+      });
+
+      if (!updated) {
+        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+      }
+
+      return right(updated);
+    } catch (error) {
+      this.logger.error(`Failed to update storage object ${id}`, error);
+      return left(error);
+    }
+  }
+
+  // Descendants only — the folder itself was just written through the ORM. Runs on the caller's
+  // transactional manager, so it commits or rolls back together with that write.
+  private async setPublicOnDescendants(
+    em: EntityManager,
+    id: string,
+    isPublic: boolean,
+  ): Promise<void> {
+    const table = StorageDatabaseEntity.STORAGE_OBJECT;
+
+    const sql = `
+      WITH RECURSIVE subtree AS (
+          SELECT id FROM "${table}" WHERE parent_id = ?
+
+          UNION
+
+          SELECT e.id
+          FROM "${table}" e
+          INNER JOIN subtree s ON e.parent_id = s.id
+      )
+      UPDATE "${table}" SET is_public = ?, updated_at = now()
+      WHERE id IN (SELECT id FROM subtree) AND is_public <> ?;
+    `;
+
+    await em.execute<QueryResult>(sql, [id, isPublic, isPublic], 'run');
+  }
+
   // One statement over the whole subtree, so a folder and its content cannot end up half-deleted.
   // Already-deleted rows are skipped: they are hidden anyway, and the cleanup cron owns them.
+  // Every walk here is `UNION`, not `UNION ALL`: the CTE carries only ids, so deduplication also
+  // ends the recursion on a `parent_id` cycle instead of running forever.
   async markDeletedWithDescendants(id: string): Promise<Either<Error, number>> {
     const table = StorageDatabaseEntity.STORAGE_OBJECT;
 
@@ -73,7 +142,7 @@ export class PgStorageObjectRepositoryImpl
         WITH RECURSIVE subtree AS (
             SELECT id FROM "${table}" WHERE id = ?
 
-            UNION ALL
+            UNION
 
             SELECT e.id
             FROM "${table}" e

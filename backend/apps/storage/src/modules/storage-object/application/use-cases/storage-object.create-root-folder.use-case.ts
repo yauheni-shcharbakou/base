@@ -24,7 +24,6 @@ export class StorageObjectCreateRootFolderUseCase {
       type: NestStorage.StorageObjectType.FOLDER,
       name: '',
       isPublic: false,
-      folderPath: '/',
       isFolder: true,
     });
 
