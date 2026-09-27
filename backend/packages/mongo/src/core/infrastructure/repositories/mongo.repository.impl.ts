@@ -9,13 +9,15 @@ import {
   UpdateOf,
 } from '@backend/common';
 import type { NestCommon } from '@backend/proto';
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { UpdateFilter } from 'mongodb';
 import { Model, UpdateQuery } from 'mongoose';
 import { MongoEntity } from '../entities';
 import { MongoMapper } from '../mappers';
+
+const logger = new Logger('MongoRepository');
 
 export abstract class MongoRepositoryImpl<
   Doc extends MongoEntity,
@@ -62,28 +64,20 @@ export abstract class MongoRepositoryImpl<
 
   async distinct<Field extends keyof Entity>(
     field: Field,
-    query?: Partial<Query>,
+    query: Partial<Query> = {},
   ): Promise<Set<Entity[Field]>> {
-    try {
-      const transformedQuery = this.mapper.transformQuery(query);
+    const property = field.toString();
 
+    try {
       const values = (await this.model
-        .distinct(field.toString(), transformedQuery, { limit: 1_000 })
+        .distinct(property, this.mapper.transformQuery(query))
         .exec()) as Entity[Field][];
 
-      return _.reduce(
-        values,
-        (acc: Set<Entity[Field]>, value: Entity[Field]) => {
-          if (!_.isNil(value)) {
-            acc.add(value);
-          }
-
-          return acc;
-        },
-        new Set(),
-      );
-    } catch (e) {
-      return new Set();
+      return new Set(_.reject(values, _.isNil));
+    } catch (error) {
+      // Never an empty set: that reads as "no values", and hides a broken query.
+      logger.error(`Failed to read distinct ${property} of ${this.resourceName}`, error);
+      throw error;
     }
   }
 

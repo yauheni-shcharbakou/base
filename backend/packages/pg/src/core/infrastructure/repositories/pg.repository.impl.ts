@@ -114,34 +114,25 @@ export abstract class PgRepositoryImpl<
     return this.repository.count(this.mapper.transformQuery(query));
   }
 
+  // A real `select distinct` with no row limit: capping the rows read (not the values returned)
+  // silently drops values that only occur past the cap. `null` is left out, as in Mongo.
   async distinct<Field extends keyof Entity>(
     field: Field,
-    query?: Partial<Query>,
+    query: Partial<Query> = {},
   ): Promise<Set<Entity[Field]>> {
+    const property = field.toString();
+
     try {
-      const transformedQuery = this.mapper.transformQuery(query);
+      const rows: Record<string, Entity[Field]>[] = await this.repository
+        .createQueryBuilder()
+        .select(property as any, true)
+        .where(this.mapper.transformQuery(query) as any)
+        .execute('all');
 
-      const entities = await this.repository.find(transformedQuery, {
-        limit: 1_000,
-        fields: [field.toString() as any],
-      });
-
-      return _.reduce(
-        entities,
-        (acc: Set<Entity[Field]>, entity: Doc) => {
-          const wrappedEntity = wrap(entity).toJSON();
-          const value = wrappedEntity[field.toString()];
-
-          if (!_.isNil(value)) {
-            acc.add(value);
-          }
-
-          return acc;
-        },
-        new Set(),
-      );
-    } catch (e) {
-      return new Set();
+      return new Set(_.reject(_.map(rows, property), _.isNil));
+    } catch (error) {
+      // Never an empty set: that reads as "no values", and hides a broken query.
+      throw this.toFailure(`read distinct ${property} of`, error);
     }
   }
 

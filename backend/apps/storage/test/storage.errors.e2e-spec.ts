@@ -229,4 +229,67 @@ describe('storage repository errors against Postgres', () => {
       );
     });
   });
+
+  // Every distinct value of the whole match — it used to be those of the first 1000 rows — and a
+  // failure thrown, never an empty set that reads as "no values".
+  describe('distinct', () => {
+    const OTHER_USER_ID = '01JQ0000000000000000000001';
+    const ROWS = 1_001;
+
+    const rootOf = (userId: string) =>
+      storageObjectRepository.saveOne({
+        userId,
+        name: '',
+        type: NestStorage.StorageObjectType.FOLDER,
+        isFolder: true,
+        isPublic: false,
+      });
+
+    // One flush for all of them; names are unique per folder, so each gets its own.
+    const fillFolder = (parent: string, name: (index: number) => string) =>
+      storageObjectRepository.saveMany(
+        Array.from({ length: ROWS }, (_, index) => ({
+          userId: USER_ID,
+          name: name(index),
+          type: NestStorage.StorageObjectType.FOLDER,
+          isFolder: true,
+          isPublic: false,
+          parent,
+        })),
+      );
+
+    withDb('reads past the first 1000 rows when the values are few', async () => {
+      const root = (await rootOf(USER_ID)).unwrap();
+      (await fillFolder(root.id, (index) => `f${index}`)).unwrap();
+      // Written last, so a read capped at 1000 rows never reaches it.
+      (await rootOf(OTHER_USER_ID)).unwrap();
+
+      assert.deepEqual(
+        await storageObjectRepository.distinct('userId'),
+        new Set([USER_ID, OTHER_USER_ID]),
+      );
+    });
+
+    // The shape `validateObjectName` asks for: a file's ` (n)` suffix is numbered from these.
+    withDb('returns more than 1000 values', async () => {
+      const root = (await rootOf(USER_ID)).unwrap();
+      (await fillFolder(root.id, (index) => `a (${index}).txt`)).unwrap();
+
+      const names = await storageObjectRepository.distinct('name', {
+        userId: USER_ID,
+        parent: root.id,
+        nameStartsWith: 'a',
+        isDeleted: false,
+      });
+
+      assert.equal(names.size, ROWS);
+      assert.ok(names.has(`a (${ROWS - 1}).txt`));
+    });
+
+    withDb('throws a failed query', async () => {
+      await assert.rejects(
+        storageObjectRepository.distinct('userId', { createdAt: 'not a date' } as never),
+      );
+    });
+  });
 });

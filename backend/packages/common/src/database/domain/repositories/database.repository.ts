@@ -20,6 +20,7 @@ export abstract class DatabaseRepository<
   abstract isExistsById(id: string): Promise<boolean>;
   abstract isExists(query?: Partial<Query>): Promise<boolean>;
   abstract count(query?: Partial<Query>): Promise<number>;
+  /** Every distinct non-null value over all matching rows; a failure is thrown, never an empty set. */
   abstract distinct<Field extends keyof Entity>(
     field: Field,
     query?: Partial<Query>,
