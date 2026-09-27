@@ -9,11 +9,11 @@ import {
   UpdateOf,
 } from '@backend/common';
 import type { NestCommon } from '@backend/proto';
-import { Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { UpdateFilter } from 'mongodb';
-import { Model, UpdateQuery } from 'mongoose';
+import { Model, QueryFilter, UpdateQuery } from 'mongoose';
 import { MongoEntity } from '../entities';
 import { MongoMapper } from '../mappers';
 
@@ -42,6 +42,18 @@ export abstract class MongoRepositoryImpl<
   protected toFailure(action: string, error: unknown): Error {
     logger.error(`Failed to ${action} ${this.resourceName}`, error);
     return error as Error;
+  }
+
+  // A bulk write whose query came out of the mapper with no condition would reach every document —
+  // refused as the caller's mistake, never run. `@backend/pg` has the reason it is one request away.
+  protected transformBulkQuery(action: string, query: Partial<Query>): QueryFilter<Doc> {
+    const transformedQuery = this.mapper.transformQuery(query);
+
+    if (_.isEmpty(transformedQuery)) {
+      throw new BadRequestException(`${this.resourceName} ${action}: a filter is required`);
+    }
+
+    return transformedQuery;
   }
 
   protected notFound(): NotFoundException {
@@ -182,8 +194,8 @@ export abstract class MongoRepositoryImpl<
     return this.deleteOne({ id } as Partial<Query>);
   }
 
-  async deleteMany(query: Partial<Query> = {}): Promise<boolean> {
-    const result = await this.model.deleteMany(this.mapper.transformQuery(query)).exec();
+  async deleteMany(query: Partial<Query>): Promise<boolean> {
+    const result = await this.model.deleteMany(this.transformBulkQuery('delete', query)).exec();
     return !!result.deletedCount;
   }
 
@@ -218,7 +230,7 @@ export abstract class MongoRepositoryImpl<
 
   async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {
     const result = await this.model
-      .updateMany(this.mapper.transformQuery(query), this.convertUpdate(updateData))
+      .updateMany(this.transformBulkQuery('update', query), this.convertUpdate(updateData))
       .exec();
 
     return !!result.modifiedCount;

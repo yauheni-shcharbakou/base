@@ -206,6 +206,29 @@ describe('storage repository errors against Postgres', () => {
       );
     });
 
+    // What a client that sends no filter arrives as; the mapper drops the empty list to `{}`.
+    withDb('refuse a query that constrains nothing, and touch no row', async () => {
+      const root = (await folder('')).unwrap();
+
+      await assert.rejects(
+        storageObjectRepository.deleteMany({ ids: [] }),
+        (error) =>
+          error instanceof BadRequestException &&
+          error.message === 'Storage object delete: a filter is required',
+      );
+      await assert.rejects(
+        storageObjectRepository.updateMany({ ids: [] }, { set: { isPublic: true } }),
+        (error) =>
+          error instanceof BadRequestException &&
+          error.message === 'Storage object update: a filter is required',
+      );
+
+      orm.em.clear();
+      const [kept] = await storageObjectRepository.getMany();
+      assert.equal(kept?.id, root.id);
+      assert.equal(kept?.isPublic, false);
+    });
+
     // An omitted query is `{}`: the mapper destructures it, so `undefined` used to be a TypeError.
     withDb('getMany takes no query', async () => {
       const root = (await folder('')).unwrap();

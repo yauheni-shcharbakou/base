@@ -69,7 +69,8 @@ pnpm test:e2e         # node:test: deletion paths, folder tree, repository error
   - the owner and name rules, and the constraints that back them against a row written by hand;
   - a leaf over existing media: another user's file is refused and survives the cleanup, the owner's own is placed and goes with its leaf, a file that is not READY is refused;
   - the media lists a picker reads: the owner's unplaced READY files, images and videos, without a file that backs other media;
-  - `updateMany`/`deleteMany` throw what the database refuses and return `false` only when nothing matched;
+  - `updateMany`/`deleteMany` throw what the database refuses, refuse a query that constrains nothing, and return `false` only when nothing matched;
+  - `distinct` returns every value of the match past the first 1000 rows, and throws a failed query;
   - the error text a client reads: every repository's miss and the root-folder conflict name the resource ("Storage object not found"), not the ORM class.
 
   `test/pg.e2e.ts` gives each spec its own `storage_e2e[_<name>]` database (`node --test` runs spec files in parallel processes, and each drops its schema), wipes and migrates it from `src/migrator/migrations` on every run, and skips the suite when no server answers. Open the connection in a `before` hook, never in an async `describe` body: `node:test` exits 0 on an error thrown there. A spec that holds a transaction open (the tree-lock specs) must release it in a `finally`: a failed assertion that leaves it open hangs the run on closing the pool instead of failing it.

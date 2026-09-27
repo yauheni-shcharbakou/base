@@ -100,6 +100,19 @@ export abstract class PgRepositoryImpl<
     return error as Error;
   }
 
+  // A bulk write whose query came out of the mapper with no condition would reach every row. The
+  // gRPC loader turns a client's unset `repeated` field into `[]`, and the mapper drops it, so "no
+  // filter" is one request away — refused as the caller's mistake, never run.
+  protected transformBulkQuery(action: string, query: Partial<Query>): FilterQuery<Doc> {
+    const transformedQuery = this.mapper.transformQuery(query);
+
+    if (_.isEmpty(transformedQuery)) {
+      throw new BadRequestException(`${this.resourceName} ${action}: a filter is required`);
+    }
+
+    return transformedQuery;
+  }
+
   protected notFound(): NotFoundException {
     return new NotFoundException(`${this.resourceName} not found`);
   }
@@ -142,8 +155,8 @@ export abstract class PgRepositoryImpl<
     return this.deleteOne({ id } as Partial<Query>);
   }
 
-  async deleteMany(query: Partial<Query> = {}): Promise<boolean> {
-    const transformedQuery = this.mapper.transformQuery(query);
+  async deleteMany(query: Partial<Query>): Promise<boolean> {
+    const transformedQuery = this.transformBulkQuery('delete', query);
 
     let page = 1;
     let hasNext = false;
@@ -298,7 +311,7 @@ export abstract class PgRepositoryImpl<
   }
 
   async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {
-    const transformedQuery = this.mapper.transformQuery(query);
+    const transformedQuery = this.transformBulkQuery('update', query);
 
     let page = 1;
     let hasNext = false;

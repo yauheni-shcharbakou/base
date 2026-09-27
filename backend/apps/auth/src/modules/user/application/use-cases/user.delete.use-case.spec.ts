@@ -2,7 +2,7 @@ import { CacheService, MemoryCacheStore } from '@backend/cache';
 import { UserEventBus } from '@backend/event-bus';
 import { NestAuth } from '@backend/proto';
 import { UserRepository } from '@modules/user/domain/repositories/user.repository';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import { UserDeleteUseCase } from './user.delete.use-case';
 
@@ -112,6 +112,15 @@ describe('UserDeleteUseCase', () => {
 
     await expect(useCase.deleteMany({ roles: [NestAuth.UserRole.ADMIN] })).resolves.toBe(false);
 
+    expect(repository.deleteMany).not.toHaveBeenCalled();
+    expect(eventBus.emitManyDelete).not.toHaveBeenCalled();
+  });
+
+  // What a client that sends no filter arrives as: the loader fills unset repeated fields with [].
+  it('refuses a bulk delete with no filter before reading any user', async () => {
+    await expect(useCase.deleteMany({ ids: [], roles: [] })).rejects.toThrow(BadRequestException);
+
+    expect(repository.getMany).not.toHaveBeenCalled();
     expect(repository.deleteMany).not.toHaveBeenCalled();
     expect(eventBus.emitManyDelete).not.toHaveBeenCalled();
   });
