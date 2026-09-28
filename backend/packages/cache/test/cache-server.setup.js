@@ -50,6 +50,11 @@ module.exports = async () => {
     return;
   }
 
+  // CI starts every server, so there a skip can only mean a broken environment.
+  if (process.env.E2E_REQUIRE_SERVERS === '1') {
+    throw new Error(`No Redis at ${REDIS_URL}, and E2E_REQUIRE_SERVERS forbids skipping.`);
+  }
+
   process.env.CACHE_E2E_SERVER = '0';
 
   console.warn(

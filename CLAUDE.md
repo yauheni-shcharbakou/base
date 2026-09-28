@@ -60,7 +60,7 @@ pnpm dev:backend.auth         # one service (also .api-gateway, .storage, fronte
 pnpm build                    # build everything (runs ^compile then ^build)
 pnpm build:backend.auth       # one service
 pnpm test                     # unit suites of every package that has them
-pnpm test:e2e                 # e2e suites; each skips itself when its server is unreachable
+pnpm test:e2e                 # e2e suites; each skips itself when its server is unreachable (fails with E2E_REQUIRE_SERVERS=1)
 pnpm typecheck                # tsc --noEmit in every workspace (see below)
 pnpm migrate                  # apply pending migrations in every DB-backed service (also :backend.auth, :backend.storage)
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
@@ -87,11 +87,12 @@ pnpm compile                  # run every package's compile task
 Creating a migration (and any other MikroORM CLI command) runs inside a service directory — see
 `backend/CLAUDE.md`.
 
-**CI.** `.github/workflows/check.yaml` runs on every pull request into `main`: `build`, `typecheck`
+**CI.** `.github/workflows/check.yaml` runs on every pull request into `main` and every push to it (which seeds the turbo cache new pull requests start from): `build`, `typecheck`
 and `lint`, then fails if they left the tree dirty (stale codegen, unformatted code, unapplied lint
 fixes), then `check:env-docs`, `migrate:check`, a guard against a migration snapshot changed
 without a new migration next to it, `test` and `test:e2e`. Postgres, Redis and NATS run beside the
-job, so no e2e suite skips itself there.
+job and `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Turbo's local cache
+(`.turbo/cache`) is carried between runs, pruned of entries older than a week.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single

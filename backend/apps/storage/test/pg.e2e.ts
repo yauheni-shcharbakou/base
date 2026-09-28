@@ -70,11 +70,22 @@ export const startOrm = async ({ database, onQuery }: StartOrmOptions = {}): Pro
   try {
     await orm.schema.ensureDatabase();
   } catch (error) {
+    await orm.close();
+
     if (!isUnreachable(error)) {
       throw error;
     }
 
-    await orm.close();
+    // CI starts every server, so there a skip can only mean a broken environment.
+    if (process.env.E2E_REQUIRE_SERVERS === '1') {
+      throw Object.assign(
+        new Error(
+          `No Postgres at ${process.env.DATABASE_URL}, and E2E_REQUIRE_SERVERS forbids skipping.`,
+        ),
+        { cause: error },
+      );
+    }
+
     console.warn(`No Postgres at ${process.env.DATABASE_URL} — skipping the storage e2e suite.`);
     return undefined;
   }

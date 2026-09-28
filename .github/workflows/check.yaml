@@ -4,10 +4,17 @@ on:
   pull_request:
     branches:
       - 'main'
+  # A pull request reads caches saved by its own branch and by its base, never by another pull
+  # request. Running on main as well gives every new pull request main's turbo cache to start from.
+  push:
+    branches:
+      - 'main'
 
 concurrency:
-  group: 'check-${{ github.event.pull_request.number }}'
-  cancel-in-progress: true
+  group: 'check-${{ github.event.pull_request.number || github.ref }}'
+  # A newer push to a pull request supersedes the older run; a run on main finishes, so its cache
+  # is saved.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: 'read'
@@ -75,6 +82,15 @@ jobs:
       - name: 'Start NATS'
         run: 'docker run -d --name nats -p 4222:4222 nats:2-alpine -js'
 
+      # Turbo's local cache, carried between runs: a task whose inputs did not change replays its
+      # logs and outputs. `test`, `test:e2e` and `lint` are `cache: false` and always run.
+      - name: 'Turbo cache'
+        uses: 'actions/cache@v6'
+        with:
+          path: '.turbo/cache'
+          key: 'turbo-${{ runner.os }}-${{ github.sha }}'
+          restore-keys: 'turbo-${{ runner.os }}-'
+
       - name: 'Install dependencies'
         run: 'pnpm install --frozen-lockfile'
 
@@ -107,6 +123,8 @@ jobs:
       # Only `migration:create` may move a snapshot (see backend/CLAUDE.md). One changed without a
       # migration beside it would make the next `migrate:create` drop whatever it lost.
       - name: 'Every snapshot change comes with a migration'
+        # A pull request's diff against its base; on main the change was checked before it merged.
+        if: github.event_name == 'pull_request'
         env:
           BASE_SHA: '${{ github.event.pull_request.base.sha }}'
         run: |
@@ -128,4 +146,13 @@ jobs:
         run: 'pnpm test'
 
       - name: 'E2E tests'
+        env:
+          # Every server runs beside the job, so a suite that finds none fails instead of skipping.
+          E2E_REQUIRE_SERVERS: '1'
         run: 'pnpm test:e2e'
+
+      # Turbo never evicts, and each run restores the previous cache and adds to it. An entry is
+      # dropped a week after it was written; the next miss rebuilds it.
+      - name: 'Prune turbo cache'
+        if: always()
+        run: 'find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true'
