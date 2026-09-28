@@ -27,7 +27,11 @@
     "compile": {
       "dependsOn": ["^compile", "^build"]
     },
-    "prod": {},
+    // Runs the migrations and starts the server: a cached run that exited cleanly would replay its
+    // logs instead of doing either.
+    "prod": {
+      "cache": false
+    },
     "test": {
       // Not cached: the whole run takes seconds, so a replay saves nothing worth the
       // question "did these tests actually run against this environment?".
