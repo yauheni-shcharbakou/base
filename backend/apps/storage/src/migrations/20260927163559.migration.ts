@@ -120,20 +120,32 @@ export class Migration20260927163559 extends Migration {
   // The objects `up` marked deleted under a deleted folder stay marked: which of them were live
   // before is not recorded, and they were unreachable either way.
   override down(): void | Promise<void> {
-    this.addSql(`alter table "storage-objects" drop constraint "storage-objects_parent_not_self_check";`);
+    this.addSql(
+      `alter table "storage-objects" drop constraint "storage-objects_parent_not_self_check";`,
+    );
     this.addSql(`alter table "storage-objects" drop constraint "storage-objects_is_folder_check";`);
-    this.addSql(`alter table "storage-objects" drop constraint "storage-objects_leaf_placed_check";`);
+    this.addSql(
+      `alter table "storage-objects" drop constraint "storage-objects_leaf_placed_check";`,
+    );
     this.addSql(`alter table "storage-objects" drop constraint "storage-objects_name_check";`);
     this.addSql(`drop index "storage-objects_name_unique";`);
 
     this.addSql(`create index "storage-objects_user_id_index" on "storage-objects" ("user_id");`);
     this.addSql(`create index "storage-objects_type_index" on "storage-objects" ("type");`);
     this.addSql(`create index "storage-objects_name_index" on "storage-objects" ("name");`);
-    this.addSql(`create index "storage-objects_is_public_index" on "storage-objects" ("is_public");`);
-    this.addSql(`create index "storage-objects_is_folder_index" on "storage-objects" ("is_folder");`);
-    this.addSql(`create index "storage-objects_is_deleted_index" on "storage-objects" ("is_deleted");`);
+    this.addSql(
+      `create index "storage-objects_is_public_index" on "storage-objects" ("is_public");`,
+    );
+    this.addSql(
+      `create index "storage-objects_is_folder_index" on "storage-objects" ("is_folder");`,
+    );
+    this.addSql(
+      `create index "storage-objects_is_deleted_index" on "storage-objects" ("is_deleted");`,
+    );
 
-    this.addSql(`alter table "storage-objects" drop constraint "storage-objects_parent_owner_foreign";`);
+    this.addSql(
+      `alter table "storage-objects" drop constraint "storage-objects_parent_owner_foreign";`,
+    );
     this.addSql(`alter table "storage-objects" drop constraint "storage-objects_owner_id_unique";`);
     this.addSql(
       `alter table "storage-objects" add constraint "storage-objects_parent_id_foreign" foreign key ("parent_id") references "storage-objects" ("id") on delete set null;`,
