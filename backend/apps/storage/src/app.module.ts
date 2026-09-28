@@ -10,14 +10,14 @@ import { VideoModule } from '@modules/video/video.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { Database } from '@packages/common';
 import { config } from './config';
+import ormConfig from './mikro-orm.config';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    PgModule.forRoot({ database: Database.STORAGE }),
+    PgModule.forRoot(ormConfig),
     GrpcModule.forRoot({ host: 'storage' }),
     RedisModule.forRoot({ host: EventBusHost.STORAGE }),
     FileModule,

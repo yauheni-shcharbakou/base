@@ -17,7 +17,7 @@ export default function nestConfig(url) {
         'eslint.config.mjs',
         'node_modules/*',
         'dist/*',
-        'src/migrator/migrations/*',
+        'src/migrations/*',
         'tsdown.config.mts',
       ],
     },

@@ -20,7 +20,7 @@ export class PgVideoEntity extends PgEntity<'duration' | 'views'> implements Nes
   })
   file: Ref<NestStorage.File>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get fileId() {
     return this.file.id;
   }

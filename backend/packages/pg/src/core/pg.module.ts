@@ -1,32 +1,21 @@
 import { DatabaseRunnerService } from '@backend/common';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { DynamicModule, Type } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { Database } from '@packages/common';
 import { PgDatabaseRunnerServiceImpl, PgEntity } from './infrastructure';
-import { PgConfig, pgConfig } from './infrastructure/configs';
+import { PgOrmConfig } from './infrastructure/configs';
 import { PgRequestInterceptor } from './interface';
 
-type PgModuleForRootParams = {
-  database: Database;
-};
-
 export class PgModule {
-  static forRoot(params: PgModuleForRootParams): DynamicModule {
+  /**
+   * `config` is the service's `src/mikro-orm.config.ts`, the file the MikroORM CLI reads. There is
+   * no `autoLoadEntities`, so both discover the same entities: the listed ones and whatever their
+   * relations reach. One registered through `forFeature` but reached by neither fails the bootstrap,
+   * rather than being left out of the next `migration:create`.
+   */
+  static forRoot(config: PgOrmConfig): DynamicModule {
     return {
-      imports: [
-        ConfigModule.forFeature(pgConfig),
-        MikroOrmModule.forRootAsync({
-          imports: [ConfigModule],
-          inject: [ConfigService],
-          useFactory: (configService: ConfigService<PgConfig>) => {
-            return configService.getOrThrow('postgres', { infer: true })(params.database);
-          },
-          driver: PostgreSqlDriver,
-        }),
-      ],
+      imports: [MikroOrmModule.forRoot(config)],
       providers: [
         {
           provide: DatabaseRunnerService,

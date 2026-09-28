@@ -27,7 +27,6 @@
     "@sweet-monads/either": "catalog:",
     "lodash": "catalog:",
     "mongoose": "9.6.2",
-    "nest-commander": "catalog:",
     "reflect-metadata": "catalog:"
   },
   "devDependencies": {

@@ -9,8 +9,8 @@ import { UserModule } from '@modules/user/user.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { Database } from '@packages/common';
 import { config } from './config';
+import ormConfig from './mikro-orm.config';
 
 // TODO: add user.avatarUrl
 
@@ -18,7 +18,7 @@ import { config } from './config';
   imports: [
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-    PgModule.forRoot({ database: Database.AUTH }),
+    PgModule.forRoot(ormConfig),
     GrpcModule.forRoot({ host: 'auth' }),
     RedisModule.forRoot({ host: EventBusHost.AUTH }),
     CacheModule.forRoot({ namespace: 'auth' }),

@@ -15,7 +15,7 @@ export class PgTempCodeEntity extends PgEntity implements NestAuth.TempCode {
   })
   user: Ref<NestAuth.User>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get userId() {
     return this.user.id;
   }

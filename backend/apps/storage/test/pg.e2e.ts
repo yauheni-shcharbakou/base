@@ -3,10 +3,7 @@
 // `pnpm docker:local` starts.
 process.env.DATABASE_URL ??= 'postgresql://admin:password123@localhost:5432';
 
-import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
-import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
-import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
-import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
+import ormConfig from '@/mikro-orm.config';
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { Migrator } from '@mikro-orm/migrations';
 import { MikroORM } from '@mikro-orm/postgresql';
@@ -15,7 +12,7 @@ import { join } from 'node:path';
 
 // Its own database, so the suite can wipe it freely without touching the one `pnpm dev` uses.
 const E2E_DATABASE = 'storage_e2e';
-const MIGRATIONS_DIR = join(__dirname, '../src/migrator/migrations');
+const MIGRATIONS_DIR = join(__dirname, '../src/migrations');
 
 // The real migrations rather than a schema generated from the entities: the FK rules the deletion
 // paths rely on (`on delete cascade`, `on delete set null`) are what production has, not what the
@@ -49,7 +46,7 @@ export const startOrm = async ({ database, onQuery }: StartOrmOptions = {}): Pro
   const orm = await MikroORM.init({
     clientUrl: process.env.DATABASE_URL,
     dbName: database ? `${E2E_DATABASE}_${database}` : E2E_DATABASE,
-    entities: [PgFileEntity, PgStorageObjectEntity, PgImageEntity, PgVideoEntity],
+    entities: ormConfig.entities,
     metadataProvider: ReflectMetadataProvider,
     forceUtcTimezone: true,
     // The specs drive the repositories directly, outside any request context.
@@ -82,8 +79,8 @@ export const startOrm = async ({ database, onQuery }: StartOrmOptions = {}): Pro
     return undefined;
   }
 
-  // The whole schema, not the entity tables: the migrations also create tables no entity here
-  // describes (the data-task log), and a leftover one fails the next run's `up`.
+  // The whole schema, not the entity tables: the migrator's own `mikro_orm_migrations` is no
+  // entity's table, and a row left in it makes the next run's `up` skip what it should recreate.
   await orm.schema.execute('drop schema if exists public cascade; create schema public;');
   await orm.migrator.up();
 

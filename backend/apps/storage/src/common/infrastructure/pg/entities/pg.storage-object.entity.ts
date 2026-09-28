@@ -119,7 +119,7 @@ export class PgStorageObjectEntity
   })
   parent?: Ref<PgStorageObjectEntity>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get parentId() {
     return this.parent?.id;
   }
@@ -140,7 +140,7 @@ export class PgStorageObjectEntity
   })
   file?: Ref<NestStorage.File>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get fileId() {
     return this.file?.id;
   }
@@ -184,7 +184,7 @@ export class PgStorageObjectEntity
   })
   image?: Ref<NestStorage.Image>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get imageId() {
     return this.image?.id;
   }
@@ -199,7 +199,7 @@ export class PgStorageObjectEntity
   })
   video?: Ref<NestStorage.Video>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get videoId() {
     return this.video?.id;
   }

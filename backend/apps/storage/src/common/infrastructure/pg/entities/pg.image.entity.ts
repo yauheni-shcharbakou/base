@@ -20,7 +20,7 @@ export class PgImageEntity extends PgEntity implements NestStorage.Image {
   })
   file: Ref<NestStorage.File>;
 
-  @Property({ persist: false })
+  @Property({ persist: false, type: 'string' })
   get fileId() {
     return this.file.id;
   }

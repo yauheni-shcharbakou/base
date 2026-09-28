@@ -50,4 +50,9 @@ USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
 WORKDIR /app/backend/apps/storage
-CMD ["sh", "-c", "node dist/migrator/main.js -- pg-migration && node dist/main.js"]
+# The image holds no TypeScript loader (devDependencies are pruned), so the CLI is told not to look
+# for one: it reads the compiled config either way, and the lookup only prints a warning.
+ENV MIKRO_ORM_CLI_PREFER_TS=false
+# Migrations first, and a failed one keeps the service down. `exec` hands PID 1 to node, so the
+# SIGTERM of a redeploy reaches the app's shutdown hooks instead of stopping at `sh`.
+CMD ["sh", "-c", "node_modules/.bin/mikro-orm migration:up --config dist/mikro-orm.config.js && exec node dist/main.js"]

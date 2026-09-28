@@ -24,13 +24,11 @@
     "@mikro-orm/nestjs": "catalog:",
     "@mikro-orm/postgresql": "catalog:",
     "@nestjs/common": "catalog:",
-    "@nestjs/config": "catalog:",
     "@nestjs/core": "catalog:",
     "@packages/common": "workspace:*",
     "@sweet-monads/either": "catalog:",
     "change-case-all": "catalog:",
     "lodash": "catalog:",
-    "nest-commander": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "ulid": "catalog:"

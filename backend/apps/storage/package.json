@@ -11,14 +11,12 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\" --config ../../../.prettierrc",
     "start": "dotenv -- nest start",
-    "start:dev": "dotenv -- nest start --watch service",
-    "start:debug": "dotenv -- nest start --debug --watch service",
-    "start:prod": "node dist/migrator/main -- pg-migration && node dist/main",
-    "migrate": "dotenv -- nest start migrator -- pg-migration",
-    "migrate:new": "dotenv -- nest start migrator -- pg-migration --new",
-    "migrate:initial": "dotenv -- nest start migrator -- pg-migration --initial",
-    "migrate:sql": "dotenv -- nest start migrator -- pg-migration --up",
-    "migrate:tasks": "dotenv -- nest start migrator -- pg-migration --tasks",
+    "start:dev": "dotenv -- nest start --watch",
+    "start:debug": "dotenv -- nest start --debug --watch",
+    "start:prod": "mikro-orm migration:up --config dist/mikro-orm.config.js && node dist/main",
+    "orm": "dotenv -- mikro-orm",
+    "migrate": "pnpm orm migration:up",
+    "migrate:create": "pnpm orm migration:create",
     "storage:copy-zone": "dotenv -e scripts/.env.migration -- tsx scripts/copy-storage-zone.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -40,6 +38,7 @@
     "@backend/proto": "workspace:*",
     "@grpc/grpc-js": "catalog:",
     "@grpc/proto-loader": "catalog:",
+    "@mikro-orm/cli": "catalog:",
     "@mikro-orm/core": "catalog:",
     "@mikro-orm/decorators": "catalog:",
     "@mikro-orm/migrations": "catalog:",
@@ -57,7 +56,6 @@
     "axios": "catalog:",
     "lodash": "catalog:",
     "moment": "catalog:",
-    "nest-commander": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "zod": "catalog:"
@@ -67,6 +65,8 @@
     "@nestjs/schematics": "catalog:",
     "@nestjs/testing": "catalog:",
     "@packages/configs": "workspace:*",
+    "@swc-node/register": "catalog:",
+    "@swc/core": "catalog:",
     "@types/express": "catalog:",
     "@types/jest": "catalog:",
     "@types/lodash": "catalog:",
@@ -80,6 +80,13 @@
     "tsconfig-paths": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
+  },
+  "mikro-orm": {
+    "configPaths": [
+      "./src/mikro-orm.config.ts",
+      "./dist/mikro-orm.config.js"
+    ],
+    "tsLoader": "swc"
   },
   "jest": {
     "moduleFileExtensions": [
