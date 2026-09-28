@@ -163,7 +163,7 @@ strictness are in that package's `CLAUDE.md`; the rationale is
 
 ## Backend
 
-Service architecture (4-layer hexagonal / use-case), the `Either` flow, the migrator sub-app and the
+Service architecture (4-layer hexagonal / use-case), the `Either` flow, migrations and the
 shared package conventions are in **`backend/CLAUDE.md`**. `backend/apps/auth` is the reference
 implementation; `backend.api-gateway` is a deliberate two-layer exception.
 

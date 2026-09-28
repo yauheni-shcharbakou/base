@@ -65,7 +65,7 @@ A package that needs an external the factory cannot see is a package with an und
 
 ## Layer-direction guard (`eslint/layer-guard.mjs`)
 
-- `eslint/layer-guard.mjs` → factory `layerGuard(forbidden?)`. Enforces the inward clean-architecture dependency direction (`interface -> infrastructure -> application -> domain`) by matching path segments regardless of nesting depth, so it works across every layout in the repo (`src/modules/<feature>/<layer>/...` in apps, `src/{core,migration}/<layer>/...` in pg/mongo, `src/<layer>/...` in nats).
+- `eslint/layer-guard.mjs` → factory `layerGuard(forbidden?)`. Enforces the inward clean-architecture dependency direction (`interface -> infrastructure -> application -> domain`) by matching path segments regardless of nesting depth, so it works across every layout in the repo (`src/modules/<feature>/<layer>/...` in apps, `src/core/<layer>/...` in pg/mongo, `src/<layer>/...` in nats).
 - Default forbidden-imports map (used when called with no argument):
   ```js
   {

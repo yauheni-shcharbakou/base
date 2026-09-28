@@ -1,6 +1,6 @@
 # CLAUDE.md — backend.storage
 
-Guidance for working inside `backend/apps/storage`. The 4-layer hexagonal/use-case architecture, `Either` flow, gRPC controllers, and migrator sub-app are in the root `CLAUDE.md`; this service follows the same conventions as `backend.auth` (the reference). This file is the service-specific map.
+Guidance for working inside `backend/apps/storage`. The 4-layer hexagonal/use-case architecture, `Either` flow, gRPC controllers, and migrations are in the root `CLAUDE.md`; this service follows the same conventions as `backend.auth` (the reference). This file is the service-specific map.
 
 ## What this service is
 
@@ -30,11 +30,11 @@ The media / file storage microservice, backed by **Bunny CDN**. gRPC host `stora
 
   **Deleting any media purges the provider regardless of `uploadStatus`** (through `storage.file.purge`). A Stream object exists from `createVideo` — before any byte — and a Storage object from the browser's PUT — before `completeUpload`. A READY gate orphaned every object deleted mid-upload, permanently: the cleanup cron reaches the provider only through the row being deleted. Deleting an absent key is a no-op. Rationale in [ADR-0014](../../../docs/adr/0014-video-uploads-bypass-the-backend.md) and [ADR-0015](../../../docs/adr/0015-file-uploads-presigned-s3-put.md).
 
-## Entities & migrator
+## Entities & migrations
 
 - Note: PG entities live in `src/common/infrastructure/pg/entities/` (shared across modules), unlike `auth` where entities sit inside each module.
 - **Transactional placement**: `file`/`image`/`video` repositories implement `saveAndPlaceOne`/`saveAndPlaceMany` (not the base `create*`) — inside a single MikroORM `em.transactional`, they persist the entity (`image`/`video` also create their backing `file` row from a `FileMeta`) plus, if a placement `StorageObjectPlacementMeta` is given, a leaf `storage-object` row built by the shared `common/infrastructure/pg/factories/pg.storage-object.factory.ts` (`buildLeafStorageObject` — owns the `type` discriminator, `isFolder: false`, and the file/image/video relation wiring so the three repositories don't duplicate it).
-- Migrator tasks: `create-root-folders` backfills root folders for existing users — it injects the **auth** `GrpcUserServiceClient` (the migrator declares `appClientStrategy: { auth: [GrpcUserTransport.service] }`), the same client the `user` module's weekly sweep uses at runtime. `add-storage-object-is-folder` backfills the `isFolder` flag.
+- `src/mikro-orm.config.ts` lists the four entities; `test/pg.e2e.ts` reads the same list. The migrations are in `src/migrations/`, and nothing in them calls another service — a user's root folder comes from `auth.user.create` alone, the seeded admin's included.
 
 ## HTTP surface
 
@@ -54,8 +54,8 @@ listener serves is public**; the signature guard, not the router, is what limits
 ## Commands & gotchas
 
 ```bash
-pnpm start:dev        # nest start --watch service
-pnpm build / typecheck / migrate (:new/:initial/:sql/:tasks) / lint
+pnpm start:dev        # nest start --watch
+pnpm build / typecheck / migrate (also migrate:create, orm <any CLI command>) / lint
 pnpm storage:copy-zone  # one-off copy into a new storage zone — runbook in README.md
 pnpm test             # jest: use-cases and services, ports mocked
 pnpm test:e2e         # node:test: deletion paths, folder tree, repository errors against Postgres (`pnpm docker:local`)
@@ -73,7 +73,7 @@ pnpm test:e2e         # node:test: deletion paths, folder tree, repository error
   - `distinct` returns every value of the match past the first 1000 rows, and throws a failed query;
   - the error text a client reads: every repository's miss and the root-folder conflict name the resource ("Storage object not found"), not the ORM class.
 
-  `test/pg.e2e.ts` gives each spec its own `storage_e2e[_<name>]` database (`node --test` runs spec files in parallel processes, and each drops its schema), wipes and migrates it from `src/migrator/migrations` on every run, and skips the suite when no server answers. Open the connection in a `before` hook, never in an async `describe` body: `node:test` exits 0 on an error thrown there. A spec that holds a transaction open (the tree-lock specs) must release it in a `finally`: a failed assertion that leaves it open hangs the run on closing the pool instead of failing it.
+  `test/pg.e2e.ts` gives each spec its own `storage_e2e[_<name>]` database (`node --test` runs spec files in parallel processes, and each drops its schema), wipes and migrates it from `src/migrations` on every run, and skips the suite when no server answers. Open the connection in a `before` hook, never in an async `describe` body: `node:test` exits 0 on an error thrown there. A spec that holds a transaction open (the tree-lock specs) must release it in a `finally`: a failed assertion that leaves it open hangs the run on closing the pool instead of failing it.
   > **Why not Jest:** [docs/adr/0017-database-specs-on-node-test.md](../../../docs/adr/0017-database-specs-on-node-test.md)
 - `scripts/` sits outside `src/`: `tsconfig.build.json` excludes it (otherwise `nest build` would emit `dist/src/main.js` and break `start:prod`), and `pnpm typecheck` is what type-checks it.
 - Event-bus handlers must stay idempotent (at-least-once redelivery, up to 10 BullMQ attempts).

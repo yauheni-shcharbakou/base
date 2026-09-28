@@ -1,6 +1,6 @@
 # CLAUDE.md — backend.auth
 
-Guidance for working inside `backend/apps/auth`. The 4-layer hexagonal/use-case architecture, the `Either` pattern, gRPC controllers, and the migrator sub-app are described in the root `CLAUDE.md` — and **this service is the reference implementation it points to**, so keep it clean and idiomatic. This file is the service-specific map.
+Guidance for working inside `backend/apps/auth`. The 4-layer hexagonal/use-case architecture, the `Either` pattern, gRPC controllers, and migrations are described in the root `CLAUDE.md` — and **this service is the reference implementation it points to**, so keep it clean and idiomatic. This file is the service-specific map.
 
 ## What this service is
 
@@ -22,13 +22,17 @@ Two details that look like style but are not:
 - **Explicit `get`/`set`, not `cacheService.wrap`.** The factory would return an `Either`, which no JSON round-trip survives; flattening it to `User | null` loses the repository's `NotFoundException` and writes a `null` per request for a deleted user, since the cache does no negative caching ([ADR-0010](../../../docs/adr/0010-cache-fails-soft.md)). The price is no single-flight dedupe on a cold key.
 - **Timestamps are rebuilt on the way out.** A cached value crosses as JSON, so `createdAt` returns a **string** while the proto type says `Date` — the same property the event bus has — and the gRPC timestamp wrapper calls `getTime()` on it.
 
-The migrator does not wire `CacheModule`: it holds no `UserModule` and a one-shot CLI has no use for a Redis socket. Writes made there (and any raw SQL) are exactly what `CACHE_TTL` insures against.
+Migrations run through the MikroORM CLI, outside Nest, and evict nothing: a migration that writes to `users` (like any raw SQL) is exactly what `CACHE_TTL` insures against.
 
 > **Why the cache lives here rather than in the gateway's guard:** [docs/adr/0011-identity-cached-in-auth.md](../../../docs/adr/0011-identity-cached-in-auth.md)
 
-## Migrator (`src/migrator/`)
+## Migrations & the first admin
 
-Separate Nest app via `PgMigrationModule.register` (entities `PgUserEntity`, `PgTempCodeEntity`). The `create-admin` task seeds the admin user from `ADMIN_EMAIL` / `ADMIN_PASSWORD` — this is how a fresh deployment gets its first login.
+`src/mikro-orm.config.ts` lists `PgUserEntity` and `PgTempCodeEntity`; the migrations are in `src/migrations/` (the rules are in `backend/CLAUDE.md`).
+
+**A fresh deployment gets its first login from auth itself.** On every start `LifecycleUserSeeder` (`user/interface/lifecycle/`, `OnApplicationBootstrap`) runs `UserEnsureAdminUseCase` inside `isolatedRun`: while no user holds the `ADMIN` role, it creates one from `ADMIN_EMAIL` / `ADMIN_PASSWORD` through `UserCreateOneUseCase`, so `auth.user.create` goes out and storage opens the admin's root folder. An existing admin is never touched, its password included. A `ConflictException` on the email is a concurrent replica's win only if an admin exists afterwards; otherwise the email belongs to a regular user, and the bootstrap fails with that reason — as it does on any other failure.
+
+> **Why at startup and not as a migration:** [docs/adr/0022-migrations-through-the-mikro-orm-cli.md](../../../docs/adr/0022-migrations-through-the-mikro-orm-cli.md)
 
 ## Config & env (`src/config.ts`)
 
@@ -37,10 +41,10 @@ Spreads `commonConfig()` and adds `admin.{email,password}` + `tempCode.expiresIn
 ## Commands
 
 ```bash
-pnpm start:dev        # dotenv → nest start --watch service
-pnpm build            # nest build (service + migrator)
-pnpm migrate          # SQL migrations + data tasks (also :new / :initial / :sql / :tasks)
-pnpm test             # unit specs (cache read + eviction); single file: pnpm test -- user.delete
+pnpm start:dev        # dotenv → nest start --watch
+pnpm build            # nest build
+pnpm migrate          # pending migrations (also migrate:create, orm <any CLI command>)
+pnpm test             # unit specs (cache read + eviction, admin seed); single file: pnpm test -- user.delete
 pnpm lint
 ```
 

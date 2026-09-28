@@ -1,6 +1,6 @@
 # CLAUDE.md — @backend/mongo
 
-Guidance for working inside `backend/packages/mongo`. The data-layer contracts it implements (`DatabaseRepository`, `MigrationService`, `MigrationTask`, `DatabaseRunnerService`) live in `@backend/common`; see the root `CLAUDE.md` for the hexagonal architecture.
+Guidance for working inside `backend/packages/mongo`. The data-layer contracts it implements (`DatabaseRepository`, `DatabaseRunnerService`) live in `@backend/common`; see the root `CLAUDE.md` for the hexagonal architecture.
 
 ## Status: not currently wired in
 
@@ -16,13 +16,9 @@ src/
     infrastructure/           # driven/outbound: configs, decorators, entities,
                               #   mappers, plugins, repositories, types, utils
     mongo.module.ts
-  migration/                  # migration sub-feature
-    infrastructure/           # driven: entities, services, constants
-    interface/cli/            # driving: MongoMigrationCommand (nest-commander)
-    mongo.migration.module.ts
 ```
 
-Unlike `@backend/pg`, `core/` has **no `interface/` layer** — Mongo has no per-request interceptor (no transactional isolation), so there is no inbound adapter at the core level; the only driving adapter is the migration CLI. Put concrete impls of `@backend/common` contracts and Mongoose-bound code in `infrastructure/`; put inbound entrypoints (CLI commands) in `interface/`. Consumers import flat symbols from `@backend/mongo` via the root `src/index.ts` barrel, never deep paths. Inside the package, `@/core` aliases `core/`.
+Unlike `@backend/pg`, `core/` has **no `interface/` layer** — Mongo has no per-request interceptor (no transactional isolation), so there is no inbound adapter at all. Put concrete impls of `@backend/common` contracts and Mongoose-bound code in `infrastructure/`; an inbound entrypoint, should one appear, goes in `interface/`. Consumers import flat symbols from `@backend/mongo` via the root `src/index.ts` barrel, never deep paths. Inside the package, `@/core` aliases `core/`.
 
 ## What it provides
 
@@ -34,7 +30,7 @@ Unlike `@backend/pg`, `core/` has **no `interface/` layer** — Mongo has no per
 
 ## Migrations
 
-Mongo migrations are **data tasks only** — there are no schema migrations (unlike `@backend/pg`'s MikroORM SQL migrations). `MongoMigrationModule.register({ database, tasks, entities })` wires `MongoMigrationServiceImpl` (`MigrationService` impl) + a `nest-commander` CLI command. `runTasks()` runs each `MigrationTask.up()` once, idempotently, recording status in the `migrations` collection (`CommonDatabaseEntity.MIGRATION`); a failure stops the run and is logged with error/stack.
+None. The data-task runner this package mirrored from `@backend/pg` went with pg's own, when migrations moved to the MikroORM CLI ([ADR-0022](../../../docs/adr/0022-migrations-through-the-mikro-orm-cli.md)); a service that wires Mongo in brings its own way to change data.
 
 ## Commands
 

@@ -4,7 +4,7 @@ Guidance for working inside `backend/packages/common`. The hexagonal/use-case ar
 
 ## What this is
 
-The hand-written core of the backend's data layer: the abstract **contracts** that every service's domain depends on and that `@backend/pg` / `@backend/mongo` implement. Layered like the apps (`domain` / `application` / `infrastructure`), split into four areas re-exported from `src/index.ts`: `database/` (CRUD contracts), `migration/` (migration contracts — mirrors the `migration/` area in `@backend/pg` / `@backend/mongo`), `auth/` (the JWT payload contract shared by `auth` and `api-gateway`), and `common/` (cross-cutting primitives, infrastructure-only). NOT generated — edit freely.
+The hand-written core of the backend's data layer: the abstract **contracts** that every service's domain depends on and that `@backend/pg` / `@backend/mongo` implement. Layered like the apps (`domain` / `application` / `infrastructure`), split into three areas re-exported from `src/index.ts`: `database/` (CRUD contracts), `auth/` (the JWT payload contract shared by `auth` and `api-gateway`), and `common/` (cross-cutting primitives, infrastructure-only). NOT generated — edit freely.
 
 ## What it exports
 
@@ -13,9 +13,6 @@ The hand-written core of the backend's data layer: the abstract **contracts** th
 - Helper types (in `domain/types`): `QueryOf`, `CreateOf`, `UpdateOf` (`{ set, remove, inc }`), `OptionsOf` (`populate`), `BulkUpdate`, `DatabaseRepositoryGetList(Res)`, `ExcludeDatabaseSystemFields`.
 - Abstract CRUD **use-cases**: `GetUseCase`, `CreateUseCase`, `UpdateUseCase`, `DeleteUseCase`, `IsExistsUseCase` — thin `Either` wrappers over a repository. Service use-cases extend these instead of re-implementing CRUD.
 - `DatabaseRunnerService` (`isolatedRun()` for transactions) + `EmptyDatabaseRunnerService` no-op impl (`infrastructure/services`).
-
-**`migration/` — migration contracts (mirrors the `migration/` area in `@backend/pg` / `@backend/mongo`):**
-- `MigrationTask` (`up()`), `MigrationService` (`runTasks()`), the `Migration` entity and `MigrationStatus` enum. The SQL / data-seeding impls live in `@backend/pg` / `@backend/mongo`.
 
 **`auth/` — the JWT contract shared by `auth` (signs) and `api-gateway` (verifies):**
 - `AuthTokenPayload` (`id`, `login`, `role`) and `AuthTokenPayloadParsed` (adds `aud`, `iat`, `exp`, `iss`) — the access/refresh token payload. Both services must agree on it, so it lives here rather than inside `backend.auth`.

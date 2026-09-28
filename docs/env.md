@@ -90,8 +90,8 @@ Nothing of its own — the shared shapes `NodeValidationSchema` and `DatabaseVal
 
 <!-- env-table:end -->
 
-`NODE_ENV` decides one thing here: outside `production` the MikroORM migrator also gets `pathTs`, so
-a migration can be run from source.
+`NODE_ENV` decides one thing here: outside `production` the MikroORM config also gets `pathTs`, so
+the CLI can run a migration from source.
 
 ### `@backend/mongo`
 
@@ -233,7 +233,8 @@ legitimate commands start showing up as errors in `CacheMetrics`.
 `JWT_ACCESS_PRIVATE_KEY_BASE64` / `JWT_ACCESS_PUBLIC_KEY_BASE64` hold a base64-encoded RSA PEM pair,
 decoded via `decodeBase64Pem` — a multi-line PEM does not survive `.env`, docker-compose or Railway.
 The public half must match the one `backend.api-gateway` verifies with. `ADMIN_EMAIL` /
-`ADMIN_PASSWORD` seed the first login through the migrator's `create-admin` task.
+`ADMIN_PASSWORD` seed the first login: on every start, auth creates an admin from them while no user
+holds the role, and never touches one that exists.
 
 ### `backend.storage`
 
@@ -265,8 +266,8 @@ Storage is written over its S3-compatible API, which Bunny enables only on a zon
 `BUNNY_STORAGE_ZONE` is that zone's name (bucket and access key id), `BUNNY_STORAGE_API_KEY` its
 password, and `BUNNY_STORAGE_CDN_ZONE` the pull zone in front of it — a separate name, since the
 pull zone outlives a move to a new storage zone.
-`AUTH_GRPC_URL` points at auth for two callers: the migrator's `create-root-folders` task and the
-weekly sweep that drops the data of users auth no longer holds.
+`AUTH_GRPC_URL` points at auth for one caller: the weekly sweep that drops the data of users auth no
+longer holds.
 
 The Stream library issues **two** keys and they are not interchangeable: `BUNNY_STREAM_API_KEY`
 writes (creating a video, signing its TUS upload), while `BUNNY_STREAM_READ_ONLY_API_KEY` is what
@@ -294,7 +295,7 @@ anything else added to this listener becomes public with it.
 <!-- env-table:end -->
 
 The **public** half of the auth service's RSA pair: the gateway verifies access tokens locally but
-cannot issue them. No database, no migrator, no event-bus variables — it publishes and consumes no
+cannot issue them. No database, no migrations, no event-bus variables — it publishes and consumes no
 domain events.
 
 ### `frontend.admin`
