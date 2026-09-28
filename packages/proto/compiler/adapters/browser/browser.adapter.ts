@@ -9,6 +9,8 @@ export class BrowserAdapter extends BaseAdapter {
       PROTOC_PATH,
       `--plugin=${PROTOC_PLUGIN_PATH}`,
       `--ts_proto_out=${this.targetRoot}`,
+      // No tool versions in the header, so any protoc regenerates the same files.
+      '--ts_proto_opt=annotateFilesWithVersion=false',
       '--ts_proto_opt=useDate=true',
       '--ts_proto_opt=snakeToCamel=false',
       '--ts_proto_opt=unrecognizedEnum=false',

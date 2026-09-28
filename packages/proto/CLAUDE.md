@@ -48,6 +48,7 @@ Turbo splits the stages: `compile` (inputs `pkg/**`,`compiler/**` → outputs `s
 ## Gotchas / prerequisites
 
 - Requires a `protoc` binary (`PROTOC_PATH`, default `protoc`); the `ts-proto` plugin resolves from local `node_modules/.bin`.
+- Every adapter passes `annotateFilesWithVersion=false`, so the generated headers carry no `protoc` / `ts-proto` versions: any `protoc` (CI installs an unpinned one) regenerates byte-identical files, and a version bump is not a 90-file diff.
 - A `*.service.proto` is recognized as a service by having `methods` → drives Nest Transports / Client repositories. Place new protos under `pkg/<domain>/` and recompile.
 - `ts-proto`/`protobufjs`/`pug`/`ts-morph` are devDeps here (the compiler runs in-package, unlike `@packages/compiler-utils` which peer-depends on them).
 - All three `src/` outputs are generated — fix bugs in tasks/templates, never in the emitted `.ts`.
