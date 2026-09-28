@@ -1,6 +1,6 @@
 import { ContextService } from '@compiler/services';
 import { TransformTaskClass } from '@compiler/tasks';
-import { CompilerContext, OnFilePayload, OnFolderPayload, ProtoContext } from '@compiler/types';
+import { OnFilePayload, OnFolderPayload, ProtoContext } from '@compiler/types';
 import { mkdir, rm } from 'node:fs/promises';
 import { Project, SourceFile, type ImportSpecifierStructure, type OptionalKind } from 'ts-morph';
 import { join } from 'node:path';
@@ -12,7 +12,6 @@ export type AdapterParams = {
   targetRoot: string;
   templatePath?: string;
   transformTasks?: TransformTaskClass[];
-  restrictedContexts?: CompilerContext[];
 };
 
 export type AdapterClass = Function & {
@@ -22,7 +21,6 @@ export type AdapterClass = Function & {
     targetRoot: string,
     templatePath?: string,
     transformTasks?: TransformTaskClass[],
-    restrictedContexts?: CompilerContext[],
   ): BaseAdapter;
 };
 
@@ -40,7 +38,6 @@ export abstract class BaseAdapter {
     public readonly targetRoot: string,
     protected readonly templatePath?: string,
     protected readonly transformTasks: TransformTaskClass[] = [],
-    protected readonly restrictedContexts: CompilerContext[] = [],
   ) {
     this.project = this.getProject();
     this.templateService = new TemplateService(this.templatePath);
@@ -109,13 +106,8 @@ export abstract class BaseAdapter {
         params.targetRoot,
         params.templatePath,
         params.transformTasks,
-        params.restrictedContexts,
       );
     };
-  }
-
-  canRun(): boolean {
-    return !this.restrictedContexts.includes(this.contextService.getExecutionContext().compiler);
   }
 
   async onInit(): Promise<void> {

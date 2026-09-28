@@ -110,10 +110,9 @@ The build-time API the adapter packages compile against — nine names: `EventBu
 first is driven only by this package's `main.ts`, the second only through `parseStrategy()`, and the
 third is plumbing inside `createFactory`.
 
-**The names are chosen to stay apart from two neighbours.** The proto compiler
-(`packages/proto/compiler/`) has its own private `BaseAdapter`, `ContextService`, `Adapter*` and
-`CompilerContext` — the last one a `'backend' | 'frontend' | 'all'` union, nothing like the object
-this package used to call by that name. And `ServiceEventBus` was one keystroke from the runtime
+**The names are chosen to stay apart from two neighbours.** The proto compiler publishes its own
+`BaseAdapter`, `ContextService` and `Adapter*` as `@packages/proto/compiler`, and a compiler package
+may one day import both entries. And `ServiceEventBus` was one keystroke from the runtime
 `<Service>EventBus` classes it exists to generate, so the parsed model is `ServiceModel`. When adding
 an export here, check both lists before reaching for a generic name.
 

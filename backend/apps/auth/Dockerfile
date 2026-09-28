@@ -20,10 +20,6 @@ COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune backend.auth --docker
 
 FROM base AS builder
-RUN apk add --no-cache protobuf protobuf-dev
-ENV PATH="/usr/bin:${PATH}"
-ENV PROTO_PATH=protoc
-ENV GRPC_COMPILER_CONTEXT=backend
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,id=s/0e139870-5149-4907-9454-d4228002c737-/pnpm/store,target=/pnpm/store \
     pnpm install \

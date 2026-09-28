@@ -33,20 +33,24 @@
       // package turbo.json: a package-level task replaces this field instead of extending
       // it, so a local `env` would silently drop the entries above.
       "env": ["NODE_ENV", "PORT", "REDIS_*", "NATS_*", "CACHE_*"],
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "compile"]
     },
     // Cacheable, unlike lint and format: it writes nothing and is a pure function of the sources
     // turbo already hashes. Every workspace with a tsconfig declares it, over the whole tsconfig:
     // no build covers that. tsdown's declaration emit builds through type errors, `tsx` strips
     // types, and `nest build` reads `tsconfig.build.json`, which leaves the specs out.
+    //
+    // `compile` (the package's own) here and in both test tasks: they read the package's `src/`,
+    // and a codegen package's compile can be pulled into the same run by a dependent's `^build`.
+    // A proto compile starts by wiping its `src/`, so without the edge the two race.
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "compile"]
     },
     "test:e2e": {
       // Whether the suite runs or skips depends on a broker being reachable, which is not an
       // input turbo can hash — a cached result would replay the wrong verdict.
       "cache": false,
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "compile"]
     },
     // Both run the MikroORM CLI over the service's `src/mikro-orm.config.ts`, which imports
     // `@backend/pg` through its built `dist` — hence `^build`. `migrate` writes to a database, which

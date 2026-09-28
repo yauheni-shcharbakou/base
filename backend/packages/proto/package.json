@@ -9,6 +9,7 @@
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "dev": "pnpm build --watch",
+    "compile": "tsx compiler/main.ts",
     "build": "pnpm format --log-level error && tsdown",
     "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
@@ -24,6 +25,10 @@
     "rxjs": "catalog:"
   },
   "devDependencies": {
-    "@packages/configs": "workspace:*"
+    "@packages/configs": "workspace:*",
+    "change-case-all": "catalog:",
+    "ts-morph": "catalog:",
+    "ts-proto": "catalog:",
+    "tsx": "catalog:"
   }
 }

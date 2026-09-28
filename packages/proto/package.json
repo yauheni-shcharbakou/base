@@ -7,6 +7,23 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./compiler": {
+      "types": "./dist/compiler.d.cts",
+      "default": "./dist/compiler.cjs"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "format": "prettier src --write --config ../../.prettierrc",
     "dev": "pnpm build --watch",
@@ -17,7 +34,6 @@
     "reset:modules": "rm -rf node_modules"
   },
   "devDependencies": {
-    "@grpc/grpc-js": "catalog:",
     "@packages/compiler-utils": "workspace:*",
     "@packages/configs": "workspace:*",
     "@types/pug": "catalog:",
@@ -26,9 +42,8 @@
     "protobufjs": "catalog:",
     "pug": "catalog:",
     "ts-morph": "catalog:",
-    "ts-proto": "2.11.6",
+    "ts-proto": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:",
-    "zod": "catalog:"
+    "typescript": "catalog:"
   }
 }

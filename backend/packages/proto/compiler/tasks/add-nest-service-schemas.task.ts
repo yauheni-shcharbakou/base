@@ -1,6 +1,5 @@
 import { constantCase, pascalCase } from 'change-case-all';
-import { TransformTask } from '@compiler/tasks';
-import { ProtoContextService } from '@compiler/types';
+import { TransformTask, type ProtoContextService } from '@packages/proto/compiler';
 
 export class AddNestServiceSchemasTask extends TransformTask {
   private declareImports() {

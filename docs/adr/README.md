@@ -49,3 +49,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0020](0020-server-action-failures-as-values.md) | Admin server actions return their failure as a value, and the gateway keeps the callee's status | Accepted | `frontend.admin`, `@backend/grpc`, `backend.api-gateway` |
 | [0021](0021-storage-tree-closed-per-owner.md) | A user's storage tree is closed, and its writes queue per owner | Accepted | `backend.storage`, `backend.api-gateway` |
 | [0022](0022-migrations-through-the-mikro-orm-cli.md) | Migrations run through the MikroORM CLI, and auth seeds its own first admin | Accepted | `@backend/pg`, `@backend/common`, `@backend/mongo`, `backend.auth`, `backend.storage` |
+| [0023](0023-proto-codegen-task-per-package.md) | One proto codegen task per target package | Accepted | `@packages/proto`, `@backend/proto`, `@frontend/proto` |

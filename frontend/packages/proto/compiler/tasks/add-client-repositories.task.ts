@@ -1,6 +1,5 @@
 import { pascalCase } from 'change-case-all';
-import { TransformTask } from '@compiler/tasks';
-import { ProtoContextService } from '@compiler/types';
+import { TransformTask, type ProtoContextService } from '@packages/proto/compiler';
 import { MethodSignature, Node } from 'ts-morph';
 
 type MethodData = {

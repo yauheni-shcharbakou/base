@@ -82,7 +82,8 @@ pnpm check:env-docs           # the same, read-only: fails when a table is stale
 pnpm compile                  # run every package's compile task
 ```
 
-`compile:proto` needs a `protoc` binary (override with env `PROTOC_PATH`); set `GRPC_COMPILER_CONTEXT=backend|frontend|all` (default `all`) to generate only some targets.
+`compile:proto` needs a `protoc` binary (override with env `PROTOC_PATH`); to generate only some
+targets, narrow the filter (`turbo run compile --filter=@backend/proto`).
 
 Creating a migration (and any other MikroORM CLI command) runs inside a service directory — see
 `backend/CLAUDE.md`.
@@ -123,11 +124,16 @@ A TypeScript LSP (the `typescript-lsp` plugin) may be available in a session. Tw
 
 ## Protobuf codegen pipeline (the backbone)
 
-`.proto` files in `packages/proto/pkg/` are the single source of truth for all cross-service contracts. The custom compiler in `packages/proto/compiler/` (run by `pnpm compile:proto`) parses them and emits three flavors via separate adapters:
+`.proto` files in `packages/proto/pkg/` are the single source of truth for all cross-service contracts. A custom compiler parses them and emits three flavors. Each target package generates its own flavor in its own turbo `compile` task, with its own adapter, against the shared core `@packages/proto` exports as `@packages/proto/compiler`:
 
-- **Nest adapter** → `backend/packages/proto/src` (`@backend/proto`) — the backend services.
-- **Client adapter** → `frontend/packages/proto/src` (`@frontend/proto`) — the admin frontend, which should call the **`Admin`** repositories.
-- **Browser adapter** → `packages/proto/src` (`@packages/proto`) — browser-safe shared types.
+- **Nest adapter** (`backend/packages/proto/compiler`) → `@backend/proto` — the backend services.
+- **Client adapter** (`frontend/packages/proto/compiler`) → `@frontend/proto` — the admin frontend, which should call the **`Admin`** repositories.
+- **Browser adapter** (`packages/proto/compiler`) → `@packages/proto` — browser-safe shared types.
+
+`pnpm compile:proto` runs all three (`--filter="@*/proto"`). A `.proto` edit invalidates the two
+targets through the hash of `@packages/proto#compile`, upstream of theirs.
+
+> **Why a task per target:** [docs/adr/0023-proto-codegen-task-per-package.md](docs/adr/0023-proto-codegen-task-per-package.md)
 
 Each per-service contract comes in audience variants (base / `Admin` / `Web` / `Public`). What each
 target exports is documented in that package's own `CLAUDE.md`.

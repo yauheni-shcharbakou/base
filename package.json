@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "scripts": {
     "compile": "turbo run compile",
-    "compile:proto": "turbo run compile --filter=@packages/proto",
+    "compile:proto": "turbo run compile --filter=\"@*/proto\"",
     "compile:event-bus": "turbo run compile --filter=\"@backend/event-bus*\"",
     "compile:env-docs": "turbo run compile --filter=@packages/env-docs",
     "check:env-docs": "pnpm --filter=@packages/env-docs run check",

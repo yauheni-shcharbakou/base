@@ -2,10 +2,15 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": ["src/**", "package.json", "tsconfig*.json", "tsdown.config.mts"],
+      // `compiler/**` too: it is bundled into `dist/compiler.cjs`, the build-time API the
+      // target packages' `compile` runs on.
+      "inputs": ["src/**", "compiler/**", "package.json", "tsconfig*.json", "tsdown.config.mts"],
       "outputs": ["dist/**"]
     },
     "compile": {
+      // Writes this package's `src/` only. `pkg/**` edits reach @backend/proto#compile and
+      // @frontend/proto#compile through this task's hash, which the root
+      // `compile.dependsOn: ["^compile"]` puts upstream of theirs.
       "inputs": ["package.json", "tsconfig*.json", "pkg/**", "compiler/**"],
       "outputs": ["src/**"]
     }

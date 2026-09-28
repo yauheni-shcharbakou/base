@@ -2,9 +2,9 @@ import { OnFilePayload, OnFolderPayload } from '@compiler/types';
 import { PROTO_EXT_REG_EXP, TS_EXT_REG_EXP } from '@packages/compiler-utils';
 import { EventEmitter } from 'node:events';
 import { stat } from 'node:fs/promises';
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
 import { dirname, join, relative } from 'node:path';
+
+export * from './protoc';
 
 export const parseProtoTree = async (
   root: string,
@@ -73,5 +73,3 @@ export const getRelativeImportPath = (fromFilePath: string, toFilePath: string):
 
   return path;
 };
-
-export const runCommand = promisify(exec);

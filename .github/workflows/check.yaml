@@ -73,7 +73,7 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      # `build` runs `@packages/proto`'s compile, which needs protoc. Unpinned on purpose: the
+      # `build` runs the three `@*/proto` compiles, which need protoc. Unpinned on purpose: the
       # generated files record no tool versions.
       - name: 'Install protoc'
         run: 'sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler'
