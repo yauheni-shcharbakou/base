@@ -11,7 +11,7 @@ type VideoItem = Pick<StorageUploadItem, 'file'> & {
 
 /**
  * The wire keeps the entity and its pre-signed TUS credentials apart so the credentials never
- * leak into the read model. The upload hooks read `id`/`uploadId` off a flat record, so the pair
+ * leak into the read model. The upload hooks read `id`/`upload` off a flat record, so the pair
  * is flattened here — at the boundary — and nowhere else.
  */
 export type CreatedVideo = BrowserStorage.Video & {
@@ -65,7 +65,6 @@ export class VideoActionProvider {
           video: {
             title: getGenericVideTitle(item.file.name),
           },
-          uploadId: item.uploadId,
         };
       }),
       userId,

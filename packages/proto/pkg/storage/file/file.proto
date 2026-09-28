@@ -28,5 +28,6 @@ message File {
   optional string providerId = 9;
 
   string userId = 10;
-  string uploadId = 11;
+  reserved 11;
+  reserved "uploadId";
 }

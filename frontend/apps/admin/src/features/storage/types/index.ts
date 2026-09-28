@@ -21,18 +21,19 @@ export type StorageData = Partial<
 >;
 
 /**
- * What the multi-upload hook needs from a created record: which selected file it answers, and when
- * the credentials it came with stop working. `expires` is unix seconds for both the Bunny Stream
- * TUS signature and the pre-signed Bunny Storage PUT.
+ * What the multi-upload hook needs from a created record: when the credentials it came with stop
+ * working. `expires` is unix seconds for both the Bunny Stream TUS signature and the pre-signed
+ * Bunny Storage PUT. Which selected file it answers is its position in the create-many result.
  */
 export type CreatedUploadEntity = BrowserCommon.IdField & {
-  uploadId: string;
   upload: { expires: string };
 };
 
 export type StorageUploadItem = {
   file: File;
-  uploadId: string;
+  // The item's key in the upload map. Browser-only: the create call is answered by position, so
+  // this never reaches the server.
+  key: string;
   // The record the create call returned, credentials included. Its presence is what lets a retry
   // skip creation — until those credentials expire, when the item is created afresh.
   entity?: CreatedUploadEntity;

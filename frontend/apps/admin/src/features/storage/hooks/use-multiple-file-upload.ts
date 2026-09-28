@@ -3,7 +3,11 @@
 import { getErrorMessage } from '@/common/helpers';
 import { deleteOne } from '@/features/grpc/actions';
 import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
-import { attachCreatedEntities, planUploadBatch } from '@/features/storage/helpers/upload-batch';
+import {
+  attachCreatedEntities,
+  pairCreatedEntities,
+  planUploadBatch,
+} from '@/features/storage/helpers/upload-batch';
 import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
 import { useCallback, useState } from 'react';
@@ -66,8 +70,8 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
 
       setUploadMap(() => {
         return files.reduce((acc: StorageUploadMap, file) => {
-          const uploadId = monotonicFactory()();
-          acc[uploadId] = { file, uploadId };
+          const key = monotonicFactory()();
+          acc[key] = { file, key };
           return acc;
         }, {});
       });
@@ -96,8 +100,8 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
   };
 
   const handleDelete = useCallback(
-    (uploadId: string) => {
-      const item = uploadMap[uploadId];
+    (key: string) => {
+      const item = uploadMap[key];
 
       if (item) {
         discardEntities([item]);
@@ -105,11 +109,11 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
 
       setUploadMap((prev) => {
         const newMap = { ...prev };
-        delete newMap[uploadId];
+        delete newMap[key];
         return newMap;
       });
 
-      setFailedItems((prev) => prev.filter((e) => e.uploadId !== uploadId));
+      setFailedItems((prev) => prev.filter((e) => e.key !== key));
     },
     [discardEntities, uploadMap],
   );
@@ -146,16 +150,16 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
 
     try {
       for (let i = 0; i < ids.length; i += batchSize) {
-        const batch = ids.slice(i, i + batchSize).map((uploadId) => uploadMap[uploadId]);
+        const batch = ids.slice(i, i + batchSize).map((key) => uploadMap[key]);
 
-        const { toCreate, reused: entityByUploadId } = planUploadBatch(batch);
+        const { toCreate, reused: entityByKey } = planUploadBatch(batch);
 
         if (toCreate.length) {
           try {
-            const entities = await createCallback(toCreate);
+            const created = pairCreatedEntities(toCreate, await createCallback(toCreate));
 
-            entities.forEach((entity) => entityByUploadId.set(entity.uploadId, entity));
-            setUploadMap((prev) => attachCreatedEntities(prev, entities));
+            created.forEach((entity, key) => entityByKey.set(key, entity));
+            setUploadMap((prev) => attachCreatedEntities(prev, created));
           } catch (error) {
             // The items stay in the map without an entity, so the next attempt creates them. The
             // rest of the batch and the batches after it still go ahead.
@@ -165,7 +169,7 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
         }
 
         for (const uploadItem of batch) {
-          const entity = entityByUploadId.get(uploadItem.uploadId);
+          const entity = entityByKey.get(uploadItem.key);
 
           if (!entity) {
             handleError(uploadItem);
@@ -175,7 +179,7 @@ export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) =>
 
           try {
             await uploadFileAction(uploadItem.file, entity);
-            handleFinish(uploadItem.uploadId);
+            handleFinish(uploadItem.key);
           } catch (err) {
             notifyError(`Upload error: ${uploadItem.file.name}`, err);
             handleError({ ...uploadItem, entity });

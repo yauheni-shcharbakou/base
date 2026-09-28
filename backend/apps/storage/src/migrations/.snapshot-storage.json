@@ -136,22 +136,6 @@
           "enumItems": [],
           "mappedType": "datetime"
         },
-        "upload_id": {
-          "name": "upload_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
-        },
         "upload_status": {
           "name": "upload_status",
           "type": "text",
@@ -352,22 +336,6 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
-        },
-        "upload_id": {
-          "name": "upload_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
         },
         "user_id": {
           "name": "user_id",
@@ -969,22 +937,6 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
-        },
-        "upload_id": {
-          "name": "upload_id",
-          "type": "varchar(255)",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": 255,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "enumItems": [],
-          "mappedType": "string"
         },
         "user_id": {
           "name": "user_id",

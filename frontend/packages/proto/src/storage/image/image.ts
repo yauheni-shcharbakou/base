@@ -15,7 +15,6 @@ export interface Image {
   alt: string;
   userId: string;
   fileId: string;
-  uploadId: string;
 }
 
 function createBaseImage(): Image {
@@ -28,7 +27,6 @@ function createBaseImage(): Image {
     alt: '',
     userId: '',
     fileId: '',
-    uploadId: '',
   };
 }
 
@@ -57,9 +55,6 @@ export const Image: MessageFns<Image> = {
     }
     if (message.fileId !== '') {
       writer.uint32(66).string(message.fileId);
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(74).string(message.uploadId);
     }
     return writer;
   },
@@ -135,14 +130,6 @@ export const Image: MessageFns<Image> = {
           message.fileId = reader.string();
           continue;
         }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -162,7 +149,6 @@ export const Image: MessageFns<Image> = {
       alt: isSet(object.alt) ? globalThis.String(object.alt) : '',
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
@@ -192,9 +178,6 @@ export const Image: MessageFns<Image> = {
     if (message.fileId !== '') {
       obj.fileId = message.fileId;
     }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
-    }
     return obj;
   },
 
@@ -211,7 +194,6 @@ export const Image: MessageFns<Image> = {
     message.alt = object.alt ?? '';
     message.userId = object.userId ?? '';
     message.fileId = object.fileId ?? '';
-    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };

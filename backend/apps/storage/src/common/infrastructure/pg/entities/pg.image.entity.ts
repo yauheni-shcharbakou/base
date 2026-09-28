@@ -43,7 +43,4 @@ export class PgImageEntity extends PgEntity implements NestStorage.Image {
 
   @Property()
   alt: string;
-
-  @Property()
-  uploadId: string;
 }

@@ -134,7 +134,7 @@ describe('storage deletion against Postgres', () => {
     status = NestStorage.FileUploadStatus.READY,
   ) => {
     const file = await fileRepository.saveAndPlaceOne({
-      file: { ...fileMeta(providerId, status), userId: USER_ID, uploadId: 'upload' },
+      file: { ...fileMeta(providerId, status), userId: USER_ID },
       storageObject: placement(parent),
     });
 
@@ -147,7 +147,7 @@ describe('storage deletion against Postgres', () => {
     status = NestStorage.FileUploadStatus.READY,
   ) => {
     const image = await imageRepository.saveAndPlaceOne({
-      image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+      image: { width: 1, height: 1, alt: '', userId: USER_ID },
       file: fileMeta(providerId, status),
       storageObject: placement(parent),
     });
@@ -162,7 +162,7 @@ describe('storage deletion against Postgres', () => {
     status = NestStorage.FileUploadStatus.READY,
   ) => {
     const video = await videoRepository.saveAndPlaceOne({
-      video: { title: 'video', providerId, userId: USER_ID, uploadId: 'upload' },
+      video: { title: 'video', providerId, userId: USER_ID },
       file: fileMeta(undefined, status),
       storageObject: placement(parent),
     });
@@ -209,7 +209,7 @@ describe('storage deletion against Postgres', () => {
         },
         async (leaves) => {
           const saved = await fileRepository.saveAndPlaceOne({
-            file: { ...fileMeta('dev/file'), userId: USER_ID, uploadId: 'upload' },
+            file: { ...fileMeta('dev/file'), userId: USER_ID },
             storageObject: leaves?.[0],
           });
           assert.ok(saved.isRight());
@@ -238,7 +238,7 @@ describe('storage deletion against Postgres', () => {
         },
         (leaves) =>
           fileRepository.saveAndPlaceOne({
-            file: { ...fileMeta('dev/second'), userId: USER_ID, uploadId: 'upload' },
+            file: { ...fileMeta('dev/second'), userId: USER_ID },
             storageObject: leaves?.[0],
           }),
       );
@@ -250,6 +250,56 @@ describe('storage deletion against Postgres', () => {
           `object-${leafCount} (1).bin`,
         ]),
         1,
+      );
+    });
+  });
+
+  // A `*CreatedArray` answers its request by position, and the create-many use cases zip the saved
+  // rows back with their items, so a repository that reordered them would mismatch every upload.
+  describe('saveAndPlaceMany keeps item order', () => {
+    const names = ['c', 'a', 'd', 'b'];
+
+    withDb('files', async () => {
+      const files = await fileRepository.saveAndPlaceMany(
+        names.map((name) => ({
+          file: { ...fileMeta(`dev/${name}`), originalName: name, userId: USER_ID },
+          storageObject: placement(root),
+        })),
+      );
+
+      assert.deepEqual(
+        files.unwrap().map(({ originalName }) => originalName),
+        names,
+      );
+    });
+
+    withDb('images', async () => {
+      const images = await imageRepository.saveAndPlaceMany(
+        names.map((name) => ({
+          image: { width: 1, height: 1, alt: name, userId: USER_ID },
+          file: fileMeta(`dev/${name}`),
+          storageObject: placement(root),
+        })),
+      );
+
+      assert.deepEqual(
+        images.unwrap().map(({ alt }) => alt),
+        names,
+      );
+    });
+
+    withDb('videos', async () => {
+      const videos = await videoRepository.saveAndPlaceMany(
+        names.map((name) => ({
+          video: { title: name, providerId: name, userId: USER_ID },
+          file: fileMeta(),
+          storageObject: placement(root),
+        })),
+      );
+
+      assert.deepEqual(
+        videos.unwrap().map(({ title }) => title),
+        names,
       );
     });
   });
@@ -278,7 +328,7 @@ describe('storage deletion against Postgres', () => {
     const unplacedFile = async (userId: string, providerId: string) =>
       (
         await fileRepository.saveAndPlaceOne({
-          file: { ...fileMeta(providerId), userId, uploadId: 'upload' },
+          file: { ...fileMeta(providerId), userId },
         })
       ).unwrap();
 
@@ -316,7 +366,7 @@ describe('storage deletion against Postgres', () => {
     withDb('places an image together with the file behind it', async () => {
       const image = (
         await imageRepository.saveAndPlaceOne({
-          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          image: { width: 1, height: 1, alt: '', userId: USER_ID },
           file: fileMeta('dev/image'),
         })
       ).unwrap();
@@ -354,13 +404,12 @@ describe('storage deletion against Postgres', () => {
           file: {
             ...fileMeta('dev/pending', NestStorage.FileUploadStatus.PENDING),
             userId: USER_ID,
-            uploadId: 'upload',
           },
         })
       ).unwrap();
       const image = (
         await imageRepository.saveAndPlaceOne({
-          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          image: { width: 1, height: 1, alt: '', userId: USER_ID },
           file: fileMeta('dev/image', NestStorage.FileUploadStatus.FAILED),
         })
       ).unwrap();
@@ -403,7 +452,7 @@ describe('storage deletion against Postgres', () => {
     ) =>
       (
         await fileRepository.saveAndPlaceOne({
-          file: { ...fileMeta(providerId, status), userId, uploadId: 'upload' },
+          file: { ...fileMeta(providerId, status), userId },
         })
       ).unwrap();
 
@@ -426,7 +475,7 @@ describe('storage deletion against Postgres', () => {
       const free = await unplaced(USER_ID, 'dev/free');
       const image = (
         await imageRepository.saveAndPlaceOne({
-          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          image: { width: 1, height: 1, alt: '', userId: USER_ID },
           file: fileMeta('dev/image'),
         })
       ).unwrap();
@@ -446,24 +495,24 @@ describe('storage deletion against Postgres', () => {
     withDb('filters images and videos on their backing file’s status', async () => {
       const image = (
         await imageRepository.saveAndPlaceOne({
-          image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+          image: { width: 1, height: 1, alt: '', userId: USER_ID },
           file: fileMeta('dev/image'),
         })
       ).unwrap();
       await imageRepository.saveAndPlaceOne({
-        image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+        image: { width: 1, height: 1, alt: '', userId: USER_ID },
         file: fileMeta('dev/pending-image', NestStorage.FileUploadStatus.PENDING),
       });
       await placeImage(root, 'dev/placed-image');
 
       const video = (
         await videoRepository.saveAndPlaceOne({
-          video: { title: 'video', providerId: 'guid', userId: USER_ID, uploadId: 'upload' },
+          video: { title: 'video', providerId: 'guid', userId: USER_ID },
           file: fileMeta(undefined),
         })
       ).unwrap();
       await videoRepository.saveAndPlaceOne({
-        video: { title: 'video', providerId: 'encoding', userId: USER_ID, uploadId: 'upload' },
+        video: { title: 'video', providerId: 'encoding', userId: USER_ID },
         file: fileMeta(undefined, NestStorage.FileUploadStatus.UPLOADED),
       });
 
@@ -732,10 +781,10 @@ describe('storage deletion against Postgres', () => {
       await placeVideo(root, 'video-guid');
       await placeFile(folder, 'dev/placed');
       await fileRepository.saveAndPlaceOne({
-        file: { ...fileMeta('dev/unplaced'), userId: USER_ID, uploadId: 'upload' },
+        file: { ...fileMeta('dev/unplaced'), userId: USER_ID },
       });
       await imageRepository.saveAndPlaceOne({
-        image: { width: 1, height: 1, alt: '', userId: USER_ID, uploadId: 'upload' },
+        image: { width: 1, height: 1, alt: '', userId: USER_ID },
         file: fileMeta('dev/unplaced-image'),
       });
 
@@ -749,7 +798,7 @@ describe('storage deletion against Postgres', () => {
       await em.persist(otherRoot).flush();
       const foreign = (
         await fileRepository.saveAndPlaceOne({
-          file: { ...fileMeta('dev/foreign'), userId: OTHER_USER_ID, uploadId: 'upload' },
+          file: { ...fileMeta('dev/foreign'), userId: OTHER_USER_ID },
           storageObject: placement(otherRoot.id),
         })
       ).unwrap();
@@ -803,7 +852,7 @@ describe('storage deletion against Postgres', () => {
     withDb('lists every file owner, and only owners of live storage objects', async () => {
       await placeFile(root, 'dev/placed');
       await fileRepository.saveAndPlaceOne({
-        file: { ...fileMeta('dev/foreign'), userId: OTHER_USER_ID, uploadId: 'upload' },
+        file: { ...fileMeta('dev/foreign'), userId: OTHER_USER_ID },
       });
       const otherRoot = em.create(PgStorageObjectEntity, {
         userId: OTHER_USER_ID,

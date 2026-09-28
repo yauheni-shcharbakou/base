@@ -13,6 +13,5 @@ export interface ImagePopulated {
   alt: string;
   userId: string;
   fileId: string;
-  uploadId: string;
   file: File;
 }

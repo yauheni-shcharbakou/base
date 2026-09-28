@@ -12,5 +12,4 @@ export interface Image {
   alt: string;
   userId: string;
   fileId: string;
-  uploadId: string;
 }

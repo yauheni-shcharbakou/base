@@ -53,7 +53,6 @@ export class VideoCreateOneUseCase {
     const videoData = {
       ...createData.video,
       userId: createData.userId,
-      uploadId: providerId.value,
       providerId: providerId.value,
     };
     const fileData = this.fileMapper.toCreateData(createData.file);

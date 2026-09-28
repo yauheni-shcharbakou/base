@@ -22,19 +22,19 @@ export class ImageCreateManyUseCase {
   async execute(
     createData: NestStorage.ImageCreateMany,
   ): Promise<Either<Error, NestStorage.ImageCreated[]>> {
-    const fileNames = new Set(_.map(createData.items, 'file.originalName'));
+    const names = _.map(createData.items, (item) => item.file.originalName);
 
-    if (fileNames.size !== createData.items.length) {
+    if (new Set(names).size !== names.length) {
       return left(new BadRequestException('Names of created files should be unique'));
     }
 
     // An `Image` does not carry its file's key, so each item's upload is signed while the key is
-    // still in hand and matched back to the saved image by `uploadId`.
-    const uploadByUploadId = new Map<string, NestStorage.FilePresignedUpload>();
+    // still in hand. The repository saves in item order, so `uploads[i]` belongs to the i-th image.
+    const uploads: NestStorage.FilePresignedUpload[] = [];
 
     try {
       const saveData: ImageSaveAndPlace[] = await Promise.all(
-        _.map(createData.items, async (item): Promise<ImageSaveAndPlace> => {
+        _.map(createData.items, async (item, index): Promise<ImageSaveAndPlace> => {
           const providerId = await this.storageFileService.createFile({
             ...item.file,
             userId: createData.userId,
@@ -50,13 +50,12 @@ export class ImageCreateManyUseCase {
             throw upload.value;
           }
 
-          uploadByUploadId.set(item.uploadId, upload.value);
+          uploads[index] = upload.value;
 
           return {
             image: {
               ...item.image,
               userId: createData.userId,
-              uploadId: item.uploadId,
             },
             file: this.fileMapper.toCreateData({
               ...item.file,
@@ -73,7 +72,7 @@ export class ImageCreateManyUseCase {
               parent: createData.storage.parent,
               isPublic: createData.storage.isPublic,
               type: NestStorage.StorageObjectType.IMAGE,
-              names: _.map(createData.items, 'file.originalName'),
+              names,
             }
           : undefined,
         (leaves) =>
@@ -86,9 +85,7 @@ export class ImageCreateManyUseCase {
         return left(images.value);
       }
 
-      return right(
-        _.map(images.value, (image) => ({ image, upload: uploadByUploadId.get(image.uploadId) })),
-      );
+      return right(_.map(images.value, (image, index) => ({ image, upload: uploads[index] })));
     } catch (error) {
       return left(error);
     }

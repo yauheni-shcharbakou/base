@@ -33,7 +33,6 @@ export class PgVideoRepositoryImpl
         const fileEntity = em.create(PgFileEntity, {
           ...createData.file,
           userId: createData.video.userId,
-          uploadId: createData.video.uploadId,
         });
 
         const videoEntity = em.create(PgVideoEntity, {
@@ -77,7 +76,6 @@ export class PgVideoRepositoryImpl
           const fileEntity = em.create(PgFileEntity, {
             ...item.file,
             userId: item.video.userId,
-            uploadId: item.video.uploadId,
           });
 
           const videoEntity = em.create(PgVideoEntity, {

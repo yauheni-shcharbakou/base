@@ -107,7 +107,6 @@ describe('storage-object tree against Postgres', () => {
       size: 1,
       extension: 'txt',
       uploadStatus: NestStorage.FileUploadStatus.READY,
-      uploadId: 'upload',
     } as never);
 
     await em.persist(file).flush();

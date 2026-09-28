@@ -85,7 +85,6 @@ export interface File {
   uploadStatus: FileUploadStatus;
   providerId?: string;
   userId: string;
-  uploadId: string;
 }
 
 function createBaseFile(): File {
@@ -100,7 +99,6 @@ function createBaseFile(): File {
     uploadStatus: FileUploadStatus.PENDING,
     providerId: undefined,
     userId: '',
-    uploadId: '',
   };
 }
 
@@ -135,9 +133,6 @@ export const File: MessageFns<File> = {
     }
     if (message.userId !== '') {
       writer.uint32(82).string(message.userId);
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(90).string(message.uploadId);
     }
     return writer;
   },
@@ -229,14 +224,6 @@ export const File: MessageFns<File> = {
           message.userId = reader.string();
           continue;
         }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -260,7 +247,6 @@ export const File: MessageFns<File> = {
         : FileUploadStatus.PENDING,
       providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : undefined,
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
@@ -296,9 +282,6 @@ export const File: MessageFns<File> = {
     if (message.userId !== '') {
       obj.userId = message.userId;
     }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
-    }
     return obj;
   },
 
@@ -317,7 +300,6 @@ export const File: MessageFns<File> = {
     message.uploadStatus = object.uploadStatus ?? FileUploadStatus.PENDING;
     message.providerId = object.providerId ?? undefined;
     message.userId = object.userId ?? '';
-    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };

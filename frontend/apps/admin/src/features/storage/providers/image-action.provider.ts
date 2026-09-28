@@ -69,7 +69,6 @@ export class ImageActionProvider {
               ...dimensions,
               alt: item.file.name,
             },
-            uploadId: item.uploadId,
           };
         }),
       ),

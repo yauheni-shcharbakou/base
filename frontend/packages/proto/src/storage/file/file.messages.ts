@@ -53,20 +53,20 @@ export interface FileCreateOneWeb {
   storage?: StorageMeta;
 }
 
-export interface FileCreateManyItem {
-  file: FileCreate;
-  uploadId: string;
-}
-
+/**
+ * `items` took a new number when it stopped wrapping each `FileCreate`: the old item message and
+ * `FileCreate` are both length-delimited, so a peer on the other shape would misread every item
+ * instead of seeing none.
+ */
 export interface FileCreateMany {
   storage?: StorageManyMeta;
-  items: FileCreateManyItem[];
   userId: string;
+  items: FileCreate[];
 }
 
 export interface FileCreateManyWeb {
   storage?: StorageManyMeta;
-  items: FileCreateManyItem[];
+  items: FileCreate[];
 }
 
 /**
@@ -86,6 +86,10 @@ export interface FileCreated {
   upload: FilePresignedUpload;
 }
 
+/**
+ * Answers a `FileCreateMany` in request order: `items[i]` is what `FileCreateMany.items[i]` created. The
+ * batch is created whole or not at all, so the two always have the same length.
+ */
 export interface FileCreatedArray {
   items: FileCreated[];
 }
@@ -746,87 +750,8 @@ export const FileCreateOneWeb: MessageFns<FileCreateOneWeb> = {
   },
 };
 
-function createBaseFileCreateManyItem(): FileCreateManyItem {
-  return { file: undefined, uploadId: '' };
-}
-
-export const FileCreateManyItem: MessageFns<FileCreateManyItem> = {
-  encode(message: FileCreateManyItem, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.file !== undefined) {
-      FileCreate.encode(message.file, writer.uint32(10).fork()).join();
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(18).string(message.uploadId);
-    }
-    return writer;
-  },
-
-  decode(input: BinaryReader | Uint8Array, length?: number): FileCreateManyItem {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-    const end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseFileCreateManyItem();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 10) {
-            break;
-          }
-
-          message.file = FileCreate.decode(reader, reader.uint32());
-          continue;
-        }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skip(tag & 7);
-    }
-    return message;
-  },
-
-  fromJSON(object: any): FileCreateManyItem {
-    return {
-      file: isSet(object.file) ? FileCreate.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
-    };
-  },
-
-  toJSON(message: FileCreateManyItem): unknown {
-    const obj: any = {};
-    if (message.file !== undefined) {
-      obj.file = FileCreate.toJSON(message.file);
-    }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
-    }
-    return obj;
-  },
-
-  create<I extends Exact<DeepPartial<FileCreateManyItem>, I>>(base?: I): FileCreateManyItem {
-    return FileCreateManyItem.fromPartial(base ?? ({} as any));
-  },
-  fromPartial<I extends Exact<DeepPartial<FileCreateManyItem>, I>>(object: I): FileCreateManyItem {
-    const message = createBaseFileCreateManyItem();
-    message.file =
-      object.file !== undefined && object.file !== null
-        ? FileCreate.fromPartial(object.file)
-        : undefined;
-    message.uploadId = object.uploadId ?? '';
-    return message;
-  },
-};
-
 function createBaseFileCreateMany(): FileCreateMany {
-  return { storage: undefined, items: [], userId: '' };
+  return { storage: undefined, userId: '', items: [] };
 }
 
 export const FileCreateMany: MessageFns<FileCreateMany> = {
@@ -834,11 +759,11 @@ export const FileCreateMany: MessageFns<FileCreateMany> = {
     if (message.storage !== undefined) {
       StorageManyMeta.encode(message.storage, writer.uint32(10).fork()).join();
     }
-    for (const v of message.items) {
-      FileCreateManyItem.encode(v!, writer.uint32(18).fork()).join();
-    }
     if (message.userId !== '') {
       writer.uint32(26).string(message.userId);
+    }
+    for (const v of message.items) {
+      FileCreate.encode(v!, writer.uint32(34).fork()).join();
     }
     return writer;
   },
@@ -858,20 +783,20 @@ export const FileCreateMany: MessageFns<FileCreateMany> = {
           message.storage = StorageManyMeta.decode(reader, reader.uint32());
           continue;
         }
-        case 2: {
-          if (tag !== 18) {
-            break;
-          }
-
-          message.items.push(FileCreateManyItem.decode(reader, reader.uint32()));
-          continue;
-        }
         case 3: {
           if (tag !== 26) {
             break;
           }
 
           message.userId = reader.string();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.items.push(FileCreate.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -886,10 +811,10 @@ export const FileCreateMany: MessageFns<FileCreateMany> = {
   fromJSON(object: any): FileCreateMany {
     return {
       storage: isSet(object.storage) ? StorageManyMeta.fromJSON(object.storage) : undefined,
-      items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => FileCreateManyItem.fromJSON(e))
-        : [],
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => FileCreate.fromJSON(e))
+        : [],
     };
   },
 
@@ -898,11 +823,11 @@ export const FileCreateMany: MessageFns<FileCreateMany> = {
     if (message.storage !== undefined) {
       obj.storage = StorageManyMeta.toJSON(message.storage);
     }
-    if (message.items?.length) {
-      obj.items = message.items.map((e) => FileCreateManyItem.toJSON(e));
-    }
     if (message.userId !== '') {
       obj.userId = message.userId;
+    }
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => FileCreate.toJSON(e));
     }
     return obj;
   },
@@ -916,8 +841,8 @@ export const FileCreateMany: MessageFns<FileCreateMany> = {
       object.storage !== undefined && object.storage !== null
         ? StorageManyMeta.fromPartial(object.storage)
         : undefined;
-    message.items = object.items?.map((e) => FileCreateManyItem.fromPartial(e)) || [];
     message.userId = object.userId ?? '';
+    message.items = object.items?.map((e) => FileCreate.fromPartial(e)) || [];
     return message;
   },
 };
@@ -932,7 +857,7 @@ export const FileCreateManyWeb: MessageFns<FileCreateManyWeb> = {
       StorageManyMeta.encode(message.storage, writer.uint32(10).fork()).join();
     }
     for (const v of message.items) {
-      FileCreateManyItem.encode(v!, writer.uint32(18).fork()).join();
+      FileCreate.encode(v!, writer.uint32(34).fork()).join();
     }
     return writer;
   },
@@ -952,12 +877,12 @@ export const FileCreateManyWeb: MessageFns<FileCreateManyWeb> = {
           message.storage = StorageManyMeta.decode(reader, reader.uint32());
           continue;
         }
-        case 2: {
-          if (tag !== 18) {
+        case 4: {
+          if (tag !== 34) {
             break;
           }
 
-          message.items.push(FileCreateManyItem.decode(reader, reader.uint32()));
+          message.items.push(FileCreate.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -973,7 +898,7 @@ export const FileCreateManyWeb: MessageFns<FileCreateManyWeb> = {
     return {
       storage: isSet(object.storage) ? StorageManyMeta.fromJSON(object.storage) : undefined,
       items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => FileCreateManyItem.fromJSON(e))
+        ? object.items.map((e: any) => FileCreate.fromJSON(e))
         : [],
     };
   },
@@ -984,7 +909,7 @@ export const FileCreateManyWeb: MessageFns<FileCreateManyWeb> = {
       obj.storage = StorageManyMeta.toJSON(message.storage);
     }
     if (message.items?.length) {
-      obj.items = message.items.map((e) => FileCreateManyItem.toJSON(e));
+      obj.items = message.items.map((e) => FileCreate.toJSON(e));
     }
     return obj;
   },
@@ -998,7 +923,7 @@ export const FileCreateManyWeb: MessageFns<FileCreateManyWeb> = {
       object.storage !== undefined && object.storage !== null
         ? StorageManyMeta.fromPartial(object.storage)
         : undefined;
-    message.items = object.items?.map((e) => FileCreateManyItem.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => FileCreate.fromPartial(e)) || [];
     return message;
   },
 };

@@ -16,7 +16,6 @@ export interface ImagePopulated {
   alt: string;
   userId: string;
   fileId: string;
-  uploadId: string;
   file: File;
 }
 
@@ -30,7 +29,6 @@ function createBaseImagePopulated(): ImagePopulated {
     alt: '',
     userId: '',
     fileId: '',
-    uploadId: '',
     file: undefined,
   };
 }
@@ -60,9 +58,6 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     }
     if (message.fileId !== '') {
       writer.uint32(66).string(message.fileId);
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(74).string(message.uploadId);
     }
     if (message.file !== undefined) {
       File.encode(message.file, writer.uint32(82).fork()).join();
@@ -141,14 +136,6 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
           message.fileId = reader.string();
           continue;
         }
-        case 9: {
-          if (tag !== 74) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
         case 10: {
           if (tag !== 82) {
             break;
@@ -176,7 +163,6 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
       alt: isSet(object.alt) ? globalThis.String(object.alt) : '',
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
       file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
     };
   },
@@ -207,9 +193,6 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     if (message.fileId !== '') {
       obj.fileId = message.fileId;
     }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
-    }
     if (message.file !== undefined) {
       obj.file = File.toJSON(message.file);
     }
@@ -229,7 +212,6 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     message.alt = object.alt ?? '';
     message.userId = object.userId ?? '';
     message.fileId = object.fileId ?? '';
-    message.uploadId = object.uploadId ?? '';
     message.file =
       object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
     return message;

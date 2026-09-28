@@ -17,7 +17,6 @@ export interface VideoPopulated {
   userId: string;
   fileId: string;
   file: File;
-  uploadId: string;
 }
 
 wrappers['.google.protobuf.Timestamp'] = {

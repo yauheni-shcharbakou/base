@@ -30,7 +30,6 @@ export class ImageCreateOneUseCase {
     const imageData = {
       ...createData.image,
       userId: createData.userId,
-      uploadId: providerId.value,
     };
     const fileData = this.fileMapper.toCreateData({
       ...createData.file,

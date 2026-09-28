@@ -42,7 +42,6 @@ export interface VideoCreateOneWeb {
 export interface VideoCreateManyItem {
   video: VideoCreate;
   file: FileCreate;
-  uploadId: string;
 }
 
 export interface VideoCreateMany {
@@ -76,6 +75,10 @@ export interface VideoCreated {
   upload: VideoTusUpload;
 }
 
+/**
+ * Answers a `VideoCreateMany` in request order: `items[i]` is what `VideoCreateMany.items[i]` created. The
+ * batch is created whole or not at all, so the two always have the same length.
+ */
 export interface VideoCreatedArray {
   items: VideoCreated[];
 }

@@ -53,20 +53,20 @@ message FileCreateOneWeb {
 
 // create many
 
-message FileCreateManyItem {
-  FileCreate file = 1;
-  string uploadId = 2;
-}
-
+// `items` took a new number when it stopped wrapping each `FileCreate`: the old item message and
+// `FileCreate` are both length-delimited, so a peer on the other shape would misread every item
+// instead of seeing none.
 message FileCreateMany {
   optional common.StorageManyMeta storage = 1;
-  repeated FileCreateManyItem items = 2;
+  reserved 2;
   string userId = 3;
+  repeated FileCreate items = 4;
 }
 
 message FileCreateManyWeb {
   optional common.StorageManyMeta storage = 1;
-  repeated FileCreateManyItem items = 2;
+  reserved 2;
+  repeated FileCreate items = 4;
 }
 
 // upload
@@ -86,6 +86,8 @@ message FileCreated {
   FilePresignedUpload upload = 2;
 }
 
+// Answers a `FileCreateMany` in request order: `items[i]` is what `FileCreateMany.items[i]` created. The
+// batch is created whole or not at all, so the two always have the same length.
 message FileCreatedArray {
   repeated FileCreated items = 1;
 }

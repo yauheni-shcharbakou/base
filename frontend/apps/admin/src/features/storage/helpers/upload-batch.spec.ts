@@ -3,6 +3,7 @@ import {
   attachCreatedEntities,
   CREDENTIALS_EXPIRY_MARGIN_MS,
   hasUsableCredentials,
+  pairCreatedEntities,
   planUploadBatch,
 } from './upload-batch';
 
@@ -11,15 +12,14 @@ const NOW = Date.UTC(2026, 8, 26, 12);
 // `expires` is unix seconds, as both Bunny signatures carry it.
 const expiringIn = (ms: number) => String((NOW + ms) / 1000);
 
-const entity = (uploadId: string, expires = expiringIn(60 * 60 * 1000)): CreatedUploadEntity => ({
-  id: `entity-${uploadId}`,
-  uploadId,
+const entity = (key: string, expires = expiringIn(60 * 60 * 1000)): CreatedUploadEntity => ({
+  id: `entity-${key}`,
   upload: { expires },
 });
 
-const item = (uploadId: string, created?: CreatedUploadEntity): StorageUploadItem => ({
-  file: { name: `${uploadId}.png` } as File,
-  uploadId,
+const item = (key: string, created?: CreatedUploadEntity): StorageUploadItem => ({
+  file: { name: `${key}.png` } as File,
+  key,
   ...(created ? { entity: created } : {}),
 });
 
@@ -64,7 +64,7 @@ describe('planUploadBatch', () => {
 
     const plan = planUploadBatch([item('a', created), item('b')], NOW);
 
-    expect(plan.toCreate.map(({ uploadId }) => uploadId)).toEqual(['b']);
+    expect(plan.toCreate.map(({ key }) => key)).toEqual(['b']);
     expect(plan.reused.get('a')).toBe(created);
   });
 
@@ -87,31 +87,57 @@ describe('planUploadBatch', () => {
     const plan = planUploadBatch(batch, NOW);
 
     expect(
-      [...plan.toCreate.map(({ uploadId }) => uploadId), ...Array.from(plan.reused.keys())].sort(),
+      [...plan.toCreate.map(({ key }) => key), ...Array.from(plan.reused.keys())].sort(),
     ).toEqual(['fresh', 'new', 'stale']);
   });
 });
 
+describe('pairCreatedEntities', () => {
+  // The create-many result carries no key of its own: `result[i]` answers `items[i]`.
+  it('pairs entities with items by position', () => {
+    const first = entity('x');
+    const second = entity('y');
+
+    const paired = pairCreatedEntities([item('b'), item('a')], [first, second]);
+
+    expect(Array.from(paired)).toEqual([
+      ['b', first],
+      ['a', second],
+    ]);
+  });
+
+  it('refuses a result that does not answer every item', () => {
+    expect(() => pairCreatedEntities([item('a'), item('b')], [entity('a')])).toThrow(
+      'returned 1 records for 2 files',
+    );
+  });
+});
+
 describe('attachCreatedEntities', () => {
+  const created = (...pairs: [string, CreatedUploadEntity][]) => new Map(pairs);
+
   it('stores each entity on the item it answers', () => {
-    const created = entity('a');
+    const fresh = entity('a');
 
-    const next = attachCreatedEntities({ a: item('a'), b: item('b') }, [created]);
+    const next = attachCreatedEntities({ a: item('a'), b: item('b') }, created(['a', fresh]));
 
-    expect(next.a.entity).toBe(created);
+    expect(next.a.entity).toBe(fresh);
     expect(next.b.entity).toBeUndefined();
   });
 
   it('replaces the stale entity of a re-created item', () => {
     const fresh = entity('a');
 
-    const next = attachCreatedEntities({ a: item('a', entity('a', expiringIn(-1))) }, [fresh]);
+    const next = attachCreatedEntities(
+      { a: item('a', entity('a', expiringIn(-1))) },
+      created(['a', fresh]),
+    );
 
     expect(next.a.entity).toBe(fresh);
   });
 
   it('does not bring back an item removed while the create call ran', () => {
-    const next = attachCreatedEntities({ b: item('b') }, [entity('a')]);
+    const next = attachCreatedEntities({ b: item('b') }, created(['a', entity('a')]));
 
     expect(Object.keys(next)).toEqual(['b']);
   });
@@ -119,7 +145,7 @@ describe('attachCreatedEntities', () => {
   it('leaves the map it was given untouched', () => {
     const map = { a: item('a') };
 
-    attachCreatedEntities(map, [entity('a')]);
+    attachCreatedEntities(map, created(['a', entity('a')]));
 
     expect(map.a.entity).toBeUndefined();
   });

@@ -31,7 +31,6 @@ export class FileCreateOneUseCase {
       ...createData.file,
       userId: createData.userId,
       providerId: providerId.value,
-      uploadId: providerId.value,
     });
 
     const file = await this.storageObjectPlacementService.placeLeaves(

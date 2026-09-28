@@ -33,7 +33,7 @@ The media / file storage microservice, backed by **Bunny CDN**. gRPC host `stora
 ## Entities & migrations
 
 - Note: PG entities live in `src/common/infrastructure/pg/entities/` (shared across modules), unlike `auth` where entities sit inside each module.
-- **Transactional placement**: `file`/`image`/`video` repositories implement `saveAndPlaceOne`/`saveAndPlaceMany` (not the base `create*`) — inside a single MikroORM `em.transactional`, they persist the entity (`image`/`video` also create their backing `file` row from a `FileMeta`) plus, if a placement `StorageObjectPlacementMeta` is given, a leaf `storage-object` row built by the shared `common/infrastructure/pg/factories/pg.storage-object.factory.ts` (`buildLeafStorageObject` — owns the `type` discriminator, `isFolder: false`, and the file/image/video relation wiring so the three repositories don't duplicate it).
+- **Transactional placement**: `file`/`image`/`video` repositories implement `saveAndPlaceOne`/`saveAndPlaceMany` (not the base `create*`) — inside a single MikroORM `em.transactional`, they persist the entity (`image`/`video` also create their backing `file` row from a `FileMeta`) plus, if a placement `StorageObjectPlacementMeta` is given, a leaf `storage-object` row built by the shared `common/infrastructure/pg/factories/pg.storage-object.factory.ts` (`buildLeafStorageObject` — owns the `type` discriminator, `isFolder: false`, and the file/image/video relation wiring so the three repositories don't duplicate it). **`saveAndPlaceMany` returns the rows in item order**, and the `*CreatedArray` contract rests on it: a create-many answers by position (`items[i]` → `result[i]`), with no correlation key on the wire or in the rows — the use cases zip each saved row with its item's upload credentials the same way.
 - `src/mikro-orm.config.ts` lists the four entities; `test/pg.e2e.ts` reads the same list. The migrations are in `src/migrations/`, and nothing in them calls another service — a user's root folder comes from `auth.user.create` alone, the seeded admin's included.
 
 ## HTTP surface
@@ -67,6 +67,7 @@ pnpm test:e2e         # node:test: deletion paths, folder tree, repository error
   - the folder tree: derived paths, the `isPublic` cascade, cycle termination, and the statement count of a populated page (the guard against an N+1 creeping into `folderPath`);
   - the tree lock: a second write of one owner queues and another owner's does not, two opposite moves let one through, a create queued behind its parent's deletion is refused, parallel creates get distinct names, a `left` rolls back — a media save placed under it included;
   - the owner and name rules, and the constraints that back them against a row written by hand;
+  - `saveAndPlaceMany` of every media type keeps item order — the create-many contract answers by position;
   - a leaf over existing media: another user's file is refused and survives the cleanup, the owner's own is placed and goes with its leaf, a file that is not READY is refused;
   - the media lists a picker reads: the owner's unplaced READY files, images and videos, without a file that backs other media;
   - `updateMany`/`deleteMany` throw what the database refuses, refuse a query that constrains nothing, and return `false` only when nothing matched;

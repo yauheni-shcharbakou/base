@@ -33,7 +33,6 @@ export class PgImageRepositoryImpl
         const fileEntity = em.create(PgFileEntity, {
           ...createData.file,
           userId: createData.image.userId,
-          uploadId: createData.image.uploadId,
         });
 
         const imageEntity = em.create(PgImageEntity, {
@@ -77,7 +76,6 @@ export class PgImageRepositoryImpl
           const fileEntity = em.create(PgFileEntity, {
             ...item.file,
             userId: item.image.userId,
-            uploadId: item.image.uploadId,
           });
 
           const imageEntity = em.create(PgImageEntity, {

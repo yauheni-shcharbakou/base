@@ -27,5 +27,4 @@ export interface File {
   uploadStatus: FileUploadStatus;
   providerId?: string;
   userId: string;
-  uploadId: string;
 }

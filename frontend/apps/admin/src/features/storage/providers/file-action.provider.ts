@@ -41,16 +41,11 @@ export class FileActionProvider {
     storage?: Omit<StorageData, 'name'>,
   ): Promise<CreatedFile[]> {
     const data: BrowserStorage.FileCreateMany = {
-      items: items.map((item) => {
-        return {
-          file: {
-            originalName: item.file.name,
-            size: item.file.size,
-            mimeType: item.file.type,
-          },
-          uploadId: item.uploadId,
-        };
-      }),
+      items: items.map(({ file }) => ({
+        originalName: file.name,
+        size: file.size,
+        mimeType: file.type,
+      })),
       userId,
     };
 

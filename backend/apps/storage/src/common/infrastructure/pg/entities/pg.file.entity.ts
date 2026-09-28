@@ -37,9 +37,6 @@ export class PgFileEntity
   @Property({ nullable: true, index: true })
   providerId?: string;
 
-  @Property()
-  uploadId: string;
-
   @OneToOne({
     entity: () => PgImageEntity,
     mappedBy: 'file',

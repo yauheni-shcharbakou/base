@@ -6,7 +6,7 @@ import React from 'react';
 
 type FailedItemProps = {
   uploadItem: StorageUploadItem;
-  onDelete?: (uploadId: string) => void;
+  onDelete?: (key: string) => void;
   frozen: boolean;
 };
 
@@ -29,7 +29,7 @@ const FailedItem = React.memo<FailedItemProps>(({ uploadItem, onDelete, frozen }
 
         <IconButton
           size="small"
-          onClick={() => onDelete?.(uploadItem.uploadId)}
+          onClick={() => onDelete?.(uploadItem.key)}
           color="error"
           disabled={frozen}
         >
@@ -42,7 +42,7 @@ const FailedItem = React.memo<FailedItemProps>(({ uploadItem, onDelete, frozen }
 
 type FailedItemsListProps = {
   failedItems: StorageUploadItem[];
-  onDelete?: (uploadId: string) => void;
+  onDelete?: (key: string) => void;
   isUploading: boolean;
 };
 
@@ -56,7 +56,7 @@ export const FailedItemsList = React.memo<FailedItemsListProps>(
       <MuiList sx={{ mt: 2, width: 1 }}>
         {failedItems.map((failedItem) => (
           <FailedItem
-            key={failedItem.uploadId}
+            key={failedItem.key}
             uploadItem={failedItem}
             onDelete={onDelete}
             frozen={isUploading}

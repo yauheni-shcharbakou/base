@@ -45,7 +45,6 @@ export interface ImageCreateOneWeb {
 export interface ImageCreateManyItem {
   image: ImageCreate;
   file: FileCreate;
-  uploadId: string;
 }
 
 export interface ImageCreateMany {
@@ -68,6 +67,10 @@ export interface ImageCreated {
   upload: FilePresignedUpload;
 }
 
+/**
+ * Answers a `ImageCreateMany` in request order: `items[i]` is what `ImageCreateMany.items[i]` created. The
+ * batch is created whole or not at all, so the two always have the same length.
+ */
 export interface ImageCreatedArray {
   items: ImageCreated[];
 }

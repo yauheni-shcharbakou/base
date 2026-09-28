@@ -19,7 +19,6 @@ export interface VideoPopulated {
   userId: string;
   fileId: string;
   file: File;
-  uploadId: string;
 }
 
 function createBaseVideoPopulated(): VideoPopulated {
@@ -35,7 +34,6 @@ function createBaseVideoPopulated(): VideoPopulated {
     userId: '',
     fileId: '',
     file: undefined,
-    uploadId: '',
   };
 }
 
@@ -73,9 +71,6 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     }
     if (message.file !== undefined) {
       File.encode(message.file, writer.uint32(90).fork()).join();
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(98).string(message.uploadId);
     }
     return writer;
   },
@@ -175,14 +170,6 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
           message.file = File.decode(reader, reader.uint32());
           continue;
         }
-        case 12: {
-          if (tag !== 98) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -205,7 +192,6 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
       file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
@@ -244,9 +230,6 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     if (message.file !== undefined) {
       obj.file = File.toJSON(message.file);
     }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
-    }
     return obj;
   },
 
@@ -267,7 +250,6 @@ export const VideoPopulated: MessageFns<VideoPopulated> = {
     message.fileId = object.fileId ?? '';
     message.file =
       object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
-    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };

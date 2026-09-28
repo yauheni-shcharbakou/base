@@ -17,7 +17,6 @@ export interface Video {
   providerId: string;
   userId: string;
   fileId: string;
-  uploadId: string;
 }
 
 function createBaseVideo(): Video {
@@ -32,7 +31,6 @@ function createBaseVideo(): Video {
     providerId: '',
     userId: '',
     fileId: '',
-    uploadId: '',
   };
 }
 
@@ -67,9 +65,6 @@ export const Video: MessageFns<Video> = {
     }
     if (message.fileId !== '') {
       writer.uint32(82).string(message.fileId);
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(90).string(message.uploadId);
     }
     return writer;
   },
@@ -161,14 +156,6 @@ export const Video: MessageFns<Video> = {
           message.fileId = reader.string();
           continue;
         }
-        case 11: {
-          if (tag !== 90) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -190,7 +177,6 @@ export const Video: MessageFns<Video> = {
       providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : '',
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
@@ -226,9 +212,6 @@ export const Video: MessageFns<Video> = {
     if (message.fileId !== '') {
       obj.fileId = message.fileId;
     }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
-    }
     return obj;
   },
 
@@ -247,7 +230,6 @@ export const Video: MessageFns<Video> = {
     message.providerId = object.providerId ?? '';
     message.userId = object.userId ?? '';
     message.fileId = object.fileId ?? '';
-    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };

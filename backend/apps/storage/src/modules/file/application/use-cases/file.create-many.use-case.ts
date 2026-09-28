@@ -22,7 +22,7 @@ export class FileCreateManyUseCase {
   async execute(
     createData: NestStorage.FileCreateMany,
   ): Promise<Either<Error, NestStorage.FileCreated[]>> {
-    const fileNames = new Set(_.map(createData.items, 'file.originalName'));
+    const fileNames = new Set(_.map(createData.items, 'originalName'));
 
     if (fileNames.size !== createData.items.length) {
       return left(new BadRequestException('Names of created files should be unique'));
@@ -32,7 +32,7 @@ export class FileCreateManyUseCase {
       const fileData = await Promise.all(
         _.map(createData.items, async (item) => {
           const providerId = await this.storageFileService.createFile({
-            ...item.file,
+            ...item,
             userId: createData.userId,
           });
 
@@ -41,10 +41,9 @@ export class FileCreateManyUseCase {
           }
 
           return this.fileMapper.toCreateData({
-            ...item.file,
+            ...item,
             userId: createData.userId,
             providerId: providerId.value,
-            uploadId: item.uploadId,
           });
         }),
       );
@@ -56,7 +55,7 @@ export class FileCreateManyUseCase {
               parent: createData.storage.parent,
               isPublic: createData.storage.isPublic,
               type: NestStorage.StorageObjectType.FILE,
-              names: _.map(createData.items, 'file.originalName'),
+              names: _.map(createData.items, 'originalName'),
             }
           : undefined,
         (leaves) =>

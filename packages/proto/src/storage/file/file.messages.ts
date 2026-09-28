@@ -44,20 +44,20 @@ export interface FileCreateOneWeb {
   storage?: StorageMeta;
 }
 
-export interface FileCreateManyItem {
-  file: FileCreate;
-  uploadId: string;
-}
-
+/**
+ * `items` took a new number when it stopped wrapping each `FileCreate`: the old item message and
+ * `FileCreate` are both length-delimited, so a peer on the other shape would misread every item
+ * instead of seeing none.
+ */
 export interface FileCreateMany {
   storage?: StorageManyMeta;
-  items: FileCreateManyItem[];
   userId: string;
+  items: FileCreate[];
 }
 
 export interface FileCreateManyWeb {
   storage?: StorageManyMeta;
-  items: FileCreateManyItem[];
+  items: FileCreate[];
 }
 
 /**
@@ -77,6 +77,10 @@ export interface FileCreated {
   upload: FilePresignedUpload;
 }
 
+/**
+ * Answers a `FileCreateMany` in request order: `items[i]` is what `FileCreateMany.items[i]` created. The
+ * batch is created whole or not at all, so the two always have the same length.
+ */
 export interface FileCreatedArray {
   items: FileCreated[];
 }

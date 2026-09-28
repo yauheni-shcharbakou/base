@@ -50,7 +50,8 @@ message VideoCreateOneWeb {
 message VideoCreateManyItem {
   VideoCreate video = 1;
   file.FileCreate file = 2;
-  string uploadId = 3;
+  reserved 3;
+  reserved "uploadId";
 }
 
 message VideoCreateMany {
@@ -84,6 +85,8 @@ message VideoCreated {
   VideoTusUpload upload = 2;
 }
 
+// Answers a `VideoCreateMany` in request order: `items[i]` is what `VideoCreateMany.items[i]` created. The
+// batch is created whole or not at all, so the two always have the same length.
 message VideoCreatedArray {
   repeated VideoCreated items = 1;
 }

@@ -32,9 +32,9 @@ export class VideoCreateManyUseCase {
   async execute(
     createData: NestStorage.VideoCreateMany,
   ): Promise<Either<Error, NestStorage.VideoCreated[]>> {
-    const fileNames = new Set(_.map(createData.items, 'file.originalName'));
+    const names = _.map(createData.items, (item) => item.file.originalName);
 
-    if (fileNames.size !== createData.items.length) {
+    if (new Set(names).size !== names.length) {
       return left(new BadRequestException('Names of created files should be unique'));
     }
 
@@ -66,7 +66,6 @@ export class VideoCreateManyUseCase {
       video: {
         ...item.video,
         userId: createData.userId,
-        uploadId: item.uploadId,
         providerId: created[index],
       },
       file: this.fileMapper.toCreateData(item.file),
@@ -79,7 +78,7 @@ export class VideoCreateManyUseCase {
             parent: createData.storage.parent,
             isPublic: createData.storage.isPublic,
             type: NestStorage.StorageObjectType.VIDEO,
-            names: _.map(createData.items, 'file.originalName'),
+            names,
           }
         : undefined,
       (leaves) =>
@@ -94,17 +93,14 @@ export class VideoCreateManyUseCase {
     }
 
     // Every created video carries its own TUS credentials — the caller uploads each file
-    // straight to Bunny, so `uploadId` is the only link back to the source file's mime type.
-    const mimeTypeByUploadId = new Map(
-      _.map(createData.items, (item) => [item.uploadId, item.file.mimeType] as const),
-    );
-
+    // straight to Bunny. The repository saves in item order, so the i-th video's mime type is the
+    // i-th item's.
     const results: NestStorage.VideoCreated[] = [];
 
-    for (const video of videos.value) {
+    for (const [index, video] of videos.value.entries()) {
       const upload = this.storageVideoService.getTusUpload(video.providerId, {
         title: video.title,
-        mimeType: mimeTypeByUploadId.get(video.uploadId) ?? '',
+        mimeType: createData.items[index].file.mimeType,
       });
 
       if (upload.isLeft()) {

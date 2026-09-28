@@ -44,7 +44,6 @@ export interface VideoCreateOneWeb {
 export interface VideoCreateManyItem {
   video: VideoCreate;
   file: FileCreate;
-  uploadId: string;
 }
 
 export interface VideoCreateMany {
@@ -78,6 +77,10 @@ export interface VideoCreated {
   upload: VideoTusUpload;
 }
 
+/**
+ * Answers a `VideoCreateMany` in request order: `items[i]` is what `VideoCreateMany.items[i]` created. The
+ * batch is created whole or not at all, so the two always have the same length.
+ */
 export interface VideoCreatedArray {
   items: VideoCreated[];
 }
@@ -625,7 +628,7 @@ export const VideoCreateOneWeb: MessageFns<VideoCreateOneWeb> = {
 };
 
 function createBaseVideoCreateManyItem(): VideoCreateManyItem {
-  return { video: undefined, file: undefined, uploadId: '' };
+  return { video: undefined, file: undefined };
 }
 
 export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
@@ -635,9 +638,6 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
     }
     if (message.file !== undefined) {
       FileCreate.encode(message.file, writer.uint32(18).fork()).join();
-    }
-    if (message.uploadId !== '') {
-      writer.uint32(26).string(message.uploadId);
     }
     return writer;
   },
@@ -665,14 +665,6 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
           message.file = FileCreate.decode(reader, reader.uint32());
           continue;
         }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.uploadId = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -686,7 +678,6 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
     return {
       video: isSet(object.video) ? VideoCreate.fromJSON(object.video) : undefined,
       file: isSet(object.file) ? FileCreate.fromJSON(object.file) : undefined,
-      uploadId: isSet(object.uploadId) ? globalThis.String(object.uploadId) : '',
     };
   },
 
@@ -697,9 +688,6 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
     }
     if (message.file !== undefined) {
       obj.file = FileCreate.toJSON(message.file);
-    }
-    if (message.uploadId !== '') {
-      obj.uploadId = message.uploadId;
     }
     return obj;
   },
@@ -719,7 +707,6 @@ export const VideoCreateManyItem: MessageFns<VideoCreateManyItem> = {
       object.file !== undefined && object.file !== null
         ? FileCreate.fromPartial(object.file)
         : undefined;
-    message.uploadId = object.uploadId ?? '';
     return message;
   },
 };

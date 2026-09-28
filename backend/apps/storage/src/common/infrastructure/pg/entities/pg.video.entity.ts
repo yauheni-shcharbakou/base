@@ -49,7 +49,4 @@ export class PgVideoEntity extends PgEntity<'duration' | 'views'> implements Nes
 
   @Property({ nullable: true })
   description?: string;
-
-  @Property()
-  uploadId: string;
 }

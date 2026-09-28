@@ -8,7 +8,6 @@ import { Either } from '@sweet-monads/either';
 export interface ImageCreate extends NestStorage.ImageCreate {
   file: string;
   userId: string;
-  uploadId: string;
 }
 
 export interface ImageSaveAndPlace {

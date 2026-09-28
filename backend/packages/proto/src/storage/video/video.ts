@@ -15,7 +15,6 @@ export interface Video {
   providerId: string;
   userId: string;
   fileId: string;
-  uploadId: string;
 }
 
 wrappers['.google.protobuf.Timestamp'] = {

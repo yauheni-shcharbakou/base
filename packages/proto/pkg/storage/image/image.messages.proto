@@ -53,7 +53,8 @@ message ImageCreateOneWeb {
 message ImageCreateManyItem {
   ImageCreate image = 1;
   file.FileCreate file = 2;
-  string uploadId = 3;
+  reserved 3;
+  reserved "uploadId";
 }
 
 message ImageCreateMany {
@@ -74,6 +75,8 @@ message ImageCreated {
   file.FilePresignedUpload upload = 2;
 }
 
+// Answers a `ImageCreateMany` in request order: `items[i]` is what `ImageCreateMany.items[i]` created. The
+// batch is created whole or not at all, so the two always have the same length.
 message ImageCreatedArray {
   repeated ImageCreated items = 1;
 }

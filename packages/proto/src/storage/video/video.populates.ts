@@ -16,5 +16,4 @@ export interface VideoPopulated {
   userId: string;
   fileId: string;
   file: File;
-  uploadId: string;
 }
