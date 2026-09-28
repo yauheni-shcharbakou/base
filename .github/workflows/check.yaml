@@ -97,6 +97,21 @@ jobs:
       - name: 'Build'
         run: 'pnpm build'
 
+      # A `globalDependencies` glob that reaches build output (`**/.env` once matched a copy under
+      # `.next/standalone/`) changes the global hash on every build, and every task misses the cache
+      # on the next run. Checked after the build, once that output exists.
+      - name: 'Global turbo inputs hold no build output'
+        run: |
+          pnpm turbo run build --dry=json | node -e '
+            let json = "";
+            process.stdin.on("data", (chunk) => (json += chunk)).on("end", () => {
+              const files = Object.keys(JSON.parse(json).globalCacheInputs.files);
+              const leaked = files.filter((file) => /(^|\/)(\.next|dist|node_modules)\//.test(file));
+              for (const file of leaked) console.log(`::error::${file} is a global turbo input.`);
+              process.exit(leaked.length ? 1 : 0);
+            });
+          '
+
       - name: 'Typecheck'
         run: 'pnpm typecheck'
 

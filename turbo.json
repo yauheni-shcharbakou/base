@@ -7,7 +7,14 @@
   // is now a one-liner delegating to `@packages/configs/tsdown/package.config.mjs`, whose edits
   // would otherwise never reach a build hash. The presets change rarely, so the extra
   // invalidations are cheap.
-  "globalDependencies": ["**/.env", "packages/configs/**"],
+  //
+  // `.env` files are not global: an edit to one would invalidate every task in the repo, while only
+  // the tasks that load one at run time depend on it — each lists its package's own in `inputs`
+  // (`migrate:check` below, `frontend.admin#build`). Keep build output out of this list: a glob
+  // that reaches it (`**/.env` once matched the copy Next writes into `.next/standalone/`) changes
+  // the global hash on every build. turbo 2.10 cannot parse a negated (`!`) glob here, and CI fails
+  // when a `.next`, `dist` or `node_modules` path shows up among the global inputs.
+  "globalDependencies": ["packages/configs/**"],
   "tasks": {
     "dev": {
       "cache": false,
@@ -55,12 +62,17 @@
     // Both run the MikroORM CLI over the service's `src/mikro-orm.config.ts`, which imports
     // `@backend/pg` through its built `dist` — hence `^build`. `migrate` writes to a database, which
     // turbo cannot hash; `migrate:check` never connects (it diffs the entities against the committed
-    // snapshot), so it is a pure function of the sources and is cached.
+    // snapshot), so it is cached — on the sources plus the environment the CLI loads through
+    // `dotenv`: `definePgConfig` validates it, and NODE_ENV decides whether the snapshot is read
+    // from `src/migrations` or `dist/migrations`. `.env` is gitignored, so `$TURBO_DEFAULT$` alone
+    // would miss it.
     "migrate": {
       "cache": false,
       "dependsOn": ["^build"]
     },
     "migrate:check": {
+      "inputs": ["$TURBO_DEFAULT$", ".env"],
+      "env": ["NODE_ENV"],
       "dependsOn": ["^build"]
     },
     "format": {
