@@ -62,6 +62,8 @@ pnpm build:backend.auth       # one service
 pnpm test                     # unit suites of every package that has them
 pnpm test:e2e                 # e2e suites; each skips itself when its server is unreachable
 pnpm typecheck                # tsc --noEmit in every workspace (see below)
+pnpm migrate                  # apply pending migrations in every DB-backed service (also :backend.auth, :backend.storage)
+pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm docker:local             # postgres + redis only (for local dev against real infra)
@@ -82,7 +84,12 @@ pnpm compile                  # run every package's compile task
 
 `compile:proto` needs a `protoc` binary (override with env `PROTOC_PATH`); set `GRPC_COMPILER_CONTEXT=backend|frontend|all` (default `all`) to generate only some targets.
 
-Database migrations run inside a service directory — see `backend/CLAUDE.md`.
+Creating a migration (and any other MikroORM CLI command) runs inside a service directory — see
+`backend/CLAUDE.md`.
+
+**Git hook.** `pnpm install` points `core.hooksPath` at `.githooks/` (the root `prepare` script).
+Its `pre-commit` refuses a staged migration snapshot without a new migration next to it, and runs
+`pnpm migrate:check` when an entity, a migration, a service's ORM config or `@backend/pg` is staged.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single

@@ -48,6 +48,17 @@
       "cache": false,
       "dependsOn": ["^build"]
     },
+    // Both run the MikroORM CLI over the service's `src/mikro-orm.config.ts`, which imports
+    // `@backend/pg` through its built `dist` — hence `^build`. `migrate` writes to a database, which
+    // turbo cannot hash; `migrate:check` never connects (it diffs the entities against the committed
+    // snapshot), so it is a pure function of the sources and is cached.
+    "migrate": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "migrate:check": {
+      "dependsOn": ["^build"]
+    },
     "format": {
       "cache": false
     },

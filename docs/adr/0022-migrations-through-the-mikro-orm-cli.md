@@ -76,7 +76,9 @@ Rejected alternatives:
 - MikroORM rewrites the snapshot after `migration:up` / `:down` / `:fresh` from the database it
   ran against. For storage that pulls in the owner-scoped parent key, which exists only as raw SQL,
   and the next `migration:create` would drop it. `definePgConfig` therefore turns the snapshot off
-  for those three commands, keying on `process.argv`; only `migration:create` moves it.
+  for those three commands, keying on `process.argv`; only `migration:create` moves it. A path the
+  toggle misses — a programmatic `migrator.up()` over the service config — is caught by the
+  `pre-commit` hook, which refuses a snapshot staged without a new migration.
 - The admin semantics moved: deleting every admin makes the next start create one from the
   environment again. An existing admin — its password included — is never touched.
 - No call crosses services at deploy time any more. Storage's one remaining caller of

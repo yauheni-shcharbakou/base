@@ -17,6 +17,7 @@
     "orm": "dotenv -- mikro-orm",
     "migrate": "pnpm orm migration:up",
     "migrate:create": "pnpm orm migration:create",
+    "migrate:check": "pnpm orm migration:check",
     "storage:copy-zone": "dotenv -e scripts/.env.migration -- tsx scripts/copy-storage-zone.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

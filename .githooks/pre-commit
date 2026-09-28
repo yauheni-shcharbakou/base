@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Migration guard. Installed by the root `prepare` script (`core.hooksPath=.githooks`), so it runs
+# for anyone who ran `pnpm install`; `git commit --no-verify` skips it.
+#
+#   1. A `.snapshot-*.json` is staged without a new `*.migration.ts` next to it. Only
+#      `migration:create` may move a snapshot: one rewritten by hand, or by a command that should
+#      not have written it, makes the next `migrate:create` drop whatever the snapshot lost.
+#   2. An entity, a migration, a service's ORM config or `@backend/pg` changed: `pnpm
+#      migrate:check` fails while the entities and the snapshot disagree — a forgotten
+#      `migrate:create`. It never connects to a database, and it reads the working tree, not the
+#      index, so a partly staged entity is checked as it is on disk.
+set -euo pipefail
+
+staged() {
+  git diff --cached --name-only --no-renames "$@"
+}
+
+# `--no-renames`: a migrations directory that moves counts as added, its migrations included.
+missing=""
+while IFS= read -r snapshot; do
+  [ -n "$snapshot" ] || continue
+  dir=$(dirname "$snapshot")
+  if [ -z "$(staged --diff-filter=A -- "$dir/*.migration.ts")" ]; then
+    missing="${missing}  - ${snapshot}"$'\n'
+  fi
+done < <(staged --diff-filter=AM -- 'backend/apps/*/src/migrations/.snapshot-*.json')
+
+if [ -n "$missing" ]; then
+  printf 'pre-commit: a migration snapshot changed without a new migration next to it:\n%s' "$missing" >&2
+  printf 'Generate one with `pnpm migrate:create` in the service, or unstage the snapshot.\n' >&2
+  exit 1
+fi
+
+if staged -- '*.entity.ts' '*/src/migrations/*' '*/src/mikro-orm.config.ts' 'backend/packages/pg/src/*' | grep -q .; then
+  pnpm migrate:check
+fi
