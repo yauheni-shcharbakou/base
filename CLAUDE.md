@@ -87,9 +87,11 @@ pnpm compile                  # run every package's compile task
 Creating a migration (and any other MikroORM CLI command) runs inside a service directory — see
 `backend/CLAUDE.md`.
 
-**Git hook.** `pnpm install` points `core.hooksPath` at `.githooks/` (the root `prepare` script).
-Its `pre-commit` refuses a staged migration snapshot without a new migration next to it, and runs
-`pnpm migrate:check` when an entity, a migration, a service's ORM config or `@backend/pg` is staged.
+**CI.** `.github/workflows/check.yaml` runs on every pull request into `main`: `build`, `typecheck`
+and `lint`, then fails if they left the tree dirty (stale codegen, unformatted code, unapplied lint
+fixes), then `check:env-docs`, `migrate:check`, a guard against a migration snapshot changed
+without a new migration next to it, `test` and `test:e2e`. Postgres, Redis and NATS run beside the
+job, so no e2e suite skips itself there.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single

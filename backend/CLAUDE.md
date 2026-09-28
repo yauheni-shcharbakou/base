@@ -56,7 +56,7 @@ nothing bootstraps the app to migrate it.
   `:down` / `:fresh` from the database it ran against, raw-SQL constraints included (storage's
   owner-scoped parent key), and the next `migrate:create` would then drop them — so
   `definePgConfig` turns the snapshot off for those commands. A snapshot that changes in git
-  without a new migration next to it is a bug, and the root `pre-commit` hook refuses it.
+  without a new migration next to it is a bug, and CI refuses it.
 - **A data change is a migration too** — a backfill is a TS migration ordered with the schema it
   needs. There is no task runner. What must hold on every start rather than once belongs to the
   service: auth creates its first admin itself (see its `CLAUDE.md`).
@@ -78,8 +78,8 @@ pnpm migrate:check            # exit non-zero while the entities and the snapsho
 pnpm orm <command>            # any CLI command: migration:list / :pending / :down, debug
 ```
 
-`migrate:check` catches a forgotten `migrate:create` and never connects to the database, so the
-`pre-commit` hook runs it and turbo caches it; `pnpm migrate` / `pnpm migrate:check` at the root
+`migrate:check` catches a forgotten `migrate:create` and never connects to the database, so CI runs
+it without one and turbo caches it; `pnpm migrate` / `pnpm migrate:check` at the root
 run them in every service.
 
 > **Why the CLI, and no task runner:** [docs/adr/0022-migrations-through-the-mikro-orm-cli.md](../docs/adr/0022-migrations-through-the-mikro-orm-cli.md)

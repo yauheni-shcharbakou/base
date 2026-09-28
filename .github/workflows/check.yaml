@@ -1,0 +1,131 @@
+name: 'Check'
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+concurrency:
+  group: 'check-${{ github.event.pull_request.number }}'
+  cancel-in-progress: true
+
+permissions:
+  contents: 'read'
+
+jobs:
+  check:
+    # One job: turbo already runs the workspaces in parallel, and a matrix would repeat the install
+    # and the build in every leg.
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 30
+
+    # Every e2e suite skips itself when its server is unreachable, so each one needs its server
+    # here, or the run is green without having tested anything.
+    services:
+      postgres:
+        image: 'postgres:15-alpine'
+        env:
+          POSTGRES_USER: 'admin'
+          POSTGRES_PASSWORD: 'password123'
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U admin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: 'redis:8-alpine'
+        ports:
+          - '6379:6379'
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # `definePgConfig` validates it at load, although `migrate:check` never connects; the storage
+      # e2e suite migrates its own databases on this server.
+      DATABASE_URL: 'postgresql://admin:password123@localhost:5432'
+      TURBO_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v7'
+        with:
+          # The snapshot guard diffs the pull request against its base.
+          fetch-depth: 0
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@v6'
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@v7'
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # `build` runs `@packages/proto`'s compile, which needs protoc. Unpinned on purpose: the
+      # generated files record no tool versions.
+      - name: 'Install protoc'
+        run: 'sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler'
+
+      # Not a service container: JetStream needs the `-js` flag, and services take no command.
+      - name: 'Start NATS'
+        run: 'docker run -d --name nats -p 4222:4222 nats:2-alpine -js'
+
+      - name: 'Install dependencies'
+        run: 'pnpm install --frozen-lockfile'
+
+      - name: 'Build'
+        run: 'pnpm build'
+
+      - name: 'Typecheck'
+        run: 'pnpm typecheck'
+
+      - name: 'Lint'
+        run: 'pnpm lint'
+
+      # The build regenerates code and formats it, and lint runs with --fix: anything they changed
+      # is codegen, formatting or a lint fix the pull request did not commit.
+      - name: 'Committed code is up to date'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git diff
+            echo '::error::The build or lint changed tracked files. Run `pnpm build && pnpm lint` and commit the result.'
+            exit 1
+          fi
+
+      - name: 'Env tables match their schemas'
+        run: 'pnpm check:env-docs'
+
+      - name: 'Entities match the migration snapshots'
+        run: 'pnpm migrate:check'
+
+      # Only `migration:create` may move a snapshot (see backend/CLAUDE.md). One changed without a
+      # migration beside it would make the next `migrate:create` drop whatever it lost.
+      - name: 'Every snapshot change comes with a migration'
+        env:
+          BASE_SHA: '${{ github.event.pull_request.base.sha }}'
+        run: |
+          changed() {
+            git diff --name-only --no-renames "$@"
+          }
+          failed=0
+          while IFS= read -r snapshot; do
+            [ -n "$snapshot" ] || continue
+            dir=$(dirname "$snapshot")
+            if [ -z "$(changed --diff-filter=A "$BASE_SHA...HEAD" -- "$dir/*.migration.ts")" ]; then
+              echo "::error file=$snapshot::The snapshot changed without a new migration in $dir. Generate one with \`pnpm migrate:create\`."
+              failed=1
+            fi
+          done < <(changed --diff-filter=AM "$BASE_SHA...HEAD" -- 'backend/apps/*/src/migrations/.snapshot-*.json')
+          exit "$failed"
+
+      - name: 'Unit tests'
+        run: 'pnpm test'
+
+      - name: 'E2E tests'
+        run: 'pnpm test:e2e'
