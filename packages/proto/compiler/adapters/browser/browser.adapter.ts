@@ -1,5 +1,10 @@
 import { BaseAdapter } from '@compiler/adapters/base.adapter';
-import { PROTO_SRC_ROOT, PROTOC_PATH, PROTOC_PLUGIN_PATH } from '@compiler/constants';
+import {
+  PROTO_INCLUDE_ROOT,
+  PROTO_SRC_ROOT,
+  PROTOC_PATH,
+  PROTOC_PLUGIN_PATH,
+} from '@compiler/constants';
 import { OnFilePayload } from '@compiler/types';
 import { runCommand } from '@compiler/utils';
 
@@ -8,6 +13,8 @@ export class BrowserAdapter extends BaseAdapter {
     const command = [
       PROTOC_PATH,
       `--plugin=${PROTOC_PLUGIN_PATH}`,
+      '--proto_path=.',
+      `--proto_path=${PROTO_INCLUDE_ROOT}`,
       `--ts_proto_out=${this.targetRoot}`,
       // No tool versions in the header, so any protoc regenerates the same files.
       '--ts_proto_opt=annotateFilesWithVersion=false',
