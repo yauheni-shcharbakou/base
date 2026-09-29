@@ -7,6 +7,11 @@ import { Metadata, status as GrpcStatus } from '@grpc/grpc-js';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies, headers } from 'next/headers';
 
+type HeadersReader = Pick<Headers, 'get'>;
+
+/** Every cookie a session leaves: `setAuthCookies` writes them, `clearCookies` deletes them. */
+export const AUTH_COOKIE_NAMES = ['userId', 'role', 'access-token', 'refresh-token'] as const;
+
 export class AuthService {
   private readonly cookieConfig: Partial<ResponseCookie>;
   private readonly authRepository: GrpcAuthPublicRepository;
@@ -46,9 +51,9 @@ export class AuthService {
 
   // The gateway rate-limits a call without a user by this address; every call it gets comes
   // from this server, so without it all visitors would share one limit.
-  private async getClientMetadata() {
+  private getClientMetadata(requestHeaders: HeadersReader) {
     const meta = new Metadata();
-    const clientIp = getHeadersIp(await headers());
+    const clientIp = getHeadersIp(requestHeaders);
 
     if (clientIp) {
       meta.set('x-client-ip', clientIp);
@@ -57,63 +62,55 @@ export class AuthService {
     return meta;
   }
 
+  /**
+   * The cookies a sign-in or a refresh leaves, each expiring with its token. Written through
+   * `cookies()` by an action, and through the request and the response by the middleware, where
+   * `next/headers` is not there to write them.
+   */
+  getAuthCookies(authData: ClientAuth.AuthData): ResponseCookie[] {
+    const accessExpireDate = authData.tokens.accessToken.expiredAt;
+    const refreshExpireDate = authData.tokens.refreshToken.expiredAt;
+
+    return [
+      { name: 'userId', value: authData.user.id, expires: accessExpireDate },
+      { name: 'role', value: authData.user.role, expires: accessExpireDate },
+      { name: 'access-token', value: authData.tokens.accessToken.value, expires: accessExpireDate },
+      {
+        name: 'refresh-token',
+        value: authData.tokens.refreshToken.value,
+        expires: refreshExpireDate,
+      },
+    ].map((cookie) => ({ ...cookie, ...this.cookieConfig }));
+  }
+
   private async setAuthCookies(authData: ClientAuth.AuthData) {
     const cookieStore = await cookies();
 
-    const userId = authData.user.id;
-    const role = authData.user.role;
-
-    const accessToken = authData.tokens.accessToken.value;
-    const accessExpireDate = authData.tokens.accessToken.expiredAt;
-
-    const refreshToken = authData.tokens.refreshToken.value;
-    const refreshExpireDate = authData.tokens.refreshToken.expiredAt;
-
-    cookieStore.set({
-      name: 'userId',
-      value: userId,
-      expires: accessExpireDate,
-      ...this.cookieConfig,
-    });
-
-    cookieStore.set({
-      name: 'role',
-      value: role,
-      expires: accessExpireDate,
-      ...this.cookieConfig,
-    });
-
-    cookieStore.set({
-      name: 'access-token',
-      value: accessToken,
-      expires: accessExpireDate,
-      ...this.cookieConfig,
-    });
-
-    cookieStore.set({
-      name: 'refresh-token',
-      value: refreshToken,
-      expires: refreshExpireDate,
-      ...this.cookieConfig,
-    });
+    this.getAuthCookies(authData).forEach((cookie) => cookieStore.set(cookie));
 
     return {
-      userId,
-      role,
-      accessToken,
-      refreshToken,
+      userId: authData.user.id,
+      role: authData.user.role,
+      accessToken: authData.tokens.accessToken.value,
+      refreshToken: authData.tokens.refreshToken.value,
     };
   }
 
-  // Throws a gRPC status, never a plain Error: `runAction` and `errorResponse` answer a missing or
-  // refused token with the 401 the auth provider reads as logged out, not with a 500.
-  private async refreshAuthData(refreshToken?: string) {
+  /**
+   * A new session for a refresh token. Throws a gRPC status, never a plain Error: `runAction` and
+   * `errorResponse` answer a missing or refused token with the 401 the auth provider reads as
+   * logged out, not with a 500.
+   */
+  async refreshSession(
+    refreshToken: string | undefined,
+    requestHeaders: HeadersReader,
+  ): Promise<ClientAuth.AuthData> {
     if (!refreshToken) {
       throw sessionEndedError('Refresh token is missing');
     }
 
     const authData = await this.authRepository
-      .refreshToken({ refreshToken }, await this.getClientMetadata())
+      .refreshToken({ refreshToken }, this.getClientMetadata(requestHeaders))
       .catch((error: unknown) => {
         throw toRefreshError(error);
       });
@@ -122,7 +119,13 @@ export class AuthService {
       throw createServiceError(GrpcStatus.PERMISSION_DENIED, 'Invalid role');
     }
 
-    return this.setAuthCookies(authData);
+    return authData;
+  }
+
+  // The middleware refreshes an expired session before a request renders; this fallback is for a
+  // call it did not see — the access token expiring between the two.
+  private async refreshAuthData(refreshToken?: string) {
+    return this.setAuthCookies(await this.refreshSession(refreshToken, await headers()));
   }
 
   private async getAccessTokenWithRefresh() {
@@ -160,7 +163,7 @@ export class AuthService {
   }
 
   async login(data: ClientAuth.AuthLogin) {
-    const authData = await this.authRepository.login(data, await this.getClientMetadata());
+    const authData = await this.authRepository.login(data, this.getClientMetadata(await headers()));
     await this.setAuthCookies(authData);
   }
 
@@ -185,7 +188,7 @@ export class AuthService {
   async clearCookies() {
     const cookieStore = await cookies();
 
-    ['userId', 'role', 'access-token', 'refresh-token'].forEach((name) => {
+    AUTH_COOKIE_NAMES.forEach((name) => {
       cookieStore.delete({ name, path: this.cookieConfig.path });
     });
   }
