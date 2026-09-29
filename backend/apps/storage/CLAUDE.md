@@ -66,7 +66,7 @@ pnpm start:dev        # nest start --watch
 pnpm build / typecheck / migrate (also migrate:create, orm <any CLI command>) / lint
 pnpm storage:copy-zone  # one-off copy into a new storage zone — runbook in README.md
 pnpm test             # jest: use-cases and services, ports mocked
-pnpm test:e2e         # node:test: deletion paths, folder tree, repository errors against Postgres (`pnpm docker:local`)
+pnpm test:e2e         # node:test: deletion paths, folder tree, repository errors against Postgres (`pnpm docker:db`)
 ```
 - **Two runners.** `src/**/*.spec.ts` is Jest. `test/*.e2e-spec.ts` runs on `node:test` under ts-node, because it drives the real repositories and Jest cannot load MikroORM. Those specs cover:
   - the FK cascades, the subtree mark and the bottom-up folder delete;

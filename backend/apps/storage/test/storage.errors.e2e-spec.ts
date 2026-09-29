@@ -67,7 +67,7 @@ describe('storage repository errors against Postgres', () => {
 
   // Skipped rather than failed without a server, like the Redis e2e suites.
   const withDb = (name: string, fn: () => Promise<void>) =>
-    it(name, (t) => (orm ? fn() : t.skip('no Postgres — start one with `pnpm docker:local`')));
+    it(name, (t) => (orm ? fn() : t.skip('no Postgres — start one with `pnpm docker:db`')));
 
   const assertError = (
     result: Either<Error, unknown>,

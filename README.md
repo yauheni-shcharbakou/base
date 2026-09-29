@@ -210,6 +210,7 @@ pnpm prod:backend # only backend stuff
 ```shell
 pnpm docker # start all services (production mode)
 pnpm docker:local # start only transport services (local development mode)
+pnpm docker:db # start only Postgres and Redis, detached (e2e suites)
 ```
 
 ##### Commands for reset build caches:

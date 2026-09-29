@@ -46,6 +46,7 @@
     "reset:modules": "turbo run reset:modules && rm -rf node_modules",
     "docker:local": "docker compose -f docker-compose.yml --profile local up --build",
     "docker:local:d": "docker compose -f docker-compose.yml --profile local up --build -d",
+    "docker:db": "docker compose -f docker-compose.yml up -d postgres postgres-init redis",
     "docker": "docker compose -f docker-compose.yml --profile all up --build"
   },
   "devDependencies": {

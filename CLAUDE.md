@@ -66,8 +66,9 @@ pnpm migrate                  # apply pending migrations in every DB-backed serv
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
-pnpm docker:local             # postgres + redis only (for local dev against real infra)
+pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
+pnpm docker:db                # postgres + redis only, detached: every e2e suite but the dormant NATS one, no tunnel
 pnpm docker                   # full stack in prod mode
 pnpm gen:package              # scaffold a new package via turbo generator (packages only; apps are hand-made)
 ```

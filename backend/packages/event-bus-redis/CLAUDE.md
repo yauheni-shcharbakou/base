@@ -221,7 +221,7 @@ pnpm dev / test:watch / lint / format / format:generated / reset
 Two specs under `src/interface/servers/` exercise the adapter against a real server:
 
 ```bash
-pnpm docker:local:d      # or: docker run --rm -p 6379:6379 redis:latest
+pnpm docker:db           # or: docker run --rm -p 6379:6379 redis:latest
 pnpm test:e2e
 ```
 

@@ -192,7 +192,7 @@ pnpm dev / test:watch / lint / format / reset
 ### The e2e suite
 
 ```bash
-pnpm docker:local:d      # or: docker run --rm -p 6379:6379 redis:latest
+pnpm docker:db           # or: docker run --rm -p 6379:6379 redis:latest
 pnpm test:e2e
 ```
 

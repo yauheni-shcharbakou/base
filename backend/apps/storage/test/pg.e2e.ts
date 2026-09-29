@@ -1,6 +1,6 @@
 // Imported first by every Postgres spec: `@backend/pg` validates its env when the module loads, so
 // the default has to be in place before anything pulls it in. The fallback is the database
-// `pnpm docker:local` starts.
+// `pnpm docker:db` starts.
 process.env.DATABASE_URL ??= 'postgresql://admin:password123@localhost:5432';
 
 import ormConfig from '@/mikro-orm.config';

@@ -90,7 +90,7 @@ describe('storage-object tree against Postgres', () => {
   // recursion that never ends into a failure instead of a hung run.
   const withDb = (name: string, fn: () => Promise<void>) =>
     it(name, { timeout: 30_000 }, (t) =>
-      orm ? fn() : t.skip('no Postgres — start one with `pnpm docker:local`'),
+      orm ? fn() : t.skip('no Postgres — start one with `pnpm docker:db`'),
     );
 
   let root: string;
