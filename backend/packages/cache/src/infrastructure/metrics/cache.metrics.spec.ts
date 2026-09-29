@@ -13,7 +13,7 @@ describe('CacheMetrics', () => {
       misses: 0,
       writes: 0,
       errors: 0,
-      errorsByOperation: { get: 0, set: 0, has: 0, delete: 0, deleteByPrefix: 0 },
+      errorsByOperation: { get: 0, set: 0, has: 0, delete: 0, deleteByPrefix: 0, increment: 0 },
       lastErrorAt: null,
     });
   });

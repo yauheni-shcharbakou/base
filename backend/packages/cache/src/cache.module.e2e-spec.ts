@@ -116,6 +116,32 @@ describeWithServer('CacheModule (e2e)', () => {
     });
   });
 
+  describe('increment', () => {
+    // What a get-then-set counter cannot do: every concurrent caller sees its own value.
+    it('counts concurrent increments without losing one', async () => {
+      const counters = await Promise.all(
+        Array.from({ length: 200 }, () => cache.increment('counter:race', 60_000)),
+      );
+
+      const values = counters.map((counter) => counter?.value).sort((a, b) => a - b);
+
+      expect(values).toEqual(Array.from({ length: 200 }, (_value, index) => index + 1));
+    });
+
+    it('keeps the first window and starts over once it has passed', async () => {
+      await expect(cache.increment('counter:window', 1000)).resolves.toMatchObject({ value: 1 });
+      await expect(cache.increment('counter:window', 60_000)).resolves.toMatchObject({
+        value: 2,
+        ttlMs: expect.any(Number),
+      });
+      await expect(client.pttl(`${OWN_PREFIX}counter:window`)).resolves.toBeLessThanOrEqual(1000);
+
+      await wait(1300);
+
+      await expect(cache.increment('counter:window', 1000)).resolves.toMatchObject({ value: 1 });
+    });
+  });
+
   describe('shutdown', () => {
     const bootLocalModule = async (): Promise<[TestingModule, Redis]> => {
       const localModule = await Test.createTestingModule({

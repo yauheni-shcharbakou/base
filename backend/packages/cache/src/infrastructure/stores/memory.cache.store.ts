@@ -1,4 +1,4 @@
-import { CacheStore } from '../../domain';
+import { CacheCounter, CacheStore } from '../../domain';
 import { CacheSerializer } from '../serializers';
 
 type MemoryCacheEntry = {
@@ -49,6 +49,24 @@ export class MemoryCacheStore extends CacheStore {
     const matched = Array.from(this.store.keys()).filter((key) => key.startsWith(prefix));
 
     return this.delete(...matched);
+  }
+
+  /** Kept as a bare integer, like the Redis adapter's `INCR` counter — `get` reads it as a miss. */
+  increment(key: string, windowMs: number): Promise<CacheCounter> {
+    const entry = this.read(key);
+    const now = Date.now();
+    const value = (entry ? Number(entry.raw) : 0) + 1;
+
+    // What Redis answers `INCR` on a key holding anything but an integer.
+    if (!Number.isInteger(value)) {
+      return Promise.reject(new Error(`"${key}" does not hold a counter`));
+    }
+
+    const expiresAt = entry?.expiresAt ?? now + windowMs;
+
+    this.store.set(key, { raw: String(value), expiresAt });
+
+    return Promise.resolve({ value, ttlMs: expiresAt - now });
   }
 
   private read(key: string): MemoryCacheEntry | undefined {

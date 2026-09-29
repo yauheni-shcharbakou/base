@@ -4,7 +4,7 @@ Guidance for working inside `backend/apps/api-gateway`. The general hexagonal/us
 
 ## What this service is
 
-The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). gRPC unary calls are rate-limited (see *Rate limiting* below); HTTP has no controllers, only Swagger UI, and is not limited. It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency); it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
+The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). gRPC unary calls are rate-limited (see *Rate limiting* below); HTTP has no controllers, only Swagger UI, and is not limited. It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency) — its one Redis use is the rate-limit counters, through `@backend/cache`; it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
 
 ## Layers (two, by design)
 
@@ -56,12 +56,19 @@ GrpcThrottlerGuard)` — a controller built without them is not limited. Limits 
   because the gRPC port is published on the private network only — expose it and that stops holding.
 - The count is per caller across **all** handlers, not per handler (`generateKey` override). Stream
   calls are not counted. An exceeded limit is `RESOURCE_EXHAUSTED`.
-- Counters are the throttler's in-memory store: per gateway instance, reset on restart. A second
-  instance needs a shared store (`ThrottlerModule`'s `storage` option).
+- **Counters live in Redis**: `CacheModule.forRoot({ namespace: 'api-gateway' })` in `app.module.ts`,
+  and `CacheThrottlerStorage` (`common/infrastructure/storages`) as the throttler's `storage`, wired
+  by `GRPC_THROTTLER_MODULE_OPTIONS` — keys `cache:api-gateway:throttle:<encoded key>`, a fixed
+  window per key. Replicas share one limit and a restart resets nothing. When Redis is unreachable
+  the gateway keeps serving and counts in-process instead, so the limit then holds per replica.
+  `blockDuration` other than `ttl` is not supported. Redis carries **only** these counters — the
+  "caches nothing" rule above still stands.
+
+  > **Why Redis, through `@backend/cache`, with an in-process fallback:** [docs/adr/0024-gateway-rate-limit-counters-in-redis.md](../../../docs/adr/0024-gateway-rate-limit-counters-in-redis.md)
 
 ## Config / commands
 
-`config.ts` is just `commonConfig()`; JWT verification has its own `common/infrastructure/configs/jwt.config.ts`, whose `JWT_ACCESS_PUBLIC_KEY_BASE64` is the only env this service owns — it verifies access tokens but cannot issue them. The three `*_GRPC_URL` come from `@backend/grpc`. No DB, no migrations, no event-bus vars — this service publishes and consumes no domain events. Full list: [docs/env.md](../../../docs/env.md).
+`config.ts` is just `commonConfig()`; JWT verification has its own `common/infrastructure/configs/jwt.config.ts`, whose `JWT_ACCESS_PUBLIC_KEY_BASE64` is the only env this service owns — it verifies access tokens but cannot issue them. The three `*_GRPC_URL` come from `@backend/grpc`, `REDIS_URL` and the optional `CACHE_*` from `@backend/cache`. No DB, no migrations, no event-bus vars — this service publishes and consumes no domain events. Full list: [docs/env.md](../../../docs/env.md).
 
 ```bash
 pnpm start:dev        # dotenv → nest start --watch service

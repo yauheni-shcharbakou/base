@@ -1,3 +1,5 @@
+import { CacheCounter } from '../types';
+
 /**
  * The adapter contract — the only thing that changes when the cache moves off Redis.
  *
@@ -17,4 +19,13 @@ export abstract class CacheStore {
   abstract delete(...keys: string[]): Promise<number>;
   /** @returns how many keys were removed. */
   abstract deleteByPrefix(prefix: string): Promise<number>;
+  /**
+   * Adds one to a counter, atomically — concurrent callers on any number of processes each see a
+   * distinct value. A **fixed window**: the first increment starts the `windowMs` expiry, later
+   * ones do not extend it.
+   *
+   * The counter is stored as a bare integer, not through `CacheSerializer`, so only `increment`
+   * reads it back; `get` on the same key answers a miss.
+   */
+  abstract increment(key: string, windowMs: number): Promise<CacheCounter>;
 }

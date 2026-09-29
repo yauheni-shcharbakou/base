@@ -26,7 +26,7 @@ read off the workspace manifests, not maintained here:
 
 | Service               | Packages                                                                                        |
 | --------------------- | ----------------------------------------------------------------------------------------------- |
-| `backend.api-gateway` | `@backend/common`, `@backend/grpc`                                                              |
+| `backend.api-gateway` | `@backend/cache`, `@backend/common`, `@backend/grpc`                                            |
 | `backend.auth`        | `@backend/cache`, `@backend/common`, `@backend/event-bus-redis`, `@backend/grpc`, `@backend/pg` |
 | `backend.storage`     | `@backend/common`, `@backend/event-bus-redis`, `@backend/grpc`, `@backend/pg`                   |
 | `frontend.admin`      | —                                                                                               |

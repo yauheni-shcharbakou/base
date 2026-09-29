@@ -24,6 +24,7 @@
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
+    "@backend/cache": "workspace:*",
     "@backend/common": "workspace:*",
     "@backend/grpc": "workspace:*",
     "@backend/proto": "workspace:*",

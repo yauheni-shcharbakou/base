@@ -21,6 +21,7 @@ const buildOperationCounters = (): Record<CacheOperation, number> => ({
   has: 0,
   delete: 0,
   deleteByPrefix: 0,
+  increment: 0,
 });
 
 /**

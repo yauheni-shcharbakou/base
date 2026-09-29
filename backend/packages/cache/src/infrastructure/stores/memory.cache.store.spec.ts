@@ -82,4 +82,34 @@ describe('MemoryCacheStore', () => {
       await expect(store.get('cache:auth:session:1')).resolves.toBe(3);
     });
   });
+
+  describe('increment', () => {
+    it('starts at 1 and counts up', async () => {
+      const store = new MemoryCacheStore();
+
+      await expect(store.increment('hits', 60_000)).resolves.toEqual({ value: 1, ttlMs: 60_000 });
+      await expect(store.increment('hits', 60_000)).resolves.toMatchObject({ value: 2 });
+    });
+
+    it('keeps the window the first hit started, then starts over', async () => {
+      jest.useFakeTimers();
+
+      const store = new MemoryCacheStore();
+
+      await store.increment('hits', 60_000);
+      jest.advanceTimersByTime(40_000);
+      await expect(store.increment('hits', 60_000)).resolves.toEqual({ value: 2, ttlMs: 20_000 });
+
+      jest.advanceTimersByTime(20_000);
+      await expect(store.increment('hits', 60_000)).resolves.toEqual({ value: 1, ttlMs: 60_000 });
+    });
+
+    it('refuses a key holding a value, as Redis does', async () => {
+      const store = new MemoryCacheStore();
+
+      await store.set('user:1', { id: '1' });
+
+      await expect(store.increment('user:1', 60_000)).rejects.toThrow('does not hold a counter');
+    });
+  });
 });

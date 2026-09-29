@@ -1,6 +1,6 @@
 import { resolveErrorMessage } from '@backend/common';
 import { Logger } from '@nestjs/common';
-import { CacheOperation, CacheServiceOptions, CacheStore } from '../../domain';
+import { CacheCounter, CacheOperation, CacheServiceOptions, CacheStore } from '../../domain';
 import { CACHE_ERROR_FALLBACK, CACHE_KEY_SEPARATOR } from '../constants';
 import { CacheMetrics } from '../metrics';
 import { buildCacheKey } from '../utils';
@@ -14,9 +14,10 @@ import { buildCacheKey } from '../utils';
  * - **key layout** — `<CACHE_KEY_PREFIX>:<namespace>:<key>`, so two services sharing one Redis
  *   cannot collide and a namespace can be dropped in one scan;
  * - **fail-soft** — a store error is logged, counted on `CacheMetrics` and turned into a miss
- *   (`get` → `null`, `set` → `false`, `delete*` → `0`, `wrap` → the factory's own value). A cache
- *   is an optimisation; losing Redis must not fail a read that Postgres can still answer. Errors
- *   thrown by the `wrap` factory are *not* swallowed — those are the caller's real work;
+ *   (`get` → `null`, `set` → `false`, `delete*` → `0`, `increment` → `null`, `wrap` → the
+ *   factory's own value). A cache is an optimisation; losing Redis must not fail a read that
+ *   Postgres can still answer. Errors thrown by the `wrap` factory are *not* swallowed — those
+ *   are the caller's real work;
  * - **single-flight `wrap`** — N concurrent misses of the same key run the factory once.
  */
 export class CacheService {
@@ -128,6 +129,24 @@ export class CacheService {
       this.warn('deleteByPrefix', pattern, error);
 
       return 0;
+    }
+  }
+
+  /**
+   * Adds one to a fixed-window counter (see `CacheStore.increment`). `null` when the store
+   * failed — the caller decides what an uncounted hit means; for a rate limit that is not
+   * "allowed".
+   */
+  async increment(key: string, windowMs: number): Promise<CacheCounter | null> {
+    try {
+      const counter = await this.store.increment(this.buildKey(key), windowMs);
+      this.metrics.recordWrite();
+
+      return counter;
+    } catch (error) {
+      this.warn('increment', key, error);
+
+      return null;
     }
   }
 

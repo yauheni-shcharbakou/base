@@ -13,11 +13,11 @@ running.
 **Status: live in `backend.auth`**, which caches the identity read behind the gateway's per-request
 access check (`cache:auth:user:<id>`) — see that service's `CLAUDE.md` for the wiring and
 [ADR-0011](../../../docs/adr/0011-identity-cached-in-auth.md) for why the cache sits there and not
-in the gateway. No other service wires it.
+in the gateway. `backend.api-gateway` wires it for its rate-limit counters (`increment`, below), not
+to cache data — [ADR-0024](../../../docs/adr/0024-gateway-rate-limit-counters-in-redis.md).
 
-Not to be confused with `MemoryCache` in `@backend/common` — a `setTimeout`-per-key Map used inside
-one process by `api-gateway`. This package supersedes that pattern for anything that has to survive
-a request or be shared between replicas.
+Not to be confused with `MemoryCache` in `@backend/common` — a `setTimeout`-per-key Map that no
+service imports any more. Anything that needs a cache uses this package instead.
 
 > **Why one package instead of a package per adapter (the shape the event bus uses), and why its
 > own Redis connection:** [docs/adr/0009-cache-one-package-driver-switch.md](../../../docs/adr/0009-cache-one-package-driver-switch.md)
@@ -27,12 +27,12 @@ a request or be shared between replicas.
 ```
 src/
   domain/
-    services/cache.store.ts      # the port: get / set / has / delete / deleteByPrefix
-    types/cache.types.ts         # CacheDriver, CacheServiceOptions
+    services/cache.store.ts      # the port: get / set / has / delete / deleteByPrefix / increment
+    types/cache.types.ts         # CacheDriver, CacheServiceOptions, CacheCounter
   infrastructure/
     configs/                     # cacheConfig() + getCacheDriver()
     connections/                 # CacheConnectionService — the package's own ioredis socket
-    constants/                   # DI tokens, CACHE_ERROR_FALLBACK, key separator, SCAN count
+    constants/                   # DI tokens, CACHE_ERROR_FALLBACK, key separator, SCAN count, increment script
     metrics/                     # CacheMetrics — counters for what fail-soft swallows
     serializers/                 # CacheSerializer — the wire format both adapters share
     stores/                      # RedisCacheStore, MemoryCacheStore
@@ -68,6 +68,13 @@ the service is the single place that decides what a failure means.
   `''` survive the round-trip — a bare parse cannot tell a stored `null` from a missing key. Both
   adapters use it, which is what keeps the memory driver from handing back live references while
   Redis hands back copies. A corrupt entry is logged and read as a miss.
+- **`increment(key, windowMs)` is the one atomic operation** — a counter shared between replicas
+  cannot be a `get` then a `set`, which loses hits to the race. It is a **fixed window**: the first
+  hit starts the expiry, later ones do not extend it. Redis runs it as one `EVAL` of
+  `CACHE_INCREMENT_SCRIPT` (INCR, then PEXPIRE on the first hit or on a key without a TTL); the
+  memory store mirrors it, refusing a key that holds a value as `INCR` does. A counter is a **bare
+  integer**, not a `CacheSerializer` envelope, so only `increment` reads it — `get` on it logs a
+  corrupt entry and answers a miss.
 
 ## `CacheService`
 
@@ -78,7 +85,8 @@ Owns the three things adapters should not repeat:
   reaches the keyspace. `scope('user')` returns a child bound to a deeper namespace.
 - **Fail-soft** — a store error is logged (`resolveErrorMessage` + `CACHE_ERROR_FALLBACK`), counted
   on `CacheMetrics`, and becomes the empty result: `get` → `null`, `set` → `false`, `delete*` → `0`,
-  `wrap` → the factory's own value. An error thrown by the `wrap` factory is **not** swallowed.
+  `increment` → `null` (the caller decides what an uncounted hit means), `wrap` → the factory's own
+  value. An error thrown by the `wrap` factory is **not** swallowed.
 - **Single-flight `wrap`** — concurrent misses of one key run the factory once. The in-flight map is
   shared with every `scope()` child, so two scopes of the same key still dedupe.
 
@@ -190,7 +198,8 @@ pnpm test:e2e
 
 `src/cache.module.e2e-spec.ts` boots the real module and covers what a stub cannot prove: that a TTL
 actually expires, that `deleteByPrefix` clears more keys than one SCAN cursor returns (1200 of
-them), that falsy values come back as values, and that shutdown closes the socket from both the
+them), that falsy values come back as values, that 200 concurrent `increment`s of one key lose none and
+its window really expires, and that shutdown closes the socket from both the
 `ready` and the still-connecting state. Its `beforeAll` calls `waitUntilReady` first: `init()` does
 not wait for the socket, and with no offline queue an early command answers as a miss rather than
 being held — a suite asserting real server behaviour has to start from a connected client.

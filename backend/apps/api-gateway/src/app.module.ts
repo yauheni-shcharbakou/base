@@ -1,3 +1,4 @@
+import { CacheModule } from '@backend/cache';
 import { GrpcModule } from '@backend/grpc';
 import { GrpcAuthTransport } from '@backend/proto';
 import { CommonModule } from '@common/common.module';
@@ -20,6 +21,8 @@ import { config } from './config';
       isGlobal: true,
       load: [config],
     }),
+    // Holds only the rate-limit counters — this service caches no data (see its CLAUDE.md).
+    CacheModule.forRoot({ namespace: 'api-gateway' }),
     GrpcModule.forRoot({
       host: 'apiGateway',
       appClientStrategy: {

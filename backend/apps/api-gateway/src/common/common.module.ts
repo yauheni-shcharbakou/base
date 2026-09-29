@@ -8,13 +8,14 @@ import { AccessService } from './domain/services/access.service';
 import { TokenService } from './domain/services/token.service';
 import { jwtConfig } from './infrastructure/configs/jwt.config';
 import { JwtTokenServiceImpl } from './infrastructure/services/jwt.token.service.impl';
-import { GRPC_THROTTLER_OPTIONS } from './interface/grpc/constants/grpc.throttle.constants';
+import { GRPC_THROTTLER_MODULE_OPTIONS } from './interface/grpc/constants/grpc.throttle.constants';
 
 @Global()
 @Module({
   imports: [
-    // Enforced by `GrpcThrottlerGuard`, which the gRPC controller decorators apply.
-    ThrottlerModule.forRoot(GRPC_THROTTLER_OPTIONS),
+    // Enforced by `GrpcThrottlerGuard`, which the gRPC controller decorators apply; counted in
+    // Redis through the global `CacheModule` the app module registers.
+    ThrottlerModule.forRootAsync(GRPC_THROTTLER_MODULE_OPTIONS),
     ConfigModule.forFeature(jwtConfig),
     JwtModule,
     GrpcModule.forFeature({

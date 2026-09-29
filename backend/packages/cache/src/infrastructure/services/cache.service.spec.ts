@@ -16,6 +16,7 @@ const buildBrokenStore = (): CacheStore => {
     has: fail,
     delete: fail,
     deleteByPrefix: fail,
+    increment: fail,
   } as unknown as CacheStore;
 };
 
@@ -164,6 +165,20 @@ describe('CacheService', () => {
     });
   });
 
+  describe('increment', () => {
+    it('counts under the namespaced key and records a write', async () => {
+      const store = new MemoryCacheStore();
+      const increment = jest.spyOn(store, 'increment');
+      const service = buildService(store);
+
+      await service.increment('hits:1', 60_000);
+      await expect(service.increment('hits:1', 60_000)).resolves.toMatchObject({ value: 2 });
+
+      expect(increment).toHaveBeenCalledWith('cache:auth:hits:1', 60_000);
+      expect(service.getMetrics().snapshot()).toMatchObject({ writes: 2 });
+    });
+  });
+
   // A cache is an optimisation: losing Redis must not fail a read Postgres can still answer.
   describe('fail-soft', () => {
     it('reads a broken store as a miss', async () => {
@@ -181,6 +196,14 @@ describe('CacheService', () => {
       await expect(service.has('user:1')).resolves.toBe(false);
       await expect(service.delete('user:1')).resolves.toBe(0);
       await expect(service.deleteByPrefix()).resolves.toBe(0);
+    });
+
+    // A rate limit must see this, not a zero: "uncounted" is not "allowed".
+    it('answers a failed increment with null and counts the error', async () => {
+      const service = buildService(buildBrokenStore());
+
+      await expect(service.increment('hits:1', 60_000)).resolves.toBeNull();
+      expect(service.getMetrics().snapshot().errorsByOperation).toMatchObject({ increment: 1 });
     });
 
     it('still answers wrap from the factory', async () => {

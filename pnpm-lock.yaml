@@ -198,6 +198,9 @@ importers:
 
   backend/apps/api-gateway:
     dependencies:
+      '@backend/cache':
+        specifier: workspace:*
+        version: link:../../packages/cache
       '@backend/common':
         specifier: workspace:*
         version: link:../../packages/common

@@ -1,4 +1,5 @@
 import type Redis from 'ioredis';
+import { CACHE_INCREMENT_SCRIPT } from '../constants';
 import { RedisCacheStore } from './redis.cache.store';
 
 type RedisStub = {
@@ -8,6 +9,7 @@ type RedisStub = {
   unlink: jest.Mock;
   scan: jest.Mock;
   keys: jest.Mock;
+  eval: jest.Mock;
 };
 
 const buildStub = (): RedisStub => ({
@@ -17,6 +19,7 @@ const buildStub = (): RedisStub => ({
   unlink: jest.fn((...keys: string[]) => Promise.resolve(keys.length)),
   scan: jest.fn(() => Promise.resolve(['0', []])),
   keys: jest.fn(() => Promise.resolve([])),
+  eval: jest.fn(() => Promise.resolve([1, 60_000])),
 });
 
 const buildStore = (client: RedisStub): RedisCacheStore =>
@@ -143,6 +146,34 @@ describe('RedisCacheStore', () => {
       await buildStore(client).deleteByPrefix('cache:auth:');
 
       expect(client.keys).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('increment', () => {
+    // Atomic only because it is one script: an INCR and a PEXPIRE sent apart race.
+    it('runs the counter script in one call, with the window in milliseconds', async () => {
+      const client = buildStub();
+
+      await buildStore(client).increment('cache:gw:hits:1', 60_000);
+
+      expect(client.eval).toHaveBeenCalledTimes(1);
+      expect(client.eval).toHaveBeenCalledWith(
+        CACHE_INCREMENT_SCRIPT,
+        1,
+        'cache:gw:hits:1',
+        60_000,
+      );
+    });
+
+    it("reads the script's reply as the value and the time left", async () => {
+      const client = buildStub();
+
+      client.eval.mockResolvedValueOnce([7, 42_000]);
+
+      await expect(buildStore(client).increment('cache:gw:hits:1', 60_000)).resolves.toEqual({
+        value: 7,
+        ttlMs: 42_000,
+      });
     });
   });
 });

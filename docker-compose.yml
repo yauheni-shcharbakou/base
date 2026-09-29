@@ -213,12 +213,14 @@ services:
       AUTH_GRPC_URL: backend.auth:8001
       STORAGE_GRPC_URL: backend.storage:8002
       JWT_ACCESS_PUBLIC_KEY_BASE64: ${JWT_ACCESS_PUBLIC_KEY_BASE64:-}
+      REDIS_URL: redis://redis:6379
     networks:
       - private_network
       - public_network
     depends_on:
       - backend.auth
       - backend.storage
+      - redis
     profiles:
       - all
 

@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
-import { CacheStore } from '../../domain';
-import { CACHE_SCAN_COUNT } from '../constants';
+import { CacheCounter, CacheStore } from '../../domain';
+import { CACHE_INCREMENT_SCRIPT, CACHE_SCAN_COUNT } from '../constants';
 import { CacheSerializer } from '../serializers';
 
 /**
@@ -75,5 +75,14 @@ export class RedisCacheStore extends CacheStore {
     } while (cursor !== '0');
 
     return deleted;
+  }
+
+  async increment(key: string, windowMs: number): Promise<CacheCounter> {
+    const [value, ttlMs] = (await this.client.eval(CACHE_INCREMENT_SCRIPT, 1, key, windowMs)) as [
+      number,
+      number,
+    ];
+
+    return { value, ttlMs };
   }
 }

@@ -1,4 +1,6 @@
-import { ThrottlerModuleOptions, ThrottlerOptions } from '@nestjs/throttler';
+import { CacheService } from '@backend/cache';
+import { CacheThrottlerStorage } from '@common/infrastructure/storages/cache.throttler.storage';
+import { ThrottlerAsyncOptions, ThrottlerModuleOptions, ThrottlerOptions } from '@nestjs/throttler';
 
 /**
  * The end client's address, set by the admin's Next server on the calls it makes without a
@@ -24,4 +26,13 @@ export const PUBLIC_THROTTLE = {
 export const GRPC_THROTTLER_OPTIONS: ThrottlerModuleOptions = {
   throttlers: [DEFAULT_THROTTLE],
   errorMessage: 'Too many requests',
+};
+
+/** The module registration: the options above, counted in Redis under `<prefix>:<namespace>:throttle`. */
+export const GRPC_THROTTLER_MODULE_OPTIONS: ThrottlerAsyncOptions = {
+  inject: [CacheService],
+  useFactory: (cache: CacheService): ThrottlerModuleOptions => ({
+    ...GRPC_THROTTLER_OPTIONS,
+    storage: new CacheThrottlerStorage(cache.scope('throttle')),
+  }),
 };
