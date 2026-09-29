@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "turbo",
+        "run",
+        "dev",
+        "--filter=backend.api-gateway",
+        "--filter=backend.auth"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "storage",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "PORT=3200",
+        "pnpm",
+        "dev:backend.storage"
+      ],
+      "port": 3200
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "PORT=3100",
+        "DEFAULT_EMAIL=opus@gmail.com",
+        "DEFAULT_PASSWORD=string123",
+        "pnpm",
+        "--filter",
+        "frontend.admin",
+        "dev"
+      ],
+      "port": 3100
+    }
+  ]
+}
