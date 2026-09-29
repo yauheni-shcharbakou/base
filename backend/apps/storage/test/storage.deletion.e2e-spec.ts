@@ -742,7 +742,8 @@ describe('storage deletion against Postgres', () => {
     async () => {
       const folder = await createFolder('a', root);
       const nested = await createFolder('b', folder);
-      await placeImage(folder, 'dev/image');
+      const image = await placeImage(folder, 'dev/image');
+      (await imageRepository.setPreview(image.id, 'dev/image.preview.webp')).unwrap();
       await placeVideo(folder, 'video-guid');
       await placeFile(nested, 'dev/nested');
       const kept = await placeFile(root, 'dev/kept');
@@ -765,6 +766,7 @@ describe('storage deletion against Postgres', () => {
 
       assert.deepEqual(purgeKeys(purged), [
         `${FilePurgeType.FILE}:dev/image`,
+        `${FilePurgeType.FILE}:dev/image.preview.webp`,
         `${FilePurgeType.FILE}:dev/nested`,
         `${FilePurgeType.VIDEO}:video-guid`,
       ]);
@@ -777,7 +779,8 @@ describe('storage deletion against Postgres', () => {
     'removes a deleted user’s tree and every media they own, and leaves other users alone',
     async () => {
       const folder = await createFolder('a', root);
-      await placeImage(folder, 'dev/image');
+      const image = await placeImage(folder, 'dev/image');
+      (await imageRepository.setPreview(image.id, 'dev/image.preview.webp')).unwrap();
       await placeVideo(root, 'video-guid');
       await placeFile(folder, 'dev/placed');
       await fileRepository.saveAndPlaceOne({
@@ -840,6 +843,7 @@ describe('storage deletion against Postgres', () => {
 
       assert.deepEqual(purgeKeys(purged), [
         `${FilePurgeType.FILE}:dev/image`,
+        `${FilePurgeType.FILE}:dev/image.preview.webp`,
         `${FilePurgeType.FILE}:dev/placed`,
         `${FilePurgeType.FILE}:dev/unplaced`,
         `${FilePurgeType.FILE}:dev/unplaced-image`,

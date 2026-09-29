@@ -45,8 +45,9 @@ Rejected alternatives:
   oneofs — and adds `optional string previewUrl = 17`, so the change is wire-compatible. A
   compile-time alias in the use case fails the build if the two messages drift apart.
 - **`StorageObjectGetFolderContentUseCase` signs in memory,** and only READY media:
-  - an IMAGE through `StorageFileService.getFileSignedUrl(file.providerId)` — the image itself,
-    as uploaded.
+  - an IMAGE through `StorageFileService.getFileSignedUrl(image.previewProviderId)` — a small
+    webp made after upload, never the original; an image without one gets no URL
+    ([ADR-0027](0027-image-preview-made-on-upload.md)).
   - a VIDEO through `StorageVideoService.getThumbnailUrl(video.providerId)` — `/{guid}/thumbnail.jpg`
     on the Stream pull zone, with no call to the provider.
 
@@ -74,8 +75,8 @@ Rejected alternatives:
   gets another name, which this service never does.
 - **Only IMAGE and VIDEO leaves get a preview.** A plain FILE whose type is an image does not;
   extending that is one predicate.
-- **An image preview is the original.** The storage pull zone runs no Bunny Optimizer, so a
+- **An image preview is made, not asked for.** The storage pull zone runs no Bunny Optimizer, so a
   `width` on the URL resizes nothing, and the admin's `<Image>` runs unoptimized rather than pull
-  every original through Next's `/_next/image`. A grid of large photos downloads them whole; a
-  smaller rendition would have to be made at upload time and stored beside the original.
+  every original through Next's `/_next/image`. The smaller rendition is made at upload time and
+  stored beside the original ([ADR-0027](0027-image-preview-made-on-upload.md)).
 - **The web audience gets previews too,** for the caller's own tree only.

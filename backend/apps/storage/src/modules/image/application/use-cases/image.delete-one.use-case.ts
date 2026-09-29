@@ -1,6 +1,8 @@
-import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
-import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
+import {
+  FilePurgeService,
+  toFileEvents,
+} from '@modules/file/application/services/file.purge.service';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
@@ -33,7 +35,7 @@ export class ImageDeleteOneUseCase {
     const providerId = image.value.file.providerId;
 
     if (providerId) {
-      await this.filePurgeService.purge([{ type: FilePurgeType.FILE, providerId }]);
+      await this.filePurgeService.purge(toFileEvents(providerId, image.value.previewProviderId));
     }
 
     return image;

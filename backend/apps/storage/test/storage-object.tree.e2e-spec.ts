@@ -927,24 +927,83 @@ describe('storage-object tree against Postgres', () => {
       assert.equal(items.get('clip.mp4')?.video?.title, 'video');
     });
 
-    // What the page populates is all the signing needs: the image's own file key, the video's guid.
+    // What the page populates is all the signing needs: the image's preview key, the video's guid.
+    // An image without a preview is never signed by its original.
     withDb('signs a preview for each READY image and video, and for nothing else', async () => {
       await createFolder('sub', root);
       await placeFile('doc.bin');
-      await placeImage('photo.png');
+      const photo = await placeImage('photo.png');
+      await placeImage('bare.png');
       await placeVideo('clip.mp4');
+      (await imageRepository.setPreview(photo.id, 'photo.preview.webp')).unwrap();
 
       const items = new Map((await content()).unwrap().items.map((item) => [item.name, item]));
-      const photo = items.get('photo.png');
       const clip = items.get('clip.mp4');
 
-      assert.equal(photo?.previewUrl, `https://storage.test/${photo?.file?.providerId}`);
+      assert.equal(items.get('photo.png')?.previewUrl, 'https://storage.test/photo.preview.webp');
+      assert.equal(items.get('bare.png')?.previewUrl, undefined);
       assert.equal(
         clip?.previewUrl,
         `https://stream.test/${clip?.video?.providerId}/thumbnail.jpg`,
       );
       assert.equal(items.get('doc.bin')?.previewUrl, undefined);
       assert.equal(items.get('sub')?.previewUrl, undefined);
+    });
+
+    describe('image preview bookkeeping', () => {
+      const withoutPreview = async () =>
+        (await read(() => imageRepository.getManyWithoutPreview(new Date(Date.now() + 60_000), 10)))
+          .map((image) => image.id)
+          .sort();
+
+      withDb(
+        'sweeps READY images with neither a preview nor a failure, with their file',
+        async () => {
+          const done = await placeImage('done.png');
+          const failed = await placeImage('failed.png');
+          const waiting = await placeImage('waiting.png');
+          const pending = await imageRepository.saveAndPlaceOne({
+            image: { width: 2, height: 3, alt: '', userId: USER_ID },
+            file: { ...fileMeta('pending'), uploadStatus: NestStorage.FileUploadStatus.PENDING },
+          });
+
+          (await imageRepository.setPreview(done.id, 'done.preview.webp')).unwrap();
+          (await imageRepository.markPreviewFailed(failed.id)).unwrap();
+
+          assert.deepEqual(await withoutPreview(), [waiting.id]);
+          assert.notEqual(pending.unwrap().id, waiting.id);
+
+          const [swept] = await read(() =>
+            imageRepository.getManyWithoutPreview(new Date(Date.now() + 60_000), 10),
+          );
+          assert.equal(swept.file.uploadStatus, NestStorage.FileUploadStatus.READY);
+        },
+      );
+
+      withDb('leaves an image READY since the cutoff to the event handler', async () => {
+        await placeImage('fresh.png');
+
+        const swept = await read(() =>
+          imageRepository.getManyWithoutPreview(new Date(Date.now() - 60_000), 10),
+        );
+
+        assert.deepEqual(swept, []);
+      });
+
+      withDb('keeps the first key recorded, and records nothing on a deleted image', async () => {
+        const image = await placeImage('race.png');
+
+        assert.equal((await imageRepository.setPreview(image.id, 'first')).unwrap(), true);
+        assert.equal((await imageRepository.setPreview(image.id, 'second')).unwrap(), false);
+        assert.equal((await imageRepository.markPreviewFailed(image.id)).unwrap(), false);
+
+        const [stored] = await read(() => imageRepository.getMany({ ids: [image.id] }));
+        assert.equal(stored.previewProviderId, 'first');
+        assert.equal('previewFailedAt' in stored, false);
+
+        (await imageRepository.deleteWithFile(image.id)).unwrap();
+        assert.equal((await imageRepository.setPreview(image.id, 'late')).unwrap(), false);
+      });
     });
 
     // The folder with its path, the walk up, the page with its to-one media joins and its COUNT:

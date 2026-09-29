@@ -1,10 +1,10 @@
 import { FileDropService } from '@modules/file/application/services/file.drop.service';
-import { FileRepository, FileWithVideo } from '@modules/file/domain/repositories/file.repository';
+import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { FileDeleteByOwnerUseCase } from './file.delete-by-owner.use-case';
 
 const USER_ID = 'owner';
 
-const batch = (...ids: string[]) => ids.map((id) => ({ id })) as FileWithVideo[];
+const batch = (...ids: string[]) => ids.map((id) => ({ id })) as FileWithMedia[];
 
 describe('FileDeleteByOwnerUseCase', () => {
   let repository: { getManyByOwner: jest.Mock };

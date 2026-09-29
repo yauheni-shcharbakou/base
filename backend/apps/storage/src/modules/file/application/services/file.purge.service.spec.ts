@@ -30,6 +30,27 @@ describe('FilePurgeService', () => {
       ]);
     });
 
+    it("purges an image's preview beside its original", async () => {
+      await service.purgeFiles([
+        { id: 'f1', providerId: 'dev/a.gif', image: { previewProviderId: 'dev/a.preview.webp' } },
+      ]);
+
+      expect(eventBus.emitManyPurge).toHaveBeenCalledWith([
+        { type: FilePurgeType.FILE, providerId: 'dev/a.gif' },
+        { type: FilePurgeType.FILE, providerId: 'dev/a.preview.webp' },
+      ]);
+    });
+
+    it('purges a light original that is its own preview once', async () => {
+      await service.purgeFiles([
+        { id: 'f1', providerId: 'dev/a.png', image: { previewProviderId: 'dev/a.png' } },
+      ]);
+
+      expect(eventBus.emitManyPurge).toHaveBeenCalledWith([
+        { type: FilePurgeType.FILE, providerId: 'dev/a.png' },
+      ]);
+    });
+
     it('skips a row that never reached the provider, and emits nothing for none', async () => {
       await service.purgeFiles([{ id: 'f1' }, { id: 'f2', video: { providerId: '' } }]);
 

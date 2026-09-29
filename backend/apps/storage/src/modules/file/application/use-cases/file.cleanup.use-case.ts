@@ -1,7 +1,7 @@
 import { NestStorage } from '@backend/proto';
 import { Config } from '@/config';
 import { FileDropService } from '@modules/file/application/services/file.drop.service';
-import { FileRepository, FileWithVideo } from '@modules/file/domain/repositories/file.repository';
+import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import _ from 'lodash';
@@ -34,8 +34,8 @@ export class FileCleanupUseCase {
 
   // Uploads that never completed. Anything newer than the TTL may still be uploading to the
   // provider or waiting on its encode — a video only turns READY once Bunny's webhook says so.
-  private async getStaleUploads(): Promise<FileWithVideo[]> {
-    const files = await this.fileRepository.getMany<FileWithVideo>(
+  private async getStaleUploads(): Promise<FileWithMedia[]> {
+    const files = await this.fileRepository.getMany<FileWithMedia>(
       {
         uploadStatuses: [NestStorage.FileUploadStatus.PENDING, NestStorage.FileUploadStatus.FAILED],
         createdBefore: moment().subtract(this.ttlHours, 'hours').toDate(),
@@ -46,7 +46,7 @@ export class FileCleanupUseCase {
     return _.take(files, SWEEP_LIMIT);
   }
 
-  private async drop(reason: string, files: FileWithVideo[]): Promise<void> {
+  private async drop(reason: string, files: FileWithMedia[]): Promise<void> {
     if (!files.length) {
       return;
     }

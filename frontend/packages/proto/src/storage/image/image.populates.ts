@@ -17,6 +17,8 @@ export interface ImagePopulated {
   userId: string;
   fileId: string;
   file: File;
+  /** As on `Image`, same tag. */
+  previewProviderId?: string;
 }
 
 function createBaseImagePopulated(): ImagePopulated {
@@ -30,6 +32,7 @@ function createBaseImagePopulated(): ImagePopulated {
     userId: '',
     fileId: '',
     file: undefined,
+    previewProviderId: undefined,
   };
 }
 
@@ -61,6 +64,9 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     }
     if (message.file !== undefined) {
       File.encode(message.file, writer.uint32(82).fork()).join();
+    }
+    if (message.previewProviderId !== undefined) {
+      writer.uint32(90).string(message.previewProviderId);
     }
     return writer;
   },
@@ -144,6 +150,14 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
           message.file = File.decode(reader, reader.uint32());
           continue;
         }
+        case 11: {
+          if (tag !== 90) {
+            break;
+          }
+
+          message.previewProviderId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -164,6 +178,9 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
       fileId: isSet(object.fileId) ? globalThis.String(object.fileId) : '',
       file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
+      previewProviderId: isSet(object.previewProviderId)
+        ? globalThis.String(object.previewProviderId)
+        : undefined,
     };
   },
 
@@ -196,6 +213,9 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     if (message.file !== undefined) {
       obj.file = File.toJSON(message.file);
     }
+    if (message.previewProviderId !== undefined) {
+      obj.previewProviderId = message.previewProviderId;
+    }
     return obj;
   },
 
@@ -214,6 +234,7 @@ export const ImagePopulated: MessageFns<ImagePopulated> = {
     message.fileId = object.fileId ?? '';
     message.file =
       object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
+    message.previewProviderId = object.previewProviderId ?? undefined;
     return message;
   },
 };

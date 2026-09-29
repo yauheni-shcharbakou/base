@@ -36,9 +36,10 @@ message StorageObjectPopulated {
 }
 
 // An item of a folder listing: `StorageObjectPopulated` field for field (keep the two in step), plus
-// a preview. `previewUrl` is a signed, short-lived CDN URL — the image itself for a READY image, the
-// Stream thumbnail for a READY video — and is absent for anything else. It is bound to no client
-// address; Optimizer parameters such as `width` may be appended to it.
+// a preview. `previewUrl` is a signed, short-lived CDN URL — the image's small webp preview for a
+// READY image that has one, the Stream thumbnail for a READY video — and is absent for anything else,
+// an image still without a preview included: never the original. It is bound to no client address,
+// and nothing on the CDN resizes it.
 message StorageObjectFolderItem {
   string id = 1;
   google.protobuf.Timestamp createdAt = 2;

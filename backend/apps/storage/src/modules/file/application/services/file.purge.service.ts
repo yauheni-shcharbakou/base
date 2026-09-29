@@ -3,9 +3,12 @@ import { NestStorage } from '@backend/proto';
 import { Injectable, Logger } from '@nestjs/common';
 import _ from 'lodash';
 
-/** A deleted file row, with its video when it backed one — enough to know what it left behind. */
+/**
+ * A deleted file row, with the video or image it backed — enough to know what it left behind.
+ */
 export type FilePurgeTarget = Pick<NestStorage.File, 'id' | 'providerId'> & {
   video?: Pick<NestStorage.Video, 'providerId'>;
+  image?: Pick<NestStorage.Image, 'previewProviderId'>;
 };
 
 /**
@@ -44,13 +47,20 @@ export class FilePurgeService {
         return [{ type: FilePurgeType.VIDEO, providerId: file.video.providerId }];
       }
 
-      if (file.providerId) {
-        return [{ type: FilePurgeType.FILE, providerId: file.providerId }];
-      }
-
-      return [];
+      return file.providerId ? toFileEvents(file.providerId, file.image?.previewProviderId) : [];
     });
 
     await this.purge(events);
   }
+}
+
+/**
+ * The objects an image or plain file leaves in Bunny Storage: its own key, and an image's preview
+ * when that is a separate object — a light original is its own preview, deleted once.
+ */
+export function toFileEvents(providerId: string, previewProviderId?: string): FilePurgeEvent[] {
+  return _.uniq(_.compact([providerId, previewProviderId])).map((key) => ({
+    type: FilePurgeType.FILE,
+    providerId: key,
+  }));
 }

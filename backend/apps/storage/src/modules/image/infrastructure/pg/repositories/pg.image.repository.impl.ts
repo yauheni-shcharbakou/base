@@ -4,6 +4,7 @@ import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity'
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { buildLeafStorageObject } from '@common/infrastructure/pg/factories/pg.storage-object.factory';
+import { FilterQuery } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityRepository } from '@mikro-orm/postgresql';
 import {
@@ -130,6 +131,55 @@ export class PgImageRepositoryImpl
       return right(this.mapper.stringify(image));
     } catch (error) {
       return left(error as NotFoundException);
+    }
+  }
+
+  async getManyWithoutPreview(
+    readyBefore: Date,
+    limit: number,
+  ): Promise<NestStorage.ImagePopulated[]> {
+    try {
+      const images = await this.repository.find(
+        {
+          previewProviderId: null,
+          previewFailedAt: null,
+          file: {
+            uploadStatus: NestStorage.FileUploadStatus.READY,
+            updatedAt: { $lt: readyBefore },
+          },
+        } as FilterQuery<PgImageEntity>,
+        { populate: ['file'], orderBy: { id: 'asc' }, limit },
+      );
+
+      return this.mapper.stringifyMany(images) as NestStorage.ImagePopulated[];
+    } catch (error) {
+      throw this.toFailure('read previewless', error);
+    }
+  }
+
+  // Straight to the table, conditional on no key yet: the event handler and the sweep can race on
+  // one image, and the row may be deleted under either. Neither must overwrite what the other set.
+  async setPreview(id: string, previewProviderId: string): Promise<Either<Error, boolean>> {
+    return this.updateWithoutPreview(id, { previewProviderId });
+  }
+
+  async markPreviewFailed(id: string): Promise<Either<Error, boolean>> {
+    return this.updateWithoutPreview(id, { previewFailedAt: new Date() });
+  }
+
+  private async updateWithoutPreview(
+    id: string,
+    set: Partial<Pick<PgImageEntity, 'previewProviderId' | 'previewFailedAt'>>,
+  ): Promise<Either<Error, boolean>> {
+    try {
+      const affected = await this.repository.nativeUpdate(
+        { id, previewProviderId: null },
+        { ...set, updatedAt: new Date() },
+      );
+
+      return right(affected > 0);
+    } catch (error) {
+      return left(error as Error);
     }
   }
 }

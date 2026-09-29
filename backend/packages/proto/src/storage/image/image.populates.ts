@@ -15,6 +15,8 @@ export interface ImagePopulated {
   userId: string;
   fileId: string;
   file: File;
+  /** As on `Image`, same tag. */
+  previewProviderId?: string;
 }
 
 wrappers['.google.protobuf.Timestamp'] = {

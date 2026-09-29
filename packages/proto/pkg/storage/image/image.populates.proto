@@ -20,4 +20,7 @@ message ImagePopulated {
   reserved "uploadId";
 
   file.File file = 10;
+
+  // As on `Image`, same tag.
+  optional string previewProviderId = 11;
 }

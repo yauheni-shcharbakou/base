@@ -1,4 +1,4 @@
-import { PgEntity, PgSchema } from '@backend/pg';
+import { PgEntity, PgProp, PgSchema } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
@@ -43,4 +43,15 @@ export class PgImageEntity extends PgEntity implements NestStorage.Image {
 
   @Property()
   alt: string;
+
+  // Set once, by the image module's preview step: a small webp beside the original, or the original
+  // itself when it is already light (ADR-0027).
+  @Property({ nullable: true })
+  previewProviderId?: string;
+
+  // When the preview step gave up on an image a retry cannot help — undecodable bytes, a missing
+  // object. The sweep skips such a row; clearing the column by hand queues it again. Hidden: the
+  // proto `Image` has no such field.
+  @PgProp.Date({ nullable: true, hidden: true })
+  previewFailedAt?: Date;
 }

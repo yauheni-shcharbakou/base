@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -18,6 +19,7 @@ import { Either, left, right } from '@sweet-monads/either';
 import moment from 'moment';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
+import { Readable } from 'node:stream';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
 import { FILE_S3_CLIENT } from '../constants/client.tokens';
 import { signBunnyCdnUrl } from '../utils/bunny.cdn-token';
@@ -38,6 +40,12 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
     const extension = extname(data.originalName).replace(/^./g, '');
     const filePath = `${this.storageConfig.rootDir}/${data.userId}/${randomUUID()}.${extension}`;
     return right(filePath);
+  }
+
+  // Beside the original, under the same uuid, so a listing of the owner's directory shows the pair.
+  createPreviewKey(providerId: string): string {
+    const extension = extname(providerId);
+    return `${extension ? providerId.slice(0, -extension.length) : providerId}.preview.webp`;
   }
 
   async deleteFile(providerId: string): Promise<Either<InternalServerErrorException, boolean>> {
@@ -101,6 +109,47 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
 
       this.logger.error(`Bunny storage head failed for ${providerId}`, err?.stack);
       return left(new InternalServerErrorException("Can't read a file from bunny storage"));
+    }
+  }
+
+  async getObjectStream(
+    providerId: string,
+  ): Promise<Either<InternalServerErrorException, Readable | null>> {
+    try {
+      const object = await this.s3Client.send(
+        new GetObjectCommand({ Bucket: this.storageConfig.s3.bucket, Key: providerId }),
+      );
+
+      // In Node the SDK's body is an `IncomingMessage`, a `Readable` under a wider type.
+      return right((object.Body as Readable | undefined) ?? null);
+    } catch (err) {
+      if (err instanceof S3ServiceException && err.$metadata.httpStatusCode === 404) {
+        return right(null);
+      }
+
+      this.logger.error(`Bunny storage get failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't read a file from bunny storage"));
+    }
+  }
+
+  async putObject(
+    providerId: string,
+    body: Buffer,
+    contentType: string,
+  ): Promise<Either<InternalServerErrorException, true>> {
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.storageConfig.s3.bucket,
+          Key: providerId,
+          Body: body,
+          ContentType: contentType,
+        }),
+      );
+      return right(true);
+    } catch (err) {
+      this.logger.error(`Bunny storage put failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't write a file to bunny storage"));
     }
   }
 

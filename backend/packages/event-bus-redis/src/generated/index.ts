@@ -76,6 +76,9 @@ const RedisFileEventPattern = {
   PURGE: {
     pattern: 'storage.file.purge',
   },
+  READY: {
+    pattern: 'storage.file.ready',
+  },
 };
 
 export const RedisFileTransport = {
@@ -92,6 +95,11 @@ export const RedisFileTransport = {
         'onPurge',
         Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onPurge'),
       );
+      EventPattern('storage.file.ready')(
+        constructor.prototype['onReady'],
+        'onReady',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onReady'),
+      );
     };
     return applyDecorators(methodsDecorator);
   },
@@ -103,11 +111,22 @@ export interface RedisFileEventController {
     event: FilePurgeEvent,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
+  onReady(
+    event: NestStorage.File,
+    context?: RedisJobContext,
+  ): void | Promise<void> | Observable<void>;
 }
 
 export interface RedisFilePurgeEventHandler {
   onFilePurge(
     event: FilePurgeEvent,
+    context?: RedisJobContext,
+  ): void | Promise<void> | Observable<void>;
+}
+
+export interface RedisFileReadyEventHandler {
+  onFileReady(
+    event: NestStorage.File,
     context?: RedisJobContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -228,6 +247,14 @@ class RedisFileEventBusClientImpl extends RedisClientImpl implements FileEventBu
   emitManyPurge(events: FilePurgeEvent[]): Promise<any[]> {
     return this.client.emitMany('storage.file.purge', events);
   }
+
+  emitReady(event: NestStorage.File): Promise<any> {
+    return this.client.emit('storage.file.ready', event);
+  }
+
+  emitManyReady(events: NestStorage.File[]): Promise<any[]> {
+    return this.client.emitMany('storage.file.ready', events);
+  }
 }
 
 class RedisVideoEventBusClientImpl extends RedisClientImpl implements VideoEventBus {
@@ -286,6 +313,7 @@ export const REDIS_HOST_EVENTS: Record<string, readonly string[]> = {
   auth: ['auth.user.create', 'auth.user.delete'],
   storage: [
     'storage.file.purge',
+    'storage.file.ready',
     'storage.video.uploaded',
     'storage.video.upload.finish',
     'storage.video.upload.fail',

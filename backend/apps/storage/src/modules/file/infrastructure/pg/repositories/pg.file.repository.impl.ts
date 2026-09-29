@@ -9,7 +9,7 @@ import { EntityRepository } from '@mikro-orm/postgresql';
 import {
   FileRepository,
   FileSaveAndPlace,
-  FileWithVideo,
+  FileWithMedia,
 } from '@modules/file/domain/repositories/file.repository';
 import { StorageDatabaseEntity } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
@@ -94,15 +94,15 @@ export class PgFileRepositoryImpl
 
   // A filter on the relation rather than a `FileQuery` field: the proto query is the public
   // contract, and "placed in a deleted storage object" is a cleanup concern only.
-  async getManyInDeletedStorageObjects(limit: number): Promise<FileWithVideo[]> {
+  async getManyInDeletedStorageObjects(limit: number): Promise<FileWithMedia[]> {
     // `storageObject` is typed as the proto read model, which does not carry the soft-delete flag;
     // the entity behind the relation does, and that is what MikroORM resolves the filter against.
     const entities = await this.repository.find(
       { storageObject: { isDeleted: true } } as FilterQuery<PgFileEntity>,
-      { populate: ['video'], limit },
+      { populate: ['video', 'image'], limit },
     );
 
-    return this.mapper.stringifyMany(entities) as FileWithVideo[];
+    return this.mapper.stringifyMany(entities) as FileWithMedia[];
   }
 
   async getOwnerIds(): Promise<string[]> {
@@ -113,9 +113,12 @@ export class PgFileRepositoryImpl
     return rows.map((row) => row.user_id);
   }
 
-  async getManyByOwner(userId: string, limit: number): Promise<FileWithVideo[]> {
-    const entities = await this.repository.find({ userId }, { populate: ['video'], limit });
+  async getManyByOwner(userId: string, limit: number): Promise<FileWithMedia[]> {
+    const entities = await this.repository.find(
+      { userId },
+      { populate: ['video', 'image'], limit },
+    );
 
-    return this.mapper.stringifyMany(entities) as FileWithVideo[];
+    return this.mapper.stringifyMany(entities) as FileWithMedia[];
   }
 }

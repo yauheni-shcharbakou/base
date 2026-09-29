@@ -19,13 +19,13 @@ const { FOLDER, FILE, IMAGE, VIDEO } = NestStorage.StorageObjectType;
 const { READY } = NestStorage.FileUploadStatus;
 
 // A video's backing file has no key of its own: its bytes live in Stream, under the video's.
-const image = (uploadStatus = READY) =>
+const image = (uploadStatus = READY, previewProviderId = 'dev/user-1/photo.preview.webp') =>
   ({
     id: 'image-leaf',
     type: IMAGE,
     isFolder: false,
     file: { id: 'image-file', uploadStatus, providerId: 'dev/user-1/photo.png' },
-    image: { id: 'image' },
+    image: { id: 'image', previewProviderId },
   }) as NestStorage.StorageObjectPopulated;
 const video = (uploadStatus = READY) =>
   ({
@@ -190,11 +190,19 @@ describe('StorageObjectGetFolderContentUseCase', () => {
       return result.isRight() ? result.value.items : [];
     };
 
-    it('signs a READY image with the key of its own file', async () => {
+    it('signs a READY image by its preview key', async () => {
       const [item] = await listed(image());
 
-      expect(item.previewUrl).toBe('https://storage.test/dev/user-1/photo.png');
-      expect(fileService.getFileSignedUrl).toHaveBeenCalledWith('dev/user-1/photo.png');
+      expect(item.previewUrl).toBe('https://storage.test/dev/user-1/photo.preview.webp');
+      expect(fileService.getFileSignedUrl).toHaveBeenCalledWith('dev/user-1/photo.preview.webp');
+    });
+
+    // The original may be a 100 MB GIF: a grid shows nothing rather than that.
+    it('never signs the original of an image that has no preview yet', async () => {
+      const [item] = await listed(image(READY, null));
+
+      expect('previewUrl' in item).toBe(false);
+      expect(fileService.getFileSignedUrl).not.toHaveBeenCalled();
     });
 
     it('gives a READY video its Stream thumbnail', async () => {

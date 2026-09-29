@@ -92,6 +92,15 @@ const NatsFileEventPattern = {
       });
     },
   },
+  READY: {
+    pattern: 'storage-file-ready',
+    registerStream: (): void => {
+      globalStreamRegistry.append({
+        name: 'storage-file-stream',
+        subjects: ['storage-file-ready'],
+      });
+    },
+  },
 };
 
 export const NatsFileTransport = {
@@ -109,6 +118,12 @@ export const NatsFileTransport = {
         Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onPurge'),
       );
       NatsFileEventPattern.PURGE.registerStream();
+      EventPattern('storage-file-ready')(
+        constructor.prototype['onReady'],
+        'onReady',
+        Reflect.getOwnPropertyDescriptor(constructor.prototype, 'onReady'),
+      );
+      NatsFileEventPattern.READY.registerStream();
     };
     return applyDecorators(methodsDecorator);
   },
@@ -120,11 +135,22 @@ export interface NatsFileEventController {
     event: FilePurgeEvent,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
+  onReady(
+    event: NestStorage.File,
+    context?: NatsMessageContext,
+  ): void | Promise<void> | Observable<void>;
 }
 
 export interface NatsFilePurgeEventHandler {
   onFilePurge(
     event: FilePurgeEvent,
+    context?: NatsMessageContext,
+  ): void | Promise<void> | Observable<void>;
+}
+
+export interface NatsFileReadyEventHandler {
+  onFileReady(
+    event: NestStorage.File,
     context?: NatsMessageContext,
   ): void | Promise<void> | Observable<void>;
 }
@@ -266,6 +292,14 @@ class NatsFileEventBusClientImpl extends NatsClientImpl implements FileEventBus 
   emitManyPurge(events: FilePurgeEvent[]): Promise<any[]> {
     return this.client.emitMany('storage-file-purge', events);
   }
+
+  emitReady(event: NestStorage.File): Promise<any> {
+    return this.client.emit('storage-file-ready', event);
+  }
+
+  emitManyReady(events: NestStorage.File[]): Promise<any[]> {
+    return this.client.emitMany('storage-file-ready', events);
+  }
 }
 
 class NatsVideoEventBusClientImpl extends NatsClientImpl implements VideoEventBus {
@@ -331,7 +365,7 @@ export const NATS_HOST_STREAMS: Record<string, readonly NatsStreamData[]> = {
   storage: [
     {
       name: 'storage-file-stream',
-      subjects: ['storage-file-purge'],
+      subjects: ['storage-file-purge', 'storage-file-ready'],
     },
     {
       name: 'storage-video-stream',

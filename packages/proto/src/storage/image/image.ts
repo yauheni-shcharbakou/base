@@ -12,4 +12,10 @@ export interface Image {
   alt: string;
   userId: string;
   fileId: string;
+  /**
+   * The key of the object a grid shows for this image: a small webp made after upload, or the
+   * original when it is already light. Unset until that is done, and on an image it cannot be made
+   * for — a client then shows no preview rather than the original (ADR-0027).
+   */
+  previewProviderId?: string;
 }

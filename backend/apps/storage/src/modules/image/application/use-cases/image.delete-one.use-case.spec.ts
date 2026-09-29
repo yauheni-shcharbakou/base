@@ -45,6 +45,19 @@ describe('ImageDeleteOneUseCase', () => {
     );
   });
 
+  it('purges the preview beside the original', async () => {
+    repository.getOne.mockResolvedValue(
+      right({ ...image, previewProviderId: 'dev/a.preview.webp' }),
+    );
+
+    await useCase.execute(byId(image.id));
+
+    expect(purgeService.purge).toHaveBeenCalledWith([
+      { type: FilePurgeType.FILE, providerId: 'dev/a.png' },
+      { type: FilePurgeType.FILE, providerId: 'dev/a.preview.webp' },
+    ]);
+  });
+
   it('purges nothing when the rows stay', async () => {
     repository.deleteWithFile.mockResolvedValue(left(new Error('flush failed')));
 

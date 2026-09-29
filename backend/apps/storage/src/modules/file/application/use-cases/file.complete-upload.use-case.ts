@@ -1,4 +1,4 @@
-import { FilePurgeType } from '@backend/event-bus';
+import { FileEventBus, FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
@@ -21,6 +21,7 @@ export class FileCompleteUploadUseCase {
     private readonly fileRepository: FileRepository,
     private readonly storageFileService: StorageFileService,
     private readonly filePurgeService: FilePurgeService,
+    private readonly eventBus: FileEventBus,
   ) {}
 
   async execute({
@@ -76,6 +77,23 @@ export class FileCompleteUploadUseCase {
       { set: { uploadStatus: NestStorage.FileUploadStatus.READY } },
     );
 
-    return updated.isRight() ? updated : this.fileRepository.getById(id);
+    if (updated.isLeft()) {
+      return this.fileRepository.getById(id);
+    }
+
+    await this.emitReady(updated.value);
+
+    return updated;
+  }
+
+  // Only the call that made the file READY announces it. A lost emit leaves an image without a
+  // preview until the image module's sweep finds it, so it is logged, never failed: the upload
+  // itself did complete.
+  private async emitReady(file: NestStorage.File): Promise<void> {
+    try {
+      await this.eventBus.emitReady(file);
+    } catch (error) {
+      this.logger.error(`Failed to announce file ${file.id} as READY`, error?.stack);
+    }
   }
 }

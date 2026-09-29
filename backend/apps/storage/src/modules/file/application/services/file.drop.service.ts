@@ -1,5 +1,5 @@
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
-import { FileRepository, FileWithVideo } from '@modules/file/domain/repositories/file.repository';
+import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 
@@ -22,7 +22,7 @@ export class FileDropService {
    * `false` when none of the rows was left: whoever deleted them purged their objects. A failed
    * delete is thrown and deletes nothing — one flush — so nothing is purged either.
    */
-  async drop(files: FileWithVideo[]): Promise<boolean> {
+  async drop(files: FileWithMedia[]): Promise<boolean> {
     if (!files.length) {
       return false;
     }

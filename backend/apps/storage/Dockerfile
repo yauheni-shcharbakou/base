@@ -31,13 +31,14 @@ COPY --from=prepare /app/.prettierrc ./.prettierrc
 RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/app/.turbo,target=/app/.turbo \
     pnpm build
 RUN pnpm reset:modules
+# Optional dependencies stay: sharp's native binary is one (`@img/sharp-linuxmusl-x64` here), and
+# without it the image previews fail at the first `require('sharp')`.
 RUN --mount=type=cache,id=s/f6216b5c-c577-42f4-9eea-fcb6e4349f8c-/pnpm/store,target=/pnpm/store \
     pnpm install \
     --store-dir=/pnpm/store \
     --frozen-lockfile \
     --prod \
-    --offline \
-    --no-optional
+    --offline
 
 FROM base AS runner
 RUN addgroup --system --gid 1001 nodejs

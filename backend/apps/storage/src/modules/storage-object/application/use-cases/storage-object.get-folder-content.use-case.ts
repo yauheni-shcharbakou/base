@@ -110,15 +110,17 @@ export class StorageObjectGetFolderContentUseCase {
     return previewUrl?.isRight() ? { ...item, previewUrl: previewUrl.value } : item;
   }
 
-  // The image itself, or the video's thumbnail — only once its upload is READY, the status of an
-  // image or a video being its backing file's. A failed signature leaves the item without one.
+  // The image's preview object, or the video's thumbnail — only once its upload is READY, the
+  // status of an image or a video being its backing file's. Never an image's original: until its
+  // preview exists, or when none can be made, a grid shows no picture rather than download what may
+  // be a 100 MB GIF (ADR-0027). A failed signature leaves the item without one too.
   private signPreview(item: NestStorage.StorageObjectPopulated): Either<Error, string> | undefined {
     if (item.file?.uploadStatus !== NestStorage.FileUploadStatus.READY) {
       return;
     }
 
-    if (item.type === NestStorage.StorageObjectType.IMAGE && item.file.providerId) {
-      return this.storageFileService.getFileSignedUrl(item.file.providerId);
+    if (item.type === NestStorage.StorageObjectType.IMAGE && item.image?.previewProviderId) {
+      return this.storageFileService.getFileSignedUrl(item.image.previewProviderId);
     }
 
     if (item.type === NestStorage.StorageObjectType.VIDEO && item.video?.providerId) {

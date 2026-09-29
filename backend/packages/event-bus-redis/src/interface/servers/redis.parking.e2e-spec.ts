@@ -5,10 +5,10 @@ import { ConfigModule } from '@nestjs/config';
 import { Payload } from '@nestjs/microservices';
 import { Test } from '@nestjs/testing';
 import IORedis from 'ioredis';
-import { RedisFileEventController, RedisFileTransport } from '@/generated';
+import { RedisFilePurgeEventHandler, RedisFileTransport } from '@/generated';
 import { REDIS_MICROSERVICE_OPTIONS } from '@/infrastructure';
 import { RedisModule } from '@/redis.module';
-import { RedisController } from '../decorators';
+import { RedisController, RedisEvent } from '../decorators';
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 const EVENT_ID = 'storage.file.purge';
@@ -22,10 +22,12 @@ const describeWithServer = process.env.REDIS_E2E_SERVER === '1' ? describe : des
 
 const received: FilePurgeEvent[] = [];
 
+// One event through `@RedisEvent`, as the services subscribe: `ControllerMethods()` would bind
+// every event of the `file` service, and this class handles only `purge`.
 @RedisController({ consumer: CONSUMER_ID })
-@RedisFileTransport.ControllerMethods()
-class FileController implements RedisFileEventController {
-  onPurge(@Payload() event: FilePurgeEvent): void {
+class FileController implements RedisFilePurgeEventHandler {
+  @RedisEvent(RedisFileTransport.PURGE)
+  onFilePurge(@Payload() event: FilePurgeEvent): void {
     received.push(event);
   }
 }

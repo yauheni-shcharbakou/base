@@ -1,8 +1,8 @@
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
-import { FileRepository, FileWithVideo } from '@modules/file/domain/repositories/file.repository';
+import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { FileDropService } from './file.drop.service';
 
-const files = [{ id: 'f1', providerId: 'dev/a.png' }, { id: 'f2' }] as FileWithVideo[];
+const files = [{ id: 'f1', providerId: 'dev/a.png' }, { id: 'f2' }] as FileWithMedia[];
 
 describe('FileDropService', () => {
   let repository: { deleteMany: jest.Mock };

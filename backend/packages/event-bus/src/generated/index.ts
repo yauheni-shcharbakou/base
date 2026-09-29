@@ -18,6 +18,10 @@ export abstract class FileEventBus extends EventBus {
   abstract emitPurge(event: FilePurgeEvent): Promise<any>;
 
   abstract emitManyPurge(events: FilePurgeEvent[]): Promise<any[]>;
+
+  abstract emitReady(event: NestStorage.File): Promise<any>;
+
+  abstract emitManyReady(events: NestStorage.File[]): Promise<any[]>;
 }
 
 export abstract class VideoEventBus extends EventBus {
