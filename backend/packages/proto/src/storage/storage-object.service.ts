@@ -5,14 +5,18 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { IdField } from '../common/fields';
+import { IdField, UserIdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { Boolean } from '../common/types';
+import { Empty } from '../google/protobuf/empty';
 import { StorageObject } from './storage-object/storage-object';
 import {
   StorageObjectArray,
   StorageObjectCreate,
   StorageObjectCreateWeb,
+  StorageObjectFolderContent,
+  StorageObjectGetFolderContent,
+  StorageObjectGetFolderContentWeb,
   StorageObjectGetFolders,
   StorageObjectGetFoldersWeb,
   StorageObjectList,
@@ -31,6 +35,13 @@ export interface GrpcStorageObjectServiceClient {
   getList(request: GetList, metadata?: Metadata): Observable<StorageObjectList>;
 
   getFolders(request: StorageObjectGetFolders, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata?: Metadata,
+  ): Observable<StorageObjectFolderContent>;
+
+  getRootFolder(request: UserIdField, metadata?: Metadata): Observable<StorageObject>;
 
   isExists(request: StorageObjectQuery, metadata?: Metadata): Observable<Boolean>;
 
@@ -62,6 +73,19 @@ export interface GrpcStorageObjectServiceController {
     ...args: any[]
   ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    ...args: any[]
+  ):
+    | Promise<StorageObjectFolderContent>
+    | Observable<StorageObjectFolderContent>
+    | StorageObjectFolderContent;
+
+  getRootFolder(
+    request: UserIdField,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
   isExists(
     request: StorageObjectQuery,
     ...args: any[]
@@ -90,6 +114,8 @@ function StorageObjectServiceControllerMethods() {
       'getMany',
       'getList',
       'getFolders',
+      'getFolderContent',
+      'getRootFolder',
       'isExists',
       'createOne',
       'updateOne',
@@ -119,6 +145,13 @@ export interface GrpcStorageObjectAdminServiceClient {
   getList(request: GetList, metadata?: Metadata): Observable<StorageObjectList>;
 
   getFolders(request: StorageObjectGetFolders, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata?: Metadata,
+  ): Observable<StorageObjectFolderContent>;
+
+  getRootFolder(request: UserIdField, metadata?: Metadata): Observable<StorageObject>;
 
   isExists(request: StorageObjectQuery, metadata?: Metadata): Observable<Boolean>;
 
@@ -150,6 +183,19 @@ export interface GrpcStorageObjectAdminServiceController {
     ...args: any[]
   ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    ...args: any[]
+  ):
+    | Promise<StorageObjectFolderContent>
+    | Observable<StorageObjectFolderContent>
+    | StorageObjectFolderContent;
+
+  getRootFolder(
+    request: UserIdField,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
   isExists(
     request: StorageObjectQuery,
     ...args: any[]
@@ -178,6 +224,8 @@ function StorageObjectAdminServiceControllerMethods() {
       'getMany',
       'getList',
       'getFolders',
+      'getFolderContent',
+      'getRootFolder',
       'isExists',
       'createOne',
       'updateById',
@@ -209,6 +257,13 @@ export interface GrpcStorageObjectWebServiceClient {
     metadata?: Metadata,
   ): Observable<StorageObjectArray>;
 
+  getFolderContent(
+    request: StorageObjectGetFolderContentWeb,
+    metadata?: Metadata,
+  ): Observable<StorageObjectFolderContent>;
+
+  getRootFolder(request: Empty, metadata?: Metadata): Observable<StorageObject>;
+
   isExists(request: StorageObjectQueryWeb, metadata?: Metadata): Observable<Boolean>;
 
   createOne(request: StorageObjectCreateWeb, metadata?: Metadata): Observable<StorageObject>;
@@ -223,6 +278,19 @@ export interface GrpcStorageObjectWebServiceController {
     request: StorageObjectGetFoldersWeb,
     ...args: any[]
   ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  getFolderContent(
+    request: StorageObjectGetFolderContentWeb,
+    ...args: any[]
+  ):
+    | Promise<StorageObjectFolderContent>
+    | Observable<StorageObjectFolderContent>
+    | StorageObjectFolderContent;
+
+  getRootFolder(
+    request: Empty,
+    ...args: any[]
+  ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
 
   isExists(
     request: StorageObjectQueryWeb,
@@ -249,6 +317,8 @@ function StorageObjectWebServiceControllerMethods() {
   return function (constructor: Function) {
     const grpcMethods: string[] = [
       'getFolders',
+      'getFolderContent',
+      'getRootFolder',
       'isExists',
       'createOne',
       'updateById',

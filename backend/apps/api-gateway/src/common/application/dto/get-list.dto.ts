@@ -45,7 +45,7 @@ class SorterDto implements NestCommon.Sorter {
   order: NestCommon.Sort;
 }
 
-class PaginationDto implements NestCommon.Pagination {
+export class PaginationDto implements NestCommon.Pagination {
   @NumberField({ required: false })
   @IsPositive()
   page?: number;

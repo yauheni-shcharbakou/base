@@ -3,12 +3,14 @@ import {
   GrpcStorageObjectWebServiceController,
   GrpcStorageObjectWebTransport,
   NestCommon,
+  NestGoogle,
   NestStorage,
 } from '@backend/proto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
 import { DefaultGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { GrpcUserId } from '@common/interface/grpc/decorators/grpc.user-id.decorator';
 import { StorageObjectCreateWebDto } from '@modules/storage-object/application/dto/storage-object.create.dto';
+import { StorageObjectGetFolderContentWebDto } from '@modules/storage-object/application/dto/storage-object.get-folder-content.dto';
 import { StorageObjectGetFoldersWebDto } from '@modules/storage-object/application/dto/storage-object.get-folders.dto';
 import { StorageObjectQueryWebDto } from '@modules/storage-object/application/dto/storage-object.query.dto';
 import { StorageObjectUpdateByIdDto } from '@modules/storage-object/application/dto/storage-object.update.dto';
@@ -26,6 +28,21 @@ export class GrpcStorageObjectWebController implements GrpcStorageObjectWebServi
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.StorageObjectArray> {
     return this.storageObjectService.getFolders({ ...request, userId });
+  }
+
+  @ValidateGrpcPayload(StorageObjectGetFolderContentWebDto)
+  getFolderContent(
+    @Payload() request: NestStorage.StorageObjectGetFolderContentWeb,
+    @GrpcUserId() userId: string,
+  ): Promise<NestStorage.StorageObjectFolderContent> {
+    return this.storageObjectService.getFolderContent({ ...request, userId });
+  }
+
+  getRootFolder(
+    @Payload() _: NestGoogle.Empty,
+    @GrpcUserId() userId: string,
+  ): Promise<NestStorage.StorageObject> {
+    return this.storageObjectService.getRootFolder(userId);
   }
 
   @ValidateGrpcPayload(StorageObjectQueryWebDto)

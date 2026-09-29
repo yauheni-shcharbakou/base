@@ -1,12 +1,21 @@
 import './pg.e2e';
-import { NestStorage } from '@backend/proto';
+import { NestCommon, NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
-import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
+import {
+  MAX_FOLDER_DEPTH,
+  PgStorageObjectEntity,
+} from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
+import { PgFileRepositoryImpl } from '@modules/file/infrastructure/pg/repositories/pg.file.repository.impl';
+import { PgImageRepositoryImpl } from '@modules/image/infrastructure/pg/repositories/pg.image.repository.impl';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
+import { StorageObjectGetFolderContentUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folder-content.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
+import { PgVideoRepositoryImpl } from '@modules/video/infrastructure/pg/repositories/pg.video.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
@@ -33,6 +42,10 @@ describe('storage-object tree against Postgres', () => {
   let updateOne: StorageObjectUpdateOneUseCase;
   let createOne: StorageObjectCreateOneUseCase;
   let deleteOne: StorageObjectDeleteOneUseCase;
+  let getFolderContent: StorageObjectGetFolderContentUseCase;
+  let fileRepository: PgFileRepositoryImpl;
+  let imageRepository: PgImageRepositoryImpl;
+  let videoRepository: PgVideoRepositoryImpl;
 
   // Every statement the ORM sends; a spec resets it to measure what one call costs.
   let statements: string[] = [];
@@ -52,6 +65,10 @@ describe('storage-object tree against Postgres', () => {
     updateOne = new StorageObjectUpdateOneUseCase(repository, validation);
     createOne = new StorageObjectCreateOneUseCase(repository, validation);
     deleteOne = new StorageObjectDeleteOneUseCase(repository);
+    getFolderContent = new StorageObjectGetFolderContentUseCase(repository);
+    fileRepository = new PgFileRepositoryImpl(em.getRepository(PgFileEntity));
+    imageRepository = new PgImageRepositoryImpl(em.getRepository(PgImageEntity));
+    videoRepository = new PgVideoRepositoryImpl(em.getRepository(PgVideoEntity));
   });
 
   after(() => orm?.close());
@@ -673,6 +690,229 @@ describe('storage-object tree against Postgres', () => {
     });
   });
 
+  // A folder view: the folder, the folders above it and a page of what it holds, read through the
+  // use case so the scope, the order and the populates are the ones a client gets.
+  describe('folder content', () => {
+    const { CREATED_AT, NAME } = NestStorage.StorageObjectSortField;
+
+    let placed = 0;
+    const fileMeta = (providerId?: string) => ({
+      originalName: 'object.bin',
+      mimeType: 'application/octet-stream',
+      size: 1,
+      extension: 'bin',
+      uploadStatus: NestStorage.FileUploadStatus.READY,
+      providerId,
+    });
+    const placement = (name: string, parent: string) => ({ name, isPublic: false, parent });
+
+    const placeFile = async (name: string, parent = root) => {
+      const file = await fileRepository.saveAndPlaceOne({
+        file: { ...fileMeta(`file-${++placed}`), userId: USER_ID },
+        storageObject: placement(name, parent),
+      });
+
+      return file.unwrap();
+    };
+
+    const placeImage = async (name: string, parent = root) => {
+      const image = await imageRepository.saveAndPlaceOne({
+        image: { width: 2, height: 3, alt: '', userId: USER_ID },
+        file: fileMeta(`image-${++placed}`),
+        storageObject: placement(name, parent),
+      });
+
+      return image.unwrap();
+    };
+
+    // A video's Stream guid sits on the video row; its backing file row carries none.
+    const placeVideo = async (name: string, parent = root) => {
+      const video = await videoRepository.saveAndPlaceOne({
+        video: { title: 'video', providerId: `video-${++placed}`, userId: USER_ID },
+        file: fileMeta(),
+        storageObject: placement(name, parent),
+      });
+
+      return video.unwrap();
+    };
+
+    const createNamedLeaf = (name: string, parent = root) =>
+      createObject({ name, parent, isFolder: false });
+
+    const content = (request: Partial<NestStorage.StorageObjectGetFolderContent> = {}) =>
+      read(() =>
+        getFolderContent.execute({ parentId: root, userId: USER_ID, sorters: [], ...request }),
+      );
+
+    const names = async (request: Partial<NestStorage.StorageObjectGetFolderContent> = {}) =>
+      (await content(request)).unwrap().items.map((item) => item.name);
+
+    // Lower-case names only: the musl of the alpine image compares bytes and the glibc of
+    // production does not, so 'B' and 'a' would come in a different order in each.
+    withDb('lists folders first, then by name, whichever way the name sorts', async () => {
+      await createNamedLeaf('b.bin');
+      await createFolder('b', root);
+      await createNamedLeaf('a.bin');
+      await createFolder('a', root);
+
+      assert.deepEqual(await names(), ['a', 'b', 'a.bin', 'b.bin']);
+      assert.deepEqual(await names({ sorters: [{ field: NAME, order: NestCommon.Sort.desc }] }), [
+        'b',
+        'a',
+        'b.bin',
+        'a.bin',
+      ]);
+    });
+
+    withDb('pages the content and counts all of it', async () => {
+      for (const name of ['a', 'b', 'c', 'd', 'e']) {
+        await createNamedLeaf(`${name}.bin`);
+      }
+
+      const page = (await content({ pagination: { page: 2, limit: 2 } })).unwrap();
+
+      assert.deepEqual(
+        page.items.map((item) => item.name),
+        ['c.bin', 'd.bin'],
+      );
+      assert.equal(page.total, 5);
+      assert.deepEqual(await names({ pagination: { page: 3, limit: 2 } }), ['e.bin']);
+    });
+
+    // Rows created in one batch can share a timestamp; the id still puts them in one order, so an
+    // offset page never repeats or skips one.
+    withDb('breaks a tie on the id', async () => {
+      const ids: string[] = [];
+
+      for (const name of ['c', 'a', 'b']) {
+        ids.push(await createNamedLeaf(`${name}.bin`));
+      }
+
+      await em
+        .getConnection()
+        .execute(
+          `update "storage-objects" set created_at = '2026-01-01' where parent_id = ?`,
+          [root],
+          'run',
+        );
+
+      const byDate = await content({
+        sorters: [{ field: CREATED_AT, order: NestCommon.Sort.asc }],
+      });
+
+      assert.deepEqual(
+        byDate.unwrap().items.map((item) => item.id),
+        [...ids].sort(),
+      );
+    });
+
+    withDb('leaves out what is deleted', async () => {
+      const gone = await createFolder('gone', root);
+      await createNamedLeaf('inside.bin', gone);
+      const goneLeaf = await createNamedLeaf('gone.bin');
+      await createNamedLeaf('kept.bin');
+
+      await repository.markDeletedWithDescendants(gone);
+      await repository.markDeletedWithDescendants(goneLeaf);
+
+      const page = (await content()).unwrap();
+
+      assert.deepEqual(
+        page.items.map((item) => item.name),
+        ['kept.bin'],
+      );
+      assert.equal(page.total, 1);
+    });
+
+    withDb('narrows by type, by visibility and by a literal piece of the name', async () => {
+      await placeImage('photo.png');
+      await createNamedLeaf('a_b.bin');
+      await createNamedLeaf('axb.bin');
+      const shared = await createFolder('shared', root);
+      await repository.updateAndCascadePublic(shared, { set: { isPublic: true } });
+
+      assert.deepEqual(await names({ query: { types: [NestStorage.StorageObjectType.IMAGE] } }), [
+        'photo.png',
+      ]);
+      assert.deepEqual(await names({ query: { types: [], isPublic: true } }), ['shared']);
+      // `_` is a LIKE wildcard, matched here as itself; the case does not count.
+      assert.deepEqual(await names({ query: { types: [], search: 'A_B' } }), ['a_b.bin']);
+    });
+
+    withDb('answers with the folder’s path and the folders above it', async () => {
+      const a = await createFolder('a', root);
+      const b = await createFolder('b', a);
+      const c = await createFolder('c', b);
+
+      const nested = (await content({ parentId: c })).unwrap();
+
+      assert.equal(nested.folder.id, c);
+      assert.equal(nested.folder.folderPath, '/a/b/c/');
+      assert.deepEqual(nested.ancestors, [
+        { id: root, name: '' },
+        { id: a, name: 'a' },
+        { id: b, name: 'b' },
+      ]);
+
+      const top = (await content()).unwrap();
+
+      assert.equal(top.folder.folderPath, '/');
+      assert.deepEqual(top.ancestors, []);
+    });
+
+    // A user's tree is closed: whatever the reason, the folder is not there for this user.
+    withDb('refuses another user’s folder, a leaf and a deleted folder alike', async () => {
+      const foreign = await createObject({ name: '', userId: OTHER_USER_ID });
+      const leaf = await createLeaf(root);
+      const deleted = await createFolder('deleted', root);
+      await repository.markDeletedWithDescendants(deleted);
+
+      for (const parentId of [foreign, leaf, deleted]) {
+        const result = await content({ parentId });
+        assert.ok(result.isLeft() && result.value instanceof NotFoundException, parentId);
+      }
+    });
+
+    withDb('carries the media of every leaf', async () => {
+      await placeFile('doc.bin');
+      await placeImage('photo.png');
+      await placeVideo('clip.mp4');
+
+      const items = new Map((await content()).unwrap().items.map((item) => [item.name, item]));
+
+      assert.equal(items.get('doc.bin')?.file?.size, 1);
+      assert.equal(items.get('photo.png')?.image?.width, 2);
+      assert.equal(items.get('photo.png')?.file?.size, 1);
+      assert.equal(items.get('clip.mp4')?.video?.title, 'video');
+    });
+
+    // The folder with its path, the walk up, the page with its to-one media joins and its COUNT:
+    // what an N+1 would break is that this stays four however much the page holds.
+    withDb('reads a page in the same number of statements however much it holds', async () => {
+      const cost = () =>
+        countStatements(() =>
+          getFolderContent.execute({ parentId: root, userId: USER_ID, sorters: [] }),
+        );
+
+      let grown = 0;
+      const grow = async (count: number) => {
+        for (let n = 0; n < count; n++, grown++) {
+          await createFolder(`f${grown}`, root);
+          await placeImage(`i${grown}.png`);
+          await placeVideo(`v${grown}.mp4`);
+        }
+      };
+
+      await grow(1);
+      const small = await cost();
+
+      await grow(15);
+
+      assert.equal(small, 4);
+      assert.equal(await cost(), small);
+    });
+  });
+
   // Moves check for a cycle under the tree lock, but a row written outside the service can still
   // close one; no walk may run forever on it.
   withDb('ends every walk on a parent cycle instead of recursing forever', async () => {
@@ -685,11 +925,13 @@ describe('storage-object tree against Postgres', () => {
 
     const cyclePaths = await paths([a, b]);
     const children = await read(() => repository.getAllChildrenIds(a));
+    const ancestors = await read(() => repository.getAncestors(a));
     const cascaded = await repository.updateAndCascadePublic(a, { set: { isPublic: true } });
     const marked = await repository.markDeletedWithDescendants(a);
 
     assert.equal(typeof cyclePaths.get(a), 'string');
     assert.deepEqual([...children.unwrap()].sort(), [a, b].sort());
+    assert.equal(ancestors.unwrap().length, MAX_FOLDER_DEPTH);
     assert.equal(cascaded.isRight(), true);
     assert.deepEqual(await publicIds(), [a, b].sort());
     assert.equal(marked.unwrap(), 2);

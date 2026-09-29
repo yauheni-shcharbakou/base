@@ -5,6 +5,7 @@ package storage;
 import "common/fields.proto";
 import "common/messages.proto";
 import "common/types.proto";
+import "google/protobuf/empty.proto";
 import "storage/storage-object/storage-object.messages.proto";
 import "storage/storage-object/storage-object.populates.proto";
 import "storage/storage-object/storage-object.proto";
@@ -14,6 +15,8 @@ service StorageObjectService {
   rpc getMany (storage_object.StorageObjectQuery) returns (storage_object.StorageObjectArray) {}
   rpc getList (GetList) returns (storage_object.StorageObjectList) {}
   rpc getFolders (storage_object.StorageObjectGetFolders) returns (storage_object.StorageObjectArray) {}
+  rpc getFolderContent (storage_object.StorageObjectGetFolderContent) returns (storage_object.StorageObjectFolderContent) {}
+  rpc getRootFolder (UserIdField) returns (storage_object.StorageObject) {}
   rpc isExists (storage_object.StorageObjectQuery) returns (Boolean) {}
   rpc createOne (storage_object.StorageObjectCreate) returns (storage_object.StorageObject) {}
   rpc updateOne (storage_object.StorageObjectUpdateOne) returns (storage_object.StorageObject) {}
@@ -25,6 +28,8 @@ service StorageObjectAdminService {
   rpc getMany (storage_object.StorageObjectQuery) returns (storage_object.StorageObjectArray) {}
   rpc getList (GetList) returns (storage_object.StorageObjectList) {}
   rpc getFolders (storage_object.StorageObjectGetFolders) returns (storage_object.StorageObjectArray) {}
+  rpc getFolderContent (storage_object.StorageObjectGetFolderContent) returns (storage_object.StorageObjectFolderContent) {}
+  rpc getRootFolder (UserIdField) returns (storage_object.StorageObject) {}
   rpc isExists (storage_object.StorageObjectQuery) returns (Boolean) {}
   rpc createOne (storage_object.StorageObjectCreate) returns (storage_object.StorageObject) {}
   rpc updateById (storage_object.StorageObjectUpdateById) returns (storage_object.StorageObject) {}
@@ -33,6 +38,8 @@ service StorageObjectAdminService {
 
 service StorageObjectWebService {
   rpc getFolders (storage_object.StorageObjectGetFoldersWeb) returns (storage_object.StorageObjectArray) {}
+  rpc getFolderContent (storage_object.StorageObjectGetFolderContentWeb) returns (storage_object.StorageObjectFolderContent) {}
+  rpc getRootFolder (google.protobuf.Empty) returns (storage_object.StorageObject) {}
   rpc isExists (storage_object.StorageObjectQueryWeb) returns (Boolean) {}
   rpc createOne (storage_object.StorageObjectCreateWeb) returns (storage_object.StorageObject) {}
   rpc updateById (storage_object.StorageObjectUpdateById) returns (storage_object.StorageObject) {}

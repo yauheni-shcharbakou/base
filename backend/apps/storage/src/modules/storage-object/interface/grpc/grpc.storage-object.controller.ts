@@ -7,6 +7,7 @@ import {
 } from '@backend/proto';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
+import { StorageObjectGetFolderContentUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folder-content.use-case';
 import { StorageObjectGetFoldersUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folders.use-case';
 import { StorageObjectGetUseCase } from '@modules/storage-object/application/use-cases/storage-object.get.use-case';
 import { StorageObjectIsExistsUseCase } from '@modules/storage-object/application/use-cases/storage-object.is-exists.use-case';
@@ -28,6 +29,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
   constructor(
     private readonly getUseCase: StorageObjectGetUseCase,
     private readonly getFoldersUseCase: StorageObjectGetFoldersUseCase,
+    private readonly getFolderContentUseCase: StorageObjectGetFolderContentUseCase,
     private readonly isExistsUseCase: StorageObjectIsExistsUseCase,
     private readonly deleteOneUseCase: StorageObjectDeleteOneUseCase,
     private readonly updateOneUseCase: StorageObjectUpdateOneUseCase,
@@ -70,6 +72,22 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
   ): Observable<NestStorage.StorageObjectArray> {
     const stream$ = from(this.getFoldersUseCase.execute(request));
     return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
+  }
+
+  getFolderContent(
+    request: NestStorage.StorageObjectGetFolderContent,
+  ): Observable<NestStorage.StorageObjectFolderContent> {
+    return from(this.getFolderContentUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  // The user's one live folder without a parent. There is none yet while `auth.user.create` waits
+  // to be handled, and none any more once the user's deletion has marked the tree: `NotFound`.
+  getRootFolder({ userId }: NestCommon.UserIdField): Observable<NestStorage.StorageObject> {
+    const stream$ = from(
+      this.getUseCase.getOne({ userId, isFolder: true, isRoot: true, isDeleted: false }),
+    );
+
+    return stream$.pipe(GrpcRxPipe.unwrapEither);
   }
 
   isExists(request: NestStorage.StorageObjectQuery): Observable<NestCommon.Boolean> {

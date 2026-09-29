@@ -32,6 +32,11 @@ export abstract class StorageObjectRepository extends DatabaseRepository<
     id: string,
     update: StorageObjectUpdate,
   ): Promise<Either<Error, StorageObject>>;
+  /**
+   * The folders above the object, from its user's root folder down to its parent: the breadcrumbs of
+   * a folder view. None for a root folder. A failed walk is a `left`.
+   */
+  abstract getAncestors(id: string): Promise<Either<Error, NestStorage.StorageObjectAncestor[]>>;
   /** Marks the object and everything under it deleted, in one statement. Returns the row count. */
   abstract markDeletedWithDescendants(id: string): Promise<Either<Error, number>>;
   /** Every user that owns a live object — a user whose tree is marked deleted drops out. */
@@ -71,6 +76,10 @@ export interface StorageObjectMedia {
 
 export interface StorageObjectQuery extends Partial<NestStorage.StorageObjectQuery> {
   nameStartsWith?: string;
+  /** A case-insensitive substring of the name, taken literally: `%` and `_` match themselves. */
+  nameContains?: string;
+  /** Any of these types; an empty list constrains nothing. */
+  types?: NestStorage.StorageObjectType[];
   isFolder?: boolean;
   /** Only the object without a parent, which is a user's root folder. */
   isRoot?: boolean;

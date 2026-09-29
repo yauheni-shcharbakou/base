@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package storage.storage_object;
 
+import "common/crud.proto";
+import "common/messages.proto";
 import "storage/storage-object/storage-object.populates.proto";
 import "storage/storage-object/storage-object.proto";
 
@@ -51,6 +53,61 @@ message StorageObjectGetFolders {
 
 message StorageObjectGetFoldersWeb {
   optional string excludeChildrenOf = 1;
+}
+
+// get folder content
+
+// What a folder listing sorts by, after folders, which always come first.
+enum StorageObjectSortField {
+  NAME = 0;
+  CREATED_AT = 1;
+  UPDATED_AT = 2;
+  TYPE = 3;
+}
+
+message StorageObjectSorter {
+  StorageObjectSortField field = 1;
+  Sort order = 2;
+}
+
+// Narrows a folder listing. The folder, its owner and "live objects only" are fixed by the server,
+// never by the caller: free-form list filters could override them.
+message StorageObjectFolderContentQuery {
+  repeated StorageObjectType types = 1;
+  optional bool isPublic = 2;
+  // A case-insensitive substring of the name.
+  optional string search = 3;
+}
+
+message StorageObjectGetFolderContent {
+  string parentId = 1;
+  string userId = 2;
+  optional StorageObjectFolderContentQuery query = 3;
+  repeated StorageObjectSorter sorters = 4;
+  optional Pagination pagination = 5;
+}
+
+message StorageObjectGetFolderContentWeb {
+  string parentId = 1;
+  optional StorageObjectFolderContentQuery query = 2;
+  repeated StorageObjectSorter sorters = 3;
+  optional Pagination pagination = 4;
+}
+
+message StorageObjectAncestor {
+  string id = 1;
+  string name = 2;
+}
+
+// A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
+// the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
+// down to the folder's parent, none for the root itself. Items carry their file, image or video, but
+// no `folderPath`: a subfolder's is the folder's own followed by its name.
+message StorageObjectFolderContent {
+  StorageObject folder = 1;
+  repeated StorageObjectAncestor ancestors = 2;
+  repeated StorageObjectPopulated items = 3;
+  int32 total = 4;
 }
 
 // create

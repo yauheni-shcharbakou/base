@@ -1,6 +1,9 @@
 import { PgRepositoryImpl } from '@backend/pg';
 import { NestCommon, NestStorage } from '@backend/proto';
-import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import {
+  MAX_FOLDER_DEPTH,
+  PgStorageObjectEntity,
+} from '@common/infrastructure/pg/entities/pg.storage-object.entity';
 import { Logger } from '@nestjs/common';
 import { LockMode, QueryResult } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
@@ -198,10 +201,41 @@ export class PgStorageObjectRepositoryImpl
     await em.execute<QueryResult>(sql, [id, isPublic, isPublic], 'run');
   }
 
+  // Up by primary key, one lookup per level, from the object's parent to the root. `UNION ALL` never
+  // deduplicates the rows, whose depth differs anyway: the depth bound is what ends a walk over a
+  // `parent_id` cycle, as in the `folderPath` formula.
+  async getAncestors(id: string): Promise<Either<Error, NestStorage.StorageObjectAncestor[]>> {
+    const table = StorageDatabaseEntity.STORAGE_OBJECT;
+
+    try {
+      const sql = `
+        WITH RECURSIVE up (id, name, parent_id, depth) AS (
+            SELECT p.id, p.name, p.parent_id, 1
+            FROM "${table}" o
+            INNER JOIN "${table}" p ON p.id = o.parent_id
+            WHERE o.id = ?
+
+            UNION ALL
+
+            SELECT p.id, p.name, p.parent_id, up.depth + 1
+            FROM up
+            INNER JOIN "${table}" p ON p.id = up.parent_id
+            WHERE up.depth < ${MAX_FOLDER_DEPTH}
+        )
+        SELECT id, name FROM up ORDER BY depth DESC;
+      `;
+
+      return right(await this.em.execute<NestStorage.StorageObjectAncestor[]>(sql, [id]));
+    } catch (error) {
+      this.logger.error(`Failed to resolve the ancestors of ${id}`, error);
+      return left(error);
+    }
+  }
+
   // One statement over the whole subtree, so a folder and its content cannot end up half-deleted.
   // Already-deleted rows are skipped: they are hidden anyway, and the cleanup cron owns them.
-  // Every walk here is `UNION`, not `UNION ALL`: the CTE carries only ids, so deduplication also
-  // ends the recursion on a `parent_id` cycle instead of running forever.
+  // Every walk down here is `UNION`, not `UNION ALL`: the CTE carries only ids, so deduplication
+  // also ends the recursion on a `parent_id` cycle instead of running forever.
   async markDeletedWithDescendants(id: string): Promise<Either<Error, number>> {
     const table = StorageDatabaseEntity.STORAGE_OBJECT;
 

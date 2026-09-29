@@ -13,14 +13,18 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { IdField } from '../common/fields';
+import { IdField, UserIdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { Boolean } from '../common/types';
+import { Empty } from '../google/protobuf/empty';
 import { StorageObject } from './storage-object/storage-object';
 import {
   StorageObjectArray,
   StorageObjectCreate,
   StorageObjectCreateWeb,
+  StorageObjectFolderContent,
+  StorageObjectGetFolderContent,
+  StorageObjectGetFolderContentWeb,
   StorageObjectGetFolders,
   StorageObjectGetFoldersWeb,
   StorageObjectList,
@@ -76,6 +80,30 @@ const StorageObjectServiceService = {
     responseSerialize: (value: StorageObjectArray): Buffer =>
       Buffer.from(StorageObjectArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  getFolderContent: {
+    path: '/storage.StorageObjectService/getFolderContent' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectGetFolderContent): Buffer =>
+      Buffer.from(StorageObjectGetFolderContent.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectGetFolderContent =>
+      StorageObjectGetFolderContent.decode(value),
+    responseSerialize: (value: StorageObjectFolderContent): Buffer =>
+      Buffer.from(StorageObjectFolderContent.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectFolderContent =>
+      StorageObjectFolderContent.decode(value),
+  },
+  getRootFolder: {
+    path: '/storage.StorageObjectService/getRootFolder' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: UserIdField): Buffer =>
+      Buffer.from(UserIdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UserIdField => UserIdField.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
   },
   isExists: {
     path: '/storage.StorageObjectService/isExists' as const,
@@ -183,6 +211,36 @@ export interface GrpcStorageObjectServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: UserIdField,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: UserIdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: UserIdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
   isExists(
     request: StorageObjectQuery,
@@ -292,6 +350,24 @@ export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: StorageObjectArray) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
+    readonly getFolderContent: {
+      readonly path: '/storage.StorageObjectService/getFolderContent';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectGetFolderContent) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFolderContent;
+      readonly responseSerialize: (value: StorageObjectFolderContent) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectFolderContent;
+    };
+    readonly getRootFolder: {
+      readonly path: '/storage.StorageObjectService/getRootFolder';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: UserIdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UserIdField;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
     readonly isExists: {
       readonly path: '/storage.StorageObjectService/isExists';
       readonly requestStream: false;
@@ -377,6 +453,30 @@ const StorageObjectAdminServiceService = {
     responseSerialize: (value: StorageObjectArray): Buffer =>
       Buffer.from(StorageObjectArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  getFolderContent: {
+    path: '/storage.StorageObjectAdminService/getFolderContent' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectGetFolderContent): Buffer =>
+      Buffer.from(StorageObjectGetFolderContent.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectGetFolderContent =>
+      StorageObjectGetFolderContent.decode(value),
+    responseSerialize: (value: StorageObjectFolderContent): Buffer =>
+      Buffer.from(StorageObjectFolderContent.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectFolderContent =>
+      StorageObjectFolderContent.decode(value),
+  },
+  getRootFolder: {
+    path: '/storage.StorageObjectAdminService/getRootFolder' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: UserIdField): Buffer =>
+      Buffer.from(UserIdField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): UserIdField => UserIdField.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
   },
   isExists: {
     path: '/storage.StorageObjectAdminService/isExists' as const,
@@ -483,6 +583,36 @@ export interface GrpcStorageObjectAdminServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: UserIdField,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: UserIdField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: UserIdField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
   isExists(
     request: StorageObjectQuery,
@@ -592,6 +722,24 @@ export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: StorageObjectArray) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
+    readonly getFolderContent: {
+      readonly path: '/storage.StorageObjectAdminService/getFolderContent';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectGetFolderContent) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFolderContent;
+      readonly responseSerialize: (value: StorageObjectFolderContent) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectFolderContent;
+    };
+    readonly getRootFolder: {
+      readonly path: '/storage.StorageObjectAdminService/getRootFolder';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: UserIdField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => UserIdField;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
     readonly isExists: {
       readonly path: '/storage.StorageObjectAdminService/isExists';
       readonly requestStream: false;
@@ -645,6 +793,29 @@ const StorageObjectWebServiceService = {
     responseSerialize: (value: StorageObjectArray): Buffer =>
       Buffer.from(StorageObjectArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  getFolderContent: {
+    path: '/storage.StorageObjectWebService/getFolderContent' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectGetFolderContentWeb): Buffer =>
+      Buffer.from(StorageObjectGetFolderContentWeb.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectGetFolderContentWeb =>
+      StorageObjectGetFolderContentWeb.decode(value),
+    responseSerialize: (value: StorageObjectFolderContent): Buffer =>
+      Buffer.from(StorageObjectFolderContent.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectFolderContent =>
+      StorageObjectFolderContent.decode(value),
+  },
+  getRootFolder: {
+    path: '/storage.StorageObjectWebService/getRootFolder' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
+    requestDeserialize: (value: Buffer): Empty => Empty.decode(value),
+    responseSerialize: (value: StorageObject): Buffer =>
+      Buffer.from(StorageObject.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
   },
   isExists: {
     path: '/storage.StorageObjectWebService/isExists' as const,
@@ -708,6 +879,36 @@ export interface GrpcStorageObjectWebServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContentWeb,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContentWeb,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getFolderContent(
+    request: StorageObjectGetFolderContentWeb,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectFolderContent) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: Empty,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: Empty,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
+  ): ClientUnaryCall;
+  getRootFolder(
+    request: Empty,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
   isExists(
     request: StorageObjectQueryWeb,
@@ -789,6 +990,24 @@ export const GrpcStorageObjectWebServiceClient = makeGenericClientConstructor(
       readonly requestDeserialize: (value: Buffer) => StorageObjectGetFoldersWeb;
       readonly responseSerialize: (value: StorageObjectArray) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly getFolderContent: {
+      readonly path: '/storage.StorageObjectWebService/getFolderContent';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectGetFolderContentWeb) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectGetFolderContentWeb;
+      readonly responseSerialize: (value: StorageObjectFolderContent) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectFolderContent;
+    };
+    readonly getRootFolder: {
+      readonly path: '/storage.StorageObjectWebService/getRootFolder';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: Empty) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => Empty;
+      readonly responseSerialize: (value: StorageObject) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObject;
     };
     readonly isExists: {
       readonly path: '/storage.StorageObjectWebService/isExists';
@@ -900,6 +1119,38 @@ export class GrpcStorageObjectRepository {
   ): Promise<StorageObjectArray> {
     return new Promise<StorageObjectArray>((resolve, reject) => {
       this.client.getFolders(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectFolderContent> {
+    return new Promise<StorageObjectFolderContent>((resolve, reject) => {
+      this.client.getFolderContent(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getRootFolder(
+    request: UserIdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.getRootFolder(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -1053,6 +1304,38 @@ export class GrpcStorageObjectAdminRepository {
     });
   }
 
+  getFolderContent(
+    request: StorageObjectGetFolderContent,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectFolderContent> {
+    return new Promise<StorageObjectFolderContent>((resolve, reject) => {
+      this.client.getFolderContent(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getRootFolder(
+    request: UserIdField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.getRootFolder(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
   isExists(
     request: StorageObjectQuery,
     metadata: Metadata = new Metadata(),
@@ -1140,6 +1423,38 @@ export class GrpcStorageObjectWebRepository {
   ): Promise<StorageObjectArray> {
     return new Promise<StorageObjectArray>((resolve, reject) => {
       this.client.getFolders(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getFolderContent(
+    request: StorageObjectGetFolderContentWeb,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectFolderContent> {
+    return new Promise<StorageObjectFolderContent>((resolve, reject) => {
+      this.client.getFolderContent(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  getRootFolder(
+    request: Empty,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObject> {
+    return new Promise<StorageObject>((resolve, reject) => {
+      this.client.getRootFolder(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

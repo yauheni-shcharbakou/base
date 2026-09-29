@@ -7,8 +7,10 @@ import {
 } from '@backend/proto';
 import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
+import { UserIdFieldDto } from '@common/application/dto/user-id-field.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { StorageObjectCreateDto } from '@modules/storage-object/application/dto/storage-object.create.dto';
+import { StorageObjectGetFolderContentDto } from '@modules/storage-object/application/dto/storage-object.get-folder-content.dto';
 import { StorageObjectGetFoldersDto } from '@modules/storage-object/application/dto/storage-object.get-folders.dto';
 import { StorageObjectQueryDto } from '@modules/storage-object/application/dto/storage-object.query.dto';
 import { StorageObjectUpdateByIdDto } from '@modules/storage-object/application/dto/storage-object.update.dto';
@@ -39,6 +41,18 @@ export class GrpcStorageObjectAdminController implements GrpcStorageObjectAdminS
     request: NestStorage.StorageObjectGetFolders,
   ): Promise<NestStorage.StorageObjectArray> {
     return this.storageObjectService.getFolders(request);
+  }
+
+  @ValidateGrpcPayload(StorageObjectGetFolderContentDto)
+  getFolderContent(
+    request: NestStorage.StorageObjectGetFolderContent,
+  ): Promise<NestStorage.StorageObjectFolderContent> {
+    return this.storageObjectService.getFolderContent(request);
+  }
+
+  @ValidateGrpcPayload(UserIdFieldDto)
+  getRootFolder({ userId }: NestCommon.UserIdField): Promise<NestStorage.StorageObject> {
+    return this.storageObjectService.getRootFolder(userId);
   }
 
   @ValidateGrpcPayload(StorageObjectQueryDto)

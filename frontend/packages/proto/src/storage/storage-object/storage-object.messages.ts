@@ -4,13 +4,79 @@
 
 /* eslint-disable */
 import { BinaryReader, BinaryWriter } from '@bufbuild/protobuf/wire';
+import { Sort, sortFromJSON, sortToJSON, sortToNumber } from '../../common/crud';
+import { Pagination } from '../../common/messages';
 import {
+  StorageObject,
   StorageObjectType,
   storageObjectTypeFromJSON,
   storageObjectTypeToJSON,
   storageObjectTypeToNumber,
 } from './storage-object';
 import { StorageObjectPopulated } from './storage-object.populates';
+
+/** What a folder listing sorts by, after folders, which always come first. */
+export enum StorageObjectSortField {
+  NAME = 'NAME',
+  CREATED_AT = 'CREATED_AT',
+  UPDATED_AT = 'UPDATED_AT',
+  TYPE = 'TYPE',
+}
+
+export function storageObjectSortFieldFromJSON(object: any): StorageObjectSortField {
+  switch (object) {
+    case 0:
+    case 'NAME':
+      return StorageObjectSortField.NAME;
+    case 1:
+    case 'CREATED_AT':
+      return StorageObjectSortField.CREATED_AT;
+    case 2:
+    case 'UPDATED_AT':
+      return StorageObjectSortField.UPDATED_AT;
+    case 3:
+    case 'TYPE':
+      return StorageObjectSortField.TYPE;
+    default:
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum StorageObjectSortField',
+      );
+  }
+}
+
+export function storageObjectSortFieldToJSON(object: StorageObjectSortField): string {
+  switch (object) {
+    case StorageObjectSortField.NAME:
+      return 'NAME';
+    case StorageObjectSortField.CREATED_AT:
+      return 'CREATED_AT';
+    case StorageObjectSortField.UPDATED_AT:
+      return 'UPDATED_AT';
+    case StorageObjectSortField.TYPE:
+      return 'TYPE';
+    default:
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum StorageObjectSortField',
+      );
+  }
+}
+
+export function storageObjectSortFieldToNumber(object: StorageObjectSortField): number {
+  switch (object) {
+    case StorageObjectSortField.NAME:
+      return 0;
+    case StorageObjectSortField.CREATED_AT:
+      return 1;
+    case StorageObjectSortField.UPDATED_AT:
+      return 2;
+    case StorageObjectSortField.TYPE:
+      return 3;
+    default:
+      throw new globalThis.Error(
+        'Unrecognized enum value ' + object + ' for enum StorageObjectSortField',
+      );
+  }
+}
 
 export interface StorageObjectQuery {
   id?: string;
@@ -52,6 +118,55 @@ export interface StorageObjectGetFolders {
 
 export interface StorageObjectGetFoldersWeb {
   excludeChildrenOf?: string;
+}
+
+export interface StorageObjectSorter {
+  field: StorageObjectSortField;
+  order: Sort;
+}
+
+/**
+ * Narrows a folder listing. The folder, its owner and "live objects only" are fixed by the server,
+ * never by the caller: free-form list filters could override them.
+ */
+export interface StorageObjectFolderContentQuery {
+  types: StorageObjectType[];
+  isPublic?: boolean;
+  /** A case-insensitive substring of the name. */
+  search?: string;
+}
+
+export interface StorageObjectGetFolderContent {
+  parentId: string;
+  userId: string;
+  query?: StorageObjectFolderContentQuery;
+  sorters: StorageObjectSorter[];
+  pagination?: Pagination;
+}
+
+export interface StorageObjectGetFolderContentWeb {
+  parentId: string;
+  query?: StorageObjectFolderContentQuery;
+  sorters: StorageObjectSorter[];
+  pagination?: Pagination;
+}
+
+export interface StorageObjectAncestor {
+  id: string;
+  name: string;
+}
+
+/**
+ * A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
+ * the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
+ * down to the folder's parent, none for the root itself. Items carry their file, image or video, but
+ * no `folderPath`: a subfolder's is the folder's own followed by its name.
+ */
+export interface StorageObjectFolderContent {
+  folder: StorageObject;
+  ancestors: StorageObjectAncestor[];
+  items: StorageObjectPopulated[];
+  total: number;
 }
 
 export interface StorageObjectCreate {
@@ -780,6 +895,665 @@ export const StorageObjectGetFoldersWeb: MessageFns<StorageObjectGetFoldersWeb> 
   ): StorageObjectGetFoldersWeb {
     const message = createBaseStorageObjectGetFoldersWeb();
     message.excludeChildrenOf = object.excludeChildrenOf ?? undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectSorter(): StorageObjectSorter {
+  return { field: StorageObjectSortField.NAME, order: Sort.asc };
+}
+
+export const StorageObjectSorter: MessageFns<StorageObjectSorter> = {
+  encode(message: StorageObjectSorter, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.field !== StorageObjectSortField.NAME) {
+      writer.uint32(8).int32(storageObjectSortFieldToNumber(message.field));
+    }
+    if (message.order !== Sort.asc) {
+      writer.uint32(16).int32(sortToNumber(message.order));
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectSorter {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectSorter();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.field = storageObjectSortFieldFromJSON(reader.int32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.order = sortFromJSON(reader.int32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectSorter {
+    return {
+      field: isSet(object.field)
+        ? storageObjectSortFieldFromJSON(object.field)
+        : StorageObjectSortField.NAME,
+      order: isSet(object.order) ? sortFromJSON(object.order) : Sort.asc,
+    };
+  },
+
+  toJSON(message: StorageObjectSorter): unknown {
+    const obj: any = {};
+    if (message.field !== StorageObjectSortField.NAME) {
+      obj.field = storageObjectSortFieldToJSON(message.field);
+    }
+    if (message.order !== Sort.asc) {
+      obj.order = sortToJSON(message.order);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectSorter>, I>>(base?: I): StorageObjectSorter {
+    return StorageObjectSorter.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectSorter>, I>>(
+    object: I,
+  ): StorageObjectSorter {
+    const message = createBaseStorageObjectSorter();
+    message.field = object.field ?? StorageObjectSortField.NAME;
+    message.order = object.order ?? Sort.asc;
+    return message;
+  },
+};
+
+function createBaseStorageObjectFolderContentQuery(): StorageObjectFolderContentQuery {
+  return { types: [], isPublic: undefined, search: undefined };
+}
+
+export const StorageObjectFolderContentQuery: MessageFns<StorageObjectFolderContentQuery> = {
+  encode(
+    message: StorageObjectFolderContentQuery,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    writer.uint32(10).fork();
+    for (const v of message.types) {
+      writer.int32(storageObjectTypeToNumber(v));
+    }
+    writer.join();
+    if (message.isPublic !== undefined) {
+      writer.uint32(16).bool(message.isPublic);
+    }
+    if (message.search !== undefined) {
+      writer.uint32(26).string(message.search);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectFolderContentQuery {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectFolderContentQuery();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag === 8) {
+            message.types.push(storageObjectTypeFromJSON(reader.int32()));
+
+            continue;
+          }
+
+          if (tag === 10) {
+            const end2 = reader.uint32() + reader.pos;
+            while (reader.pos < end2) {
+              message.types.push(storageObjectTypeFromJSON(reader.int32()));
+            }
+
+            continue;
+          }
+
+          break;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.isPublic = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.search = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectFolderContentQuery {
+    return {
+      types: globalThis.Array.isArray(object?.types)
+        ? object.types.map((e: any) => storageObjectTypeFromJSON(e))
+        : [],
+      isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : undefined,
+      search: isSet(object.search) ? globalThis.String(object.search) : undefined,
+    };
+  },
+
+  toJSON(message: StorageObjectFolderContentQuery): unknown {
+    const obj: any = {};
+    if (message.types?.length) {
+      obj.types = message.types.map((e) => storageObjectTypeToJSON(e));
+    }
+    if (message.isPublic !== undefined) {
+      obj.isPublic = message.isPublic;
+    }
+    if (message.search !== undefined) {
+      obj.search = message.search;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectFolderContentQuery>, I>>(
+    base?: I,
+  ): StorageObjectFolderContentQuery {
+    return StorageObjectFolderContentQuery.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectFolderContentQuery>, I>>(
+    object: I,
+  ): StorageObjectFolderContentQuery {
+    const message = createBaseStorageObjectFolderContentQuery();
+    message.types = object.types?.map((e) => e) || [];
+    message.isPublic = object.isPublic ?? undefined;
+    message.search = object.search ?? undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectGetFolderContent(): StorageObjectGetFolderContent {
+  return { parentId: '', userId: '', query: undefined, sorters: [], pagination: undefined };
+}
+
+export const StorageObjectGetFolderContent: MessageFns<StorageObjectGetFolderContent> = {
+  encode(
+    message: StorageObjectGetFolderContent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.parentId !== '') {
+      writer.uint32(10).string(message.parentId);
+    }
+    if (message.userId !== '') {
+      writer.uint32(18).string(message.userId);
+    }
+    if (message.query !== undefined) {
+      StorageObjectFolderContentQuery.encode(message.query, writer.uint32(26).fork()).join();
+    }
+    for (const v of message.sorters) {
+      StorageObjectSorter.encode(v!, writer.uint32(34).fork()).join();
+    }
+    if (message.pagination !== undefined) {
+      Pagination.encode(message.pagination, writer.uint32(42).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectGetFolderContent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectGetFolderContent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.parentId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.query = StorageObjectFolderContentQuery.decode(reader, reader.uint32());
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.sorters.push(StorageObjectSorter.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.pagination = Pagination.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectGetFolderContent {
+    return {
+      parentId: isSet(object.parentId) ? globalThis.String(object.parentId) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      query: isSet(object.query)
+        ? StorageObjectFolderContentQuery.fromJSON(object.query)
+        : undefined,
+      sorters: globalThis.Array.isArray(object?.sorters)
+        ? object.sorters.map((e: any) => StorageObjectSorter.fromJSON(e))
+        : [],
+      pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: StorageObjectGetFolderContent): unknown {
+    const obj: any = {};
+    if (message.parentId !== '') {
+      obj.parentId = message.parentId;
+    }
+    if (message.userId !== '') {
+      obj.userId = message.userId;
+    }
+    if (message.query !== undefined) {
+      obj.query = StorageObjectFolderContentQuery.toJSON(message.query);
+    }
+    if (message.sorters?.length) {
+      obj.sorters = message.sorters.map((e) => StorageObjectSorter.toJSON(e));
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = Pagination.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectGetFolderContent>, I>>(
+    base?: I,
+  ): StorageObjectGetFolderContent {
+    return StorageObjectGetFolderContent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectGetFolderContent>, I>>(
+    object: I,
+  ): StorageObjectGetFolderContent {
+    const message = createBaseStorageObjectGetFolderContent();
+    message.parentId = object.parentId ?? '';
+    message.userId = object.userId ?? '';
+    message.query =
+      object.query !== undefined && object.query !== null
+        ? StorageObjectFolderContentQuery.fromPartial(object.query)
+        : undefined;
+    message.sorters = object.sorters?.map((e) => StorageObjectSorter.fromPartial(e)) || [];
+    message.pagination =
+      object.pagination !== undefined && object.pagination !== null
+        ? Pagination.fromPartial(object.pagination)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectGetFolderContentWeb(): StorageObjectGetFolderContentWeb {
+  return { parentId: '', query: undefined, sorters: [], pagination: undefined };
+}
+
+export const StorageObjectGetFolderContentWeb: MessageFns<StorageObjectGetFolderContentWeb> = {
+  encode(
+    message: StorageObjectGetFolderContentWeb,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.parentId !== '') {
+      writer.uint32(10).string(message.parentId);
+    }
+    if (message.query !== undefined) {
+      StorageObjectFolderContentQuery.encode(message.query, writer.uint32(18).fork()).join();
+    }
+    for (const v of message.sorters) {
+      StorageObjectSorter.encode(v!, writer.uint32(26).fork()).join();
+    }
+    if (message.pagination !== undefined) {
+      Pagination.encode(message.pagination, writer.uint32(34).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectGetFolderContentWeb {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectGetFolderContentWeb();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.parentId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.query = StorageObjectFolderContentQuery.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.sorters.push(StorageObjectSorter.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.pagination = Pagination.decode(reader, reader.uint32());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectGetFolderContentWeb {
+    return {
+      parentId: isSet(object.parentId) ? globalThis.String(object.parentId) : '',
+      query: isSet(object.query)
+        ? StorageObjectFolderContentQuery.fromJSON(object.query)
+        : undefined,
+      sorters: globalThis.Array.isArray(object?.sorters)
+        ? object.sorters.map((e: any) => StorageObjectSorter.fromJSON(e))
+        : [],
+      pagination: isSet(object.pagination) ? Pagination.fromJSON(object.pagination) : undefined,
+    };
+  },
+
+  toJSON(message: StorageObjectGetFolderContentWeb): unknown {
+    const obj: any = {};
+    if (message.parentId !== '') {
+      obj.parentId = message.parentId;
+    }
+    if (message.query !== undefined) {
+      obj.query = StorageObjectFolderContentQuery.toJSON(message.query);
+    }
+    if (message.sorters?.length) {
+      obj.sorters = message.sorters.map((e) => StorageObjectSorter.toJSON(e));
+    }
+    if (message.pagination !== undefined) {
+      obj.pagination = Pagination.toJSON(message.pagination);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectGetFolderContentWeb>, I>>(
+    base?: I,
+  ): StorageObjectGetFolderContentWeb {
+    return StorageObjectGetFolderContentWeb.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectGetFolderContentWeb>, I>>(
+    object: I,
+  ): StorageObjectGetFolderContentWeb {
+    const message = createBaseStorageObjectGetFolderContentWeb();
+    message.parentId = object.parentId ?? '';
+    message.query =
+      object.query !== undefined && object.query !== null
+        ? StorageObjectFolderContentQuery.fromPartial(object.query)
+        : undefined;
+    message.sorters = object.sorters?.map((e) => StorageObjectSorter.fromPartial(e)) || [];
+    message.pagination =
+      object.pagination !== undefined && object.pagination !== null
+        ? Pagination.fromPartial(object.pagination)
+        : undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectAncestor(): StorageObjectAncestor {
+  return { id: '', name: '' };
+}
+
+export const StorageObjectAncestor: MessageFns<StorageObjectAncestor> = {
+  encode(message: StorageObjectAncestor, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== '') {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.name !== '') {
+      writer.uint32(18).string(message.name);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectAncestor {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectAncestor();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectAncestor {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      name: isSet(object.name) ? globalThis.String(object.name) : '',
+    };
+  },
+
+  toJSON(message: StorageObjectAncestor): unknown {
+    const obj: any = {};
+    if (message.id !== '') {
+      obj.id = message.id;
+    }
+    if (message.name !== '') {
+      obj.name = message.name;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectAncestor>, I>>(base?: I): StorageObjectAncestor {
+    return StorageObjectAncestor.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectAncestor>, I>>(
+    object: I,
+  ): StorageObjectAncestor {
+    const message = createBaseStorageObjectAncestor();
+    message.id = object.id ?? '';
+    message.name = object.name ?? '';
+    return message;
+  },
+};
+
+function createBaseStorageObjectFolderContent(): StorageObjectFolderContent {
+  return { folder: undefined, ancestors: [], items: [], total: 0 };
+}
+
+export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> = {
+  encode(
+    message: StorageObjectFolderContent,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.folder !== undefined) {
+      StorageObject.encode(message.folder, writer.uint32(10).fork()).join();
+    }
+    for (const v of message.ancestors) {
+      StorageObjectAncestor.encode(v!, writer.uint32(18).fork()).join();
+    }
+    for (const v of message.items) {
+      StorageObjectPopulated.encode(v!, writer.uint32(26).fork()).join();
+    }
+    if (message.total !== 0) {
+      writer.uint32(32).int32(message.total);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectFolderContent {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectFolderContent();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.folder = StorageObject.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.ancestors.push(StorageObjectAncestor.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.items.push(StorageObjectPopulated.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 4: {
+          if (tag !== 32) {
+            break;
+          }
+
+          message.total = reader.int32();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectFolderContent {
+    return {
+      folder: isSet(object.folder) ? StorageObject.fromJSON(object.folder) : undefined,
+      ancestors: globalThis.Array.isArray(object?.ancestors)
+        ? object.ancestors.map((e: any) => StorageObjectAncestor.fromJSON(e))
+        : [],
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => StorageObjectPopulated.fromJSON(e))
+        : [],
+      total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+    };
+  },
+
+  toJSON(message: StorageObjectFolderContent): unknown {
+    const obj: any = {};
+    if (message.folder !== undefined) {
+      obj.folder = StorageObject.toJSON(message.folder);
+    }
+    if (message.ancestors?.length) {
+      obj.ancestors = message.ancestors.map((e) => StorageObjectAncestor.toJSON(e));
+    }
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => StorageObjectPopulated.toJSON(e));
+    }
+    if (message.total !== 0) {
+      obj.total = Math.round(message.total);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectFolderContent>, I>>(
+    base?: I,
+  ): StorageObjectFolderContent {
+    return StorageObjectFolderContent.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectFolderContent>, I>>(
+    object: I,
+  ): StorageObjectFolderContent {
+    const message = createBaseStorageObjectFolderContent();
+    message.folder =
+      object.folder !== undefined && object.folder !== null
+        ? StorageObject.fromPartial(object.folder)
+        : undefined;
+    message.ancestors = object.ancestors?.map((e) => StorageObjectAncestor.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => StorageObjectPopulated.fromPartial(e)) || [];
+    message.total = object.total ?? 0;
     return message;
   },
 };

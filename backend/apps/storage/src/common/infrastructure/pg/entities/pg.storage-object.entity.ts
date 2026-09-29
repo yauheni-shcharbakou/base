@@ -26,8 +26,8 @@ const TABLE = StorageDatabaseEntity.STORAGE_OBJECT;
 
 // Moves check for a cycle under the tree lock, so only a row written outside the service can close
 // one; the bound keeps a read of such a row from recursing forever. Real trees are nowhere near
-// this deep.
-const MAX_FOLDER_DEPTH = 64;
+// this deep. Every walk up the tree stops at it: the path formula and the repository's ancestors.
+export const MAX_FOLDER_DEPTH = 64;
 
 /**
  * A user owns exactly one root folder. Enforced in the database rather than by a read-then-write

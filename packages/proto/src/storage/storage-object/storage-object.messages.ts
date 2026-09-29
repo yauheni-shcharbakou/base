@@ -2,8 +2,18 @@
 // source: storage/storage-object/storage-object.messages.proto
 
 /* eslint-disable */
-import type { StorageObjectType } from './storage-object';
+import type { Sort } from '../../common/crud';
+import type { Pagination } from '../../common/messages';
+import type { StorageObject, StorageObjectType } from './storage-object';
 import type { StorageObjectPopulated } from './storage-object.populates';
+
+/** What a folder listing sorts by, after folders, which always come first. */
+export enum StorageObjectSortField {
+  NAME = 'NAME',
+  CREATED_AT = 'CREATED_AT',
+  UPDATED_AT = 'UPDATED_AT',
+  TYPE = 'TYPE',
+}
 
 export interface StorageObjectQuery {
   id?: string;
@@ -45,6 +55,55 @@ export interface StorageObjectGetFolders {
 
 export interface StorageObjectGetFoldersWeb {
   excludeChildrenOf?: string;
+}
+
+export interface StorageObjectSorter {
+  field: StorageObjectSortField;
+  order: Sort;
+}
+
+/**
+ * Narrows a folder listing. The folder, its owner and "live objects only" are fixed by the server,
+ * never by the caller: free-form list filters could override them.
+ */
+export interface StorageObjectFolderContentQuery {
+  types: StorageObjectType[];
+  isPublic?: boolean;
+  /** A case-insensitive substring of the name. */
+  search?: string;
+}
+
+export interface StorageObjectGetFolderContent {
+  parentId: string;
+  userId: string;
+  query?: StorageObjectFolderContentQuery;
+  sorters: StorageObjectSorter[];
+  pagination?: Pagination;
+}
+
+export interface StorageObjectGetFolderContentWeb {
+  parentId: string;
+  query?: StorageObjectFolderContentQuery;
+  sorters: StorageObjectSorter[];
+  pagination?: Pagination;
+}
+
+export interface StorageObjectAncestor {
+  id: string;
+  name: string;
+}
+
+/**
+ * A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
+ * the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
+ * down to the folder's parent, none for the root itself. Items carry their file, image or video, but
+ * no `folderPath`: a subfolder's is the folder's own followed by its name.
+ */
+export interface StorageObjectFolderContent {
+  folder: StorageObject;
+  ancestors: StorageObjectAncestor[];
+  items: StorageObjectPopulated[];
+  total: number;
 }
 
 export interface StorageObjectCreate {

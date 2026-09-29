@@ -38,6 +38,20 @@ export class StorageObjectProxyService {
     );
   }
 
+  getFolderContent(
+    request: NestStorage.StorageObjectGetFolderContent,
+  ): Promise<NestStorage.StorageObjectFolderContent> {
+    return firstValueFrom(
+      this.storageObjectClient.getFolderContent(request).pipe(GrpcRxPipe.rpcException),
+    );
+  }
+
+  getRootFolder(userId: string): Promise<NestStorage.StorageObject> {
+    return firstValueFrom(
+      this.storageObjectClient.getRootFolder({ userId }).pipe(GrpcRxPipe.rpcException),
+    );
+  }
+
   getList(request: NestCommon.GetList): Promise<NestStorage.StorageObjectList> {
     return firstValueFrom(this.storageObjectClient.getList(request).pipe(GrpcRxPipe.rpcException));
   }
