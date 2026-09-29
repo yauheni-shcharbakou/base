@@ -15,6 +15,8 @@ import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/applicati
 import { StorageObjectGetFolderContentUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folder-content.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
+import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
 import { PgVideoRepositoryImpl } from '@modules/video/infrastructure/pg/repositories/pg.video.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
@@ -65,7 +67,18 @@ describe('storage-object tree against Postgres', () => {
     updateOne = new StorageObjectUpdateOneUseCase(repository, validation);
     createOne = new StorageObjectCreateOneUseCase(repository, validation);
     deleteOne = new StorageObjectDeleteOneUseCase(repository);
-    getFolderContent = new StorageObjectGetFolderContentUseCase(repository);
+    // The Bunny signers read their keys from the env; these stubs keep the signed key readable.
+    const fileSigner = {
+      getFileSignedUrl: (providerId: string) => right(`https://storage.test/${providerId}`),
+    } as unknown as StorageFileService;
+    const videoSigner = {
+      getThumbnailUrl: (guid: string) => right(`https://stream.test/${guid}/thumbnail.jpg`),
+    } as unknown as StorageVideoService;
+    getFolderContent = new StorageObjectGetFolderContentUseCase(
+      repository,
+      fileSigner,
+      videoSigner,
+    );
     fileRepository = new PgFileRepositoryImpl(em.getRepository(PgFileEntity));
     imageRepository = new PgImageRepositoryImpl(em.getRepository(PgImageEntity));
     videoRepository = new PgVideoRepositoryImpl(em.getRepository(PgVideoEntity));
@@ -912,6 +925,26 @@ describe('storage-object tree against Postgres', () => {
       assert.equal(items.get('photo.png')?.image?.width, 2);
       assert.equal(items.get('photo.png')?.file?.size, 1);
       assert.equal(items.get('clip.mp4')?.video?.title, 'video');
+    });
+
+    // What the page populates is all the signing needs: the image's own file key, the video's guid.
+    withDb('signs a preview for each READY image and video, and for nothing else', async () => {
+      await createFolder('sub', root);
+      await placeFile('doc.bin');
+      await placeImage('photo.png');
+      await placeVideo('clip.mp4');
+
+      const items = new Map((await content()).unwrap().items.map((item) => [item.name, item]));
+      const photo = items.get('photo.png');
+      const clip = items.get('clip.mp4');
+
+      assert.equal(photo?.previewUrl, `https://storage.test/${photo?.file?.providerId}`);
+      assert.equal(
+        clip?.previewUrl,
+        `https://stream.test/${clip?.video?.providerId}/thumbnail.jpg`,
+      );
+      assert.equal(items.get('doc.bin')?.previewUrl, undefined);
+      assert.equal(items.get('sub')?.previewUrl, undefined);
     });
 
     // The folder with its path, the walk up, the page with its to-one media joins and its COUNT:

@@ -1,5 +1,6 @@
 import { PgModule } from '@backend/pg';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
+import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { StorageObjectPlacementService } from './application/services/storage-object.placement.service';
 import { StorageObjectValidationService } from './application/services/storage-object.validation.service';
@@ -20,7 +21,8 @@ import { GrpcStorageObjectController } from './interface/grpc/grpc.storage-objec
 import { RedisStorageObjectController } from './interface/redis/redis.storage-object.controller';
 
 @Module({
-  imports: [PgModule.forFeature(PgStorageObjectEntity)],
+  // `storage` signs the folder listing's previews. Never `file`: it imports this module.
+  imports: [PgModule.forFeature(PgStorageObjectEntity), StorageModule],
   providers: [
     {
       provide: StorageObjectRepository,

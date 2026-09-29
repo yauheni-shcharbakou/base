@@ -5,7 +5,7 @@
 import { Sort } from '../../common/crud';
 import { Pagination } from '../../common/messages';
 import { StorageObject, StorageObjectType } from './storage-object';
-import { StorageObjectPopulated } from './storage-object.populates';
+import { StorageObjectFolderItem, StorageObjectPopulated } from './storage-object.populates';
 
 /** What a folder listing sorts by, after folders, which always come first. */
 export enum StorageObjectSortField {
@@ -97,12 +97,13 @@ export interface StorageObjectAncestor {
  * A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
  * the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
  * down to the folder's parent, none for the root itself. Items carry their file, image or video, but
- * no `folderPath`: a subfolder's is the folder's own followed by its name.
+ * no `folderPath`: a subfolder's is the folder's own followed by its name. A READY image or video
+ * also carries a signed `previewUrl`.
  */
 export interface StorageObjectFolderContent {
   folder: StorageObject;
   ancestors: StorageObjectAncestor[];
-  items: StorageObjectPopulated[];
+  items: StorageObjectFolderItem[];
   total: number;
 }
 

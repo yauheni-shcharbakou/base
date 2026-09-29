@@ -1,5 +1,7 @@
 import { NestCommon, NestStorage } from '@backend/proto';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
+import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
 import { NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import { StorageObjectGetFolderContentUseCase } from './storage-object.get-folder-content.use-case';
@@ -12,6 +14,27 @@ const folder = {
 } as NestStorage.StorageObjectPopulated;
 const ancestors: NestStorage.StorageObjectAncestor[] = [{ id: 'root', name: '' }];
 const items = [{ id: 'child' }] as NestStorage.StorageObjectPopulated[];
+
+const { FOLDER, FILE, IMAGE, VIDEO } = NestStorage.StorageObjectType;
+const { READY } = NestStorage.FileUploadStatus;
+
+// A video's backing file has no key of its own: its bytes live in Stream, under the video's.
+const image = (uploadStatus = READY) =>
+  ({
+    id: 'image-leaf',
+    type: IMAGE,
+    isFolder: false,
+    file: { id: 'image-file', uploadStatus, providerId: 'dev/user-1/photo.png' },
+    image: { id: 'image' },
+  }) as NestStorage.StorageObjectPopulated;
+const video = (uploadStatus = READY) =>
+  ({
+    id: 'video-leaf',
+    type: VIDEO,
+    isFolder: false,
+    file: { id: 'video-file', uploadStatus },
+    video: { id: 'video', providerId: 'guid' },
+  }) as NestStorage.StorageObjectPopulated;
 
 const FOLDERS_FIRST = { field: 'isFolder', order: NestCommon.Sort.desc };
 const BY_ID = { field: 'id', order: NestCommon.Sort.asc };
@@ -27,6 +50,8 @@ const request = (
 
 describe('StorageObjectGetFolderContentUseCase', () => {
   let repository: { getOne: jest.Mock; getAncestors: jest.Mock; getList: jest.Mock };
+  let fileService: { getFileSignedUrl: jest.Mock };
+  let videoService: { getThumbnailUrl: jest.Mock };
   let useCase: StorageObjectGetFolderContentUseCase;
 
   beforeEach(() => {
@@ -35,9 +60,21 @@ describe('StorageObjectGetFolderContentUseCase', () => {
       getAncestors: jest.fn().mockResolvedValue(right(ancestors)),
       getList: jest.fn().mockResolvedValue({ items, total: 7 }),
     };
+    fileService = {
+      getFileSignedUrl: jest.fn((providerId: string) =>
+        right(`https://storage.test/${providerId}`),
+      ),
+    };
+    videoService = {
+      getThumbnailUrl: jest.fn((guid: string) =>
+        right(`https://stream.test/${guid}/thumbnail.jpg`),
+      ),
+    };
 
     useCase = new StorageObjectGetFolderContentUseCase(
       repository as unknown as StorageObjectRepository,
+      fileService as unknown as StorageFileService,
+      videoService as unknown as StorageVideoService,
     );
   });
 
@@ -144,6 +181,64 @@ describe('StorageObjectGetFolderContentUseCase', () => {
     expect(listRequest()).toMatchObject({
       query: { types: [NestStorage.StorageObjectType.IMAGE], isPublic: true, nameContains: 'cat' },
       pagination,
+    });
+  });
+  describe('previews', () => {
+    const listed = async (...page: NestStorage.StorageObjectPopulated[]) => {
+      repository.getList.mockResolvedValue({ items: page, total: page.length });
+      const result = await useCase.execute(request());
+      return result.isRight() ? result.value.items : [];
+    };
+
+    it('signs a READY image with the key of its own file', async () => {
+      const [item] = await listed(image());
+
+      expect(item.previewUrl).toBe('https://storage.test/dev/user-1/photo.png');
+      expect(fileService.getFileSignedUrl).toHaveBeenCalledWith('dev/user-1/photo.png');
+    });
+
+    it('gives a READY video its Stream thumbnail', async () => {
+      const [item] = await listed(video());
+
+      expect(item.previewUrl).toBe('https://stream.test/guid/thumbnail.jpg');
+      expect(videoService.getThumbnailUrl).toHaveBeenCalledWith('guid');
+    });
+
+    it.each(['PENDING', 'UPLOADED', 'FAILED'] as const)(
+      'signs nothing while the upload is %s',
+      async (status) => {
+        const uploadStatus = NestStorage.FileUploadStatus[status];
+        const page = await listed(image(uploadStatus), video(uploadStatus));
+
+        expect(page.map((item) => 'previewUrl' in item)).toEqual([false, false]);
+        expect(fileService.getFileSignedUrl).not.toHaveBeenCalled();
+        expect(videoService.getThumbnailUrl).not.toHaveBeenCalled();
+      },
+    );
+
+    it('signs nothing for a folder or a plain file', async () => {
+      const page = await listed(
+        { id: 'sub', type: FOLDER, isFolder: true } as NestStorage.StorageObjectPopulated,
+        {
+          id: 'doc',
+          type: FILE,
+          isFolder: false,
+          file: { id: 'doc-file', uploadStatus: READY, providerId: 'dev/user-1/doc.pdf' },
+        } as NestStorage.StorageObjectPopulated,
+      );
+
+      expect(page.map((item) => 'previewUrl' in item)).toEqual([false, false]);
+      expect(fileService.getFileSignedUrl).not.toHaveBeenCalled();
+      expect(videoService.getThumbnailUrl).not.toHaveBeenCalled();
+    });
+
+    it('leaves the preview out when signing fails, and still answers', async () => {
+      fileService.getFileSignedUrl.mockReturnValue(left(new Error('no key')));
+
+      const [item] = await listed(image());
+
+      expect(item).toEqual(image());
+      expect('previewUrl' in item).toBe(false);
     });
   });
 });

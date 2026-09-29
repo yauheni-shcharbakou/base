@@ -26,6 +26,8 @@ export abstract class StorageVideoService {
   abstract getVideo(providerId: string): Promise<Either<Error, StorageVideo>>;
   abstract getList(page: number, limit: number): Promise<StorageVideoList>;
   abstract getPlayerUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
+  /** A signed URL of the video's thumbnail image, built without a call to the provider. */
+  abstract getThumbnailUrl(providerId: string): Either<Error, string>;
   abstract getDownloadUrl(
     providerId: string,
   ): Either<Error, string> | Promise<Either<Error, string>>;

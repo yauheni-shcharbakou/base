@@ -27,6 +27,32 @@ export interface StorageObjectPopulated {
   video?: Video;
 }
 
+/**
+ * An item of a folder listing: `StorageObjectPopulated` field for field (keep the two in step), plus
+ * a preview. `previewUrl` is a signed, short-lived CDN URL — the image itself for a READY image, the
+ * Stream thumbnail for a READY video — and is absent for anything else. It is bound to no client
+ * address; Optimizer parameters such as `width` may be appended to it.
+ */
+export interface StorageObjectFolderItem {
+  id: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  name: string;
+  isPublic: boolean;
+  isFolder: boolean;
+  type: StorageObjectType;
+  userId: string;
+  fileId?: string;
+  parentId?: string;
+  file?: File;
+  folderPath?: string;
+  imageId?: string;
+  videoId?: string;
+  image?: Image;
+  video?: Video;
+  previewUrl?: string;
+}
+
 wrappers['.google.protobuf.Timestamp'] = {
   fromObject(value: Date) {
     return { seconds: value.getTime() / 1000, nanos: (value.getTime() % 1000) * 1e6 };

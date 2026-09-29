@@ -52,3 +52,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0023](0023-proto-codegen-task-per-package.md) | One proto codegen task per target package | Accepted | `@packages/proto`, `@backend/proto`, `@frontend/proto` |
 | [0024](0024-gateway-rate-limit-counters-in-redis.md) | The gateway's rate-limit counters live in Redis, behind `@backend/cache` | Accepted | `backend.api-gateway`, `@backend/cache` |
 | [0025](0025-read-urls-bound-to-no-client-address.md) | Signed read URLs are bound to no client address | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin`, `@packages/proto` |
+| [0026](0026-folder-listing-carries-signed-previews.md) | A folder listing's items carry a signed preview URL | Accepted | `backend.storage`, `@packages/proto`, `frontend.admin` |

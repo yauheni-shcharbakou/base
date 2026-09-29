@@ -198,6 +198,25 @@ export class BunnyStorageVideoServiceImpl implements StorageVideoService {
     }
   }
 
+  getThumbnailUrl(providerId: string): Either<Error, string> {
+    try {
+      const { cdn } = this.streamConfig;
+
+      // Bunny's default name. A custom thumbnail set on the provider gets another one, which this
+      // service never does.
+      return right(
+        signBunnyCdnUrl({
+          baseUrl: cdn.url,
+          path: `/${providerId}/thumbnail.jpg`,
+          privateKey: cdn.privateKey,
+          expiresInMinutes: cdn.expiresInMinutes,
+        }),
+      );
+    } catch (error) {
+      return left(error);
+    }
+  }
+
   async getDownloadUrl(providerId: string): Promise<Either<Error, string>> {
     try {
       const { cdn } = this.streamConfig;

@@ -54,7 +54,10 @@ env `BUNNY_STORAGE_CDN_ZONE` (served as `https://<name>.b-cdn.net`).
 - [x] `Embed view token authentication`
 - [x] `CDN token authentication`
 
-`Allowed domains`: set list with `player.mediadelivery.net` and your hosts
+`Allowed domains`: set list with `player.mediadelivery.net` and your hosts — the admin's host
+included (`localhost` for the dev library): a folder view loads video thumbnails with an `<img>`
+from the admin's origin, and a request without an allowed referrer is refused
+([ADR-0026](../../../docs/adr/0026-folder-listing-carries-signed-previews.md))
 
 `Token authentication key` => env `BUNNY_STREAM_CDN_PRIVATE_KEY`
 

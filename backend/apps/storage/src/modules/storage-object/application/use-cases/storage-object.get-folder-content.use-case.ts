@@ -1,6 +1,8 @@
 import { NestCommon, NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
+import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
 import { Injectable } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 
@@ -18,17 +20,37 @@ const SORT_FIELDS: Record<NestStorage.StorageObjectSortField, keyof StorageObjec
   [NestStorage.StorageObjectSortField.TYPE]: 'type',
 };
 
+// `StorageObjectFolderItem` repeats `StorageObjectPopulated` field by field. The spread in
+// `toFolderItem` skips the excess-property check, so a field added to the one and not the other
+// would compile and then vanish in the encoder: this alias fails the build instead.
+type Expect<T extends true> = T;
+type FolderItemCoversPopulated = Expect<
+  [
+    Exclude<keyof NestStorage.StorageObjectPopulated, keyof NestStorage.StorageObjectFolderItem>,
+  ] extends [never]
+    ? true
+    : false
+>;
+
 /**
  * A page of one folder of a user's tree, with what a folder view shows around it: the folder's path
  * and the folders above it. The scope — this folder, its owner's tree, live objects only — is fixed
  * here. The caller narrows it through the content query alone, never through free-form list filters,
  * which the repository would apply over it.
  *
+ * A READY image or video on the page carries a signed `previewUrl`, so a folder view shows its
+ * thumbnails straight from the CDN instead of asking for a URL per item. Signing happens in memory,
+ * from the media the page already populates: it adds no statement.
+ *
  * A read, so it takes no tree lock: a write that lands between its statements shows on the next call.
  */
 @Injectable()
 export class StorageObjectGetFolderContentUseCase {
-  constructor(private readonly storageObjectRepository: StorageObjectRepository) {}
+  constructor(
+    private readonly storageObjectRepository: StorageObjectRepository,
+    private readonly storageFileService: StorageFileService,
+    private readonly storageVideoService: StorageVideoService,
+  ) {}
 
   async execute(
     request: NestStorage.StorageObjectGetFolderContent,
@@ -73,7 +95,35 @@ export class StorageObjectGetFolderContentUseCase {
         { populate: ['file', 'image', 'video'] },
       );
 
-    return right({ folder: folder.value, ancestors: ancestors.value, items, total });
+    return right({
+      folder: folder.value,
+      ancestors: ancestors.value,
+      items: items.map((item) => this.toFolderItem(item)),
+      total,
+    });
+  }
+
+  private toFolderItem(
+    item: NestStorage.StorageObjectPopulated,
+  ): NestStorage.StorageObjectFolderItem {
+    const previewUrl = this.signPreview(item);
+    return previewUrl?.isRight() ? { ...item, previewUrl: previewUrl.value } : item;
+  }
+
+  // The image itself, or the video's thumbnail — only once its upload is READY, the status of an
+  // image or a video being its backing file's. A failed signature leaves the item without one.
+  private signPreview(item: NestStorage.StorageObjectPopulated): Either<Error, string> | undefined {
+    if (item.file?.uploadStatus !== NestStorage.FileUploadStatus.READY) {
+      return;
+    }
+
+    if (item.type === NestStorage.StorageObjectType.IMAGE && item.file.providerId) {
+      return this.storageFileService.getFileSignedUrl(item.file.providerId);
+    }
+
+    if (item.type === NestStorage.StorageObjectType.VIDEO && item.video?.providerId) {
+      return this.storageVideoService.getThumbnailUrl(item.video.providerId);
+    }
   }
 
   private getSorters(sorters: NestStorage.StorageObjectSorter[] = []): NestCommon.Sorter[] {

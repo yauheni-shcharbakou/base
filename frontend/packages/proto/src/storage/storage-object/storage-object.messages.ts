@@ -13,7 +13,7 @@ import {
   storageObjectTypeToJSON,
   storageObjectTypeToNumber,
 } from './storage-object';
-import { StorageObjectPopulated } from './storage-object.populates';
+import { StorageObjectFolderItem, StorageObjectPopulated } from './storage-object.populates';
 
 /** What a folder listing sorts by, after folders, which always come first. */
 export enum StorageObjectSortField {
@@ -160,12 +160,13 @@ export interface StorageObjectAncestor {
  * A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
  * the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
  * down to the folder's parent, none for the root itself. Items carry their file, image or video, but
- * no `folderPath`: a subfolder's is the folder's own followed by its name.
+ * no `folderPath`: a subfolder's is the folder's own followed by its name. A READY image or video
+ * also carries a signed `previewUrl`.
  */
 export interface StorageObjectFolderContent {
   folder: StorageObject;
   ancestors: StorageObjectAncestor[];
-  items: StorageObjectPopulated[];
+  items: StorageObjectFolderItem[];
   total: number;
 }
 
@@ -1452,7 +1453,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
       StorageObjectAncestor.encode(v!, writer.uint32(18).fork()).join();
     }
     for (const v of message.items) {
-      StorageObjectPopulated.encode(v!, writer.uint32(26).fork()).join();
+      StorageObjectFolderItem.encode(v!, writer.uint32(26).fork()).join();
     }
     if (message.total !== 0) {
       writer.uint32(32).int32(message.total);
@@ -1488,7 +1489,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
             break;
           }
 
-          message.items.push(StorageObjectPopulated.decode(reader, reader.uint32()));
+          message.items.push(StorageObjectFolderItem.decode(reader, reader.uint32()));
           continue;
         }
         case 4: {
@@ -1515,7 +1516,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
         ? object.ancestors.map((e: any) => StorageObjectAncestor.fromJSON(e))
         : [],
       items: globalThis.Array.isArray(object?.items)
-        ? object.items.map((e: any) => StorageObjectPopulated.fromJSON(e))
+        ? object.items.map((e: any) => StorageObjectFolderItem.fromJSON(e))
         : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
     };
@@ -1530,7 +1531,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
       obj.ancestors = message.ancestors.map((e) => StorageObjectAncestor.toJSON(e));
     }
     if (message.items?.length) {
-      obj.items = message.items.map((e) => StorageObjectPopulated.toJSON(e));
+      obj.items = message.items.map((e) => StorageObjectFolderItem.toJSON(e));
     }
     if (message.total !== 0) {
       obj.total = Math.round(message.total);
@@ -1552,7 +1553,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
         ? StorageObject.fromPartial(object.folder)
         : undefined;
     message.ancestors = object.ancestors?.map((e) => StorageObjectAncestor.fromPartial(e)) || [];
-    message.items = object.items?.map((e) => StorageObjectPopulated.fromPartial(e)) || [];
+    message.items = object.items?.map((e) => StorageObjectFolderItem.fromPartial(e)) || [];
     message.total = object.total ?? 0;
     return message;
   },
