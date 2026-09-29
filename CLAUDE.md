@@ -60,7 +60,8 @@ pnpm dev:backend.auth         # one service (also .api-gateway, .storage, fronte
 pnpm build                    # build everything (runs ^compile then ^build)
 pnpm build:backend.auth       # one service
 pnpm test                     # unit suites of every package that has them
-pnpm test:e2e                 # e2e suites; each skips itself when its server is unreachable (fails with E2E_REQUIRE_SERVERS=1)
+pnpm test:e2e                 # e2e suites; each skips itself when its server is unreachable (fails with E2E_REQUIRE_SERVERS=1) — start them with docker:e2e
+pnpm e2e                      # CI's e2e step: docker:e2e, test:e2e with E2E_REQUIRE_SERVERS=1, then docker:e2e:stop — pass or fail, and even when those containers were already up
 pnpm typecheck                # tsc --noEmit in every workspace (see below)
 pnpm migrate                  # apply pending migrations in every DB-backed service (also :backend.auth, :backend.storage)
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
@@ -68,7 +69,8 @@ pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
-pnpm docker:db                # postgres + redis only, detached: every e2e suite but the dormant NATS one, no tunnel
+pnpm docker:db                # postgres + redis only, detached, no tunnel (docker:db:stop to stop)
+pnpm docker:e2e               # the `e2e` compose profile: postgres, redis and nats — every server an e2e suite needs (docker:e2e:stop)
 pnpm docker                   # full stack in prod mode
 pnpm gen:package              # scaffold a new package via turbo generator (packages only; apps are hand-made)
 ```

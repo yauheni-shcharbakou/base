@@ -6,7 +6,7 @@ naming rules and the **bus-wide semantics** — JSON payloads, at-least-once, er
 `backend/CLAUDE.md` (shared package conventions). This file is the NATS JetStream runtime.
 
 **Status: dormant.** `auth`/`storage` run on `@backend/event-bus-redis`, so no service imports this
-package and `docker-compose.yml` starts no `nats` container. It stays generated, built and
+package and `docker-compose.yml` starts a `nats` container only under the `e2e` profile. It stays generated, built and
 unit-tested as the alternative broker — keep it working when changing the event bus.
 
 ## Dual nature
@@ -170,7 +170,7 @@ pnpm dev / test:watch / lint / format / format:generated / reset
 a real broker, since no service wires this package:
 
 ```bash
-docker run --rm -p 4222:4222 nats:latest -js
+pnpm docker:e2e          # from the root; or: docker run --rm -p 4222:4222 nats:2-alpine -js
 pnpm test:e2e
 ```
 

@@ -27,7 +27,8 @@ jobs:
     timeout-minutes: 30
 
     # Every e2e suite skips itself when its server is unreachable, so each one needs its server
-    # here, or the run is green without having tested anything.
+    # here, or the run is green without having tested anything. Locally, `pnpm docker:e2e` starts
+    # the same set.
     services:
       postgres:
         image: 'postgres:15-alpine'

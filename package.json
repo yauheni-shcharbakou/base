@@ -47,6 +47,10 @@
     "docker:local": "docker compose -f docker-compose.yml --profile local up --build",
     "docker:local:d": "docker compose -f docker-compose.yml --profile local up --build -d",
     "docker:db": "docker compose -f docker-compose.yml up -d postgres postgres-init redis",
+    "docker:db:stop": "docker compose -f docker-compose.yml stop postgres postgres-init redis",
+    "docker:e2e": "docker compose -f docker-compose.yml --profile e2e up -d --wait",
+    "docker:e2e:stop": "docker compose -f docker-compose.yml --profile e2e stop",
+    "e2e": "pnpm docker:e2e && (E2E_REQUIRE_SERVERS=1 pnpm test:e2e; code=$?; pnpm docker:e2e:stop; exit $code)",
     "docker": "docker compose -f docker-compose.yml --profile all up --build"
   },
   "devDependencies": {

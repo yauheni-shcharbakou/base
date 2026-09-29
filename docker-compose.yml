@@ -18,6 +18,7 @@ services:
     profiles:
       - local
       - all
+      - e2e
 
   postgres-init:
     image: postgres:15-alpine
@@ -51,22 +52,21 @@ services:
       - local
       - all
 
-  # nats:
-  #   image: nats:latest
-  #   restart: unless-stopped
-  #   container_name: base-nats
-  #   ports:
-  #     - '4222:4222'
-  #     - '8222:8222'
-  #   command: ['-js', '-m', '8222', '-sd', '/data', '--name', 'nats-node']
-  #   volumes:
-  #     - nats_data:/data
-  #   networks:
-  #     - private_network
-  #     - public_network
-  #   profiles:
-  #     - local
-  #     - all
+  # The broker of the dormant NATS JetStream transport (`@backend/event-bus-nats`). No service runs
+  # on it, so only the e2e profile starts it, for that package's suite — as CI does, JetStream on and
+  # no volume, so no stream outlives a run. 8222 is the monitoring endpoint.
+  nats:
+    image: nats:2-alpine
+    restart: unless-stopped
+    container_name: base-nats
+    ports:
+      - '4222:4222'
+      - '8222:8222'
+    command: ['-js', '-m', '8222']
+    networks:
+      - public_network
+    profiles:
+      - e2e
 
   redis:
     image: redis:8-alpine
@@ -83,6 +83,7 @@ services:
     profiles:
       - local
       - all
+      - e2e
 
   # Public tunnel to the host's backend.storage webhook listener, so Bunny Stream can deliver status
   # callbacks during local development. The domain is the account's static ngrok domain, so the
@@ -254,5 +255,4 @@ networks:
 
 volumes:
   postgres_data:
-  # nats_data:
   redis_data:
