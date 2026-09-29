@@ -1,12 +1,6 @@
 import { errorResponse } from '@/features/grpc/helpers/error-response';
-import { Metadata, status as GrpcStatus, type ServiceError } from '@grpc/grpc-js';
-
-const serviceError = (code: GrpcStatus, details: string): ServiceError =>
-  Object.assign(new Error(`${code} ${GrpcStatus[code]}: ${details}`), {
-    code,
-    details,
-    metadata: new Metadata(),
-  });
+import { createServiceError as serviceError } from '@/features/grpc/helpers/service-error';
+import { status as GrpcStatus } from '@grpc/grpc-js';
 
 describe('errorResponse', () => {
   let consoleError: jest.SpyInstance;

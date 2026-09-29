@@ -1,6 +1,8 @@
 'use server';
 
 import { authService } from '@/features/auth/services';
+import { runAction } from '@/features/grpc/helpers/run-action';
+import type { ActionResult } from '@/features/grpc/types';
 import type { ClientAuth } from '@frontend/proto';
 import { type AuthActionResponse, CheckResponse } from '@refinedev/core';
 import _ from 'lodash';
@@ -59,11 +61,8 @@ export async function logout(): Promise<AuthActionResponse> {
   };
 }
 
-export async function me(): Promise<ClientAuth.User | null> {
-  try {
-    return authService.getCurrentUser();
-  } catch (error) {
-    await authService.clearCookies();
-    return null;
-  }
+// Signed out is a 401 (no refresh token, or a refused one) or a 403 (not an admin), which the auth
+// provider's `getIdentity` reads as no identity.
+export async function me(): Promise<ActionResult<ClientAuth.User>> {
+  return runAction(() => authService.getCurrentUser());
 }

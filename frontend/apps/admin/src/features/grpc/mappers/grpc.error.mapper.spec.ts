@@ -1,14 +1,6 @@
-import { Metadata, status } from '@grpc/grpc-js';
+import { createServiceError as serviceError } from '@/features/grpc/helpers/service-error';
+import { status } from '@grpc/grpc-js';
 import { GrpcErrorMapper } from './grpc.error.mapper';
-
-// A rejection the way grpc-js builds one: an Error with the received status spread over it.
-const serviceError = (code: status, details: string) => {
-  return Object.assign(new Error(`${code} ${status[code]}: ${details}`), {
-    code,
-    details,
-    metadata: new Metadata(),
-  });
-};
 
 const mapper = new GrpcErrorMapper();
 

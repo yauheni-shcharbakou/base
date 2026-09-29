@@ -1,7 +1,9 @@
 import { getHeadersIp } from '@/common/helpers/request.helpers';
 import { ConfigService } from '@/common/services/config.service';
+import { sessionEndedError, toRefreshError } from '@/features/auth/helpers/session-error';
+import { createServiceError } from '@/features/grpc/helpers/service-error';
 import { ClientAuth, GrpcAuthPublicRepository, GrpcUserWebRepository } from '@frontend/proto';
-import { Metadata } from '@grpc/grpc-js';
+import { Metadata, status as GrpcStatus } from '@grpc/grpc-js';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies, headers } from 'next/headers';
 
@@ -103,18 +105,21 @@ export class AuthService {
     };
   }
 
+  // Throws a gRPC status, never a plain Error: `runAction` and `errorResponse` answer a missing or
+  // refused token with the 401 the auth provider reads as logged out, not with a 500.
   private async refreshAuthData(refreshToken?: string) {
     if (!refreshToken) {
-      throw new Error('Forbidden');
+      throw sessionEndedError('Refresh token is missing');
     }
 
-    const authData = await this.authRepository.refreshToken(
-      { refreshToken },
-      await this.getClientMetadata(),
-    );
+    const authData = await this.authRepository
+      .refreshToken({ refreshToken }, await this.getClientMetadata())
+      .catch((error: unknown) => {
+        throw toRefreshError(error);
+      });
 
     if (authData.user.role !== ClientAuth.UserRole.ADMIN) {
-      throw new Error('Forbidden');
+      throw createServiceError(GrpcStatus.PERMISSION_DENIED, 'Invalid role');
     }
 
     return this.setAuthCookies(authData);

@@ -1,16 +1,7 @@
+import { isServiceError } from '@/features/grpc/helpers/service-error';
 import type { ActionError } from '@/features/grpc/types';
-import { status as GrpcStatus, type ServiceError } from '@grpc/grpc-js';
+import { status as GrpcStatus } from '@grpc/grpc-js';
 import { HTTP_STATUS_BY_GRPC_STATUS } from '@packages/common';
-
-const isServiceError = (error: unknown): error is ServiceError => {
-  return (
-    error instanceof Error &&
-    'code' in error &&
-    'details' in error &&
-    typeof error.code === 'number' &&
-    typeof error.details === 'string'
-  );
-};
 
 // The canonical gRPC → HTTP table, shared with @backend/grpc. OK never rejects a call, so an error
 // claiming it is no status at all.
