@@ -1,6 +1,5 @@
 'use client';
 
-import { imageLoader } from '@/common/helpers';
 import { Card, Skeleton } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import Image from 'next/image';
@@ -22,7 +21,6 @@ export const ImagePreview: FC<Props> = ({ image }) => {
         src={`/api/files/${image.fileId}/open`}
         loading="lazy"
         style={{ objectFit: 'contain' }}
-        loader={imageLoader}
         fill
       />
     </Card>

@@ -1,15 +1,14 @@
 import { authService } from '@/features/auth/services';
 import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
-    const query = request.nextUrl.searchParams;
     const response = await fileGrpcRepository.getUrlMap({ id, ids: [] }, authMeta);
     const url = response.entries.get(id);
 
@@ -20,15 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    const redirectUrl = new URL(url);
-
-    if (query.size) {
-      query.forEach((value, key) => {
-        redirectUrl.searchParams.set(key, value);
-      });
-    }
-
-    return NextResponse.redirect(redirectUrl);
+    return NextResponse.redirect(url);
   } catch (error) {
     return errorResponse(error);
   }
