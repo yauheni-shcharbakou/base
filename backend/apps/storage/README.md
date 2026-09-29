@@ -55,8 +55,11 @@ env `BUNNY_STORAGE_CDN_ZONE` (served as `https://<name>.b-cdn.net`).
 - [x] `CDN token authentication`
 
 `Allowed domains`: set list with `player.mediadelivery.net` and your hosts — the admin's host
-included (`localhost` for the dev library): a folder view loads video thumbnails with an `<img>`
-from the admin's origin, and a request without an allowed referrer is refused
+included: a folder view loads video thumbnails with an `<img>` from the admin's origin, and a
+request without an allowed referrer is refused. An entry is matched with its port, so the dev library
+lists every port the admin runs on — `localhost:3336` (`ADMIN_PORT`) and `localhost:3100` (the
+admin's preview in `.claude/launch.json`); an admin on an unlisted port gets a 403 for every
+thumbnail, however it is signed
 ([ADR-0026](../../../docs/adr/0026-folder-listing-carries-signed-previews.md))
 
 `Token authentication key` => env `BUNNY_STREAM_CDN_PRIVATE_KEY`

@@ -57,7 +57,7 @@ listener serves is public**; the signature guard, not the router, is what limits
 
 ## Config / env
 
-`config.ts` declares `STORAGE_PENDING_FILE_TTL_HOURS`; everything else lives in the storage module's Bunny config — fourteen `BUNNY_STORAGE_*` / `BUNNY_STREAM_*` variables, eight of them required. Those plus the env of the packages it wires: [docs/env.md](../../../docs/env.md).
+`config.ts` declares `STORAGE_PENDING_FILE_TTL_HOURS`; everything else lives in the storage module's Bunny config — fourteen `BUNNY_STORAGE_*` / `BUNNY_STREAM_*` variables, nine of them required. Those plus the env of the packages it wires: [docs/env.md](../../../docs/env.md).
 
 ## Commands & gotchas
 

@@ -68,7 +68,8 @@ Rejected alternatives:
   URLs of one window expire together, so a view left open refetches the listing once a thumbnail
   fails. The expiry is readable in the URL.
 - **Video thumbnails depend on the Stream pull zone's referrer rules.** An `<img>` sends the admin's
-  origin as `Referer`, which the allowed referrers must list (`localhost` for the dev library).
+  origin as `Referer`, which the allowed referrers must list — port included, so the dev library
+  names each port the admin runs on (`localhost:3336`, `localhost:3100`).
   "Block direct url file access" refuses an empty one, so a `no-referrer` policy on the admin would
   break them.
 - **The thumbnail name is Bunny's default, `thumbnail.jpg`.** A custom thumbnail set on the provider
