@@ -1,4 +1,3 @@
-import { getRequestIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
 import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { videoGrpcRepository } from '@/features/grpc/repositories';
@@ -10,9 +9,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
-    const ip = getRequestIp(request);
     const query = request.nextUrl.searchParams;
-    const response = await videoGrpcRepository.getUrlMap({ id, ids: [], ip }, authMeta);
+    const response = await videoGrpcRepository.getUrlMap({ id, ids: [] }, authMeta);
     const url = response.entries.get(id);
 
     if (!url) {

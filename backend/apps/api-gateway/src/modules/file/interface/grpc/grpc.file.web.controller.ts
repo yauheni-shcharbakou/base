@@ -21,18 +21,18 @@ export class GrpcFileWebController implements GrpcFileWebServiceController {
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getUrlMap(
-    @Payload() { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() request: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestCommon.StringMap> {
-    return this.fileService.getUrlMap(query, ip, userId);
+    return this.fileService.getUrlMap(request, userId);
   }
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getDownloadMap(
-    @Payload() { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() request: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.DownloadMap> {
-    return this.fileService.getDownloadMap(query, ip, userId);
+    return this.fileService.getDownloadMap(request, userId);
   }
 
   @ValidateGrpcPayload(FileCreateOneWebDto)

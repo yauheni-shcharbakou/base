@@ -12,19 +12,15 @@ export class FileProxyService {
     private readonly fileMapper: FileMapper,
   ) {}
 
-  getUrlMap(query: NestCommon.Query, ip?: string, userId?: string): Promise<NestCommon.StringMap> {
+  getUrlMap(query: NestCommon.Query, userId?: string): Promise<NestCommon.StringMap> {
     return firstValueFrom(
-      this.fileClient.getUrlMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
+      this.fileClient.getUrlMap({ ...query, userId }).pipe(GrpcRxPipe.rpcException),
     );
   }
 
-  getDownloadMap(
-    query: NestCommon.Query,
-    ip?: string,
-    userId?: string,
-  ): Promise<NestStorage.DownloadMap> {
+  getDownloadMap(query: NestCommon.Query, userId?: string): Promise<NestStorage.DownloadMap> {
     return firstValueFrom(
-      this.fileClient.getDownloadMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
+      this.fileClient.getDownloadMap({ ...query, userId }).pipe(GrpcRxPipe.rpcException),
     );
   }
 

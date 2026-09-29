@@ -11,23 +11,21 @@ export class FileGetUrlMapUseCase {
     private readonly storageFileService: StorageFileService,
   ) {}
 
-  async execute(query: Partial<NestStorage.FileQuery>, ip?: string): Promise<Map<string, string>> {
+  async execute(query: Partial<NestStorage.FileQuery>): Promise<Map<string, string>> {
     const files = await this.fileRepository.getMany(query);
     const urlMap = new Map<string, string>();
 
-    await Promise.all(
-      _.map(files, async (file) => {
-        if (!file.providerId) {
-          return;
-        }
+    _.forEach(files, (file) => {
+      if (!file.providerId) {
+        return;
+      }
 
-        const url = await this.storageFileService.getFileSignedUrl(file.providerId, ip);
+      const url = this.storageFileService.getFileSignedUrl(file.providerId);
 
-        if (url.isRight()) {
-          urlMap.set(file.id, url.value);
-        }
-      }),
-    );
+      if (url.isRight()) {
+        urlMap.set(file.id, url.value);
+      }
+    });
 
     return urlMap;
   }

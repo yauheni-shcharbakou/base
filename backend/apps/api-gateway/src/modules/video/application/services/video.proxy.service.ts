@@ -17,19 +17,15 @@ export class VideoProxyService {
     private readonly videoMapper: VideoMapper,
   ) {}
 
-  getUrlMap(query: NestCommon.Query, ip?: string, userId?: string): Promise<NestCommon.StringMap> {
+  getUrlMap(query: NestCommon.Query, userId?: string): Promise<NestCommon.StringMap> {
     return firstValueFrom(
-      this.videoClient.getUrlMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
+      this.videoClient.getUrlMap({ ...query, userId }).pipe(GrpcRxPipe.rpcException),
     );
   }
 
-  getDownloadMap(
-    query: NestCommon.Query,
-    ip?: string,
-    userId?: string,
-  ): Promise<NestStorage.DownloadMap> {
+  getDownloadMap(query: NestCommon.Query, userId?: string): Promise<NestStorage.DownloadMap> {
     return firstValueFrom(
-      this.videoClient.getDownloadMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
+      this.videoClient.getDownloadMap({ ...query, userId }).pipe(GrpcRxPipe.rpcException),
     );
   }
 

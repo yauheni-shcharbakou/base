@@ -25,13 +25,9 @@ export abstract class StorageVideoService {
    */
   abstract getVideo(providerId: string): Promise<Either<Error, StorageVideo>>;
   abstract getList(page: number, limit: number): Promise<StorageVideoList>;
-  abstract getPlayerUrl(
-    providerId: string,
-    ip?: string,
-  ): Either<Error, string> | Promise<Either<Error, string>>;
+  abstract getPlayerUrl(providerId: string): Either<Error, string> | Promise<Either<Error, string>>;
   abstract getDownloadUrl(
     providerId: string,
-    ip?: string,
   ): Either<Error, string> | Promise<Either<Error, string>>;
 }
 

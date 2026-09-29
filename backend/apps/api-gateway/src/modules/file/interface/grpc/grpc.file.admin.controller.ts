@@ -19,13 +19,13 @@ export class GrpcFileAdminController implements GrpcFileAdminServiceController {
   constructor(private readonly fileService: FileProxyService) {}
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
-  getUrlMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestCommon.StringMap> {
-    return this.fileService.getUrlMap(query, ip);
+  getUrlMap(request: NestStorage.GetUrlMapShort): Promise<NestCommon.StringMap> {
+    return this.fileService.getUrlMap(request);
   }
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
-  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestStorage.DownloadMap> {
-    return this.fileService.getDownloadMap(query, ip);
+  getDownloadMap(request: NestStorage.GetUrlMapShort): Promise<NestStorage.DownloadMap> {
+    return this.fileService.getDownloadMap(request);
   }
 
   @ValidateGrpcPayload(IdFieldDto)

@@ -25,14 +25,12 @@ import { FILE_S3_CLIENT } from '../constants/client.tokens';
 export class BunnyStorageFileServiceImpl implements StorageFileService {
   private readonly logger = new Logger(BunnyStorageFileServiceImpl.name);
   private readonly storageConfig: BunnyStorageConfig['bunny']['storage'];
-  private readonly isDev: boolean;
 
   constructor(
     private readonly configService: ConfigService<BunnyStorageConfig>,
     @Inject(FILE_S3_CLIENT) private readonly s3Client: S3Client,
   ) {
     this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
-    this.isDev = this.configService.getOrThrow('isDevelopment', { infer: true });
   }
 
   createFile(data: StorageFileCreateData): Either<InternalServerErrorException, string> {
@@ -105,23 +103,15 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
     }
   }
 
-  getFileSignedUrl(providerId: string, ip?: string): Either<Error, string> {
+  // No client address goes into the token: the browser reaches the CDN over its own route, which
+  // the server that signs never sees (ADR-0025).
+  getFileSignedUrl(providerId: string): Either<Error, string> {
     try {
       const path = `/${providerId}`;
       const { url: cdnUrl, privateKey, expiresInMinutes } = this.storageConfig.cdn;
 
       const expires = moment().add(expiresInMinutes, 'minutes').unix();
-
-      let hashableBase = privateKey + path + expires;
-
-      if (!this.isDev) {
-        if (!ip) {
-          throw new Error('Unsupported IP address');
-        }
-
-        hashableBase += ip;
-      }
-
+      const hashableBase = privateKey + path + expires;
       const md5String = createHash('md5').update(hashableBase).digest('binary');
 
       const token = Buffer.from(md5String, 'binary')

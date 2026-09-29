@@ -27,12 +27,12 @@ export class GrpcFileController implements GrpcFileServiceController {
     private readonly deleteUseCase: FileDeleteUseCase,
   ) {}
 
-  getUrlMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
-    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
+  getUrlMap(request: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
+    return from(this.getUrlMapUseCase.execute(request)).pipe(GrpcRxPipe.toMapEntries);
   }
 
-  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
-    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
+  getDownloadMap(request: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
+    return from(this.getDownloadMapUseCase.execute(request)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getById(request: NestCommon.IdField): Observable<NestStorage.File> {

@@ -37,7 +37,7 @@ const getRefererOrigin = (referer: string | null): string | null => {
  * The browser's `Referer` goes on as its origin. The Stream pull zone blocks a request with no
  * referrer ("Block direct url file access") and checks the rest against its allowed referrers
  * (`backend/apps/storage/README.md`), so without it every video download is a 403. Signed token
- * auth reads the URL alone, and IP validation the connection's own address — no header of ours.
+ * auth reads the URL alone — no header of ours.
  */
 export const toUpstreamHeaders = (requestHeaders: Headers): Headers => {
   const headers = new Headers({ 'accept-encoding': 'identity' });

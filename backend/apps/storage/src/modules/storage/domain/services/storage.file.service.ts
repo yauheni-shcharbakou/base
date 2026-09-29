@@ -17,10 +17,11 @@ export abstract class StorageFileService {
     providerId: string,
   ): Promise<Either<InternalServerErrorException, number | null>>;
   abstract deleteFile(providerId: string): Promise<Either<InternalServerErrorException, boolean>>;
-  abstract getFileSignedUrl(
-    providerId: string,
-    ip?: string,
-  ): Either<Error, string> | Promise<Either<Error, string>>;
+  /**
+   * A time-limited CDN URL, bound to no client address: whoever holds it may read the object until
+   * it expires.
+   */
+  abstract getFileSignedUrl(providerId: string): Either<Error, string>;
 }
 
 export interface StorageFileCreateData extends NestStorage.FileCreate {

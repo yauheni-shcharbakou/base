@@ -22,15 +22,19 @@ message StorageManyMeta {
   string parent = 2;
 }
 
+// In both URL-map requests, field 3 carried the client's address — a signed read URL is bound to
+// none (ADR-0025).
 message GetUrlMap {
   optional string id = 1;
   repeated string ids = 2;
-  optional string ip = 3;
+  reserved 3;
+  reserved "ip";
   optional string userId = 4;
 }
 
 message GetUrlMapShort {
   optional string id = 1;
   repeated string ids = 2;
-  optional string ip = 3;
+  reserved 3;
+  reserved "ip";
 }

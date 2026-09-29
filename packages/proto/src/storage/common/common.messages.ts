@@ -28,15 +28,17 @@ export interface StorageManyMeta {
   parent: string;
 }
 
+/**
+ * In both URL-map requests, field 3 carried the client's address — a signed read URL is bound to
+ * none (ADR-0025).
+ */
 export interface GetUrlMap {
   id?: string;
   ids: string[];
-  ip?: string;
   userId?: string;
 }
 
 export interface GetUrlMapShort {
   id?: string;
   ids: string[];
-  ip?: string;
 }

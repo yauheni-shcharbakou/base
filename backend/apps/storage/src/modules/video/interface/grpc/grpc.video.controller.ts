@@ -27,12 +27,12 @@ export class GrpcVideoController implements GrpcVideoServiceController {
     private readonly createManyUseCase: VideoCreateManyUseCase,
   ) {}
 
-  getUrlMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
-    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
+  getUrlMap(request: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
+    return from(this.getUrlMapUseCase.execute(request)).pipe(GrpcRxPipe.toMapEntries);
   }
 
-  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
-    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
+  getDownloadMap(request: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
+    return from(this.getDownloadMapUseCase.execute(request)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getOne(request: NestStorage.VideoQuery): Observable<NestStorage.VideoPopulated> {

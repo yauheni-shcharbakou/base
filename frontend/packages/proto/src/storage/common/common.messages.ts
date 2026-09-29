@@ -30,17 +30,19 @@ export interface StorageManyMeta {
   parent: string;
 }
 
+/**
+ * In both URL-map requests, field 3 carried the client's address — a signed read URL is bound to
+ * none (ADR-0025).
+ */
 export interface GetUrlMap {
   id?: string;
   ids: string[];
-  ip?: string;
   userId?: string;
 }
 
 export interface GetUrlMapShort {
   id?: string;
   ids: string[];
-  ip?: string;
 }
 
 function createBaseDownloadData(): DownloadData {
@@ -456,7 +458,7 @@ export const StorageManyMeta: MessageFns<StorageManyMeta> = {
 };
 
 function createBaseGetUrlMap(): GetUrlMap {
-  return { id: undefined, ids: [], ip: undefined, userId: undefined };
+  return { id: undefined, ids: [], userId: undefined };
 }
 
 export const GetUrlMap: MessageFns<GetUrlMap> = {
@@ -466,9 +468,6 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     }
     for (const v of message.ids) {
       writer.uint32(18).string(v!);
-    }
-    if (message.ip !== undefined) {
-      writer.uint32(26).string(message.ip);
     }
     if (message.userId !== undefined) {
       writer.uint32(34).string(message.userId);
@@ -499,14 +498,6 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
           message.ids.push(reader.string());
           continue;
         }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.ip = reader.string();
-          continue;
-        }
         case 4: {
           if (tag !== 34) {
             break;
@@ -530,7 +521,6 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
       ids: globalThis.Array.isArray(object?.ids)
         ? object.ids.map((e: any) => globalThis.String(e))
         : [],
-      ip: isSet(object.ip) ? globalThis.String(object.ip) : undefined,
       userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
     };
   },
@@ -542,9 +532,6 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     }
     if (message.ids?.length) {
       obj.ids = message.ids;
-    }
-    if (message.ip !== undefined) {
-      obj.ip = message.ip;
     }
     if (message.userId !== undefined) {
       obj.userId = message.userId;
@@ -559,14 +546,13 @@ export const GetUrlMap: MessageFns<GetUrlMap> = {
     const message = createBaseGetUrlMap();
     message.id = object.id ?? undefined;
     message.ids = object.ids?.map((e) => e) || [];
-    message.ip = object.ip ?? undefined;
     message.userId = object.userId ?? undefined;
     return message;
   },
 };
 
 function createBaseGetUrlMapShort(): GetUrlMapShort {
-  return { id: undefined, ids: [], ip: undefined };
+  return { id: undefined, ids: [] };
 }
 
 export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
@@ -576,9 +562,6 @@ export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
     }
     for (const v of message.ids) {
       writer.uint32(18).string(v!);
-    }
-    if (message.ip !== undefined) {
-      writer.uint32(26).string(message.ip);
     }
     return writer;
   },
@@ -606,14 +589,6 @@ export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
           message.ids.push(reader.string());
           continue;
         }
-        case 3: {
-          if (tag !== 26) {
-            break;
-          }
-
-          message.ip = reader.string();
-          continue;
-        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -629,7 +604,6 @@ export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
       ids: globalThis.Array.isArray(object?.ids)
         ? object.ids.map((e: any) => globalThis.String(e))
         : [],
-      ip: isSet(object.ip) ? globalThis.String(object.ip) : undefined,
     };
   },
 
@@ -641,9 +615,6 @@ export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
     if (message.ids?.length) {
       obj.ids = message.ids;
     }
-    if (message.ip !== undefined) {
-      obj.ip = message.ip;
-    }
     return obj;
   },
 
@@ -654,7 +625,6 @@ export const GetUrlMapShort: MessageFns<GetUrlMapShort> = {
     const message = createBaseGetUrlMapShort();
     message.id = object.id ?? undefined;
     message.ids = object.ids?.map((e) => e) || [];
-    message.ip = object.ip ?? undefined;
     return message;
   },
 };

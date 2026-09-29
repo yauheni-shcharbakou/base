@@ -20,13 +20,13 @@ export class GrpcVideoAdminController implements GrpcVideoAdminServiceController
   constructor(private readonly videoService: VideoProxyService) {}
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
-  getUrlMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestCommon.StringMap> {
-    return this.videoService.getUrlMap(query, ip);
+  getUrlMap(request: NestStorage.GetUrlMapShort): Promise<NestCommon.StringMap> {
+    return this.videoService.getUrlMap(request);
   }
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
-  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMapShort): Promise<NestStorage.DownloadMap> {
-    return this.videoService.getDownloadMap(query, ip);
+  getDownloadMap(request: NestStorage.GetUrlMapShort): Promise<NestStorage.DownloadMap> {
+    return this.videoService.getDownloadMap(request);
   }
 
   @ValidateGrpcPayload(IdFieldDto)

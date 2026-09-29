@@ -1,4 +1,3 @@
-import { getServerPublicIp } from '@/common/helpers';
 import { authService } from '@/features/auth/services';
 import { errorResponse } from '@/features/grpc/helpers/error-response';
 import { fileGrpcRepository } from '@/features/grpc/repositories';
@@ -14,8 +13,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const authMeta = await authService.getAuthMetadata();
     const id = (await params).id;
-    const ip = await getServerPublicIp();
-    const response = await fileGrpcRepository.getDownloadMap({ id, ids: [], ip }, authMeta);
+    const response = await fileGrpcRepository.getDownloadMap({ id, ids: [] }, authMeta);
     const downloadData = response.entries.get(id);
 
     if (!downloadData) {

@@ -22,18 +22,18 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getUrlMap(
-    @Payload() { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() request: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestCommon.StringMap> {
-    return this.videoService.getUrlMap(query, ip, userId);
+    return this.videoService.getUrlMap(request, userId);
   }
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getDownloadMap(
-    @Payload() { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() request: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.DownloadMap> {
-    return this.videoService.getDownloadMap(query, ip, userId);
+    return this.videoService.getDownloadMap(request, userId);
   }
 
   @ValidateGrpcPayload(VideoCreateOneWebDto)
