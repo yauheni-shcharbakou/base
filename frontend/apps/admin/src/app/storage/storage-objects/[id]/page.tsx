@@ -10,16 +10,21 @@ import {
 } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/storage/components';
-import { getFileSize, getFileUploadStatusColor } from '@/features/storage/helpers';
+import {
+  getFileSize,
+  getFileUploadStatusColor,
+  getFolderContentPath,
+} from '@/features/storage/helpers';
 import { ImagePreview } from '@/features/image/components';
 import { VideoPlayer } from '@/features/video/components';
 import { getVideoDuration } from '@/features/video/helpers';
-import { ExpandMore, OpenInBrowserOutlined } from '@mui/icons-material';
+import { ExpandMore, FolderOpenOutlined, OpenInBrowserOutlined } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import React, { useMemo } from 'react';
 import { BrowserStorage } from '@packages/proto';
+import NextLink from 'next/link';
 
 export default function StorageObjectShow() {
   const { isLoading, record } = useResourceShow<BrowserStorage.StorageObjectPopulated>();
@@ -70,6 +75,22 @@ export default function StorageObjectShow() {
     <AppShow
       isLoading={isLoading || !record?.id}
       headerButtons={({ defaultButtons }) => {
+        if (record?.isFolder) {
+          return (
+            <>
+              <Button
+                variant="text"
+                startIcon={<FolderOpenOutlined />}
+                component={NextLink}
+                href={getFolderContentPath(record.id)}
+              >
+                Open folder
+              </Button>
+              {defaultButtons}
+            </>
+          );
+        }
+
         if (!isFileReady) {
           return <>{defaultButtons}</>;
         }

@@ -1185,6 +1185,9 @@ importers:
       '@sweet-monads/either':
         specifier: 'catalog:'
         version: 3.3.1
+      '@tanstack/react-query':
+        specifier: 5.101.2
+        version: 5.101.2(react@19.2.4)
       axios:
         specifier: 1.16.0
         version: 1.16.0(debug@4.4.3)
@@ -1200,6 +1203,9 @@ importers:
       next:
         specifier: 15.5.18
         version: 15.5.18(@babel/core@7.29.7)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      player.js:
+        specifier: 0.1.0
+        version: 0.1.0
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -7209,6 +7215,9 @@ packages:
   pkg-up@3.1.0:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
+
+  player.js@0.1.0:
+    resolution: {integrity: sha512-pzWPiqw5b4kQCYhXyoLOZWidWcSySVJTqciDOtoH/MzY97piKnUme494dfczCAC7FLkMSPMH2HfhNJU9D/lVFw==}
 
   pluralize@8.0.0:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
@@ -15059,6 +15068,8 @@ snapshots:
   pkg-up@3.1.0:
     dependencies:
       find-up: 3.0.0
+
+  player.js@0.1.0: {}
 
   pluralize@8.0.0: {}
 

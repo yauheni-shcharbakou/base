@@ -26,6 +26,10 @@ export class PathProvider {
     return `/${database}/${resource}/${id}/edit`;
   }
 
+  getContentPath(database: Database, resource: string, id: string) {
+    return `/${database}/${resource}/${id}/content`;
+  }
+
   private getEditPathPattern(database: Database, resource: string) {
     return `/${database}/${resource}/:id/edit`;
   }

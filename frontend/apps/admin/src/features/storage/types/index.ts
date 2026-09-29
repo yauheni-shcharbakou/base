@@ -38,3 +38,17 @@ export type StorageUploadItem = {
   // skip creation — until those credentials expire, when the item is created afresh.
   entity?: CreatedUploadEntity;
 };
+
+/** A page of a folder, as the folder browser asks for it. */
+export type FolderContentRequest = {
+  folderId: string;
+  // The folder's owner, when an earlier listing told it. Without it the action reads the folder
+  // first: the admin `getFolderContent` scopes by owner as well as by folder.
+  userId?: string;
+  sortBy: BrowserStorage.StorageObjectSortField;
+  sortOrder: BrowserCommon.Sort;
+  page: number;
+  pageSize: number;
+  search?: string;
+  types: BrowserStorage.StorageObjectType[];
+};

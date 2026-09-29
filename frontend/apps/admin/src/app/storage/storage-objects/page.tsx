@@ -1,7 +1,9 @@
 'use client';
 
-import { ResourceListPage } from '@/common/components';
+import { ResourceListPage, RowActionButton } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
+import { getFolderContentPath } from '@/features/storage/helpers';
+import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
@@ -32,7 +34,15 @@ export default function StorageObjectList() {
         .enum('type', { maxWidth: 100 })
         .boolean('isPublic', { maxWidth: 100 })
         .date('createdAt')
-        .actions()
+        .actions({
+          width: 176,
+          prepend: (row) =>
+            row.isFolder && (
+              <RowActionButton title="Open folder" href={getFolderContentPath(row.id)}>
+                <FolderOpenOutlined fontSize="small" />
+              </RowActionButton>
+            ),
+        })
         .build(),
     [],
   );
