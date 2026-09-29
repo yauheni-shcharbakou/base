@@ -16,10 +16,11 @@ import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestj
 import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
 import moment from 'moment';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
 import { FILE_S3_CLIENT } from '../constants/client.tokens';
+import { signBunnyCdnUrl } from '../utils/bunny.cdn-token';
 
 @Injectable()
 export class BunnyStorageFileServiceImpl implements StorageFileService {
@@ -103,29 +104,13 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
     }
   }
 
-  // No client address goes into the token: the browser reaches the CDN over its own route, which
-  // the server that signs never sees (ADR-0025).
   getFileSignedUrl(providerId: string): Either<Error, string> {
     try {
-      const path = `/${providerId}`;
-      const { url: cdnUrl, privateKey, expiresInMinutes } = this.storageConfig.cdn;
+      const { url, privateKey, expiresInMinutes } = this.storageConfig.cdn;
 
-      const expires = moment().add(expiresInMinutes, 'minutes').unix();
-      const hashableBase = privateKey + path + expires;
-      const md5String = createHash('md5').update(hashableBase).digest('binary');
-
-      const token = Buffer.from(md5String, 'binary')
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-
-      const url = new URL(cdnUrl + path);
-
-      url.searchParams.set('token', token);
-      url.searchParams.set('expires', expires.toString());
-
-      return right(url.toString());
+      return right(
+        signBunnyCdnUrl({ baseUrl: url, path: `/${providerId}`, privateKey, expiresInMinutes }),
+      );
     } catch (error) {
       return left(error);
     }

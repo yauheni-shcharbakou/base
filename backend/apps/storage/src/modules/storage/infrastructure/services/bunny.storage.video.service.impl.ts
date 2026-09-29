@@ -16,6 +16,7 @@ import { createHash } from 'node:crypto';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
 import { VIDEO_HTTP_CLIENT } from '../constants/client.tokens';
 import { BunnyUpdateBody, BunnyVideo, BunnyVideoList } from '../types/bunny.types';
+import { signBunnyCdnUrl } from '../utils/bunny.cdn-token';
 
 @Injectable()
 export class BunnyStorageVideoServiceImpl implements StorageVideoService {
@@ -213,23 +214,15 @@ export class BunnyStorageVideoServiceImpl implements StorageVideoService {
       });
 
       const maxResolution = _.max(resolutions);
-      const path = `/${providerId}/play_${maxResolution}p.mp4`;
-      const expires = moment().add(cdn.expiresInMinutes, 'minutes').unix();
-      const hashableBase = cdn.privateKey + path + expires;
-      const md5String = createHash('md5').update(hashableBase).digest('binary');
 
-      const token = Buffer.from(md5String, 'binary')
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-
-      const url = new URL(cdn.url + path);
-
-      url.searchParams.set('token', token);
-      url.searchParams.set('expires', expires.toString());
-
-      return right(url.toString());
+      return right(
+        signBunnyCdnUrl({
+          baseUrl: cdn.url,
+          path: `/${providerId}/play_${maxResolution}p.mp4`,
+          privateKey: cdn.privateKey,
+          expiresInMinutes: cdn.expiresInMinutes,
+        }),
+      );
     } catch (error) {
       return left(error);
     }

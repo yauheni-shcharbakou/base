@@ -249,19 +249,23 @@ holds the role, and never touches one that exists.
 | `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES` | number ≥ 1, ≤ 10_080                                          | `60`         | `bunny.storage.config.ts` |
 | `BUNNY_STORAGE_CDN_ZONE`                  | string                                                        | **required** | `bunny.storage.config.ts` |
 | `BUNNY_STORAGE_CDN_PRIVATE_KEY`           | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`    | number                                                        | `10`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`    | number ≥ 1                                                    | `10`         | `bunny.storage.config.ts` |
 | `BUNNY_STREAM_API_KEY`                    | string                                                        | **required** | `bunny.storage.config.ts` |
 | `BUNNY_STREAM_READ_ONLY_API_KEY`          | string                                                        | **required** | `bunny.storage.config.ts` |
 | `BUNNY_STREAM_LIBRARY_ID`                 | string                                                        | **required** | `bunny.storage.config.ts` |
 | `BUNNY_STREAM_CDN_ZONE`                   | string                                                        | **required** | `bunny.storage.config.ts` |
 | `BUNNY_STREAM_CDN_PRIVATE_KEY`            | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`     | number                                                        | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`     | number ≥ 1                                                    | `60`         | `bunny.storage.config.ts` |
 | `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`     | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
 
 <!-- env-table:end -->
 
 Two Bunny products, credentialed separately: **Storage** (files) and **Stream** (video). The CDN
-private keys sign time-limited URLs, expiring after the matching `*_EXPIRES_IN_MINUTES`.
+private keys sign time-limited URLs, bound to no client address. A pull zone URL's expiry is rounded
+up to a multiple of the matching `*_CDN_EXPIRES_IN_MINUTES`: it lives between one and two of them,
+and every URL signed for an object within one window is the same string, so a browser reuses what
+it fetched. The Stream embed-player link expires exactly `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES` after
+it is signed.
 Storage is written over its S3-compatible API, which Bunny enables only on a zone created with it:
 `BUNNY_STORAGE_ZONE` is that zone's name (bucket and access key id), `BUNNY_STORAGE_API_KEY` its
 password, and `BUNNY_STORAGE_CDN_ZONE` the pull zone in front of it — a separate name, since the

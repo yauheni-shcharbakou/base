@@ -18,7 +18,9 @@ const env = validateEnv({
   // The pull zone serving the storage zone — its own name, not necessarily the storage zone's.
   BUNNY_STORAGE_CDN_ZONE: zod.string(),
   BUNNY_STORAGE_CDN_PRIVATE_KEY: zod.string(),
-  BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES: zod.coerce.number().default(10),
+  // A signed read URL's lifetime, and the window its expiry is rounded up to: a URL lives between
+  // one and two of these, and URLs signed within one window are identical.
+  BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES: zod.coerce.number().min(1).default(10),
 
   BUNNY_STREAM_API_KEY: zod.string(),
   BUNNY_STREAM_READ_ONLY_API_KEY: zod.string(),
@@ -26,7 +28,7 @@ const env = validateEnv({
 
   BUNNY_STREAM_CDN_ZONE: zod.string(),
   BUNNY_STREAM_CDN_PRIVATE_KEY: zod.string(),
-  BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES: zod.coerce.number().default(60),
+  BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES: zod.coerce.number().min(1).default(60),
 
   // Bunny requires a TUS authorization window of at least an hour, and refuses the upload once
   // it passes — a resumed upload is re-signed, never extended.
