@@ -747,8 +747,6 @@ describe('storage-object tree against Postgres', () => {
     const names = async (request: Partial<NestStorage.StorageObjectGetFolderContent> = {}) =>
       (await content(request)).unwrap().items.map((item) => item.name);
 
-    // Lower-case names only: the musl of the alpine image compares bytes and the glibc of
-    // production does not, so 'B' and 'a' would come in a different order in each.
     withDb('lists folders first, then by name, whichever way the name sorts', async () => {
       await createNamedLeaf('b.bin');
       await createFolder('b', root);
@@ -763,6 +761,36 @@ describe('storage-object tree against Postgres', () => {
         'a.bin',
       ]);
     });
+
+    // The column's ICU collation, not the server's libc: the musl of the alpine image here and in
+    // CI would put every capital first and 'É' after 'z', and 'file10' before 'file2' on any libc.
+    // Fails as well once a retyped column has lost its collation.
+    withDb(
+      'orders names by letter whatever their case or accent, and numbers by value',
+      async () => {
+        for (const name of [
+          'zeta.bin',
+          'B2.bin',
+          'Été.bin',
+          'a10.bin',
+          'b.bin',
+          'A1.bin',
+          'a2.bin',
+        ]) {
+          await createNamedLeaf(name);
+        }
+
+        assert.deepEqual(await names(), [
+          'A1.bin',
+          'a2.bin',
+          'a10.bin',
+          'b.bin',
+          'B2.bin',
+          'Été.bin',
+          'zeta.bin',
+        ]);
+      },
+    );
 
     withDb('pages the content and counts all of it', async () => {
       for (const name of ['a', 'b', 'c', 'd', 'e']) {

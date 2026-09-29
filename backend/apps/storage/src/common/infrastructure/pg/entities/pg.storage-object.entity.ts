@@ -90,6 +90,10 @@ export class PgStorageObjectEntity
   // No single-column index on `name` or the flags below: none is selective on its own, and an
   // index on a column the subtree `UPDATE`s rewrite (`is_public`, `is_deleted`) rules out a HOT
   // update for every row they touch. Names are found through the per-folder unique index.
+  //
+  // The column is `collate "natural_order"` (ICU, numbers by value), set by a hand-written migration
+  // no property option can express. A generated `alter column "name" type …` carries no `collate`
+  // and silently resets it to the default: add `collate "natural_order"` to any such statement.
   @Property()
   name: string;
 
