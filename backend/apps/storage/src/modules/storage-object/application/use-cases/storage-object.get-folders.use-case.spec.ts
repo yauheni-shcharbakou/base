@@ -18,13 +18,13 @@ describe('StorageObjectGetFoldersUseCase', () => {
     useCase = new StorageObjectGetFoldersUseCase(repository as unknown as StorageObjectRepository);
   });
 
-  it('lists every folder of the user with its path', async () => {
+  it('lists every live folder of the user with its path', async () => {
     const result = await useCase.execute({ userId: 'user-1' });
 
     expect(result.isRight() && result.value).toBe(folders);
     expect(repository.getAllChildrenIds).not.toHaveBeenCalled();
     expect(repository.getMany).toHaveBeenCalledWith(
-      { userId: 'user-1', isFolder: true },
+      { userId: 'user-1', isFolder: true, isDeleted: false },
       { populate: ['folderPath'] },
     );
   });
@@ -34,7 +34,7 @@ describe('StorageObjectGetFoldersUseCase', () => {
     await useCase.execute({ userId: 'user-1', excludeChildrenOf: 'moved' });
 
     expect(repository.getMany).toHaveBeenCalledWith(
-      { userId: 'user-1', isFolder: true, excludeIds: ['child', 'moved'] },
+      { userId: 'user-1', isFolder: true, isDeleted: false, excludeIds: ['child', 'moved'] },
       { populate: ['folderPath'] },
     );
   });

@@ -13,9 +13,11 @@ export class StorageObjectGetFoldersUseCase {
   async execute(
     request: NestStorage.StorageObjectGetFolders,
   ): Promise<Either<Error, NestStorage.StorageObjectPopulated[]>> {
+    // A deleted folder waits for the cleanup cron, and a placement into it is refused: not a target.
     const query: StorageObjectQuery = {
       userId: request.userId,
       isFolder: true,
+      isDeleted: false,
     };
 
     // The picker for a move leaves out the folder and its subtree. If the walk fails, the call
