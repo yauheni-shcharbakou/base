@@ -1,5 +1,6 @@
 {
-  "model": "claude-opus-5.5",
+  "model": "claude-opus-5-5",
+  "plansDirectory": ".claude/plans",
   "permissions": {
     "defaultMode": "acceptEdits",
     "allow": ["Bash(pnpm:*)", "Bash(git:*)"],
@@ -43,7 +44,8 @@
   "env": {
     "ENABLE_TOOL_SEARCH": "auto:5",
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5-5",
+    "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1",
     "DISABLE_TELEMETRY": "1",
     "DISABLE_ERROR_REPORTING": "1"
   },
