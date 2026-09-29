@@ -1,8 +1,9 @@
+import { getHeadersIp } from '@/common/helpers/request.helpers';
 import { ConfigService } from '@/common/services/config.service';
 import { ClientAuth, GrpcAuthPublicRepository, GrpcUserWebRepository } from '@frontend/proto';
 import { Metadata } from '@grpc/grpc-js';
 import { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export class AuthService {
   private readonly cookieConfig: Partial<ResponseCookie>;
@@ -39,6 +40,19 @@ export class AuthService {
       },
       invalidRole,
     };
+  }
+
+  // The gateway rate-limits a call without a user by this address; every call it gets comes
+  // from this server, so without it all visitors would share one limit.
+  private async getClientMetadata() {
+    const meta = new Metadata();
+    const clientIp = getHeadersIp(await headers());
+
+    if (clientIp) {
+      meta.set('x-client-ip', clientIp);
+    }
+
+    return meta;
   }
 
   private async setAuthCookies(authData: ClientAuth.AuthData) {
@@ -94,7 +108,10 @@ export class AuthService {
       throw new Error('Forbidden');
     }
 
-    const authData = await this.authRepository.refreshToken({ refreshToken });
+    const authData = await this.authRepository.refreshToken(
+      { refreshToken },
+      await this.getClientMetadata(),
+    );
 
     if (authData.user.role !== ClientAuth.UserRole.ADMIN) {
       throw new Error('Forbidden');
@@ -138,7 +155,7 @@ export class AuthService {
   }
 
   async login(data: ClientAuth.AuthLogin) {
-    const authData = await this.authRepository.login(data);
+    const authData = await this.authRepository.login(data, await this.getClientMetadata());
     await this.setAuthCookies(authData);
   }
 

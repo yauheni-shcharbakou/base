@@ -4,7 +4,7 @@ Guidance for working inside `backend/apps/api-gateway`. The general hexagonal/us
 
 ## What this service is
 
-The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). `ThrottlerModule` rate-limits (100 / 60s). It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency); it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
+The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). gRPC unary calls are rate-limited (see *Rate limiting* below); HTTP has no controllers, only Swagger UI, and is not limited. It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency); it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
 
 ## Layers (two, by design)
 
@@ -36,6 +36,28 @@ There is **no `grpc-access` module** — authorization is the global `CommonModu
 - Controller decorators (`common/interface/grpc/decorators/grpc.controller.decorator.ts`): `@PublicGrpcController()` (skips auth), `@DefaultGrpcController()` (authenticated — `GrpcAccessUnaryGuard` reads the `access-token` gRPC metadata), `@AdminGrpcController()` (additionally requires `UserRole.ADMIN`).
 - **Stream methods** use `@GrpcStreamMethod()` → `GrpcAccessStreamGuard`, which reads the same `access-token` metadata and calls `checkStreamAccess`. Both guards put the resolved id into the `user-id` metadata for `@GrpcUserId()`.
 - The `temp-code` module is now a plain CRUD proxy — it no longer participates in stream authorization.
+
+## Rate limiting (`src/common/`)
+
+`ThrottlerModule` is registered in `CommonModule`, but nothing throttles globally: the stock
+`ThrottlerGuard` reads an HTTP request. **`GrpcThrottlerGuard`** (`common/interface/grpc/guards`)
+is its gRPC subclass, and the controller decorators apply it as `UseGuards(GrpcAccessUnaryGuard,
+GrpcThrottlerGuard)` — a controller built without them is not limited. Limits live in
+`common/interface/grpc/constants/grpc.throttle.constants.ts`:
+
+- **Authenticated** (`@DefaultGrpcController()` / `@AdminGrpcController()`): 100 / 60s **per user**,
+  keyed by the `user-id` the access guard resolves. That is why the throttler runs *after* it — and
+  why a call over the limit has still cost an `auth.me` round trip.
+- **Public** (`@PublicGrpcController()`, i.e. login / refresh): 10 / 60s **per client address**, set
+  with `@Throttle` in the decorator. A `user-id` a public caller sends is ignored. The address is the
+  `x-client-ip` metadata the admin's Next server sets from `x-forwarded-for` / `x-real-ip`
+  (`AuthService.getClientMetadata`); without it, the peer host (port dropped). The Next server is
+  the only gRPC client, so the peer alone is one bucket for every visitor. `x-client-ip` is trusted
+  because the gRPC port is published on the private network only — expose it and that stops holding.
+- The count is per caller across **all** handlers, not per handler (`generateKey` override). Stream
+  calls are not counted. An exceeded limit is `RESOURCE_EXHAUSTED`.
+- Counters are the throttler's in-memory store: per gateway instance, reset on restart. A second
+  instance needs a shared store (`ThrottlerModule`'s `storage` option).
 
 ## Config / commands
 

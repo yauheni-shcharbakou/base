@@ -20,7 +20,7 @@ The admin panel. Refine resources under `src/app/`: `auth/{users,temp-codes}` an
 - `features/grpc/services/grpc.data.service.ts` — `GrpcDataService` builds the resource→repository map behind the CRUD data provider from these singletons (no longer instantiates its own).
 - the binary-media **route handlers** (`app/api/*`) and the storage create/folder **server actions** (`features/storage/actions/*`), which import the storage repos directly.
 
-The **auth** flow (`features/auth/services/auth.service.ts`) is separate and deliberately uses the `Web`/`Public` audiences (`GrpcUserWebRepository`, `GrpcAuthPublicRepository`): login / refresh / current-user are web-audience calls, not admin CRUD. `getAuthMetadata()` is the single source of gRPC metadata for every call, upload confirmations included.
+The **auth** flow (`features/auth/services/auth.service.ts`) is separate and deliberately uses the `Web`/`Public` audiences (`GrpcUserWebRepository`, `GrpcAuthPublicRepository`): login / refresh / current-user are web-audience calls, not admin CRUD. `getAuthMetadata()` is the single source of gRPC metadata for every authenticated call, upload confirmations included. Login and refresh carry `getClientMetadata()` instead — the browser's address as `x-client-ip`, which the gateway rate-limits them by (see `backend/apps/api-gateway/CLAUDE.md`).
 
 ## Binary media (separate path)
 

@@ -10,21 +10,12 @@ import { UserModule } from '@modules/user/user.module';
 import { VideoModule } from '@modules/video/video.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { config } from './config';
 
 // TODO: add anti-sql injection decorators
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          ttl: 60 * 1000,
-          limit: 100,
-        },
-      ],
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
