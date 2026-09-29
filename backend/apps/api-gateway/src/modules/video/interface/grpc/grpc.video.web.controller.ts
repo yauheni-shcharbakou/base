@@ -13,6 +13,7 @@ import { VideoCreateManyWebDto } from '@modules/video/application/dto/video.crea
 import { VideoCreateOneWebDto } from '@modules/video/application/dto/video.create.dto';
 import { VideoUpdateByIdDto } from '@modules/video/application/dto/video.update.dto';
 import { VideoProxyService } from '@modules/video/application/services/video.proxy.service';
+import { Payload } from '@nestjs/microservices';
 
 @DefaultGrpcController()
 @GrpcVideoWebTransport.ControllerMethods()
@@ -21,7 +22,7 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getUrlMap(
-    { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() { ip, ...query }: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestCommon.StringMap> {
     return this.videoService.getUrlMap(query, ip, userId);
@@ -29,7 +30,7 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getDownloadMap(
-    { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() { ip, ...query }: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.DownloadMap> {
     return this.videoService.getDownloadMap(query, ip, userId);
@@ -37,7 +38,7 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @ValidateGrpcPayload(VideoCreateOneWebDto)
   createOne(
-    { file, storage, video }: NestStorage.VideoCreateOneWeb,
+    @Payload() { file, storage, video }: NestStorage.VideoCreateOneWeb,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.VideoCreated> {
     return this.videoService.createOne({ userId, file, storage, video });
@@ -45,7 +46,7 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @ValidateGrpcPayload(VideoCreateManyWebDto)
   createMany(
-    { items, storage }: NestStorage.VideoCreateManyWeb,
+    @Payload() { items, storage }: NestStorage.VideoCreateManyWeb,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.VideoCreatedArray> {
     return this.videoService.createMany({ userId, items, storage });
@@ -53,14 +54,17 @@ export class GrpcVideoWebController implements GrpcVideoWebServiceController {
 
   @ValidateGrpcPayload(VideoUpdateByIdDto)
   updateById(
-    { id, update }: NestStorage.VideoUpdateById,
+    @Payload() { id, update }: NestStorage.VideoUpdateById,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.Video> {
     return this.videoService.updateOne({ id, userId }, update);
   }
 
   @ValidateGrpcPayload(IdFieldDto)
-  deleteById({ id }: NestCommon.IdField, @GrpcUserId() userId: string): Promise<NestStorage.Video> {
+  deleteById(
+    @Payload() { id }: NestCommon.IdField,
+    @GrpcUserId() userId: string,
+  ): Promise<NestStorage.Video> {
     return this.videoService.deleteOne({ id, userId });
   }
 }

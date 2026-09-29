@@ -101,8 +101,8 @@ file: `pnpm test -- path/to/file.spec.ts`). A package with no `*.spec.ts` under 
 suite — there is no central list. Both turbo tasks depend on `^build`, because specs import
 sibling packages through their built `dist`; `test:e2e` is `cache: false` — whether a suite runs or
 skips depends on a reachable broker or database, which turbo cannot hash. A backend app whose suite
-is still empty passes `--passWithNoTests` in that script to keep the repo-wide run green (both of
-`api-gateway`'s, `auth`'s `test:e2e`) — **drop the flag the moment the suite gets its first spec.**
+is still empty passes `--passWithNoTests` in that script to keep the repo-wide run green (the
+`test:e2e` of `api-gateway` and `auth`) — **drop the flag the moment the suite gets its first spec.**
 **Nothing that loads MikroORM runs under Jest:** MikroORM 7 is ESM-only and Jest's runtime has no
 `require(esm)`. A database spec runs on `node:test` instead — `backend.storage`'s `test:e2e` is the
 template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).

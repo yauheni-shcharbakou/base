@@ -22,7 +22,7 @@ Seven feature modules, each proxying to one downstream host:
 - **→ auth**: `auth` (public login / refresh), `user`, `temp-code`.
 - **→ storage**: `file`, `image`, `video`, `storage-object`.
 
-Each proxy service injects the downstream client via `@InjectGrpcService(Grpc<X>Transport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))` (from `@backend/grpc`). Request payloads are validated with `@ValidateGrpcPayload(Dto)`; the resolved caller id is read with the `@GrpcUserId()` param decorator.
+Each proxy service injects the downstream client via `@InjectGrpcService(Grpc<X>Transport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))` (from `@backend/grpc`). Request payloads are validated with `@ValidateGrpcPayload(Dto)`; the resolved caller id is read with the `@GrpcUserId()` param decorator. **A handler that takes `@GrpcUserId()` binds its request with `@Payload()`** (`@nestjs/microservices`), an unused `Empty` included: Nest maps a handler's request, metadata and call only while none of its parameters is decorated, so next to a param decorator an unbound request arrives `undefined` and its `@ValidateGrpcPayload` never runs — silently. `common/interface/grpc/grpc.payload-binding.spec.ts` fails on any handler that decorates a parameter without it.
 
 ## Auth / access (`src/common/`)
 

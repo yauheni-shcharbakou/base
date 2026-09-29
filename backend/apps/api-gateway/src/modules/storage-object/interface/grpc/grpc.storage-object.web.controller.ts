@@ -13,6 +13,7 @@ import { StorageObjectGetFoldersWebDto } from '@modules/storage-object/applicati
 import { StorageObjectQueryWebDto } from '@modules/storage-object/application/dto/storage-object.query.dto';
 import { StorageObjectUpdateByIdDto } from '@modules/storage-object/application/dto/storage-object.update.dto';
 import { StorageObjectProxyService } from '@modules/storage-object/application/services/storage-object.proxy.service';
+import { Payload } from '@nestjs/microservices';
 
 @DefaultGrpcController()
 @GrpcStorageObjectWebTransport.ControllerMethods()
@@ -21,7 +22,7 @@ export class GrpcStorageObjectWebController implements GrpcStorageObjectWebServi
 
   @ValidateGrpcPayload(StorageObjectGetFoldersWebDto)
   getFolders(
-    request: NestStorage.StorageObjectGetFoldersWeb,
+    @Payload() request: NestStorage.StorageObjectGetFoldersWeb,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.StorageObjectArray> {
     return this.storageObjectService.getFolders({ ...request, userId });
@@ -29,7 +30,7 @@ export class GrpcStorageObjectWebController implements GrpcStorageObjectWebServi
 
   @ValidateGrpcPayload(StorageObjectQueryWebDto)
   isExists(
-    request: NestStorage.StorageObjectQueryWeb,
+    @Payload() request: NestStorage.StorageObjectQueryWeb,
     @GrpcUserId() userId: string,
   ): Promise<NestCommon.Boolean> {
     return this.storageObjectService.isExists({ ...request, userId });
@@ -37,7 +38,7 @@ export class GrpcStorageObjectWebController implements GrpcStorageObjectWebServi
 
   @ValidateGrpcPayload(StorageObjectCreateWebDto)
   createOne(
-    request: NestStorage.StorageObjectCreateWeb,
+    @Payload() request: NestStorage.StorageObjectCreateWeb,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.StorageObject> {
     return this.storageObjectService.createOne({ ...request, userId });
@@ -45,7 +46,7 @@ export class GrpcStorageObjectWebController implements GrpcStorageObjectWebServi
 
   @ValidateGrpcPayload(StorageObjectUpdateByIdDto)
   updateById(
-    { id, update }: NestStorage.StorageObjectUpdateById,
+    @Payload() { id, update }: NestStorage.StorageObjectUpdateById,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.StorageObject> {
     return this.storageObjectService.updateOne({ id, userId }, update);
@@ -53,7 +54,7 @@ export class GrpcStorageObjectWebController implements GrpcStorageObjectWebServi
 
   @ValidateGrpcPayload(IdFieldDto)
   deleteById(
-    { id }: NestCommon.IdField,
+    @Payload() { id }: NestCommon.IdField,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.StorageObject> {
     return this.storageObjectService.deleteOne({ id, userId });
