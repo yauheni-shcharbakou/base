@@ -18,6 +18,10 @@ export class AuthProxyService {
     return firstValueFrom(this.authClient.refreshToken(request).pipe(GrpcRxPipe.rpcException));
   }
 
+  async logout(request: NestAuth.AuthLogout): Promise<void> {
+    await firstValueFrom(this.authClient.logout(request).pipe(GrpcRxPipe.rpcException));
+  }
+
   me(request: NestAuth.AuthMe): Promise<NestAuth.User> {
     return firstValueFrom(this.authClient.me(request).pipe(GrpcRxPipe.rpcException));
   }

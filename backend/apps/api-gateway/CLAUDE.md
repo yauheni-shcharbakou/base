@@ -19,7 +19,7 @@ No `domain/`/`infrastructure/` per module — there are no entities, repositorie
 
 Seven feature modules, each proxying to one downstream host:
 
-- **→ auth**: `auth` (public login / refresh), `user`, `temp-code`.
+- **→ auth**: `auth` (public login / refresh / logout), `user`, `temp-code`.
 - **→ storage**: `file`, `image`, `video`, `storage-object`.
 
 Each proxy service injects the downstream client via `@InjectGrpcService(Grpc<X>Transport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))` (from `@backend/grpc`). Request payloads are validated with `@ValidateGrpcPayload(Dto)`; the resolved caller id is read with the `@GrpcUserId()` param decorator. **A handler that takes `@GrpcUserId()` binds its request with `@Payload()`** (`@nestjs/microservices`), an unused `Empty` included: Nest maps a handler's request, metadata and call only while none of its parameters is decorated, so next to a param decorator an unbound request arrives `undefined` and its `@ValidateGrpcPayload` never runs — silently. `common/interface/grpc/grpc.payload-binding.spec.ts` fails on any handler that decorates a parameter without it.
@@ -48,7 +48,7 @@ GrpcThrottlerGuard)` — a controller built without them is not limited. Limits 
 - **Authenticated** (`@DefaultGrpcController()` / `@AdminGrpcController()`): 100 / 60s **per user**,
   keyed by the `user-id` the access guard resolves. That is why the throttler runs *after* it — and
   why a call over the limit has still cost an `auth.me` round trip.
-- **Public** (`@PublicGrpcController()`, i.e. login / refresh): 10 / 60s **per client address**, set
+- **Public** (`@PublicGrpcController()`, i.e. login / refresh / logout): 10 / 60s **per client address**, set
   with `@Throttle` in the decorator. A `user-id` a public caller sends is ignored. The address is the
   `x-client-ip` metadata the admin's Next server sets from `x-forwarded-for` / `x-real-ip`
   (`AuthService.getClientMetadata`); without it, the peer host (port dropped). The Next server is

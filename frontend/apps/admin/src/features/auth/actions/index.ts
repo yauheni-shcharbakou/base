@@ -53,7 +53,7 @@ export async function login(request: ClientAuth.AuthLogin): Promise<AuthActionRe
 }
 
 export async function logout(): Promise<AuthActionResponse> {
-  await authService.clearCookies();
+  await authService.logout();
 
   return {
     success: true,

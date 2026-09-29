@@ -1,3 +1,4 @@
+import { PgModule } from '@backend/pg';
 import { CryptoModule } from '@modules/crypto/crypto.module';
 import { UserModule } from '@modules/user/user.module';
 import { Module } from '@nestjs/common';
@@ -5,22 +6,41 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGetUserByTokenUseCase } from './application/use-cases/auth.get-user-by-token.use-case';
 import { AuthLoginUseCase } from './application/use-cases/auth.login.use-case';
+import { AuthLogoutUseCase } from './application/use-cases/auth.logout.use-case';
 import { AuthRefreshTokenUseCase } from './application/use-cases/auth.refresh-token.use-case';
+import { AuthSessionDeleteExpiredUseCase } from './application/use-cases/auth.session.delete-expired.use-case';
+import { AuthSessionRepository } from './domain/repositories/auth.session.repository';
 import { AuthTokenService } from './domain/services/auth.token.service';
 import { jwtConfig } from './infrastructure/configs/jwt.config';
+import { PgAuthSessionEntity } from './infrastructure/pg/entities/pg.auth-session.entity';
+import { PgAuthSessionRepositoryImpl } from './infrastructure/pg/repositories/pg.auth-session.repository.impl';
 import { JwtAuthTokenServiceImpl } from './infrastructure/services/jwt.auth.token.service.impl';
+import { CronAuthSessionScheduler } from './interface/cron/cron.auth-session.scheduler';
 import { GrpcAuthController } from './interface/grpc/grpc.auth.controller';
 
 @Module({
-  imports: [UserModule, JwtModule, ConfigModule.forFeature(jwtConfig), CryptoModule],
+  imports: [
+    UserModule,
+    JwtModule,
+    ConfigModule.forFeature(jwtConfig),
+    CryptoModule,
+    PgModule.forFeature(PgAuthSessionEntity),
+  ],
   providers: [
     {
       provide: AuthTokenService,
       useClass: JwtAuthTokenServiceImpl,
     },
+    {
+      provide: AuthSessionRepository,
+      useClass: PgAuthSessionRepositoryImpl,
+    },
     AuthLoginUseCase,
     AuthRefreshTokenUseCase,
+    AuthLogoutUseCase,
     AuthGetUserByTokenUseCase,
+    AuthSessionDeleteExpiredUseCase,
+    CronAuthSessionScheduler,
   ],
   controllers: [GrpcAuthController],
 })

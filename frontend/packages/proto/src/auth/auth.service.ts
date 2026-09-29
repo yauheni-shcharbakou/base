@@ -13,7 +13,8 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { AuthData, AuthLogin, AuthMe, AuthRefresh } from './auth/auth.messages';
+import { Empty } from '../google/protobuf/empty';
+import { AuthData, AuthLogin, AuthLogout, AuthMe, AuthRefresh } from './auth/auth.messages';
 import { User } from './user/user';
 
 type AuthServiceService = typeof AuthServiceService;
@@ -36,6 +37,15 @@ const AuthServiceService = {
     requestDeserialize: (value: Buffer): AuthRefresh => AuthRefresh.decode(value),
     responseSerialize: (value: AuthData): Buffer => Buffer.from(AuthData.encode(value).finish()),
     responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
+  },
+  logout: {
+    path: '/auth.AuthService/logout' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: AuthLogout): Buffer => Buffer.from(AuthLogout.encode(value).finish()),
+    requestDeserialize: (value: Buffer): AuthLogout => AuthLogout.decode(value),
+    responseSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Empty => Empty.decode(value),
   },
   me: {
     path: '/auth.AuthService/me' as const,
@@ -78,6 +88,21 @@ export interface GrpcAuthServiceClient extends Client {
     metadata: Metadata,
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: AuthData) => void,
+  ): ClientUnaryCall;
+  logout(
+    request: AuthLogout,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  logout(
+    request: AuthLogout,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  logout(
+    request: AuthLogout,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
   ): ClientUnaryCall;
   me(
     request: AuthMe,
@@ -124,6 +149,15 @@ export const GrpcAuthServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: AuthData) => Buffer;
       readonly responseDeserialize: (value: Buffer) => AuthData;
     };
+    readonly logout: {
+      readonly path: '/auth.AuthService/logout';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: AuthLogout) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => AuthLogout;
+      readonly responseSerialize: (value: Empty) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Empty;
+    };
     readonly me: {
       readonly path: '/auth.AuthService/me';
       readonly requestStream: false;
@@ -158,6 +192,15 @@ const AuthPublicServiceService = {
     responseSerialize: (value: AuthData): Buffer => Buffer.from(AuthData.encode(value).finish()),
     responseDeserialize: (value: Buffer): AuthData => AuthData.decode(value),
   },
+  logout: {
+    path: '/auth.AuthPublicService/logout' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: AuthLogout): Buffer => Buffer.from(AuthLogout.encode(value).finish()),
+    requestDeserialize: (value: Buffer): AuthLogout => AuthLogout.decode(value),
+    responseSerialize: (value: Empty): Buffer => Buffer.from(Empty.encode(value).finish()),
+    responseDeserialize: (value: Buffer): Empty => Empty.decode(value),
+  },
 } as const;
 
 export interface GrpcAuthPublicServiceClient extends Client {
@@ -191,6 +234,21 @@ export interface GrpcAuthPublicServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: AuthData) => void,
   ): ClientUnaryCall;
+  logout(
+    request: AuthLogout,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  logout(
+    request: AuthLogout,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
+  logout(
+    request: AuthLogout,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: Empty) => void,
+  ): ClientUnaryCall;
 }
 
 export const GrpcAuthPublicServiceClient = makeGenericClientConstructor(
@@ -220,6 +278,15 @@ export const GrpcAuthPublicServiceClient = makeGenericClientConstructor(
       readonly requestDeserialize: (value: Buffer) => AuthRefresh;
       readonly responseSerialize: (value: AuthData) => Buffer;
       readonly responseDeserialize: (value: Buffer) => AuthData;
+    };
+    readonly logout: {
+      readonly path: '/auth.AuthPublicService/logout';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: AuthLogout) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => AuthLogout;
+      readonly responseSerialize: (value: Empty) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => Empty;
     };
   };
   serviceName: string;
@@ -263,6 +330,22 @@ export class GrpcAuthRepository {
   ): Promise<AuthData> {
     return new Promise<AuthData>((resolve, reject) => {
       this.client.refreshToken(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  logout(
+    request: AuthLogout,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<Empty> {
+    return new Promise<Empty>((resolve, reject) => {
+      this.client.logout(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {
@@ -327,6 +410,22 @@ export class GrpcAuthPublicRepository {
   ): Promise<AuthData> {
     return new Promise<AuthData>((resolve, reject) => {
       this.client.refreshToken(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  logout(
+    request: AuthLogout,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<Empty> {
+    return new Promise<Empty>((resolve, reject) => {
+      this.client.logout(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

@@ -54,3 +54,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0025](0025-read-urls-bound-to-no-client-address.md) | Signed read URLs are bound to no client address | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin`, `@packages/proto` |
 | [0026](0026-folder-listing-carries-signed-previews.md) | A folder listing's items carry a signed preview URL | Accepted | `backend.storage`, `@packages/proto`, `frontend.admin` |
 | [0027](0027-image-preview-made-on-upload.md) | An image's grid preview is a webp made on upload, and a grid never shows the original | Accepted | `backend.storage`, `@backend/event-bus`, `@packages/proto` |
+| [0028](0028-refresh-sessions-in-postgres.md) | A refresh token is valid only while its session row exists, and keeps its `jti` across refreshes | Accepted | `backend.auth`, `backend.api-gateway`, `frontend.admin`, `@packages/proto`, `@packages/common` |

@@ -5,13 +5,16 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { AuthData, AuthLogin, AuthMe, AuthRefresh } from './auth/auth.messages';
+import { Empty } from '../google/protobuf/empty';
+import { AuthData, AuthLogin, AuthLogout, AuthMe, AuthRefresh } from './auth/auth.messages';
 import { User } from './user/user';
 
 export interface GrpcAuthServiceClient {
   login(request: AuthLogin, metadata?: Metadata): Observable<AuthData>;
 
   refreshToken(request: AuthRefresh, metadata?: Metadata): Observable<AuthData>;
+
+  logout(request: AuthLogout, metadata?: Metadata): Observable<Empty>;
 
   me(request: AuthMe, metadata?: Metadata): Observable<User>;
 }
@@ -24,12 +27,14 @@ export interface GrpcAuthServiceController {
     ...args: any[]
   ): Promise<AuthData> | Observable<AuthData> | AuthData;
 
+  logout(request: AuthLogout, ...args: any[]): void | Promise<void>;
+
   me(request: AuthMe, ...args: any[]): Promise<User> | Observable<User> | User;
 }
 
 function AuthServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ['login', 'refreshToken', 'me'];
+    const grpcMethods: string[] = ['login', 'refreshToken', 'logout', 'me'];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('AuthService', method)(constructor.prototype[method], method, descriptor);
@@ -46,6 +51,8 @@ export interface GrpcAuthPublicServiceClient {
   login(request: AuthLogin, metadata?: Metadata): Observable<AuthData>;
 
   refreshToken(request: AuthRefresh, metadata?: Metadata): Observable<AuthData>;
+
+  logout(request: AuthLogout, metadata?: Metadata): Observable<Empty>;
 }
 
 export interface GrpcAuthPublicServiceController {
@@ -55,11 +62,13 @@ export interface GrpcAuthPublicServiceController {
     request: AuthRefresh,
     ...args: any[]
   ): Promise<AuthData> | Observable<AuthData> | AuthData;
+
+  logout(request: AuthLogout, ...args: any[]): void | Promise<void>;
 }
 
 function AuthPublicServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ['login', 'refreshToken'];
+    const grpcMethods: string[] = ['login', 'refreshToken', 'logout'];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('AuthPublicService', method)(constructor.prototype[method], method, descriptor);

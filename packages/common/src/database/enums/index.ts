@@ -7,6 +7,7 @@ export enum Database {
 export enum AuthDatabaseEntity {
   USER = 'users',
   TEMP_CODE = 'temp-codes',
+  SESSION = 'sessions',
 }
 
 export enum StorageDatabaseEntity {

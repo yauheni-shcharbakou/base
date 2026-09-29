@@ -17,6 +17,14 @@ export interface AuthRefresh {
   refreshToken: string;
 }
 
+/**
+ * Ends the session the refresh token belongs to. Keyed by the refresh token, not the access one:
+ * the access token may have expired already, and the refresh token is what outlives it.
+ */
+export interface AuthLogout {
+  refreshToken: string;
+}
+
 export interface AuthToken {
   value: string;
   expiredAt: Date;

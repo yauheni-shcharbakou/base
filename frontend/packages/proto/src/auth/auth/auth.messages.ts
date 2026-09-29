@@ -20,6 +20,14 @@ export interface AuthRefresh {
   refreshToken: string;
 }
 
+/**
+ * Ends the session the refresh token belongs to. Keyed by the refresh token, not the access one:
+ * the access token may have expired already, and the refresh token is what outlives it.
+ */
+export interface AuthLogout {
+  refreshToken: string;
+}
+
 export interface AuthToken {
   value: string;
   expiredAt: Date;
@@ -224,6 +232,66 @@ export const AuthRefresh: MessageFns<AuthRefresh> = {
   },
   fromPartial<I extends Exact<DeepPartial<AuthRefresh>, I>>(object: I): AuthRefresh {
     const message = createBaseAuthRefresh();
+    message.refreshToken = object.refreshToken ?? '';
+    return message;
+  },
+};
+
+function createBaseAuthLogout(): AuthLogout {
+  return { refreshToken: '' };
+}
+
+export const AuthLogout: MessageFns<AuthLogout> = {
+  encode(message: AuthLogout, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.refreshToken !== '') {
+      writer.uint32(10).string(message.refreshToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): AuthLogout {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseAuthLogout();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.refreshToken = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): AuthLogout {
+    return {
+      refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : '',
+    };
+  },
+
+  toJSON(message: AuthLogout): unknown {
+    const obj: any = {};
+    if (message.refreshToken !== '') {
+      obj.refreshToken = message.refreshToken;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<AuthLogout>, I>>(base?: I): AuthLogout {
+    return AuthLogout.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<AuthLogout>, I>>(object: I): AuthLogout {
+    const message = createBaseAuthLogout();
     message.refreshToken = object.refreshToken ?? '';
     return message;
   },

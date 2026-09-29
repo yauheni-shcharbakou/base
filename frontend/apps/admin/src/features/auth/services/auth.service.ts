@@ -1,6 +1,7 @@
 import { getHeadersIp } from '@/common/helpers/request.helpers';
 import { ConfigService } from '@/common/services/config.service';
 import { sessionEndedError, toRefreshError } from '@/features/auth/helpers/session-error';
+import { reportError } from '@/features/grpc/helpers/report-error';
 import { createServiceError } from '@/features/grpc/helpers/service-error';
 import { ClientAuth, GrpcAuthPublicRepository, GrpcUserWebRepository } from '@frontend/proto';
 import { Metadata, status as GrpcStatus } from '@grpc/grpc-js';
@@ -183,6 +184,24 @@ export class AuthService {
     }
 
     return values.userId;
+  }
+
+  /**
+   * Ends the session at the gateway, so its refresh token is refused from now on even if a copy
+   * survives, then drops the cookies. Best effort: a gateway that is down or rate-limiting must not
+   * keep the admin signed in, so the cookies go either way — the session then lasts until its
+   * token expires, and the failure is logged.
+   */
+  async logout() {
+    const { values } = await this.getCurrentAuthData();
+
+    if (values.refreshToken) {
+      await this.authRepository
+        .logout({ refreshToken: values.refreshToken }, this.getClientMetadata(await headers()))
+        .catch(reportError);
+    }
+
+    await this.clearCookies();
   }
 
   async clearCookies() {
