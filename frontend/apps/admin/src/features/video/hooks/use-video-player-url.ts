@@ -1,3 +1,4 @@
+import { getQueryRetryDelay, retryUpTo } from '@/common/helpers/query-retry';
 import { createBatchLoader } from '@/common/helpers/batch-loader';
 import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { getVideoPlayerUrls } from '@/features/video/actions/player.actions';
@@ -9,12 +10,6 @@ import { useEffect } from 'react';
 const STALE_TIME_MS = 5 * 60_000;
 const MAX_RETRIES = 2;
 
-// A 4xx answers the same on every try.
-const shouldRetry = (failureCount: number, error: Error) => {
-  const { statusCode } = error as Error & { statusCode?: number };
-  return !(statusCode && statusCode < 500) && failureCount < MAX_RETRIES;
-};
-
 // Every URL asked for at once — a page prefetching its videos, retries — is one gateway call.
 const playerUrlLoader = createBatchLoader(async (videoIds) =>
   unwrapActionResult(await getVideoPlayerUrls(videoIds)),
@@ -25,7 +20,8 @@ const playerUrlQuery = (videoId: string) =>
     queryKey: ['video-player-url', videoId],
     queryFn: () => playerUrlLoader.load(videoId),
     staleTime: STALE_TIME_MS,
-    retry: shouldRetry,
+    retry: retryUpTo(MAX_RETRIES),
+    retryDelay: getQueryRetryDelay,
     // A new URL would reload the iframe and start the video over: a URL is refetched only when a
     // player mounts on a stale one.
     refetchOnWindowFocus: false,

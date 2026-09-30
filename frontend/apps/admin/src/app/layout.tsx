@@ -1,4 +1,5 @@
 import { DevtoolsProvider } from '@/common/components';
+import { queryClientConfig } from '@/common/providers/query-client.config';
 import { pathProvider } from '@/common/providers';
 import { authProvider } from '@/features/auth/providers';
 import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
@@ -139,6 +140,7 @@ export default async function RootLayout({
                       syncWithLocation: true,
                       warnWhenUnsavedChanges: true,
                       disableTelemetry: true,
+                      reactQuery: { clientConfig: queryClientConfig },
                     }}
                   >
                     {children}

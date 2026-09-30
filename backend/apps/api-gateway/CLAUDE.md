@@ -62,8 +62,8 @@ GrpcThrottlerGuard)` — a controller built without them is not limited. Limits 
   because the gRPC port is published on the private network only — expose it and that stops holding.
 - The count is per caller and bucket across **all** handlers, not per handler (`generateKey` override: `<bucket>:<tracker>`). Stream
   calls are not counted. An exceeded limit is `RESOURCE_EXHAUSTED`, with a `retry-after` trailer
-  (`RETRY_AFTER_METADATA_KEY`): whole seconds until that bucket's window resets, which the admin's
-  upload queue waits out.
+  (`RETRY_AFTER_METADATA_KEY`): whole seconds until that bucket's window resets, which the admin
+  waits out — its upload queue and every query.
 - **Counters live in Redis**: `CacheModule.forRoot({ namespace: 'api-gateway' })` in `app.module.ts`,
   and `CacheThrottlerStorage` (`common/infrastructure/storages`) as the throttler's `storage`, wired
   by `GRPC_THROTTLER_MODULE_OPTIONS` — keys `cache:api-gateway:throttle:<encoded key>`, a fixed

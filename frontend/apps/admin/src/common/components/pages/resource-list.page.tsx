@@ -16,6 +16,7 @@
  */
 
 import { AppBreadcrumb } from '@/common/components';
+import { getQueryRetryDelay, retryUpTo } from '@/common/helpers/query-retry';
 import { LinearProgress } from '@mui/material';
 import {
   DataGrid,
@@ -24,7 +25,7 @@ import {
   GridPaginationModel,
   GridSortModel,
 } from '@mui/x-data-grid';
-import { CrudSort } from '@refinedev/core';
+import { CrudSort, HttpError } from '@refinedev/core';
 import { List, ListProps, useDataGrid } from '@refinedev/mui';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { FC, useEffect, useState } from 'react';
@@ -71,8 +72,8 @@ export const ResourceListPage: FC<ResourceListProps> = ({ columns, headerButtons
     resource,
     queryOptions: {
       enabled: () => isMounted,
-      retry: 3,
-      retryDelay: 1_000,
+      retry: retryUpTo<HttpError>(3),
+      retryDelay: getQueryRetryDelay,
     },
     pagination: {
       currentPage: initialPage,

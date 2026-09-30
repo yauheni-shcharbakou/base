@@ -1,3 +1,4 @@
+import { getQueryRetryDelay, retryUpTo } from '@/common/helpers/query-retry';
 import {
   applyFolderContentParams,
   FOLDER_PREFERENCE_KEYS,
@@ -62,13 +63,8 @@ const rememberOwner = (content: BrowserStorage.StorageObjectFolderContent) => {
     .forEach((item) => ownerByFolder.set(item.id, userId));
 };
 
+// A retryable failure — the rate limit, a server failure — is tried twice more (`retryUpTo`).
 const MAX_RETRIES = 2;
-
-// A 4xx — a missing folder, a leaf, no access — answers the same on every try.
-const shouldRetry = (failureCount: number, error: Error) => {
-  const { statusCode } = error as Error & { statusCode?: number };
-  return !(statusCode && statusCode < 500) && failureCount < MAX_RETRIES;
-};
 
 const folderContentQuery = (
   folderId: string,
@@ -100,7 +96,8 @@ const folderContentQuery = (
     return content;
   },
   staleTime: STALE_TIME_MS,
-  retry: shouldRetry,
+  retry: retryUpTo(MAX_RETRIES),
+  retryDelay: getQueryRetryDelay,
 });
 
 /**
