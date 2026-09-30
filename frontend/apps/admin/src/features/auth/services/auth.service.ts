@@ -1,6 +1,7 @@
 import { getHeadersIp } from '@/common/helpers/request.helpers';
 import { ConfigService } from '@/common/services/config.service';
 import { sessionEndedError, toRefreshError } from '@/features/auth/helpers/session-error';
+import { type Flight, SingleFlight } from '@/features/auth/helpers/single-flight';
 import { reportError } from '@/features/grpc/helpers/report-error';
 import { createServiceError } from '@/features/grpc/helpers/service-error';
 import { ClientAuth, GrpcAuthPublicRepository, GrpcUserWebRepository } from '@frontend/proto';
@@ -12,6 +13,28 @@ type HeadersReader = Pick<Headers, 'get'>;
 
 /** Every cookie a session leaves: `setAuthCookies` writes them, `clearCookies` deletes them. */
 export const AUTH_COOKIE_NAMES = ['userId', 'role', 'access-token', 'refresh-token'] as const;
+
+// Requests the browser sent with the old cookie before a refresh's response reached it arrive
+// within the page load that sent them; this long they get the same session instead of a refresh.
+const REFRESH_GRACE_MS = 30_000;
+
+// The flights live on `globalThis`, for two reasons. The middleware and the app are separate
+// bundles, each with its own copy of this module, and one refresh per session holds only if both
+// reach the same map. And only the map is kept there, never a `SingleFlight`: an object that
+// outlives a dev reload would keep running the code it was built with.
+const REFRESH_FLIGHTS_KEY = Symbol.for('frontend.admin.refresh-flights');
+
+const getRefreshFlights = (): SingleFlight<ClientAuth.AuthData> => {
+  const store = globalThis as typeof globalThis & {
+    [REFRESH_FLIGHTS_KEY]?: Map<string, Flight<ClientAuth.AuthData>>;
+  };
+
+  if (!store[REFRESH_FLIGHTS_KEY]) {
+    store[REFRESH_FLIGHTS_KEY] = new Map();
+  }
+
+  return new SingleFlight(REFRESH_GRACE_MS, Date.now, store[REFRESH_FLIGHTS_KEY]);
+};
 
 export class AuthService {
   private readonly cookieConfig: Partial<ResponseCookie>;
@@ -101,6 +124,10 @@ export class AuthService {
    * A new session for a refresh token. Throws a gRPC status, never a plain Error: `runAction` and
    * `errorResponse` answer a missing or refused token with the 401 the auth provider reads as
    * logged out, not with a 500.
+   *
+   * One gateway call per refresh token: the parallel requests of a page each arrive without an
+   * access token, and they share the first one's refresh (`SingleFlight`) rather than spending the
+   * gateway's public rate limit — and, once refresh tokens rotate, refusing each other.
    */
   async refreshSession(
     refreshToken: string | undefined,
@@ -110,6 +137,15 @@ export class AuthService {
       throw sessionEndedError('Refresh token is missing');
     }
 
+    return getRefreshFlights().run(refreshToken, () =>
+      this.requestRefresh(refreshToken, requestHeaders),
+    );
+  }
+
+  private async requestRefresh(
+    refreshToken: string,
+    requestHeaders: HeadersReader,
+  ): Promise<ClientAuth.AuthData> {
     const authData = await this.authRepository
       .refreshToken({ refreshToken }, this.getClientMetadata(requestHeaders))
       .catch((error: unknown) => {
@@ -196,6 +232,16 @@ export class AuthService {
     const { values } = await this.getCurrentAuthData();
 
     if (values.refreshToken) {
+      const refreshToken = values.refreshToken;
+
+      // A refresh shared within its grace period would hand the ended session out again. It is
+      // keyed by the token it was asked with, which the cookie no longer holds once the refresh
+      // replaced it — so the flight that handed this token out goes too.
+      getRefreshFlights().forget(
+        (key, authData) =>
+          key === refreshToken || authData?.tokens.refreshToken.value === refreshToken,
+      );
+
       await this.authRepository
         .logout({ refreshToken: values.refreshToken }, this.getClientMetadata(await headers()))
         .catch(reportError);
