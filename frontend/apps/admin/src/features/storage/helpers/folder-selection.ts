@@ -35,6 +35,17 @@ export const selectOnly = (id: string): FolderSelection => ({
   focus: id,
 });
 
+/**
+ * Nothing selected, with the keyboard on the item — the folder just left, marked on the way back up.
+ * Only marked: a checkbox or a ⌘-click starts the selection afresh, so an action never takes the
+ * folder along unseen.
+ */
+export const focusOnly = (id: string): FolderSelection => ({
+  ids: new Set(),
+  anchor: id,
+  focus: id,
+});
+
 const rangeOf = (order: string[], from: string, to: string): string[] => {
   const start = order.indexOf(from);
   const end = order.indexOf(to);

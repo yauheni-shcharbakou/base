@@ -3,6 +3,7 @@ import {
   deselectAll,
   EMPTY_SELECTION,
   FolderSelection,
+  focusOnly,
   getArrowTargetId,
   ItemRect,
   pruneSelection,
@@ -16,6 +17,24 @@ import {
 const order = ['a', 'b', 'c', 'd', 'e'];
 
 const ids = (selection: FolderSelection) => Array.from(selection.ids).sort();
+
+describe('focusOnly', () => {
+  it('marks the folder just left for the keyboard without selecting it', () => {
+    const marked = focusOnly('b');
+
+    expect(ids(marked)).toEqual([]);
+    expect(marked.focus).toBe('b');
+  });
+
+  it('lets a checkbox or a ⌘-click start the selection without the marked folder', () => {
+    expect(ids(toggleSelection(focusOnly('b'), 'd'))).toEqual(['d']);
+    expect(ids(clickSelection(focusOnly('b'), 'd', order, { toggle: true }))).toEqual(['d']);
+  });
+
+  it('extends a Shift-arrow from the marked folder', () => {
+    expect(ids(stepSelection(focusOnly('b'), 'c', order, true))).toEqual(['b', 'c']);
+  });
+});
 
 describe('clickSelection', () => {
   it('selects only the item on a plain click', () => {

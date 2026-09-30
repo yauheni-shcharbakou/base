@@ -58,6 +58,9 @@ export const FolderItemCard: FC<Props> = ({ item, behavior, onPreviewError }) =>
       borderColor: 'primary.main',
       '&:hover': { bgcolor: 'action.selected' },
     }),
+    // Marked for the keyboard but not selected — the folder just left — whatever moved the focus.
+    ...(isFocused &&
+      !isSelected && { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 }),
     ...(isDropTarget && {
       bgcolor: 'primary.light',
       borderColor: 'primary.main',

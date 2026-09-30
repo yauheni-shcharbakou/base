@@ -3,6 +3,7 @@ import {
   deselectAll,
   Direction,
   EMPTY_SELECTION,
+  focusOnly,
   FolderSelection,
   getArrowTargetId,
   ItemRect,
@@ -24,13 +25,13 @@ type Options = {
   items?: Item[];
   // A new value starts a new selection: another folder, filter, or the gallery.
   resetKey: string;
-  // The item marked on arrival — the folder just left, as Finder selects it.
+  // The item marked on arrival — the folder just left. The keyboard is on it; nothing is selected.
   initialFocus?: string;
   // Where the keyboard is, for the URL: Back comes to this page with the item marked.
   onFocusChange: (id?: string) => void;
 };
 
-const initial = (focus?: string): FolderSelection => (focus ? selectOnly(focus) : EMPTY_SELECTION);
+const initial = (focus?: string): FolderSelection => (focus ? focusOnly(focus) : EMPTY_SELECTION);
 
 /**
  * Google Drive's selection over a folder, held in memory — only the item the keyboard is on reaches

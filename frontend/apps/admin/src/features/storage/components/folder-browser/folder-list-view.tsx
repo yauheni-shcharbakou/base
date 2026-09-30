@@ -137,7 +137,9 @@ export const FolderListView: FC<Props> = ({
                 {...behavior.getItemProps(item)}
                 sx={{
                   ...rowSx,
-                  ...(item.id === dropTargetId && {
+                  // Marked for the keyboard but not selected — the folder just left.
+                  ...((item.id === dropTargetId ||
+                    (item.id === focusedId && !selectedIds.has(item.id))) && {
                     outline: '2px solid',
                     outlineColor: 'primary.main',
                     outlineOffset: -2,
