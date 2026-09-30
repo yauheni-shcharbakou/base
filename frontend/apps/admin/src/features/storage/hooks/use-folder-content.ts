@@ -189,7 +189,7 @@ export const useFolderContent = (folderId: string, initialPreferences: FolderPre
         getFolderContentPath(id),
         applyFolderContentParams(
           searchParams.toString(),
-          { page: 1, item: undefined, search: undefined, types: [] },
+          { page: 1, focus: undefined, search: undefined, types: [] },
           defaults,
           params,
         ),
@@ -199,17 +199,17 @@ export const useFolderContent = (folderId: string, initialPreferences: FolderPre
 
   /**
    * An ancestor's URL on the way up: the page it was left on, with the folder that leads back down
-   * marked — Finder's selection of the folder just left.
+   * marked for the keyboard, as Finder marks the folder just left.
    */
   const getAncestorHref = useCallback(
-    (id: string, item?: string) =>
+    (id: string, focus?: string) =>
       toHref(
         getFolderContentPath(id),
         applyFolderContentParams(
           searchParams.toString(),
           {
-            page: (item && lastPageByFolder.get(id)) || 1,
-            item,
+            page: (focus && lastPageByFolder.get(id)) || 1,
+            focus,
             search: undefined,
             types: [],
           },
@@ -228,7 +228,7 @@ export const useFolderContent = (folderId: string, initialPreferences: FolderPre
     (id: string) => {
       const search = applyFolderContentParams(
         searchParams.toString(),
-        { item: id },
+        { focus: id },
         defaults,
         params,
       );
@@ -264,7 +264,7 @@ export const useFolderContent = (folderId: string, initialPreferences: FolderPre
 
   useEffect(() => {
     if (isPastLastPage) {
-      setParams({ page: pageCount, item: undefined }, 'replace');
+      setParams({ page: pageCount, focus: undefined }, 'replace');
     }
   }, [isPastLastPage, pageCount, setParams]);
 

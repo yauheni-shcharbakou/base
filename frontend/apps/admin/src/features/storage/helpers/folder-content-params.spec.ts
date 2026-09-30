@@ -12,7 +12,7 @@ describe('parseFolderContentParams', () => {
   it('reads every parameter', () => {
     expect(
       parse(
-        'view=gallery&sortBy=UPDATED_AT&sortOrder=desc&page=3&pageSize=100&search=cat&types=IMAGE&item=abc',
+        'view=gallery&sortBy=UPDATED_AT&sortOrder=desc&page=3&pageSize=100&search=cat&types=IMAGE&focus=abc',
       ),
     ).toEqual({
       view: FolderView.GALLERY,
@@ -22,7 +22,7 @@ describe('parseFolderContentParams', () => {
       pageSize: 100,
       search: 'cat',
       types: [BrowserStorage.StorageObjectType.IMAGE],
-      item: 'abc',
+      focus: 'abc',
     });
   });
 
@@ -53,7 +53,7 @@ describe('parseFolderContentParams', () => {
 
   it('falls back to the defaults on missing or unknown values', () => {
     expect(parse('')).toEqual(DEFAULT_FOLDER_CONTENT_PARAMS);
-    expect(parse('view=tiles&sortBy=size&sortOrder=up&page=-1&pageSize=33&item=')).toEqual(
+    expect(parse('view=tiles&sortBy=size&sortOrder=up&page=-1&pageSize=33&focus=')).toEqual(
       DEFAULT_FOLDER_CONTENT_PARAMS,
     );
     expect(parse('page=1.5').page).toBe(1);
@@ -123,7 +123,7 @@ describe('applyFolderContentParams', () => {
   });
 
   it('drops a parameter patched to undefined', () => {
-    expect(applyFolderContentParams('item=abc&page=2', { item: undefined }).toString()).toBe(
+    expect(applyFolderContentParams('focus=abc&page=2', { focus: undefined }).toString()).toBe(
       'page=2',
     );
   });

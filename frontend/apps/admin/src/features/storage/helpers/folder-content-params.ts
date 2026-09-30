@@ -19,8 +19,9 @@ export type FolderContentParams = {
   search?: string;
   // No types means every type.
   types: BrowserStorage.StorageObjectType[];
-  // The item a gallery has selected, or the one a grid or list marks — the folder just left.
-  item?: string;
+  // The item the keyboard is on: the gallery's selection, or in a grid or list the folder just left
+  // marked, or the item last clicked or stepped to. Never the selection itself, which is in memory.
+  focus?: string;
 };
 
 export const DEFAULT_FOLDER_CONTENT_PARAMS: FolderContentParams = {
@@ -40,7 +41,7 @@ const KEYS: (keyof FolderContentParams)[] = [
   'pageSize',
   'search',
   'types',
-  'item',
+  'focus',
 ];
 
 // Changing any of these moves every item, so the page that was open no longer means anything.
@@ -97,7 +98,7 @@ export const parseFolderContentParams = (
     pageSize: pageSize && FOLDER_PAGE_SIZES.includes(pageSize) ? pageSize : defaults.pageSize,
     search: search.get('search')?.trim() || undefined,
     types: typesOf(search.get('types')),
-    item: search.get('item') || undefined,
+    focus: search.get('focus') || undefined,
   };
 };
 

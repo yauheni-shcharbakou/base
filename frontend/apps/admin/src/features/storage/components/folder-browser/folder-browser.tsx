@@ -145,8 +145,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     // A new folder or filter starts a new selection, and so does the gallery, which has its own.
     // Another page, order, or Drive's other view keeps it.
     resetKey: [folderId, isGallery, params.search ?? '', params.types.join(',')].join('|'),
-    initialFocus: params.item,
-    onFocusChange: useCallback((id?: string) => setParams({ item: id }, 'replace'), [setParams]),
+    initialFocus: params.focus,
+    onFocusChange: useCallback((id?: string) => setParams({ focus: id }, 'replace'), [setParams]),
   });
 
   const marquee = useMarqueeSelection(contentRef, {
@@ -199,10 +199,10 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     }
   });
 
-  const selectItem = useCallback((id: string) => setParams({ item: id }, 'replace'), [setParams]);
+  const selectItem = useCallback((id: string) => setParams({ focus: id }, 'replace'), [setParams]);
 
   const changePage = useCallback(
-    (page: number) => setParams({ page, item: undefined }, 'replace'),
+    (page: number) => setParams({ page, focus: undefined }, 'replace'),
     [setParams],
   );
 
@@ -242,7 +242,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     (patch: Parameters<typeof setParams>[0]) =>
       setParams(
         isGallery && patch.view && patch.view !== FolderView.GALLERY
-          ? { ...patch, item: undefined }
+          ? { ...patch, focus: undefined }
           : patch,
       ),
     [setParams, isGallery],
@@ -382,7 +382,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
           <FolderGalleryView
             items={items}
             isPlaceholderData={isPlaceholderData}
-            selectedId={params.item}
+            selectedId={params.focus}
             page={params.page}
             pageCount={pageCount}
             pageSize={params.pageSize}
@@ -516,9 +516,9 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             page={Math.min(params.page, pageCount) - 1}
             rowsPerPage={params.pageSize}
             rowsPerPageOptions={FOLDER_PAGE_SIZES}
-            onPageChange={(_, page) => setParams({ page: page + 1, item: undefined })}
+            onPageChange={(_, page) => setParams({ page: page + 1, focus: undefined })}
             onRowsPerPageChange={(event) =>
-              setParams({ pageSize: Number(event.target.value), item: undefined })
+              setParams({ pageSize: Number(event.target.value), focus: undefined })
             }
           />
         </>

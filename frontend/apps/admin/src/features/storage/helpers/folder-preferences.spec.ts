@@ -27,7 +27,7 @@ describe('parseFolderPreferences', () => {
   });
 
   it('keeps nothing but the preferences', () => {
-    expect(parseFolderPreferences('view=list&page=4&item=abc')).toEqual({
+    expect(parseFolderPreferences('view=list&page=4&focus=abc')).toEqual({
       ...DEFAULT_FOLDER_PREFERENCES,
       view: FolderView.LIST,
     });

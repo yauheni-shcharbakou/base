@@ -89,7 +89,7 @@ export const FolderToolbar: FC<Props> = ({ params, total, onChange }) => {
     }
 
     const timer = setTimeout(
-      () => onChange({ search: value || undefined, item: undefined }, 'replace'),
+      () => onChange({ search: value || undefined, focus: undefined }, 'replace'),
       SEARCH_DEBOUNCE_MS,
     );
     return () => clearTimeout(timer);
@@ -100,7 +100,7 @@ export const FolderToolbar: FC<Props> = ({ params, total, onChange }) => {
       types: params.types.includes(type)
         ? params.types.filter((selected) => selected !== type)
         : [...params.types, type],
-      item: undefined,
+      focus: undefined,
     });
 
   const typeLabel = params.types.length
@@ -170,7 +170,7 @@ export const FolderToolbar: FC<Props> = ({ params, total, onChange }) => {
           disabled={!params.types.length}
           onClick={() => {
             setTypeAnchor(null);
-            onChange({ types: [], item: undefined });
+            onChange({ types: [], focus: undefined });
           }}
         >
           <ListItemText inset>Clear</ListItemText>
