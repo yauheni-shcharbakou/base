@@ -3,12 +3,13 @@ import {
   getCompleteDeadline,
   getUploadRowStatus,
   groupUploads,
-  isRateLimited,
+  getRateLimitPause,
   pickUploadWork,
   QueuedUpload,
   summarizeUploads,
   UPLOAD_COMPLETE_BATCH,
   UPLOAD_COMPLETE_DELAY_MS,
+  UPLOAD_RATE_LIMIT_PAUSE_MS,
 } from './upload-queue';
 
 const { FILE, VIDEO } = BrowserStorage.StorageObjectType;
@@ -96,11 +97,20 @@ describe('pickUploadWork', () => {
   });
 });
 
-describe('isRateLimited', () => {
-  it('tells the gateway’s rate limit from any other refusal', () => {
-    expect(isRateLimited(Object.assign(new Error('slow down'), { statusCode: 429 }))).toBe(true);
-    expect(isRateLimited(Object.assign(new Error('bad'), { statusCode: 400 }))).toBe(false);
-    expect(isRateLimited(undefined)).toBe(false);
+describe('getRateLimitPause', () => {
+  const refused = (patch: object) => Object.assign(new Error('Too many requests'), patch);
+
+  it('waits until the gateway’s window resets', () => {
+    expect(getRateLimitPause(refused({ statusCode: 429, retryAfterMs: 12_000 }))).toBe(12_000);
+  });
+
+  it('falls back on a fixed pause when the gateway does not say', () => {
+    expect(getRateLimitPause(refused({ statusCode: 429 }))).toBe(UPLOAD_RATE_LIMIT_PAUSE_MS);
+  });
+
+  it('does not wait out any other failure', () => {
+    expect(getRateLimitPause(refused({ statusCode: 400, retryAfterMs: 5000 }))).toBeUndefined();
+    expect(getRateLimitPause(undefined)).toBeUndefined();
   });
 });
 

@@ -8,11 +8,10 @@ import { putToPresignedUrl } from '@/features/storage/helpers/presigned-upload';
 import { hasUsableCredentials, pairCreatedEntities } from '@/features/storage/helpers/upload-batch';
 import {
   getCompleteDeadline,
-  isRateLimited,
+  getRateLimitPause,
   pickUploadWork,
   QueuedUpload,
   UPLOAD_CONCURRENCY,
-  UPLOAD_RATE_LIMIT_PAUSE_MS,
   UploadWork,
 } from '@/features/storage/helpers/upload-queue';
 import type { UploadKind } from '@/features/storage/helpers/upload-rules';
@@ -223,8 +222,9 @@ class StorageUploadQueue {
     }
   }
 
-  private pauseForRateLimit() {
-    this.pausedUntil = Date.now() + UPLOAD_RATE_LIMIT_PAUSE_MS;
+  // Until the gateway's window resets. A later refusal may only push the pause out, never in.
+  private pauseFor(pauseMs: number) {
+    this.pausedUntil = Math.max(this.pausedUntil, Date.now() + pauseMs);
   }
 
   private async create(keys: string[]) {
@@ -236,8 +236,10 @@ class StorageUploadQueue {
       // Back in the queue, now with credentials: the next turn uploads them.
       this.patch(keys, (item) => ({ status: 'queued', entity: created.get(item.key) }));
     } catch (error) {
-      if (isRateLimited(error)) {
-        this.pauseForRateLimit();
+      const pauseMs = getRateLimitPause(error);
+
+      if (pauseMs) {
+        this.pauseFor(pauseMs);
         this.patch(keys, { status: 'queued' });
         return;
       }
@@ -261,8 +263,10 @@ class StorageUploadQueue {
           : { status: 'failed', error: result?.error ?? 'The upload was not confirmed' };
       });
     } catch (error) {
-      if (isRateLimited(error)) {
-        this.pauseForRateLimit();
+      const pauseMs = getRateLimitPause(error);
+
+      if (pauseMs) {
+        this.pauseFor(pauseMs);
         this.patch(keys, { status: 'uploaded' });
         return;
       }

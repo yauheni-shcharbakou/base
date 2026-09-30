@@ -1,5 +1,5 @@
 import { createServiceError as serviceError } from '@/features/grpc/helpers/service-error';
-import { status } from '@grpc/grpc-js';
+import { Metadata, status } from '@grpc/grpc-js';
 import { GrpcErrorMapper } from './grpc.error.mapper';
 
 const mapper = new GrpcErrorMapper();
@@ -25,6 +25,18 @@ describe('GrpcErrorMapper.toActionError', () => {
     expect(mapper.toActionError(serviceError(code, 'Reason'))).toEqual({
       message: 'Reason',
       statusCode,
+    });
+  });
+
+  it('passes on how long the gateway’s rate limit asks to wait', () => {
+    const error = serviceError(status.RESOURCE_EXHAUSTED, 'Too many requests');
+    error.metadata = new Metadata();
+    error.metadata.set('retry-after', '12');
+
+    expect(mapper.toActionError(error)).toEqual({
+      message: 'Too many requests',
+      statusCode: 429,
+      retryAfterMs: 12_000,
     });
   });
 

@@ -50,7 +50,8 @@ export const UPLOAD_COMPLETE_BATCH = 20;
 // How long an uploaded item waits for others to be confirmed with. Short: until then it spins.
 export const UPLOAD_COMPLETE_DELAY_MS = 1000;
 
-// How long the queue stops calling the backend once the gateway's rate limit has refused a call.
+// How long the queue stops calling the backend once the gateway's rate limit has refused a call
+// without saying how long to wait.
 export const UPLOAD_RATE_LIMIT_PAUSE_MS = 30 * 1000;
 
 export type UploadWork =
@@ -73,9 +74,23 @@ export const getCompleteDeadline = (items: QueuedUpload[]): number | undefined =
   return Math.min(...waiting.map(({ uploadedAt = 0 }) => uploadedAt)) + UPLOAD_COMPLETE_DELAY_MS;
 };
 
-/** A call the gateway refused for the per-user rate limit — worth waiting out, not failing. */
-export const isRateLimited = (error: unknown): boolean =>
-  (error as { statusCode?: number } | undefined)?.statusCode === 429;
+/**
+ * How long to wait out a call the gateway refused for the per-user rate limit: until its window
+ * resets (`retryAfterMs`), or `UPLOAD_RATE_LIMIT_PAUSE_MS` when it did not say. None for any other
+ * failure, which fails the items instead.
+ */
+export const getRateLimitPause = (error: unknown): number | undefined => {
+  const { statusCode, retryAfterMs } = (error ?? {}) as {
+    statusCode?: number;
+    retryAfterMs?: number;
+  };
+
+  if (statusCode !== 429) {
+    return;
+  }
+
+  return retryAfterMs && retryAfterMs > 0 ? retryAfterMs : UPLOAD_RATE_LIMIT_PAUSE_MS;
+};
 
 const isReady = (item: QueuedUpload, now: number) =>
   !!item.entity && hasUsableCredentials(item.entity, now);

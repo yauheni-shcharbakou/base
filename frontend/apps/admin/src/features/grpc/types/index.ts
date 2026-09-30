@@ -55,11 +55,12 @@ export interface GrpcUpdateOne<
 
 /**
  * What the page may know of a failed server action: the `message` and `statusCode` of Refine's
- * `HttpError`.
+ * `HttpError`, and for a call refused by the gateway's rate limit, how long to wait before the next.
  */
 export type ActionError = {
   message: string;
   statusCode: number;
+  retryAfterMs?: number;
 };
 
 /**
