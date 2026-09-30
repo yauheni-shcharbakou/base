@@ -13,7 +13,7 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { IdField, UserIdField } from '../common/fields';
+import { IdField, IdsField, UserIdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { Boolean } from '../common/types';
 import { Empty } from '../google/protobuf/empty';
@@ -22,12 +22,15 @@ import {
   StorageObjectArray,
   StorageObjectCreate,
   StorageObjectCreateWeb,
+  StorageObjectDeleteMany,
   StorageObjectFolderContent,
   StorageObjectGetFolderContent,
   StorageObjectGetFolderContentWeb,
   StorageObjectGetFolders,
   StorageObjectGetFoldersWeb,
   StorageObjectList,
+  StorageObjectMoveByIds,
+  StorageObjectMoveMany,
   StorageObjectQuery,
   StorageObjectQueryWeb,
   StorageObjectUpdateById,
@@ -148,6 +151,30 @@ const StorageObjectServiceService = {
     responseSerialize: (value: StorageObject): Buffer =>
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  deleteMany: {
+    path: '/storage.StorageObjectService/deleteMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectDeleteMany): Buffer =>
+      Buffer.from(StorageObjectDeleteMany.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectDeleteMany =>
+      StorageObjectDeleteMany.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  moveMany: {
+    path: '/storage.StorageObjectService/moveMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectMoveMany): Buffer =>
+      Buffer.from(StorageObjectMoveMany.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectMoveMany =>
+      StorageObjectMoveMany.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
   },
 } as const;
 
@@ -302,6 +329,36 @@ export interface GrpcStorageObjectServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
+  deleteMany(
+    request: StorageObjectDeleteMany,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  deleteMany(
+    request: StorageObjectDeleteMany,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  deleteMany(
+    request: StorageObjectDeleteMany,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  moveMany(
+    request: StorageObjectMoveMany,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  moveMany(
+    request: StorageObjectMoveMany,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  moveMany(
+    request: StorageObjectMoveMany,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
 }
 
 export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
@@ -403,6 +460,24 @@ export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
       readonly requestDeserialize: (value: Buffer) => StorageObjectQuery;
       readonly responseSerialize: (value: StorageObject) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly deleteMany: {
+      readonly path: '/storage.StorageObjectService/deleteMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectDeleteMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectDeleteMany;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly moveMany: {
+      readonly path: '/storage.StorageObjectService/moveMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectMoveMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectMoveMany;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
   };
   serviceName: string;
@@ -520,6 +595,28 @@ const StorageObjectAdminServiceService = {
     responseSerialize: (value: StorageObject): Buffer =>
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  deleteByIds: {
+    path: '/storage.StorageObjectAdminService/deleteByIds' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdsField): Buffer => Buffer.from(IdsField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdsField => IdsField.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  moveByIds: {
+    path: '/storage.StorageObjectAdminService/moveByIds' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectMoveByIds): Buffer =>
+      Buffer.from(StorageObjectMoveByIds.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectMoveByIds =>
+      StorageObjectMoveByIds.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
   },
 } as const;
 
@@ -674,6 +771,36 @@ export interface GrpcStorageObjectAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
+  deleteByIds(
+    request: IdsField,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  deleteByIds(
+    request: IdsField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  deleteByIds(
+    request: IdsField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  moveByIds(
+    request: StorageObjectMoveByIds,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  moveByIds(
+    request: StorageObjectMoveByIds,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  moveByIds(
+    request: StorageObjectMoveByIds,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
 }
 
 export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
@@ -775,6 +902,24 @@ export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
       readonly requestDeserialize: (value: Buffer) => IdField;
       readonly responseSerialize: (value: StorageObject) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly deleteByIds: {
+      readonly path: '/storage.StorageObjectAdminService/deleteByIds';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdsField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdsField;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly moveByIds: {
+      readonly path: '/storage.StorageObjectAdminService/moveByIds';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectMoveByIds) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectMoveByIds;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
   };
   serviceName: string;
@@ -1223,6 +1368,38 @@ export class GrpcStorageObjectRepository {
       });
     });
   }
+
+  deleteMany(
+    request: StorageObjectDeleteMany,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.deleteMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  moveMany(
+    request: StorageObjectMoveMany,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.moveMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
 }
 
 export class GrpcStorageObjectAdminRepository {
@@ -1391,6 +1568,38 @@ export class GrpcStorageObjectAdminRepository {
   ): Promise<StorageObject> {
     return new Promise<StorageObject>((resolve, reject) => {
       this.client.deleteById(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  deleteByIds(
+    request: IdsField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.deleteByIds(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  moveByIds(
+    request: StorageObjectMoveByIds,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.moveByIds(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

@@ -236,13 +236,18 @@ export class PgStorageObjectRepositoryImpl
   // Already-deleted rows are skipped: they are hidden anyway, and the cleanup cron owns them.
   // Every walk down here is `UNION`, not `UNION ALL`: the CTE carries only ids, so deduplication
   // also ends the recursion on a `parent_id` cycle instead of running forever.
-  async markDeletedWithDescendants(id: string): Promise<Either<Error, number>> {
+  async markManyDeletedWithDescendants(ids: string[]): Promise<Either<Error, number>> {
+    // `IN ()` is a syntax error, and nothing is the right answer anyway.
+    if (!ids.length) {
+      return right(0);
+    }
+
     const table = StorageDatabaseEntity.STORAGE_OBJECT;
 
     try {
       const sql = `
         WITH RECURSIVE subtree AS (
-            SELECT id FROM "${table}" WHERE id = ?
+            SELECT id FROM "${table}" WHERE id IN (${ids.map(() => '?').join(', ')})
 
             UNION
 
@@ -254,12 +259,16 @@ export class PgStorageObjectRepositoryImpl
         WHERE id IN (SELECT id FROM subtree) AND is_deleted = false;
       `;
 
-      const result = await this.em.execute<QueryResult>(sql, [id], 'run');
+      const result = await this.em.execute<QueryResult>(sql, ids, 'run');
       return right(result.affectedRows);
     } catch (error) {
-      this.logger.error(`Failed to mark the subtree of ${id} deleted`, error);
+      this.logger.error(`Failed to mark the subtrees of ${ids.join(', ')} deleted`, error);
       return left(error);
     }
+  }
+
+  markDeletedWithDescendants(id: string): Promise<Either<Error, number>> {
+    return this.markManyDeletedWithDescendants([id]);
   }
 
   async getLiveOwnerIds(): Promise<string[]> {

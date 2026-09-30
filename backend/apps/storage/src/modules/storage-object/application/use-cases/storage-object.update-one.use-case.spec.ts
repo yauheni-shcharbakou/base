@@ -26,7 +26,11 @@ describe('StorageObjectUpdateOneUseCase', () => {
     getAllChildrenIds: jest.Mock;
     updateAndCascadePublic: jest.Mock;
   };
-  let validation: { validatePlacement: jest.Mock; validateNameIsFree: jest.Mock };
+  let validation: {
+    validatePlacement: jest.Mock;
+    validateNameIsFree: jest.Mock;
+    resolveFreeName: jest.Mock;
+  };
   let useCase: StorageObjectUpdateOneUseCase;
 
   beforeEach(() => {
@@ -40,6 +44,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
     validation = {
       validatePlacement: jest.fn().mockResolvedValue(right({ isPublic: true })),
       validateNameIsFree: jest.fn(({ name }: { name: string }) => Promise.resolve(right(name))),
+      resolveFreeName: jest.fn(({ name }: { name: string }) => Promise.resolve(name)),
     };
 
     useCase = new StorageObjectUpdateOneUseCase(
@@ -87,33 +92,54 @@ describe('StorageObjectUpdateOneUseCase', () => {
       });
     });
 
-    it('checks the unchanged name in the target folder on a move', async () => {
+    it('resolves the unchanged name in the target folder on a move', async () => {
       await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
 
-      expect(validation.validateNameIsFree).toHaveBeenCalledWith({
+      expect(validation.validateNameIsFree).not.toHaveBeenCalled();
+      expect(validation.resolveFreeName).toHaveBeenCalledWith({
         id: folder.id,
         userId: 'owner',
         name: folder.name,
         parent: 'target',
+        isFolder: true,
       });
     });
 
-    it('checks the new name in the target folder on a rename with a move', async () => {
+    it('resolves the new name in the target folder on a rename with a move', async () => {
       await useCase.execute(byId(folder.id), { set: { name: 'papers', parent: 'target' } });
 
-      expect(validation.validateNameIsFree).toHaveBeenCalledWith({
-        id: folder.id,
-        userId: 'owner',
-        name: 'papers',
-        parent: 'target',
-      });
+      expect(validation.resolveFreeName).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'papers', parent: 'target' }),
+      );
       expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
         set: { name: 'papers', parent: 'target', isPublic: true },
       });
     });
 
-    // Refused, not suffixed, for a file as for a folder: an edit applies the name it was given.
-    it('refuses a taken name and writes nothing', async () => {
+    // A move never fails on a name: it lands under the suffixed one, as an upload does.
+    it('moves under a suffixed name when the name is taken in the target', async () => {
+      validation.resolveFreeName.mockResolvedValue('docs (1)');
+
+      const result = await useCase.execute(byId(folder.id), { set: { parent: 'target' } });
+
+      expect(result.isRight()).toBe(true);
+      expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
+        set: { name: 'docs (1)', parent: 'target', isPublic: true },
+      });
+    });
+
+    // Back into the folder it is in is no move: a rename there is checked, not suffixed.
+    it('checks rather than suffixes when the parent given is the current one', async () => {
+      await useCase.execute(byId(folder.id), { set: { name: 'papers', parent: folder.parentId } });
+
+      expect(validation.resolveFreeName).not.toHaveBeenCalled();
+      expect(validation.validateNameIsFree).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'papers', parent: folder.parentId }),
+      );
+    });
+
+    // Refused, not suffixed, for a file as for a folder: a rename applies the name it was given.
+    it('refuses a taken name on a rename in place and writes nothing', async () => {
       const file = { ...folder, name: 'a.txt', isFolder: false } as StorageObject;
       repository.getOne.mockResolvedValue(right(file));
       validation.validateNameIsFree.mockResolvedValue(left(new ConflictException()));

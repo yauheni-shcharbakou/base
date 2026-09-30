@@ -39,6 +39,8 @@ export abstract class StorageObjectRepository extends DatabaseRepository<
   abstract getAncestors(id: string): Promise<Either<Error, NestStorage.StorageObjectAncestor[]>>;
   /** Marks the object and everything under it deleted, in one statement. Returns the row count. */
   abstract markDeletedWithDescendants(id: string): Promise<Either<Error, number>>;
+  /** The same over several objects' subtrees, still one statement. Returns the row count. */
+  abstract markManyDeletedWithDescendants(ids: string[]): Promise<Either<Error, number>>;
   /** Every user that owns a live object — a user whose tree is marked deleted drops out. */
   abstract getLiveOwnerIds(): Promise<string[]>;
   /** Hard-deletes deleted folders that no longer have children. Returns the row count. */

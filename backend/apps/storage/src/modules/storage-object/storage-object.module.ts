@@ -7,12 +7,14 @@ import { StorageObjectValidationService } from './application/services/storage-o
 import { StorageObjectCleanupUseCase } from './application/use-cases/storage-object.cleanup.use-case';
 import { StorageObjectCreateOneUseCase } from './application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectCreateRootFolderUseCase } from './application/use-cases/storage-object.create-root-folder.use-case';
+import { StorageObjectDeleteManyUseCase } from './application/use-cases/storage-object.delete-many.use-case';
 import { StorageObjectDeleteOneUseCase } from './application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectDeleteRootFolderUseCase } from './application/use-cases/storage-object.delete-root-folder.use-case';
 import { StorageObjectGetFolderContentUseCase } from './application/use-cases/storage-object.get-folder-content.use-case';
 import { StorageObjectGetFoldersUseCase } from './application/use-cases/storage-object.get-folders.use-case';
 import { StorageObjectGetUseCase } from './application/use-cases/storage-object.get.use-case';
 import { StorageObjectIsExistsUseCase } from './application/use-cases/storage-object.is-exists.use-case';
+import { StorageObjectMoveManyUseCase } from './application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from './application/use-cases/storage-object.update-one.use-case';
 import { StorageObjectRepository } from './domain/repositories/storage-object.repository';
 import { PgStorageObjectRepositoryImpl } from './infrastructure/pg/repositories/pg.storage-object.repository.impl';
@@ -35,7 +37,9 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
     StorageObjectGetFoldersUseCase,
     StorageObjectGetFolderContentUseCase,
     StorageObjectDeleteOneUseCase,
+    StorageObjectDeleteManyUseCase,
     StorageObjectUpdateOneUseCase,
+    StorageObjectMoveManyUseCase,
     StorageObjectCreateRootFolderUseCase,
     StorageObjectDeleteRootFolderUseCase,
     StorageObjectCreateOneUseCase,

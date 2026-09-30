@@ -211,6 +211,27 @@ export interface StorageObjectUpdateById {
   update: StorageObjectUpdate;
 }
 
+/**
+ * Objects of one owner, deleted or moved together under one tree lock: all or none. With `userId`,
+ * an object of another owner reads as missing.
+ */
+export interface StorageObjectDeleteMany {
+  ids: string[];
+  userId?: string;
+}
+
+/** A name taken in `parent` gets a ` (n)` suffix, as a move of one object does. */
+export interface StorageObjectMoveMany {
+  ids: string[];
+  parent: string;
+  userId?: string;
+}
+
+export interface StorageObjectMoveByIds {
+  ids: string[];
+  parent: string;
+}
+
 function createBaseStorageObjectQuery(): StorageObjectQuery {
   return {
     id: undefined,
@@ -2237,6 +2258,269 @@ export const StorageObjectUpdateById: MessageFns<StorageObjectUpdateById> = {
       object.update !== undefined && object.update !== null
         ? StorageObjectUpdate.fromPartial(object.update)
         : undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectDeleteMany(): StorageObjectDeleteMany {
+  return { ids: [], userId: undefined };
+}
+
+export const StorageObjectDeleteMany: MessageFns<StorageObjectDeleteMany> = {
+  encode(
+    message: StorageObjectDeleteMany,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(18).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectDeleteMany {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectDeleteMany();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectDeleteMany {
+    return {
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
+    };
+  },
+
+  toJSON(message: StorageObjectDeleteMany): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    if (message.userId !== undefined) {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectDeleteMany>, I>>(
+    base?: I,
+  ): StorageObjectDeleteMany {
+    return StorageObjectDeleteMany.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectDeleteMany>, I>>(
+    object: I,
+  ): StorageObjectDeleteMany {
+    const message = createBaseStorageObjectDeleteMany();
+    message.ids = object.ids?.map((e) => e) || [];
+    message.userId = object.userId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectMoveMany(): StorageObjectMoveMany {
+  return { ids: [], parent: '', userId: undefined };
+}
+
+export const StorageObjectMoveMany: MessageFns<StorageObjectMoveMany> = {
+  encode(message: StorageObjectMoveMany, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.parent !== '') {
+      writer.uint32(18).string(message.parent);
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(26).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectMoveMany {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectMoveMany();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.parent = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectMoveMany {
+    return {
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
+      parent: isSet(object.parent) ? globalThis.String(object.parent) : '',
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
+    };
+  },
+
+  toJSON(message: StorageObjectMoveMany): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    if (message.parent !== '') {
+      obj.parent = message.parent;
+    }
+    if (message.userId !== undefined) {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectMoveMany>, I>>(base?: I): StorageObjectMoveMany {
+    return StorageObjectMoveMany.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectMoveMany>, I>>(
+    object: I,
+  ): StorageObjectMoveMany {
+    const message = createBaseStorageObjectMoveMany();
+    message.ids = object.ids?.map((e) => e) || [];
+    message.parent = object.parent ?? '';
+    message.userId = object.userId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectMoveByIds(): StorageObjectMoveByIds {
+  return { ids: [], parent: '' };
+}
+
+export const StorageObjectMoveByIds: MessageFns<StorageObjectMoveByIds> = {
+  encode(message: StorageObjectMoveByIds, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.parent !== '') {
+      writer.uint32(18).string(message.parent);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectMoveByIds {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectMoveByIds();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.parent = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectMoveByIds {
+    return {
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
+      parent: isSet(object.parent) ? globalThis.String(object.parent) : '',
+    };
+  },
+
+  toJSON(message: StorageObjectMoveByIds): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    if (message.parent !== '') {
+      obj.parent = message.parent;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectMoveByIds>, I>>(
+    base?: I,
+  ): StorageObjectMoveByIds {
+    return StorageObjectMoveByIds.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectMoveByIds>, I>>(
+    object: I,
+  ): StorageObjectMoveByIds {
+    const message = createBaseStorageObjectMoveByIds();
+    message.ids = object.ids?.map((e) => e) || [];
+    message.parent = object.parent ?? '';
     return message;
   },
 };

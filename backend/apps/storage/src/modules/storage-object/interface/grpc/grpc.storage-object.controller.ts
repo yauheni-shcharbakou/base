@@ -6,11 +6,13 @@ import {
   NestStorage,
 } from '@backend/proto';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
+import { StorageObjectDeleteManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-many.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectGetFolderContentUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folder-content.use-case';
 import { StorageObjectGetFoldersUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folders.use-case';
 import { StorageObjectGetUseCase } from '@modules/storage-object/application/use-cases/storage-object.get.use-case';
 import { StorageObjectIsExistsUseCase } from '@modules/storage-object/application/use-cases/storage-object.is-exists.use-case';
+import { StorageObjectMoveManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { from, map, Observable } from 'rxjs';
 
@@ -34,6 +36,8 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     private readonly deleteOneUseCase: StorageObjectDeleteOneUseCase,
     private readonly updateOneUseCase: StorageObjectUpdateOneUseCase,
     private readonly createOneUseCase: StorageObjectCreateOneUseCase,
+    private readonly deleteManyUseCase: StorageObjectDeleteManyUseCase,
+    private readonly moveManyUseCase: StorageObjectMoveManyUseCase,
   ) {}
 
   getById(request: NestCommon.IdField): Observable<NestStorage.StorageObjectPopulated> {
@@ -106,5 +110,17 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
 
   deleteOne(request: NestStorage.StorageObjectQuery): Observable<NestStorage.StorageObject> {
     return from(this.deleteOneUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  deleteMany(
+    request: NestStorage.StorageObjectDeleteMany,
+  ): Observable<NestStorage.StorageObjectArray> {
+    const stream$ = from(this.deleteManyUseCase.execute(request));
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
+  }
+
+  moveMany(request: NestStorage.StorageObjectMoveMany): Observable<NestStorage.StorageObjectArray> {
+    const stream$ = from(this.moveManyUseCase.execute(request));
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 }

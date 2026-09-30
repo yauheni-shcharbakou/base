@@ -15,6 +15,7 @@ describe('StorageObjectValidationService', () => {
     isExists: jest.Mock;
     distinct: jest.Mock;
     getOne: jest.Mock;
+    getMany: jest.Mock;
     getMediaToPlace: jest.Mock;
   };
   let service: StorageObjectValidationService;
@@ -24,6 +25,7 @@ describe('StorageObjectValidationService', () => {
       isExists: jest.fn().mockResolvedValue(false),
       distinct: jest.fn().mockResolvedValue(new Set()),
       getOne: jest.fn().mockResolvedValue(right({ id: 'root', isPublic: true })),
+      getMany: jest.fn().mockResolvedValue([]),
       getMediaToPlace: jest.fn(),
     };
 
@@ -110,6 +112,95 @@ describe('StorageObjectValidationService', () => {
       });
     });
   });
+  describe('resolveFreeName', () => {
+    const target = { id: 'moved', userId: 'owner', parent: 'target' };
+
+    it('keeps a name that is free, the object itself left out of the siblings', async () => {
+      const name = await service.resolveFreeName({ ...target, name: 'a.txt', isFolder: false });
+
+      expect(name).toBe('a.txt');
+      expect(repository.distinct).toHaveBeenCalledWith('name', {
+        userId: 'owner',
+        parent: 'target',
+        nameStartsWith: 'a',
+        isDeleted: false,
+        excludeIds: ['moved'],
+      });
+    });
+
+    it('suffixes a file before its extension', async () => {
+      repository.distinct.mockResolvedValue(new Set(['a.txt', 'a (1).txt']));
+
+      const name = await service.resolveFreeName({ ...target, name: 'a.txt', isFolder: false });
+
+      expect(name).toBe('a (2).txt');
+    });
+
+    // A dot in a folder's name is no extension: `v1.2` becomes `v1.2 (1)`, never `v1 (1).2`.
+    it('suffixes a folder after its whole name', async () => {
+      repository.distinct.mockResolvedValue(new Set(['v1.2']));
+
+      const name = await service.resolveFreeName({ ...target, name: 'v1.2', isFolder: true });
+
+      expect(name).toBe('v1.2 (1)');
+      expect(repository.distinct).toHaveBeenCalledWith(
+        'name',
+        expect.objectContaining({ nameStartsWith: 'v1.2' }),
+      );
+    });
+
+    it('suffixes past the names reserved by earlier items of the same call', async () => {
+      const name = await service.resolveFreeName(
+        { ...target, name: 'docs', isFolder: true },
+        new Set(['docs']),
+      );
+
+      expect(name).toBe('docs (1)');
+    });
+  });
+
+  describe('validateBatch', () => {
+    const object = (id: string, userId = 'owner') => ({ id, userId });
+
+    it('returns the live objects in the order they were named, each once', async () => {
+      repository.getMany.mockResolvedValue([object('b'), object('a')]);
+
+      const result = await service.validateBatch(['a', 'b', 'a'], 'owner');
+
+      expect(result.isRight() && result.value.map(({ id }) => id)).toEqual(['a', 'b']);
+      expect(repository.getMany).toHaveBeenCalledWith({
+        ids: ['a', 'b'],
+        userId: 'owner',
+        isDeleted: false,
+      });
+    });
+
+    // An empty `ids` filter constrains nothing: the query would read every object.
+    it('refuses an empty batch without reading', async () => {
+      const result = await service.validateBatch([]);
+
+      expect(result.isLeft() && result.value).toBeInstanceOf(BadRequestException);
+      expect(repository.getMany).not.toHaveBeenCalled();
+    });
+
+    it('reports a batch with a missing, deleted or foreign object as not found', async () => {
+      repository.getMany.mockResolvedValue([object('a')]);
+
+      const result = await service.validateBatch(['a', 'b']);
+
+      expect(result.isLeft() && result.value).toBeInstanceOf(NotFoundException);
+    });
+
+    // The tree lock is per owner: a batch across two trees could not hold one.
+    it('refuses objects of different owners', async () => {
+      repository.getMany.mockResolvedValue([object('a'), object('b', 'other')]);
+
+      const result = await service.validateBatch(['a', 'b']);
+
+      expect(result.isLeft() && result.value).toBeInstanceOf(BadRequestException);
+    });
+  });
+
   describe('validatePlacement', () => {
     it('looks the parent up among the owner’s live folders only', async () => {
       const result = await service.validatePlacement('root', 'owner');

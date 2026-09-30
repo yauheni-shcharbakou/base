@@ -93,4 +93,16 @@ export class StorageObjectProxyService {
       this.storageObjectClient.deleteOne(transformedQuery).pipe(GrpcRxPipe.rpcException),
     );
   }
+
+  deleteMany(ids: string[]): Promise<NestStorage.StorageObjectArray> {
+    return firstValueFrom(
+      this.storageObjectClient.deleteMany({ ids }).pipe(GrpcRxPipe.rpcException),
+    );
+  }
+
+  moveMany(ids: string[], parent: string): Promise<NestStorage.StorageObjectArray> {
+    return firstValueFrom(
+      this.storageObjectClient.moveMany({ ids, parent }).pipe(GrpcRxPipe.rpcException),
+    );
+  }
 }

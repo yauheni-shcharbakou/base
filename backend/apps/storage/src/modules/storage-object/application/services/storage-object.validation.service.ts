@@ -1,5 +1,6 @@
 import { NestStorage } from '@backend/proto';
 import { StorageObjectPlacementMeta } from '@common/domain/interfaces/storage-object.meta.interface';
+import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
   StorageObjectCreate,
   StorageObjectLeafType,
@@ -35,6 +36,17 @@ export type StorageObjectNameTarget = {
   parent: string;
 };
 
+/** Where a moved object ends up, under a free name. */
+export type StorageObjectFreeNameRequest = {
+  /** The object being moved, which never clashes with its own name. */
+  id?: string;
+  userId: string;
+  name: string;
+  parent: string;
+  /** A folder's suffix goes after its whole name; a file's before its extension. */
+  isFolder: boolean;
+};
+
 /** A new object's name, as the caller asked for it. */
 export type StorageObjectNameRequest = Pick<
   NestStorage.StorageObjectCreate,
@@ -63,6 +75,7 @@ export const resolveIsPublic = (parentIsPublic: boolean, requested?: boolean): b
 // the name field — the admin does, and keeps no copy of the rule.
 const NAME_TAKEN = 'This name is already taken in the folder';
 const PARENT_NOT_FOUND = 'Parent folder not found';
+const DIFFERENT_OWNERS = 'The objects belong to different users';
 
 type MediaField = 'file' | 'image' | 'video';
 
@@ -114,9 +127,9 @@ export class StorageObjectValidationService {
   }
 
   /**
-   * For a rename or a move: the name must be free in the folder the object ends up in. Unlike
-   * create, a taken file name is refused rather than suffixed: an edit applies the name it was given
-   * or fails.
+   * For a rename in place: the name must be free in the object's folder. Refused rather than
+   * suffixed, for a file as for a folder: the caller typed that name, and an edit applies it or
+   * fails. A move takes `resolveFreeName` instead.
    */
   async validateNameIsFree(
     target: StorageObjectNameTarget,
@@ -153,18 +166,44 @@ export class StorageObjectValidationService {
       return right(createData.name);
     }
 
-    const parsedName = path.parse(createData.name);
+    return right(
+      await this.resolveFreeName(
+        {
+          userId: createData.userId,
+          parent: createData.parent,
+          name: createData.name,
+          isFolder: false,
+        },
+        reserved,
+      ),
+    );
+  }
+
+  /**
+   * The name itself when it is free in `parent`, otherwise the first ` (n)` past the highest one
+   * taken — a file's before its extension, a folder's after its whole name. What an upload and a
+   * move land under: neither fails on a name. `reserved` holds the names given to earlier items of
+   * the same call, not saved yet.
+   */
+  async resolveFreeName(
+    { id, userId, name, parent, isFolder }: StorageObjectFreeNameRequest,
+    reserved: ReadonlySet<string> = new Set(),
+  ): Promise<string> {
+    const parsed = path.parse(name);
+    const base = isFolder ? name : parsed.name;
+    const ext = isFolder ? '' : parsed.ext;
 
     const savedNames = await this.storageObjectRepository.distinct('name', {
-      userId: createData.userId,
-      parent: createData.parent,
-      nameStartsWith: parsedName.name,
+      userId,
+      parent,
+      nameStartsWith: base,
       isDeleted: false,
+      ...(id ? { excludeIds: [id] } : {}),
     });
 
     const escapeRegexp = /[.*+?^${}()|[\]\\]/g;
-    const escapedName = parsedName.name.replace(escapeRegexp, '\\$&');
-    const escapedExt = parsedName.ext.replace(escapeRegexp, '\\$&');
+    const escapedName = base.replace(escapeRegexp, '\\$&');
+    const escapedExt = ext.replace(escapeRegexp, '\\$&');
     const re = new RegExp(`^${escapedName}(?: \\((?<num>\\d+)\\))?${escapedExt}$`);
 
     let maxNum = -1;
@@ -191,10 +230,44 @@ export class StorageObjectValidationService {
     }
 
     if (!baseFileExists) {
-      return right(createData.name);
+      return name;
     }
 
-    return right(`${parsedName.name} (${maxNum + 1})${parsedName.ext}`);
+    return `${base} (${maxNum + 1})${ext}`;
+  }
+
+  /**
+   * The live objects a batch call names, all of one owner — the tree lock is per owner. A missing,
+   * deleted or (with `userId`) foreign id fails the whole batch as `NotFound`, like a single call.
+   * Duplicates count once. An empty list is refused: it would read as "no filter" and match all.
+   */
+  async validateBatch(
+    ids: string[],
+    userId?: string,
+  ): Promise<Either<HttpException, StorageObject[]>> {
+    const uniqueIds = _.uniq(ids);
+
+    if (!uniqueIds.length) {
+      return left(new BadRequestException('No objects given'));
+    }
+
+    const objects = await this.storageObjectRepository.getMany({
+      ids: uniqueIds,
+      ...(userId ? { userId } : {}),
+      isDeleted: false,
+    });
+
+    if (objects.length !== uniqueIds.length) {
+      return left(new NotFoundException('Storage object not found'));
+    }
+
+    if (_.uniqBy(objects, 'userId').length > 1) {
+      return left(new BadRequestException(DIFFERENT_OWNERS));
+    }
+
+    // In the order the caller named them: a batch move gives out suffixes in that order.
+    const byId = _.keyBy(objects, 'id');
+    return right(uniqueIds.map((id) => byId[id]));
   }
 
   async validateCreateData(

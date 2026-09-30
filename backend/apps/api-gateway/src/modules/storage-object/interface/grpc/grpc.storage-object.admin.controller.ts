@@ -9,6 +9,10 @@ import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
 import { UserIdFieldDto } from '@common/application/dto/user-id-field.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
+import {
+  StorageObjectIdsDto,
+  StorageObjectMoveByIdsDto,
+} from '@modules/storage-object/application/dto/storage-object.batch.dto';
 import { StorageObjectCreateDto } from '@modules/storage-object/application/dto/storage-object.create.dto';
 import { StorageObjectGetFolderContentDto } from '@modules/storage-object/application/dto/storage-object.get-folder-content.dto';
 import { StorageObjectGetFoldersDto } from '@modules/storage-object/application/dto/storage-object.get-folders.dto';
@@ -76,5 +80,18 @@ export class GrpcStorageObjectAdminController implements GrpcStorageObjectAdminS
   @ValidateGrpcPayload(IdFieldDto)
   deleteById({ id }: NestCommon.IdField): Promise<NestStorage.StorageObject> {
     return this.storageObjectService.deleteOne({ id });
+  }
+
+  @ValidateGrpcPayload(StorageObjectIdsDto)
+  deleteByIds({ ids }: NestCommon.IdsField): Promise<NestStorage.StorageObjectArray> {
+    return this.storageObjectService.deleteMany(ids);
+  }
+
+  @ValidateGrpcPayload(StorageObjectMoveByIdsDto)
+  moveByIds({
+    ids,
+    parent,
+  }: NestStorage.StorageObjectMoveByIds): Promise<NestStorage.StorageObjectArray> {
+    return this.storageObjectService.moveMany(ids, parent);
   }
 }

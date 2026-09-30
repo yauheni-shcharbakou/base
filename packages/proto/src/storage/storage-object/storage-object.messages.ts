@@ -147,3 +147,24 @@ export interface StorageObjectUpdateById {
   id: string;
   update: StorageObjectUpdate;
 }
+
+/**
+ * Objects of one owner, deleted or moved together under one tree lock: all or none. With `userId`,
+ * an object of another owner reads as missing.
+ */
+export interface StorageObjectDeleteMany {
+  ids: string[];
+  userId?: string;
+}
+
+/** A name taken in `parent` gets a ` (n)` suffix, as a move of one object does. */
+export interface StorageObjectMoveMany {
+  ids: string[];
+  parent: string;
+  userId?: string;
+}
+
+export interface StorageObjectMoveByIds {
+  ids: string[];
+  parent: string;
+}

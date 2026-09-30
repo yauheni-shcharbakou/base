@@ -11,8 +11,10 @@ import { PgFileRepositoryImpl } from '@modules/file/infrastructure/pg/repositori
 import { PgImageRepositoryImpl } from '@modules/image/infrastructure/pg/repositories/pg.image.repository.impl';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
+import { StorageObjectDeleteManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-many.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectGetFolderContentUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folder-content.use-case';
+import { StorageObjectMoveManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
@@ -44,6 +46,8 @@ describe('storage-object tree against Postgres', () => {
   let updateOne: StorageObjectUpdateOneUseCase;
   let createOne: StorageObjectCreateOneUseCase;
   let deleteOne: StorageObjectDeleteOneUseCase;
+  let deleteMany: StorageObjectDeleteManyUseCase;
+  let moveMany: StorageObjectMoveManyUseCase;
   let getFolderContent: StorageObjectGetFolderContentUseCase;
   let fileRepository: PgFileRepositoryImpl;
   let imageRepository: PgImageRepositoryImpl;
@@ -67,6 +71,8 @@ describe('storage-object tree against Postgres', () => {
     updateOne = new StorageObjectUpdateOneUseCase(repository, validation);
     createOne = new StorageObjectCreateOneUseCase(repository, validation);
     deleteOne = new StorageObjectDeleteOneUseCase(repository);
+    deleteMany = new StorageObjectDeleteManyUseCase(repository, validation);
+    moveMany = new StorageObjectMoveManyUseCase(repository, validation);
     // The Bunny signers read their keys from the env; these stubs keep the signed key readable.
     const fileSigner = {
       getFileSignedUrl: (providerId: string) => right(`https://storage.test/${providerId}`),
@@ -413,19 +419,31 @@ describe('storage-object tree against Postgres', () => {
       assert.equal(fileRenamed.unwrap().name, 'b.txt');
     });
 
-    withDb('refuses a name the target folder already has, on a move and on a rename', async () => {
+    withDb('refuses a name the folder already has on a rename in place', async () => {
       const docs = await createFolder('docs', root);
-      const archive = await createFolder('archive', root);
-      await createFolder('docs', archive);
       await createFile('b.txt', docs);
       const file = await createFile('a.txt', docs);
 
-      const moved = await updateOne.execute(byId(docs), { set: { parent: archive } });
       const renamed = await updateOne.execute(byId(file), { set: { name: 'b.txt' } });
 
-      assert.ok(moved.isLeft() && moved.value instanceof ConflictException);
       assert.ok(renamed.isLeft() && renamed.value instanceof ConflictException);
-      assert.equal((await paths([docs])).get(docs), '/docs/', 'the refused move wrote nothing');
+    });
+
+    // A move never fails on a name: a folder takes its suffix after the whole name, a file before
+    // its extension.
+    withDb('suffixes a name the target folder already has on a move', async () => {
+      const docs = await createFolder('docs', root);
+      const archive = await createFolder('archive', root);
+      await createFolder('docs', archive);
+      await createFile('a.txt', archive);
+      const file = await createFile('a.txt', docs);
+
+      const movedFile = await updateOne.execute(byId(file), { set: { parent: archive } });
+      const movedFolder = await updateOne.execute(byId(docs), { set: { parent: archive } });
+
+      assert.equal(movedFile.unwrap().name, 'a (1).txt');
+      assert.equal(movedFolder.unwrap().name, 'docs (1)');
+      assert.equal((await paths([docs])).get(docs), '/archive/docs (1)/');
     });
 
     withDb('frees the name of a deleted object at once', async () => {
@@ -436,6 +454,122 @@ describe('storage-object tree against Postgres', () => {
       const renamed = await updateOne.execute(byId(drafts), { set: { name: 'docs' } });
 
       assert.equal(renamed.unwrap().name, 'docs');
+    });
+  });
+
+  // Several objects of one owner in one call, under one lock: all or none.
+  describe('batch move and delete', () => {
+    const createFile = (name: string, parent: string) =>
+      createObject({ name, parent, isFolder: false });
+
+    const names = async (parent: string): Promise<string[]> => {
+      const items = await read(() => repository.getMany({ parent, isDeleted: false }));
+      return items.map((item) => item.name).sort();
+    };
+
+    withDb('moves objects from different folders, suffixing each clash in order', async () => {
+      const left1 = await createFolder('left', root);
+      const right1 = await createFolder('right', root);
+      const target = await createFolder('target', root);
+      await createFile('a.txt', target);
+      const a1 = await createFile('a.txt', left1);
+      const a2 = await createFile('a.txt', right1);
+      const docs = await createFolder('docs', left1);
+      await createFolder('inner', docs);
+
+      const moved = await moveMany.execute({ ids: [a1, a2, docs], parent: target });
+
+      assert.deepEqual(
+        moved.unwrap().map((item) => item.name),
+        ['a (1).txt', 'a (2).txt', 'docs'],
+      );
+      assert.deepEqual(await names(target), ['a (1).txt', 'a (2).txt', 'a.txt', 'docs']);
+      assert.equal((await paths([docs])).get(docs), '/target/docs/');
+    });
+
+    withDb('spreads the target’s visibility over every moved subtree', async () => {
+      const target = await createFolder('target', root);
+      await repository.updateAndCascadePublic(target, { set: { isPublic: true } });
+      const docs = await createFolder('docs', root);
+      const inner = await createFolder('inner', docs);
+      const file = await createFile('a.txt', root);
+
+      await moveMany.execute({ ids: [docs, file], parent: target });
+
+      assert.deepEqual(await publicIds(), [target, docs, inner, file].sort());
+    });
+
+    withDb('refuses a target inside a moved folder and writes nothing', async () => {
+      const docs = await createFolder('docs', root);
+      const inner = await createFolder('inner', docs);
+      const file = await createFile('a.txt', root);
+
+      const moved = await moveMany.execute({ ids: [file, docs], parent: inner });
+
+      assert.ok(moved.isLeft() && moved.value instanceof BadRequestException);
+      assert.deepEqual(await names(root), ['a.txt', 'docs']);
+    });
+
+    // The lock's transaction rolls the objects written before a failure back with it.
+    withDb('rolls the whole batch back when one object cannot be written', async () => {
+      const target = await createFolder('target', root);
+      const file = await createFile('a.txt', root);
+      const docs = await createFolder('docs', root);
+      // Past the service's checks, the unique index refuses the second write.
+      const original = repository.updateAndCascadePublic.bind(repository);
+      let calls = 0;
+      repository.updateAndCascadePublic = (id, update) =>
+        ++calls === 2
+          ? original(id, { set: { ...update.set, name: 'a.txt' } })
+          : original(id, update);
+
+      try {
+        const moved = await moveMany.execute({ ids: [file, docs], parent: target });
+        assert.ok(moved.isLeft() && moved.value instanceof ConflictException);
+      } finally {
+        repository.updateAndCascadePublic = original;
+      }
+
+      assert.deepEqual(await names(target), []);
+      assert.deepEqual(await names(root), ['a.txt', 'docs', 'target']);
+    });
+
+    withDb('refuses objects of another owner, in the batch or as the target', async () => {
+      const otherRoot = await createObject({ name: '', userId: OTHER_USER_ID });
+      const foreign = await createObject({ name: 'x', parent: otherRoot, userId: OTHER_USER_ID });
+      const docs = await createFolder('docs', root);
+
+      const mixed = await moveMany.execute({ ids: [docs, foreign], parent: root });
+      const intoForeign = await moveMany.execute({ ids: [docs], parent: otherRoot });
+      const scoped = await deleteMany.execute({ ids: [foreign], userId: USER_ID });
+
+      assert.ok(mixed.isLeft() && mixed.value instanceof BadRequestException);
+      assert.ok(intoForeign.isLeft() && intoForeign.value instanceof NotFoundException);
+      assert.ok(scoped.isLeft() && scoped.value instanceof NotFoundException);
+    });
+
+    withDb('marks several subtrees deleted in one statement', async () => {
+      const docs = await createFolder('docs', root);
+      const inner = await createFolder('inner', docs);
+      const leaf = await createFile('a.txt', inner);
+      const file = await createFile('b.txt', root);
+      await createFile('c.txt', root);
+
+      const marked = await repository.markManyDeletedWithDescendants([docs, file]);
+      const deleted = await read(() => repository.getMany({ userId: USER_ID, isDeleted: true }));
+
+      assert.equal(marked.unwrap(), 4);
+      assert.deepEqual(deleted.map(({ id }) => id).sort(), [docs, inner, leaf, file].sort());
+      assert.deepEqual(await names(root), ['c.txt']);
+    });
+
+    withDb('deletes a batch with the root folder in it not at all', async () => {
+      const docs = await createFolder('docs', root);
+
+      const deleted = await deleteMany.execute({ ids: [docs, root] });
+
+      assert.ok(deleted.isLeft() && deleted.value instanceof BadRequestException);
+      assert.deepEqual(await names(root), ['docs']);
     });
   });
 

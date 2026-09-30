@@ -157,3 +157,24 @@ message StorageObjectUpdateById {
   string id = 1;
   StorageObjectUpdate update = 2;
 }
+
+// many
+
+// Objects of one owner, deleted or moved together under one tree lock: all or none. With `userId`,
+// an object of another owner reads as missing.
+message StorageObjectDeleteMany {
+  repeated string ids = 1;
+  optional string userId = 2;
+}
+
+// A name taken in `parent` gets a ` (n)` suffix, as a move of one object does.
+message StorageObjectMoveMany {
+  repeated string ids = 1;
+  string parent = 2;
+  optional string userId = 3;
+}
+
+message StorageObjectMoveByIds {
+  repeated string ids = 1;
+  string parent = 2;
+}

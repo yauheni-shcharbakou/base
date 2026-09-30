@@ -15,7 +15,8 @@ import { StorageObjectValidationService } from '../services/storage-object.valid
  * over its subtree in the same transaction as the folder itself.
  *
  * An object moves only within its owner's tree — the new parent must be the owner's own live
- * folder, whoever makes the call, an admin included.
+ * folder, whoever makes the call, an admin included. A move lands under a free name (` (n)` on a
+ * clash); a rename in place is refused with a 409 on a taken name.
  *
  * The whole read-check-write runs under the owner's tree lock. Without it, two opposite moves
  * (A into B, B into A) each pass the descendant check before either commits, and together close a
@@ -66,10 +67,20 @@ export class StorageObjectUpdateOneUseCase {
     // An empty name or parent means "unchanged", like an absent one.
     const name = updateData.set?.name || entity.name;
     const parent = updateData.set?.parent || entity.parentId;
+    let resolvedName = name;
 
-    // On a move as well as a rename: the name has to be free where the object ends up. Nothing to
-    // check when neither changes, or for a root folder, which has no folder to clash in.
-    if (parent && (name !== entity.name || parent !== entity.parentId)) {
+    if (parent && parent !== entity.parentId) {
+      // A move lands under a free name, suffixed on a clash, as a batch move and an upload do.
+      resolvedName = await this.storageObjectValidationService.resolveFreeName({
+        id: entity.id,
+        userId: entity.userId,
+        name,
+        parent,
+        isFolder: entity.isFolder,
+      });
+    } else if (parent && name !== entity.name) {
+      // A rename in place applies the name it was given or fails. Nothing to check for a root
+      // folder, which has no folder to clash in.
       const freeName = await this.storageObjectValidationService.validateNameIsFree({
         id: entity.id,
         userId: entity.userId,
@@ -82,8 +93,8 @@ export class StorageObjectUpdateOneUseCase {
       }
     }
 
-    if (name !== entity.name) {
-      update.set.name = name;
+    if (resolvedName !== entity.name) {
+      update.set.name = resolvedName;
     }
 
     return right(update);

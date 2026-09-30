@@ -5,7 +5,7 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { IdField, UserIdField } from '../common/fields';
+import { IdField, IdsField, UserIdField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { Boolean } from '../common/types';
 import { Empty } from '../google/protobuf/empty';
@@ -14,12 +14,15 @@ import {
   StorageObjectArray,
   StorageObjectCreate,
   StorageObjectCreateWeb,
+  StorageObjectDeleteMany,
   StorageObjectFolderContent,
   StorageObjectGetFolderContent,
   StorageObjectGetFolderContentWeb,
   StorageObjectGetFolders,
   StorageObjectGetFoldersWeb,
   StorageObjectList,
+  StorageObjectMoveByIds,
+  StorageObjectMoveMany,
   StorageObjectQuery,
   StorageObjectQueryWeb,
   StorageObjectUpdateById,
@@ -50,6 +53,10 @@ export interface GrpcStorageObjectServiceClient {
   updateOne(request: StorageObjectUpdateOne, metadata?: Metadata): Observable<StorageObject>;
 
   deleteOne(request: StorageObjectQuery, metadata?: Metadata): Observable<StorageObject>;
+
+  deleteMany(request: StorageObjectDeleteMany, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  moveMany(request: StorageObjectMoveMany, metadata?: Metadata): Observable<StorageObjectArray>;
 }
 
 export interface GrpcStorageObjectServiceController {
@@ -105,6 +112,16 @@ export interface GrpcStorageObjectServiceController {
     request: StorageObjectQuery,
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
+  deleteMany(
+    request: StorageObjectDeleteMany,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  moveMany(
+    request: StorageObjectMoveMany,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 }
 
 function StorageObjectServiceControllerMethods() {
@@ -120,6 +137,8 @@ function StorageObjectServiceControllerMethods() {
       'createOne',
       'updateOne',
       'deleteOne',
+      'deleteMany',
+      'moveMany',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
@@ -160,6 +179,10 @@ export interface GrpcStorageObjectAdminServiceClient {
   updateById(request: StorageObjectUpdateById, metadata?: Metadata): Observable<StorageObject>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<StorageObject>;
+
+  deleteByIds(request: IdsField, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  moveByIds(request: StorageObjectMoveByIds, metadata?: Metadata): Observable<StorageObjectArray>;
 }
 
 export interface GrpcStorageObjectAdminServiceController {
@@ -215,6 +238,16 @@ export interface GrpcStorageObjectAdminServiceController {
     request: IdField,
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
+
+  deleteByIds(
+    request: IdsField,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  moveByIds(
+    request: StorageObjectMoveByIds,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 }
 
 function StorageObjectAdminServiceControllerMethods() {
@@ -230,6 +263,8 @@ function StorageObjectAdminServiceControllerMethods() {
       'createOne',
       'updateById',
       'deleteById',
+      'deleteByIds',
+      'moveByIds',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
