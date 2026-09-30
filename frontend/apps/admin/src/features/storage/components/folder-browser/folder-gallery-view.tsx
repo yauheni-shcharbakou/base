@@ -1,23 +1,14 @@
 'use client';
 
-import {
-  getFolderItemOpenUrl,
-  getNeighbourId,
-  getStorageItemKind,
-  GalleryDirection,
-  StorageItemKind,
-  stepGallery,
-} from '@/features/storage/helpers';
-import { BunnyPlayerControls } from '@/features/video/components';
-import { usePrefetchVideoPlayerUrls } from '@/features/video/hooks';
+import { getNeighbourId } from '@/features/storage/helpers';
 import { Box, CircularProgress, Stack } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
-import React, { FC, useEffect, useRef, useState } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import { GalleryBar } from './gallery-bar';
 import { GalleryInfo } from './gallery-info';
 import { GalleryStage } from './gallery-stage';
-import { GalleryViewer } from './gallery-viewer';
 import { StorageItemThumbnail } from './storage-item-thumbnail';
+import type { FolderViewer } from './use-folder-viewer';
 import { isControl, isTyping, useWindowKeyDown } from './use-window-key-down';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
@@ -27,16 +18,13 @@ type Props = {
   // The page's items are the previous page's while the next one loads.
   isPlaceholderData: boolean;
   selectedId?: string;
-  page: number;
-  pageCount: number;
-  pageSize: number;
-  total: number;
   isInfoShown: boolean;
   onInfoShownChange: (isShown: boolean) => void;
   onSelect: (id: string) => void;
-  onPageChange: (page: number) => void;
-  onPrefetch: (page: number) => void;
+  // A double click or Enter: a folder in place, anything else in the viewer.
   onOpen: (item: Item) => void;
+  // The bar's Open: the item itself, in a new tab.
+  onOpenExternal: (item: Item) => void;
   onDelete?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
@@ -44,95 +32,50 @@ type Props = {
   isPublicLocked?: boolean;
   onPreviewError?: () => void;
   getFolderHref?: (id: string) => string;
-};
-
-const SEEK_STEP_SECONDS = 10;
-
-const isPlayable = (item: Item) =>
-  getStorageItemKind(item) === StorageItemKind.VIDEO && !!getFolderItemOpenUrl(item);
-
-// Where the viewer's video goes on from: the inline player's, as its own full-screen button opened
-// the viewer.
-type ViewerStart = { id: string; seconds: number };
-
-// A player's own full screen may sit on the viewer's, and each exit leaves one.
-const MAX_FULLSCREEN_DEPTH = 2;
-// A request some browsers never settle — embedded ones — must not keep the viewer from opening.
-const FULLSCREEN_SETTLE_TIMEOUT_MS = 3000;
-
-const exitFullscreen = async () => {
-  for (let depth = 0; depth < MAX_FULLSCREEN_DEPTH && document.fullscreenElement; depth += 1) {
-    await document.exitFullscreen().catch(() => undefined);
-  }
+  // The folder browser's viewer, which this gallery's selection drives, and whose steps it takes.
+  viewer: FolderViewer;
 };
 
 /**
  * Finder's gallery view: the selected item large, the page as a strip of small thumbnails below,
  * its details over the stage on demand. The keys are Finder's — ←/→ step (on to the next or
  * previous page at an edge), Home/End jump to the ends of the folder, Enter or ⌘↓ opens, Space
- * toggles the full-screen viewer, I the details, F2 renames, ⌘⌫ or Delete deletes, and
- * K / J / L / M drive a playing video (going up is the folder browser's, in every view). The
- * selection is kept in the URL. A click in the strip only selects: a video plays on a click on its
- * poster, or by itself in the viewer.
+ * opens the full-screen viewer, I the details, F2 renames, ⌘⌫ or Delete deletes, ↑/↓ and
+ * PgUp/PgDn scroll a shown PDF, and K / J / L / M drive a playing video (going up is the folder
+ * browser's, in every view). The viewer, once open, has the keys. The selection is kept in the URL.
+ * A click in the strip only selects: a video plays on a click on its poster, or by itself in the
+ * viewer.
  */
 export const FolderGalleryView: FC<Props> = ({
   items,
   isPlaceholderData,
   selectedId,
-  page,
-  pageCount,
-  pageSize,
-  total,
   isInfoShown,
   onInfoShownChange,
   onSelect,
-  onPageChange,
-  onPrefetch,
   onOpen,
+  onOpenExternal,
   onDelete,
   onRename,
   onPublicChange,
   isPublicLocked,
   onPreviewError,
   getFolderHref,
+  viewer,
 }) => {
-  const [isViewer, setViewer] = useState(false);
-  const [viewerStart, setViewerStart] = useState<ViewerStart>();
-  // Whether the viewer holds the browser's full screen: only then does leaving full screen close it.
-  // An inline player's full screen coming and going, or a refused request, does not.
-  const hasFullscreen = useRef(false);
-  // The page a step across an edge went to, and which end of it to select once it is loaded.
-  const pendingEdge = useRef<{ page: number; edge: 'first' | 'last' } | null>(null);
   const strip = useRef<HTMLDivElement>(null);
   const thumbs = useRef(new Map<string, HTMLElement>());
-  // The playing video's player, inline or in the viewer — one stage is mounted at a time.
-  const playerControls = useRef<BunnyPlayerControls | null>(null);
   // The page as last shown with the selection on it, to find where a deleted item stood.
   const shownItems = useRef(items);
+  const { isArriving } = viewer;
 
   const index = isPlaceholderData ? -1 : items.findIndex((item) => item.id === selectedId);
   const selected = index >= 0 ? items[index] : undefined;
-  const position = { index, count: items.length, page, pageCount };
 
-  // The page's players get their URLs in one call: stepping from video to video spends none.
-  usePrefetchVideoPlayerUrls(
-    isPlaceholderData
-      ? []
-      : items.filter((item) => isPlayable(item) && item.videoId).map((item) => item.videoId!),
-  );
-
-  // Select on arrival: the end a step came in from; the neighbour of an item just deleted, as Finder
-  // does; else the first item when the URL names none on this page.
+  // Select on arrival: the neighbour of an item just deleted, as Finder does; else the first item
+  // when the URL names none on this page. A step across pages selects its own end, in the viewer.
   useEffect(() => {
-    if (isPlaceholderData || !items.length) {
-      return;
-    }
-
-    const pending = pendingEdge.current;
-
-    if (pending?.page === page) {
-      pendingEdge.current = null;
-      onSelect(pending.edge === 'first' ? items[0].id : items[items.length - 1].id);
+    if (isPlaceholderData || !items.length || isArriving()) {
       return;
     }
 
@@ -147,22 +90,7 @@ export const FolderGalleryView: FC<Props> = ({
     const isNeighbourShown = items.some((item) => item.id === neighbourId);
 
     onSelect(neighbourId && isNeighbourShown ? neighbourId : items[0].id);
-  }, [items, isPlaceholderData, index, page, selectedId, onSelect]);
-
-  // Near an end of the strip, the neighbouring page loads ahead, so the step across is instant.
-  useEffect(() => {
-    if (index < 0) {
-      return;
-    }
-
-    if (index >= items.length - 3 && page < pageCount) {
-      onPrefetch(page + 1);
-    }
-
-    if (index <= 2 && page > 1) {
-      onPrefetch(page - 1);
-    }
-  }, [index, items.length, page, pageCount, onPrefetch]);
+  }, [items, isPlaceholderData, index, selectedId, onSelect, isArriving]);
 
   // The strip alone scrolls to centre the selection: `scrollIntoView` would scroll the page too.
   useEffect(() => {
@@ -176,94 +104,15 @@ export const FolderGalleryView: FC<Props> = ({
     }
   }, [selectedId]);
 
-  // The browser leaves full screen by itself on Esc, which never reaches the page: the viewer goes
-  // with it. Leaving the page — into a folder, to another view — leaves full screen too.
-  useEffect(() => {
-    if (!isViewer) {
-      return;
-    }
-
-    const handleChange = () => {
-      if (!document.fullscreenElement && hasFullscreen.current) {
-        hasFullscreen.current = false;
-        setViewer(false);
-      }
-    };
-
-    document.addEventListener('fullscreenchange', handleChange);
-    return () => document.removeEventListener('fullscreenchange', handleChange);
-  }, [isViewer]);
-
-  useEffect(
-    () => () => {
-      void exitFullscreen();
-    },
-    [],
-  );
-
-  // The whole document, not the viewer: menus, dialogs and notifications open in portals outside it
-  // and would stay hidden behind a full-screen viewer. Refused, the viewer still fills the window.
-  const requestFullscreen = async () => {
-    await document.documentElement.requestFullscreen();
-    hasFullscreen.current = true;
-  };
-
-  const enterViewer = () => {
-    setViewerStart(undefined);
-    setViewer(true);
-    requestFullscreen().catch(() => undefined);
-  };
-
-  // The inline player went full screen by its own button: the viewer takes over and plays on from
-  // where it was. The document takes the full screen while the player still holds it — removing
-  // the full-screen element, as the viewer replacing the inline player does, leaves full screen
-  // altogether — or, refused, once the player has left it; only then does the viewer open.
-  const continueInViewer = async (start: ViewerStart) => {
-    const outcome = await Promise.race([
-      requestFullscreen().then(
-        () => 'entered',
-        () => 'refused',
-      ),
-      new Promise((resolve) => setTimeout(resolve, FULLSCREEN_SETTLE_TIMEOUT_MS, 'unsettled')),
-    ]);
-
-    if (outcome === 'refused') {
-      await exitFullscreen();
-      await requestFullscreen().catch(() => undefined);
-    }
-
-    setViewerStart(start);
-    setViewer(true);
-  };
-
-  const exitViewer = () => {
-    hasFullscreen.current = false;
-    setViewer(false);
-    void exitFullscreen();
-  };
-
   const toggleInfo = () => onInfoShownChange(!isInfoShown);
 
-  const step = (direction: GalleryDirection) => {
-    const next = stepGallery(position, direction);
-
-    if (!next) {
-      return;
-    }
-
-    setViewerStart(undefined);
-
-    if ('index' in next) {
-      onSelect(items[next.index].id);
-      return;
-    }
-
-    pendingEdge.current = next;
-    onPageChange(next.page);
-  };
-
   useWindowKeyDown((event) => {
-    if (event.defaultPrevented || event.altKey || isTyping(event.target)) {
+    if (viewer.isOpen || event.defaultPrevented || event.altKey || isTyping(event.target)) {
+      return;
+    }
+
+    if (viewer.handleMediaKey(event)) {
+      event.preventDefault();
       return;
     }
 
@@ -275,13 +124,13 @@ export const FolderGalleryView: FC<Props> = ({
         if (isModified) {
           return;
         }
-        step(event.key === 'ArrowRight' ? 'next' : 'prev');
+        viewer.step(event.key === 'ArrowRight' ? 'next' : 'prev');
         break;
       case 'Home':
-        step('first');
+        viewer.step('first');
         break;
       case 'End':
-        step('last');
+        viewer.step('last');
         break;
       case 'ArrowDown':
         if (!isModified || !selected) {
@@ -296,14 +145,10 @@ export const FolderGalleryView: FC<Props> = ({
         onOpen(selected);
         break;
       case ' ':
-        if (isControl(event.target)) {
+        if (isControl(event.target) || !selected) {
           return;
         }
-        if (isViewer) {
-          exitViewer();
-        } else if (selected) {
-          enterViewer();
-        }
+        viewer.open(selected.id);
         break;
       case 'i':
       case 'I':
@@ -312,32 +157,6 @@ export const FolderGalleryView: FC<Props> = ({
         }
         toggleInfo();
         break;
-      // The player keeps no keys of its own here (it hands the focus back), so these are YouTube's.
-      case 'k':
-      case 'K':
-      case 'j':
-      case 'J':
-      case 'l':
-      case 'L':
-      case 'm':
-      case 'M': {
-        const controls = playerControls.current;
-
-        if (isModified || !controls) {
-          return;
-        }
-
-        const key = event.key.toLowerCase();
-
-        if (key === 'k') {
-          controls.togglePlay();
-        } else if (key === 'm') {
-          controls.toggleMute();
-        } else {
-          controls.seekBy(key === 'l' ? SEEK_STEP_SECONDS : -SEEK_STEP_SECONDS);
-        }
-        break;
-      }
       case 'F2':
         if (!selected || !onRename) {
           return;
@@ -359,12 +178,10 @@ export const FolderGalleryView: FC<Props> = ({
     event.preventDefault();
   });
 
-  const overall = index >= 0 ? `${(page - 1) * pageSize + index + 1} / ${total}` : undefined;
-
   return (
     <Stack gap={1.5}>
       <Box
-        onDoubleClick={() => selected && enterViewer()}
+        onDoubleClick={() => selected && viewer.open(selected.id)}
         sx={{
           position: 'relative',
           height: { xs: 360, md: '72vh' },
@@ -375,15 +192,16 @@ export const FolderGalleryView: FC<Props> = ({
         }}
       >
         {/* One stage at a time: a second would load the original or play the video twice. */}
-        {!isViewer &&
+        {!viewer.isOpen &&
           (selected ? (
             <GalleryStage
               key={selected.id}
               item={selected}
-              onFullscreen={(seconds) => continueInViewer({ id: selected.id, seconds })}
-              onOpen={onOpen}
+              onFullscreen={(seconds) => viewer.continueIn({ id: selected.id, seconds })}
+              onOpen={onOpenExternal}
               onPreviewError={onPreviewError}
-              playerControls={playerControls}
+              playerControls={viewer.playerControls}
+              pdfControls={viewer.pdfControls}
             />
           ) : (
             <Stack
@@ -394,14 +212,14 @@ export const FolderGalleryView: FC<Props> = ({
               <CircularProgress />
             </Stack>
           ))}
-        {selected && !isViewer && (
+        {selected && !viewer.isOpen && (
           <GalleryBar
             item={selected}
-            position={overall}
+            position={viewer.overall}
             isInfoShown={isInfoShown}
             onToggleInfo={toggleInfo}
-            onToggleViewer={() => enterViewer()}
-            onOpen={onOpen}
+            onToggleViewer={() => viewer.open(selected.id)}
+            onOpen={onOpenExternal}
             onDelete={onDelete}
             onRename={onRename}
             onPublicChange={onPublicChange}
@@ -409,7 +227,7 @@ export const FolderGalleryView: FC<Props> = ({
             getFolderHref={getFolderHref}
           />
         )}
-        {selected && isInfoShown && !isViewer && <GalleryInfo item={selected} />}
+        {selected && isInfoShown && !viewer.isOpen && <GalleryInfo item={selected} />}
       </Box>
 
       <Box
@@ -464,28 +282,6 @@ export const FolderGalleryView: FC<Props> = ({
           );
         })}
       </Box>
-
-      <GalleryViewer
-        open={isViewer}
-        item={selected}
-        startTime={viewerStart?.id === selected?.id ? viewerStart?.seconds : undefined}
-        position={overall}
-        canPrev={!!stepGallery(position, 'prev')}
-        canNext={!!stepGallery(position, 'next')}
-        isInfoShown={isInfoShown}
-        onPrev={() => step('prev')}
-        onNext={() => step('next')}
-        onExit={exitViewer}
-        onToggleInfo={toggleInfo}
-        onOpen={onOpen}
-        onDelete={onDelete}
-        onRename={onRename}
-        onPublicChange={onPublicChange}
-        isPublicLocked={isPublicLocked}
-        onPreviewError={onPreviewError}
-        getFolderHref={getFolderHref}
-        playerControls={playerControls}
-      />
     </Stack>
   );
 };

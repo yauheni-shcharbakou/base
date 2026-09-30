@@ -1,6 +1,6 @@
 'use client';
 
-import { getStorageItemKind, StorageItemKind } from '@/features/storage/helpers';
+import { getStorageItemKind, PdfControls, StorageItemKind } from '@/features/storage/helpers';
 import { BunnyPlayerControls } from '@/features/video/components';
 import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
@@ -36,6 +36,7 @@ type Props = {
   onPreviewError?: () => void;
   getFolderHref?: (id: string) => string;
   playerControls?: RefObject<BunnyPlayerControls | null>;
+  pdfControls?: RefObject<PdfControls | null>;
 };
 
 // How long the pointer rests before the controls fade out, as in any media viewer.
@@ -84,9 +85,10 @@ const StepButton: FC<{
 );
 
 /**
- * The gallery's full-screen viewer: one item at a time over black, stepping through the whole folder
- * until it is left. An image fills the screen, a video plays on arrival, anything else shows a
- * placeholder to open it by. The keys are the gallery's; the controls fade while the pointer rests.
+ * The folder browser's full-screen viewer, over any view: one item at a time over black, stepping
+ * through the folder until it is left. An image fills the screen, a video plays on arrival, a PDF
+ * shows its pages, anything else shows a placeholder to open it by. The keys are
+ * `useFolderViewer`'s; the controls fade while the pointer rests.
  */
 export const GalleryViewer: FC<Props> = ({
   open,
@@ -108,6 +110,7 @@ export const GalleryViewer: FC<Props> = ({
   onPreviewError,
   getFolderHref,
   playerControls,
+  pdfControls,
 }) => {
   const [isIdle, setIdle] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -152,6 +155,7 @@ export const GalleryViewer: FC<Props> = ({
             onOpen={onOpen}
             onPreviewError={onPreviewError}
             playerControls={playerControls}
+            pdfControls={pdfControls}
           />
         ) : (
           <Stack

@@ -56,10 +56,12 @@ import { FolderListView } from './folder-list-view';
 import { FolderNewMenu } from './folder-new-menu';
 import { FolderSelectionBar } from './folder-selection-bar';
 import { FolderToolbar } from './folder-toolbar';
+import { GalleryViewer } from './gallery-viewer';
 import { MoveStorageItemsDialog } from './move-storage-items-dialog';
 import { RenameStorageItemDialog } from './rename-storage-item-dialog';
 import { useFileDrop } from './use-file-drop';
 import { DropFolder, FolderItemBehavior, useFolderItemBehavior } from './use-folder-item-behavior';
+import { useFolderViewer } from './use-folder-viewer';
 import { isControl, isTyping, useWindowKeyDown } from './use-window-key-down';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
@@ -109,8 +111,9 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
 
 /**
  * A folder of a user's storage, browsed the way Google Drive does — grid or list — or the way
- * Finder's gallery does. A folder opens in place; a file, image or video opens in a new tab once
- * its upload is done, and its details otherwise. In the grid and the list a click selects, as in
+ * Finder's gallery does. A folder opens in place; anything else in the full-screen viewer, which
+ * steps through the folder's files — through all its items, from the gallery — and opens one in a
+ * new tab once its upload is done, and its details otherwise. In the grid and the list a click selects, as in
  * Drive, and the selection — up to 100 items — moves, deletes or turns public or private together:
  * from its bar, an item's "⋮", a drag onto a folder or a breadcrumb, or the keyboard. An item's "⋮"
  * renames it. Files dropped from the desktop upload into the folder, or
@@ -173,7 +176,9 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     onClear: selection.clear,
   });
 
-  const openItem = useCallback(
+  // The item itself: a folder in place, the rest in a new tab — or its details, before its upload is
+  // done. What the viewer's and the gallery's Open buttons do.
+  const openExternal = useCallback(
     (item: Item) => {
       const target = getFolderItemTarget(item);
 
@@ -211,7 +216,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     const isUp = event.key === 'ArrowUp' && (event.metaKey || event.ctrlKey);
     const isBack = event.key === 'Backspace' && !event.metaKey && !event.ctrlKey && !event.altKey;
 
-    if ((isUp || isBack) && !event.defaultPrevented && !isTyping(event.target)) {
+    if ((isUp || isBack) && !viewer.isOpen && !event.defaultPrevented && !isTyping(event.target)) {
       event.preventDefault();
       openParent();
     }
@@ -222,6 +227,39 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   const changePage = useCallback(
     (page: number) => setParams({ page, focus: undefined }, 'replace'),
     [setParams],
+  );
+
+  // Over the grid and the list the viewer keeps its own item, off the selection: stepping through
+  // files must neither select them nor move the keyboard's item under it, until it is left.
+  const [viewerId, setViewerId] = useState<string>();
+
+  const viewer = useFolderViewer({
+    items: content?.items ?? [],
+    isPlaceholderData,
+    page: params.page,
+    pageCount,
+    pageSize: params.pageSize,
+    total: content?.total ?? 0,
+    currentId: isGallery ? params.focus : viewerId,
+    onCurrentChange: isGallery ? selectItem : setViewerId,
+    onPageChange: changePage,
+    onPrefetch: prefetchPage,
+    isFilesOnly: !isGallery,
+    onOpen: openExternal,
+    onRename: setPendingRename,
+    onDelete: (item) => setPendingDelete([item]),
+    onToggleInfo: () => setGalleryInfo(!preferences.galleryInfo),
+    // Left from the grid or the list, the item last shown is selected, as in Drive.
+    onExit: (item) => !isGallery && item && selection.click(item, {}),
+  });
+
+  const { open: openViewer } = viewer;
+
+  // A double click or Enter: a folder in place, anything else in the viewer.
+  const openItem = useCallback(
+    (item: Item) =>
+      getFolderItemTarget(item).kind === 'folder' ? openExternal(item) : openViewer(item.id),
+    [openExternal, openViewer],
   );
 
   // What Move, Delete and Public on an item act on: the whole selection when the item is part of it.
@@ -300,10 +338,12 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     },
   };
 
-  // Drive's keys over the grid and the list; the gallery has its own. A dialog keeps its keys.
+  // Drive's keys over the grid and the list; the gallery has its own, and so has the viewer over
+  // them. A dialog keeps its keys.
   useWindowKeyDown((event) => {
     if (
       isGallery ||
+      viewer.isOpen ||
       !content ||
       pendingDelete ||
       pendingMove ||
@@ -427,22 +467,18 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             items={items}
             isPlaceholderData={isPlaceholderData}
             selectedId={params.focus}
-            page={params.page}
-            pageCount={pageCount}
-            pageSize={params.pageSize}
-            total={content?.total ?? 0}
             isInfoShown={preferences.galleryInfo}
             onInfoShownChange={setGalleryInfo}
             onSelect={selectItem}
-            onPageChange={changePage}
-            onPrefetch={prefetchPage}
             onOpen={openItem}
+            onOpenExternal={openExternal}
             onDelete={(item) => setPendingDelete([item])}
             onRename={setPendingRename}
             onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
             isPublicLocked={isPublicLocked}
             onPreviewError={refreshPreviews}
             getFolderHref={getFolderHref}
+            viewer={viewer}
           />
         );
       default:
@@ -580,6 +616,28 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onConfirm={confirmDelete}
       />
       <RenameStorageItemDialog item={pendingRename} onClose={() => setPendingRename(undefined)} />
+      <GalleryViewer
+        open={viewer.isOpen}
+        item={viewer.current}
+        startTime={viewer.startTime}
+        position={viewer.overall}
+        canPrev={viewer.canPrev}
+        canNext={viewer.canNext}
+        isInfoShown={preferences.galleryInfo}
+        onPrev={() => viewer.step('prev')}
+        onNext={() => viewer.step('next')}
+        onExit={viewer.exit}
+        onToggleInfo={() => setGalleryInfo(!preferences.galleryInfo)}
+        onOpen={openExternal}
+        onDelete={(item) => setPendingDelete([item])}
+        onRename={setPendingRename}
+        onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
+        isPublicLocked={isPublicLocked}
+        onPreviewError={refreshPreviews}
+        getFolderHref={getFolderHref}
+        playerControls={viewer.playerControls}
+        pdfControls={viewer.pdfControls}
+      />
       {fileDropTarget && (
         // Drive's drop area: the folder outlined.
         <Box

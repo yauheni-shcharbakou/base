@@ -57,3 +57,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0028](0028-refresh-sessions-in-postgres.md) | A refresh token is valid only while its session row exists, and keeps its `jti` across refreshes | Accepted; `jti` part superseded by 0029 | `backend.auth`, `backend.api-gateway`, `frontend.admin`, `@packages/proto`, `@packages/common` |
 | [0029](0029-refresh-token-rotation.md) | Every refresh replaces the refresh token, and a token spent twice ends its session | Accepted | `backend.auth`, `frontend.admin` |
 | [0030](0030-a-move-suffixes-a-taken-name.md) | A move lands under a suffixed name, only a typed name is refused, and batch tree writes are one call | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin`, `@packages/proto` |
+| [0031](0031-gallery-pdf-rendered-by-pdfjs.md) | The gallery renders a PDF with pdf.js, loaded whole through the `open` route | Accepted | `frontend.admin` |

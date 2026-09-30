@@ -1,4 +1,4 @@
-import { getNeighbourId, stepGallery } from './gallery-navigation';
+import { getNeighbourId, pickArrival, stepFiles, stepGallery } from './gallery-navigation';
 
 const at = (index: number, page = 1, pageCount = 1, count = 5) => ({
   index,
@@ -52,5 +52,59 @@ describe('getNeighbourId', () => {
   it('gives nothing for the last item left or an unknown one', () => {
     expect(getNeighbourId([{ id: 'a' }], 'a')).toBeUndefined();
     expect(getNeighbourId(items, 'z')).toBeUndefined();
+  });
+});
+
+const folder = (id: string) => ({ id, isFolder: true });
+const file = (id: string) => ({ id });
+
+describe('stepFiles', () => {
+  const items = [folder('a'), folder('b'), file('c'), file('d')];
+  const on = (index: number, page = 1, pageCount = 1) => ({
+    index,
+    count: items.length,
+    page,
+    pageCount,
+  });
+
+  it('steps over the files as the gallery does', () => {
+    expect(stepFiles(on(2), 'next', items)).toEqual({ index: 3 });
+    expect(stepFiles(on(3), 'prev', items)).toEqual({ index: 2 });
+    expect(stepFiles(on(3, 1, 2), 'next', items)).toEqual({ page: 2, edge: 'first' });
+  });
+
+  it('stops at the folders', () => {
+    expect(stepFiles(on(2), 'prev', items)).toBeNull();
+  });
+
+  it('jumps home to the first file', () => {
+    expect(stepFiles(on(3), 'first', items)).toEqual({ index: 2 });
+    expect(stepFiles(on(2), 'first', items)).toBeNull();
+    expect(stepFiles(on(3, 2, 2), 'first', items)).toEqual({ page: 1, edge: 'first' });
+  });
+
+  it('crosses back to the previous page, for the arrival to settle', () => {
+    expect(stepFiles(on(0, 2, 2), 'prev', [file('x')])).toEqual({ page: 1, edge: 'last' });
+  });
+});
+
+describe('pickArrival', () => {
+  it('lands on either end of any item', () => {
+    expect(pickArrival([folder('a'), file('b')], 'first', false)).toEqual({ index: 0 });
+    expect(pickArrival([file('a'), folder('b')], 'last', false)).toEqual({ index: 1 });
+  });
+
+  it('lands on the first file, or goes on past a page of folders', () => {
+    expect(pickArrival([folder('a'), file('b')], 'first', true)).toEqual({ index: 1 });
+    expect(pickArrival([folder('a'), folder('b')], 'first', true)).toEqual({ page: 'next' });
+  });
+
+  it('turns back from a page that ends in folders', () => {
+    expect(pickArrival([folder('a'), folder('b')], 'last', true)).toBeNull();
+    expect(pickArrival([folder('a'), file('b')], 'last', true)).toEqual({ index: 1 });
+  });
+
+  it('has nothing to land on in an empty page', () => {
+    expect(pickArrival([], 'first', true)).toBeNull();
   });
 });

@@ -65,3 +65,58 @@ export const getNeighbourId = (items: { id: string }[], id: string): string | un
 
   return (items[index + 1] ?? items[index - 1])?.id;
 };
+
+type Entry = { id: string; isFolder?: boolean };
+
+/**
+ * A viewer's step over the files alone, as Drive's: the folders — always listed first — are a wall.
+ * A step back onto one goes nowhere; Home lands on the page's first file, or starts from the
+ * folder's first page, where `pickArrival` finds it.
+ */
+export const stepFiles = (
+  position: GalleryPosition,
+  direction: GalleryDirection,
+  items: Entry[],
+): GalleryStep => {
+  const next = stepGallery(position, direction);
+
+  if (!next || !('index' in next) || !items[next.index]?.isFolder) {
+    return next;
+  }
+
+  if (direction !== 'first') {
+    return null;
+  }
+
+  const first = items.findIndex((item) => !item.isFolder);
+  return first < 0 || first === position.index ? null : { index: first };
+};
+
+/**
+ * What a step across pages lands on once the page is loaded: its first or last item — its first
+ * file, over files alone, or the page after it when it has none. Nothing when the item at the end
+ * is a folder: the step went past the files, and goes back.
+ */
+export type GalleryArrival = { index: number } | { page: 'next' } | null;
+
+export const pickArrival = (
+  items: Entry[],
+  edge: 'first' | 'last',
+  isFilesOnly: boolean,
+): GalleryArrival => {
+  if (!items.length) {
+    return null;
+  }
+
+  if (edge === 'last') {
+    const last = items.length - 1;
+    return isFilesOnly && items[last].isFolder ? null : { index: last };
+  }
+
+  if (!isFilesOnly) {
+    return { index: 0 };
+  }
+
+  const first = items.findIndex((item) => !item.isFolder);
+  return first < 0 ? { page: 'next' } : { index: first };
+};

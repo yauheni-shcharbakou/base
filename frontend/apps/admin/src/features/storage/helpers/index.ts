@@ -13,6 +13,7 @@ export * from './marquee';
 export * from './media-options';
 export * from './moved-items';
 export * from './name-conflict';
+export * from './pdf-view';
 export * from './presigned-upload';
 export * from './storage-meta.schema';
 export * from './upload-queue';

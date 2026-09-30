@@ -51,6 +51,7 @@ catalog:
   jest: '30.3.0'
   lodash: '4.18.1'
   moment: '2.30.1'
+  pdfjs-dist: '6.3.289'
   prettier: '3.9.4'
   protobufjs: '7.6.3'
   pug: '3.0.4'

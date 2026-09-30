@@ -4,6 +4,8 @@ import {
   getFileSize,
   getFolderItemOpenUrl,
   getStorageItemKind,
+  PdfControls,
+  shouldAutoloadPdf,
   STORAGE_ITEM_KIND_LABELS,
   StorageItemKind,
 } from '@/features/storage/helpers';
@@ -13,9 +15,18 @@ import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import React, { FC, RefObject, useEffect, useState } from 'react';
+import type { PdfFailure } from './pdf-document-view';
 import { StorageItemIcon } from './storage-item-icon';
+
+// pdf.js touches browser globals as it loads, and weighs a worker besides: never on the server, and
+// only once a PDF is shown.
+const PdfDocumentView = dynamic(
+  () => import('./pdf-document-view').then(({ PdfDocumentView }) => PdfDocumentView),
+  { ssr: false },
+);
 
 type Item = BrowserStorage.StorageObjectFolderItem;
 
@@ -32,6 +43,8 @@ type Props = {
   onPreviewError?: () => void;
   // Where a playing video's controls go, for the gallery's keys.
   playerControls?: RefObject<BunnyPlayerControls | null>;
+  // Where a shown PDF's scrolling goes, for the gallery's keys.
+  pdfControls?: RefObject<PdfControls | null>;
 };
 
 // How long a selection has to stay before the original loads, or a viewer's video starts. An
@@ -42,10 +55,15 @@ const REST_DELAY_MS = 400;
 
 const fill = { position: 'absolute', inset: 0 } as const;
 
+const PDF_FAILURE_LABELS: Record<PdfFailure, string> = {
+  protected: 'Password-protected — open it to read',
+  error: 'Preview unavailable',
+};
+
 /**
  * The large picture of a gallery or its viewer: an image's preview at once, then its original once
  * the selection rests; a video's poster that turns into the player on a click — or by itself, in
- * the viewer; a big icon for the rest. Keyed by item, so nothing of one item's state leaks into the
+ * the viewer; a PDF's pages once the selection rests; a big icon for the rest. Keyed by item, so nothing of one item's state leaks into the
  * next.
  */
 export const GalleryStage: FC<Props> = ({
@@ -56,6 +74,7 @@ export const GalleryStage: FC<Props> = ({
   onOpen,
   onPreviewError,
   playerControls,
+  pdfControls,
 }) => {
   const kind = getStorageItemKind(item);
   const openUrl = getFolderItemOpenUrl(item);
@@ -65,6 +84,11 @@ export const GalleryStage: FC<Props> = ({
   // A video that carries on from the inline player starts at once: no key flicked through to it.
   const [isPlaying, setPlaying] = useState(startTime !== undefined);
   const isPlayable = kind === StorageItemKind.VIDEO && !!openUrl;
+  const isPdf = kind === StorageItemKind.PDF && !!openUrl;
+  const isPdfAutoloaded = isPdf && shouldAutoloadPdf(item.file?.size, isViewer);
+  const [pdfSrc, setPdfSrc] = useState<string>();
+  const [isPdfShown, setPdfShown] = useState(false);
+  const [pdfFailure, setPdfFailure] = useState<PdfFailure>();
 
   useEffect(() => {
     if (kind !== StorageItemKind.IMAGE || !openUrl) {
@@ -74,6 +98,16 @@ export const GalleryStage: FC<Props> = ({
     const timer = setTimeout(() => setOriginalSrc(openUrl), REST_DELAY_MS);
     return () => clearTimeout(timer);
   }, [kind, openUrl]);
+
+  // A PDF loads whole, through the same `open` call as an image's original: after the same pause.
+  useEffect(() => {
+    if (!isPdfAutoloaded || !openUrl) {
+      return;
+    }
+
+    const timer = setTimeout(() => setPdfSrc(openUrl), REST_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [isPdfAutoloaded, openUrl]);
 
   // The viewer plays every video it arrives at, once the selection rests there.
   useEffect(() => {
@@ -195,7 +229,9 @@ export const GalleryStage: FC<Props> = ({
     );
   }
 
-  return (
+  const isPdfLoading = isPdf && !pdfFailure && (!!pdfSrc || isPdfAutoloaded);
+
+  const placeholder = (
     <Stack sx={fill} alignItems="center" justifyContent="center" gap={1} px={2}>
       <StorageItemIcon kind={kind} sx={{ fontSize: 160 }} />
       {isViewer && (
@@ -213,6 +249,19 @@ export const GalleryStage: FC<Props> = ({
         {item.file?.extension ? ` · ${item.file.extension.toUpperCase()}` : ''}
         {isViewer && item.file ? ` · ${getFileSize(item.file.size)}` : ''}
       </Typography>
+      {pdfFailure && (
+        <Typography variant="body2" color={mutedColor} textAlign="center">
+          {PDF_FAILURE_LABELS[pdfFailure]}
+        </Typography>
+      )}
+      {isPdfLoading && (
+        <CircularProgress color="inherit" size={24} sx={{ mt: 1, color: mutedColor }} />
+      )}
+      {isPdf && !isPdfLoading && !pdfFailure && openUrl && (
+        <Button variant="outlined" onClick={() => setPdfSrc(openUrl)} sx={{ mt: 1 }}>
+          Show preview
+        </Button>
+      )}
       {isViewer && onOpen && (
         <Button
           variant="contained"
@@ -225,4 +274,21 @@ export const GalleryStage: FC<Props> = ({
       )}
     </Stack>
   );
+
+  if (isPdf && pdfSrc && !pdfFailure) {
+    return (
+      <Box sx={fill}>
+        {!isPdfShown && placeholder}
+        <PdfDocumentView
+          url={pdfSrc}
+          isViewer={isViewer}
+          controlsRef={pdfControls}
+          onLoad={() => setPdfShown(true)}
+          onFailure={setPdfFailure}
+        />
+      </Box>
+    );
+  }
+
+  return placeholder;
 };
