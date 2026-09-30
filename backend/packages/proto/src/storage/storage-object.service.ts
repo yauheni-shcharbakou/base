@@ -28,6 +28,8 @@ import {
   StorageObjectQueryWeb,
   StorageObjectUpdateById,
   StorageObjectUpdateOne,
+  StorageObjectUpdatePublicByIds,
+  StorageObjectUpdatePublicMany,
 } from './storage-object/storage-object.messages';
 import { StorageObjectPopulated } from './storage-object/storage-object.populates';
 
@@ -63,6 +65,11 @@ export interface GrpcStorageObjectServiceClient {
   deleteMany(request: StorageObjectDeleteMany, metadata?: Metadata): Observable<StorageObjectArray>;
 
   moveMany(request: StorageObjectMoveMany, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  updatePublicMany(
+    request: StorageObjectUpdatePublicMany,
+    metadata?: Metadata,
+  ): Observable<StorageObjectArray>;
 }
 
 export interface GrpcStorageObjectServiceController {
@@ -133,6 +140,11 @@ export interface GrpcStorageObjectServiceController {
     request: StorageObjectMoveMany,
     ...args: any[]
   ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  updatePublicMany(
+    request: StorageObjectUpdatePublicMany,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 }
 
 function StorageObjectServiceControllerMethods() {
@@ -151,6 +163,7 @@ function StorageObjectServiceControllerMethods() {
       'deleteOne',
       'deleteMany',
       'moveMany',
+      'updatePublicMany',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
@@ -200,6 +213,11 @@ export interface GrpcStorageObjectAdminServiceClient {
   deleteByIds(request: IdsField, metadata?: Metadata): Observable<StorageObjectArray>;
 
   moveByIds(request: StorageObjectMoveByIds, metadata?: Metadata): Observable<StorageObjectArray>;
+
+  updatePublicByIds(
+    request: StorageObjectUpdatePublicByIds,
+    metadata?: Metadata,
+  ): Observable<StorageObjectArray>;
 }
 
 export interface GrpcStorageObjectAdminServiceController {
@@ -270,6 +288,11 @@ export interface GrpcStorageObjectAdminServiceController {
     request: StorageObjectMoveByIds,
     ...args: any[]
   ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
+  updatePublicByIds(
+    request: StorageObjectUpdatePublicByIds,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
 }
 
 function StorageObjectAdminServiceControllerMethods() {
@@ -288,6 +311,7 @@ function StorageObjectAdminServiceControllerMethods() {
       'deleteById',
       'deleteByIds',
       'moveByIds',
+      'updatePublicByIds',
     ];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);

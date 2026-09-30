@@ -17,6 +17,7 @@ import { StorageObjectGetUseCase } from './application/use-cases/storage-object.
 import { StorageObjectIsExistsUseCase } from './application/use-cases/storage-object.is-exists.use-case';
 import { StorageObjectMoveManyUseCase } from './application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from './application/use-cases/storage-object.update-one.use-case';
+import { StorageObjectUpdatePublicManyUseCase } from './application/use-cases/storage-object.update-public-many.use-case';
 import { StorageObjectRepository } from './domain/repositories/storage-object.repository';
 import { PgStorageObjectRepositoryImpl } from './infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { CronStorageObjectScheduler } from './interface/cron/cron.storage-object.scheduler';
@@ -41,6 +42,7 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
     StorageObjectDeleteManyUseCase,
     StorageObjectUpdateOneUseCase,
     StorageObjectMoveManyUseCase,
+    StorageObjectUpdatePublicManyUseCase,
     StorageObjectCreateRootFolderUseCase,
     StorageObjectDeleteRootFolderUseCase,
     StorageObjectCreateOneUseCase,

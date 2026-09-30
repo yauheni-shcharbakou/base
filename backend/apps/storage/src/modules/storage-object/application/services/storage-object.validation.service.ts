@@ -76,6 +76,7 @@ export const resolveIsPublic = (parentIsPublic: boolean, requested?: boolean): b
 const NAME_TAKEN = 'This name is already taken in the folder';
 const PARENT_NOT_FOUND = 'Parent folder not found';
 const DIFFERENT_OWNERS = 'The objects belong to different users';
+const PRIVATE_IN_PUBLIC = 'An object in a public folder is public too';
 
 type MediaField = 'file' | 'image' | 'video';
 
@@ -268,6 +269,38 @@ export class StorageObjectValidationService {
     // In the order the caller named them: a batch move gives out suffixes in that order.
     const byId = _.keyBy(objects, 'id');
     return right(uniqueIds.map((id) => byId[id]));
+  }
+
+  /**
+   * A public folder holds nothing private — the rule `resolveIsPublic` keeps on a create, kept on an
+   * edit too. Making objects private is refused while the folder of any of them is public, unless
+   * that folder is one of `objects` itself, made private along with them. A root folder has no
+   * folder to follow.
+   */
+  async validateVisibility(
+    objects: Pick<StorageObject, 'id' | 'parentId'>[],
+    isPublic: boolean,
+  ): Promise<Either<HttpException, void>> {
+    if (isPublic) {
+      return right(undefined);
+    }
+
+    const ids = new Set(objects.map(({ id }) => id));
+    const parentIds = _.uniq(
+      objects.flatMap(({ parentId }) => (parentId && !ids.has(parentId) ? [parentId] : [])),
+    );
+
+    if (!parentIds.length) {
+      return right(undefined);
+    }
+
+    const isInPublicFolder = await this.storageObjectRepository.isExists({
+      ids: parentIds,
+      isPublic: true,
+      isDeleted: false,
+    });
+
+    return isInPublicFolder ? left(new BadRequestException(PRIVATE_IN_PUBLIC)) : right(undefined);
   }
 
   async validateCreateData(

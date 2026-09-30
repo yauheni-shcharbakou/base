@@ -17,6 +17,7 @@ import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/applicati
 import { StorageObjectGetFolderContentUseCase } from '@modules/storage-object/application/use-cases/storage-object.get-folder-content.use-case';
 import { StorageObjectMoveManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
+import { StorageObjectUpdatePublicManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-public-many.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
@@ -49,6 +50,7 @@ describe('storage-object tree against Postgres', () => {
   let deleteOne: StorageObjectDeleteOneUseCase;
   let deleteMany: StorageObjectDeleteManyUseCase;
   let moveMany: StorageObjectMoveManyUseCase;
+  let updatePublicMany: StorageObjectUpdatePublicManyUseCase;
   let createFolders: StorageObjectCreateFoldersUseCase;
   let getFolderContent: StorageObjectGetFolderContentUseCase;
   let fileRepository: PgFileRepositoryImpl;
@@ -75,6 +77,7 @@ describe('storage-object tree against Postgres', () => {
     deleteOne = new StorageObjectDeleteOneUseCase(repository);
     deleteMany = new StorageObjectDeleteManyUseCase(repository, validation);
     moveMany = new StorageObjectMoveManyUseCase(repository, validation);
+    updatePublicMany = new StorageObjectUpdatePublicManyUseCase(repository, validation);
     createFolders = new StorageObjectCreateFoldersUseCase(repository, validation);
     // The Bunny signers read their keys from the env; these stubs keep the signed key readable.
     const fileSigner = {
@@ -573,6 +576,97 @@ describe('storage-object tree against Postgres', () => {
 
       assert.ok(deleted.isLeft() && deleted.value instanceof BadRequestException);
       assert.deepEqual(await names(root), ['docs']);
+    });
+  });
+
+  // A public folder holds nothing private, on an edit as on a create; a batch is all or none.
+  describe('visibility', () => {
+    withDb('refuses to make an object in a public folder private in place', async () => {
+      const docs = await createFolder('docs', root);
+      const leaf = await createLeaf(docs);
+      await repository.updateAndCascadePublic(docs, { set: { isPublic: true } });
+
+      const refused = await updateOne.execute(byId(leaf), { set: { isPublic: false } });
+      const folderMadePrivate = await updateOne.execute(byId(docs), { set: { isPublic: false } });
+
+      assert.ok(refused.isLeft() && refused.value instanceof BadRequestException);
+      // The folder itself sits in the private root: it goes private, and its content with it.
+      assert.equal(folderMadePrivate.unwrap().isPublic, false);
+      assert.deepEqual(await publicIds(), []);
+    });
+
+    withDb('makes several objects public at once, each folder with its subtree', async () => {
+      const docs = await createFolder('docs', root);
+      const inner = await createFolder('inner', docs);
+      const leaf = await createLeaf(inner);
+      const file = await createObject({ name: 'a.txt', parent: root, isFolder: false });
+      await createFolder('other', root);
+
+      const updated = await updatePublicMany.execute({ ids: [docs, file], isPublic: true });
+
+      assert.deepEqual(
+        updated.unwrap().map(({ id, isPublic }) => [id, isPublic]),
+        [
+          [docs, true],
+          [file, true],
+        ],
+      );
+      assert.deepEqual(await publicIds(), [docs, inner, leaf, file].sort());
+    });
+
+    withDb(
+      'makes private an object whose public folder goes private in the same call',
+      async () => {
+        const docs = await createFolder('docs', root);
+        const inner = await createFolder('inner', docs);
+        await repository.updateAndCascadePublic(docs, { set: { isPublic: true } });
+
+        const refused = await updatePublicMany.execute({ ids: [inner], isPublic: false });
+        const together = await updatePublicMany.execute({ ids: [inner, docs], isPublic: false });
+
+        assert.ok(refused.isLeft() && refused.value instanceof BadRequestException);
+        assert.equal(together.isRight(), true);
+        assert.deepEqual(await publicIds(), []);
+      },
+    );
+
+    withDb('rolls the whole batch back when one object cannot be written', async () => {
+      const docs = await createFolder('docs', root);
+      const file = await createObject({ name: 'a.txt', parent: root, isFolder: false });
+      await createObject({ name: 'b.txt', parent: root, isFolder: false });
+      // Past the service's checks, the unique index refuses the second write.
+      const original = repository.updateAndCascadePublic.bind(repository);
+      let calls = 0;
+      repository.updateAndCascadePublic = (id, update) =>
+        ++calls === 2
+          ? original(id, { set: { ...update.set, name: 'b.txt' } })
+          : original(id, update);
+
+      try {
+        const updated = await updatePublicMany.execute({ ids: [docs, file], isPublic: true });
+        assert.ok(updated.isLeft() && updated.value instanceof ConflictException);
+      } finally {
+        repository.updateAndCascadePublic = original;
+      }
+
+      assert.deepEqual(await publicIds(), []);
+    });
+
+    withDb('refuses objects of another owner', async () => {
+      const otherRoot = await createObject({ name: '', userId: OTHER_USER_ID });
+      const foreign = await createObject({ name: 'x', parent: otherRoot, userId: OTHER_USER_ID });
+      const docs = await createFolder('docs', root);
+
+      const mixed = await updatePublicMany.execute({ ids: [docs, foreign], isPublic: true });
+      const scoped = await updatePublicMany.execute({
+        ids: [foreign],
+        isPublic: true,
+        userId: USER_ID,
+      });
+
+      assert.ok(mixed.isLeft() && mixed.value instanceof BadRequestException);
+      assert.ok(scoped.isLeft() && scoped.value instanceof NotFoundException);
+      assert.deepEqual(await publicIds(), []);
     });
   });
 

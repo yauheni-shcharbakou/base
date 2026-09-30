@@ -1,7 +1,7 @@
 import { NestStorage } from '@backend/proto';
 import { ULIDField } from '@common/application/decorators/field.decorator.dto';
 import { IdsFieldDto } from '@common/application/dto/ids-field.dto';
-import { IsNotEmpty } from 'class-validator';
+import { IsBoolean, IsNotEmpty } from 'class-validator';
 
 export class StorageObjectMoveByIdsDto
   extends IdsFieldDto
@@ -10,4 +10,12 @@ export class StorageObjectMoveByIdsDto
   @ULIDField()
   @IsNotEmpty()
   parent: string;
+}
+
+export class StorageObjectUpdatePublicByIdsDto
+  extends IdsFieldDto
+  implements NestStorage.StorageObjectUpdatePublicByIds
+{
+  @IsBoolean()
+  isPublic: boolean;
 }

@@ -12,6 +12,7 @@ describe('GrpcStorageObjectController batch writes', () => {
   let getUseCase: { getMany: jest.Mock };
   let deleteManyUseCase: { execute: jest.Mock };
   let moveManyUseCase: { execute: jest.Mock };
+  let updatePublicManyUseCase: { execute: jest.Mock };
   let controller: GrpcStorageObjectController;
 
   beforeEach(() => {
@@ -19,6 +20,9 @@ describe('GrpcStorageObjectController batch writes', () => {
     getUseCase = { getMany: jest.fn().mockResolvedValue([populated('b'), populated('a')]) };
     deleteManyUseCase = { execute: jest.fn().mockResolvedValue(right([row('a'), row('b')])) };
     moveManyUseCase = { execute: jest.fn().mockResolvedValue(right([row('a'), row('b')])) };
+    updatePublicManyUseCase = {
+      execute: jest.fn().mockResolvedValue(right([row('a'), row('b')])),
+    };
 
     const unused = {} as never;
     controller = new GrpcStorageObjectController(
@@ -32,6 +36,7 @@ describe('GrpcStorageObjectController batch writes', () => {
       deleteManyUseCase as never,
       moveManyUseCase as never,
       unused,
+      updatePublicManyUseCase as never,
     );
   });
 
@@ -54,6 +59,21 @@ describe('GrpcStorageObjectController batch writes', () => {
     const answer = await firstValueFrom(controller.moveMany({ ids: ['a', 'b'], parent: 'p' }));
 
     expect(answer.items.map(({ id }) => id)).toEqual(['a', 'b']);
+    expect(getUseCase.getMany).toHaveBeenCalledWith(
+      { ids: ['a', 'b'], isDeleted: false },
+      expect.anything(),
+    );
+  });
+
+  it('answers a visibility change with the rows read back live, with their media', async () => {
+    const answer = await firstValueFrom(
+      controller.updatePublicMany({ ids: ['a', 'b'], isPublic: true }),
+    );
+
+    expect(answer.items.map(({ id, file }) => [id, file?.id])).toEqual([
+      ['a', 'file-of-a'],
+      ['b', 'file-of-b'],
+    ]);
     expect(getUseCase.getMany).toHaveBeenCalledWith(
       { ids: ['a', 'b'], isDeleted: false },
       expect.anything(),

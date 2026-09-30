@@ -170,6 +170,22 @@ export interface StorageObjectMoveByIds {
 }
 
 /**
+ * Objects of one owner made public or private together under one tree lock: all or none. A folder
+ * takes its whole subtree along. An object cannot be made private while its folder is public,
+ * unless that folder is made private by the same call.
+ */
+export interface StorageObjectUpdatePublicMany {
+  ids: string[];
+  isPublic: boolean;
+  userId?: string;
+}
+
+export interface StorageObjectUpdatePublicByIds {
+  ids: string[];
+  isPublic: boolean;
+}
+
+/**
  * A folder tree made under `parent` at once, under one tree lock: all or none. `paths` are
  * "/"-separated and relative to `parent` ("img", "img/2024"), each nested path's parent path listed
  * too. A top-level name taken in `parent` gets a ` (n)` suffix; the folders below it are new. Answered

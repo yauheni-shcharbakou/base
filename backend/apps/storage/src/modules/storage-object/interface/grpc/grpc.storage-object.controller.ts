@@ -15,6 +15,7 @@ import { StorageObjectGetUseCase } from '@modules/storage-object/application/use
 import { StorageObjectIsExistsUseCase } from '@modules/storage-object/application/use-cases/storage-object.is-exists.use-case';
 import { StorageObjectMoveManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
+import { StorageObjectUpdatePublicManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-public-many.use-case';
 import { Either } from '@sweet-monads/either';
 import _ from 'lodash';
 import { from, map, Observable } from 'rxjs';
@@ -42,6 +43,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     private readonly deleteManyUseCase: StorageObjectDeleteManyUseCase,
     private readonly moveManyUseCase: StorageObjectMoveManyUseCase,
     private readonly createFoldersUseCase: StorageObjectCreateFoldersUseCase,
+    private readonly updatePublicManyUseCase: StorageObjectUpdatePublicManyUseCase,
   ) {}
 
   getById(request: NestCommon.IdField): Observable<NestStorage.StorageObjectPopulated> {
@@ -132,6 +134,13 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
 
   moveMany(request: NestStorage.StorageObjectMoveMany): Observable<NestStorage.StorageObjectArray> {
     const stream$ = from(this.populate(this.moveManyUseCase.execute(request), false));
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
+  }
+
+  updatePublicMany(
+    request: NestStorage.StorageObjectUpdatePublicMany,
+  ): Observable<NestStorage.StorageObjectArray> {
+    const stream$ = from(this.populate(this.updatePublicManyUseCase.execute(request), false));
     return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 

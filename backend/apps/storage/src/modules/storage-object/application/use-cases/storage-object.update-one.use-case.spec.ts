@@ -30,6 +30,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
     validatePlacement: jest.Mock;
     validateNameIsFree: jest.Mock;
     resolveFreeName: jest.Mock;
+    validateVisibility: jest.Mock;
   };
   let useCase: StorageObjectUpdateOneUseCase;
 
@@ -45,6 +46,7 @@ describe('StorageObjectUpdateOneUseCase', () => {
       validatePlacement: jest.fn().mockResolvedValue(right({ isPublic: true })),
       validateNameIsFree: jest.fn(({ name }: { name: string }) => Promise.resolve(right(name))),
       resolveFreeName: jest.fn(({ name }: { name: string }) => Promise.resolve(name)),
+      validateVisibility: jest.fn().mockResolvedValue(right(undefined)),
     };
 
     useCase = new StorageObjectUpdateOneUseCase(
@@ -72,6 +74,32 @@ describe('StorageObjectUpdateOneUseCase', () => {
     expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
       set: { isPublic: true },
     });
+  });
+
+  it('checks the folder before making an object private in place', async () => {
+    await useCase.execute(byId(folder.id), { set: { isPublic: false } });
+
+    expect(validation.validateVisibility).toHaveBeenCalledWith([folder], false);
+    expect(repository.updateAndCascadePublic).toHaveBeenCalledWith(folder.id, {
+      set: { isPublic: false },
+    });
+  });
+
+  it('refuses to make an object in a public folder private, and writes nothing', async () => {
+    const refusal = new BadRequestException('An object in a public folder is public too');
+    validation.validateVisibility.mockResolvedValue(left(refusal));
+
+    const result = await useCase.execute(byId(folder.id), { set: { isPublic: false } });
+
+    expect(result.isLeft() && result.value).toBe(refusal);
+    expect(repository.updateAndCascadePublic).not.toHaveBeenCalled();
+  });
+
+  // A move takes the new folder's visibility, whatever the caller asked for.
+  it('checks no visibility on a move', async () => {
+    await useCase.execute(byId(folder.id), { set: { parent: 'target', isPublic: false } });
+
+    expect(validation.validateVisibility).not.toHaveBeenCalled();
   });
 
   describe('name', () => {

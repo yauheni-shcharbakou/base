@@ -36,6 +36,8 @@ import {
   StorageObjectQueryWeb,
   StorageObjectUpdateById,
   StorageObjectUpdateOne,
+  StorageObjectUpdatePublicByIds,
+  StorageObjectUpdatePublicMany,
 } from './storage-object/storage-object.messages';
 import { StorageObjectPopulated } from './storage-object/storage-object.populates';
 
@@ -185,6 +187,18 @@ const StorageObjectServiceService = {
       Buffer.from(StorageObjectMoveMany.encode(value).finish()),
     requestDeserialize: (value: Buffer): StorageObjectMoveMany =>
       StorageObjectMoveMany.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  updatePublicMany: {
+    path: '/storage.StorageObjectService/updatePublicMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectUpdatePublicMany): Buffer =>
+      Buffer.from(StorageObjectUpdatePublicMany.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectUpdatePublicMany =>
+      StorageObjectUpdatePublicMany.decode(value),
     responseSerialize: (value: StorageObjectArray): Buffer =>
       Buffer.from(StorageObjectArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
@@ -387,6 +401,21 @@ export interface GrpcStorageObjectServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
+  updatePublicMany(
+    request: StorageObjectUpdatePublicMany,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  updatePublicMany(
+    request: StorageObjectUpdatePublicMany,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  updatePublicMany(
+    request: StorageObjectUpdatePublicMany,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
 }
 
 export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
@@ -513,6 +542,15 @@ export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: StorageObjectMoveMany) => Buffer;
       readonly requestDeserialize: (value: Buffer) => StorageObjectMoveMany;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly updatePublicMany: {
+      readonly path: '/storage.StorageObjectService/updatePublicMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectUpdatePublicMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectUpdatePublicMany;
       readonly responseSerialize: (value: StorageObjectArray) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
@@ -663,6 +701,18 @@ const StorageObjectAdminServiceService = {
       Buffer.from(StorageObjectMoveByIds.encode(value).finish()),
     requestDeserialize: (value: Buffer): StorageObjectMoveByIds =>
       StorageObjectMoveByIds.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
+  },
+  updatePublicByIds: {
+    path: '/storage.StorageObjectAdminService/updatePublicByIds' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectUpdatePublicByIds): Buffer =>
+      Buffer.from(StorageObjectUpdatePublicByIds.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectUpdatePublicByIds =>
+      StorageObjectUpdatePublicByIds.decode(value),
     responseSerialize: (value: StorageObjectArray): Buffer =>
       Buffer.from(StorageObjectArray.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
@@ -865,6 +915,21 @@ export interface GrpcStorageObjectAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObjectArray) => void,
   ): ClientUnaryCall;
+  updatePublicByIds(
+    request: StorageObjectUpdatePublicByIds,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  updatePublicByIds(
+    request: StorageObjectUpdatePublicByIds,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  updatePublicByIds(
+    request: StorageObjectUpdatePublicByIds,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
 }
 
 export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
@@ -991,6 +1056,15 @@ export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
       readonly responseStream: false;
       readonly requestSerialize: (value: StorageObjectMoveByIds) => Buffer;
       readonly requestDeserialize: (value: Buffer) => StorageObjectMoveByIds;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
+    readonly updatePublicByIds: {
+      readonly path: '/storage.StorageObjectAdminService/updatePublicByIds';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectUpdatePublicByIds) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectUpdatePublicByIds;
       readonly responseSerialize: (value: StorageObjectArray) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
@@ -1489,6 +1563,22 @@ export class GrpcStorageObjectRepository {
       });
     });
   }
+
+  updatePublicMany(
+    request: StorageObjectUpdatePublicMany,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.updatePublicMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
 }
 
 export class GrpcStorageObjectAdminRepository {
@@ -1705,6 +1795,22 @@ export class GrpcStorageObjectAdminRepository {
   ): Promise<StorageObjectArray> {
     return new Promise<StorageObjectArray>((resolve, reject) => {
       this.client.moveByIds(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  updatePublicByIds(
+    request: StorageObjectUpdatePublicByIds,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.updatePublicByIds(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

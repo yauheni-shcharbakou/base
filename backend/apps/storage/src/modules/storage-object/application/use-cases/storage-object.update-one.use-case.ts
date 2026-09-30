@@ -16,7 +16,8 @@ import { StorageObjectValidationService } from '../services/storage-object.valid
  *
  * An object moves only within its owner's tree — the new parent must be the owner's own live
  * folder, whoever makes the call, an admin included. A move lands under a free name (` (n)` on a
- * clash); a rename in place is refused with a 409 on a taken name.
+ * clash); a rename in place is refused with a 409 on a taken name. An object in a public folder
+ * cannot be made private (400) — a move takes the new folder's visibility instead.
  *
  * The whole read-check-write runs under the owner's tree lock. Without it, two opposite moves
  * (A into B, B into A) each pass the descendant check before either commits, and together close a
@@ -62,6 +63,16 @@ export class StorageObjectUpdateOneUseCase {
 
       update.set.parent = updateData.set.parent;
       update.set.isPublic = placeData.value.isPublic;
+    } else if (update.set.isPublic === false) {
+      // In place, it stays in its folder: a public one keeps it public.
+      const visibility = await this.storageObjectValidationService.validateVisibility(
+        [entity],
+        false,
+      );
+
+      if (visibility.isLeft()) {
+        return left(visibility.value);
+      }
     }
 
     // An empty name or parent means "unchanged", like an absent one.

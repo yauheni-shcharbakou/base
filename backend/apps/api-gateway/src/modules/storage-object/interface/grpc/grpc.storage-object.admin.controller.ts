@@ -10,7 +10,10 @@ import { IdFieldDto } from '@common/application/dto/id-field.dto';
 import { IdsFieldDto } from '@common/application/dto/ids-field.dto';
 import { UserIdFieldDto } from '@common/application/dto/user-id-field.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
-import { StorageObjectMoveByIdsDto } from '@modules/storage-object/application/dto/storage-object.batch.dto';
+import {
+  StorageObjectMoveByIdsDto,
+  StorageObjectUpdatePublicByIdsDto,
+} from '@modules/storage-object/application/dto/storage-object.batch.dto';
 import { StorageObjectCreateFoldersDto } from '@modules/storage-object/application/dto/storage-object.create-folders.dto';
 import { StorageObjectCreateDto } from '@modules/storage-object/application/dto/storage-object.create.dto';
 import { StorageObjectGetFolderContentDto } from '@modules/storage-object/application/dto/storage-object.get-folder-content.dto';
@@ -99,5 +102,13 @@ export class GrpcStorageObjectAdminController implements GrpcStorageObjectAdminS
     parent,
   }: NestStorage.StorageObjectMoveByIds): Promise<NestStorage.StorageObjectArray> {
     return this.storageObjectService.moveMany(ids, parent);
+  }
+
+  @ValidateGrpcPayload(StorageObjectUpdatePublicByIdsDto)
+  updatePublicByIds({
+    ids,
+    isPublic,
+  }: NestStorage.StorageObjectUpdatePublicByIds): Promise<NestStorage.StorageObjectArray> {
+    return this.storageObjectService.updatePublicMany(ids, isPublic);
   }
 }

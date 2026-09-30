@@ -24,6 +24,7 @@ service StorageObjectService {
   rpc deleteOne (storage_object.StorageObjectQuery) returns (storage_object.StorageObject) {}
   rpc deleteMany (storage_object.StorageObjectDeleteMany) returns (storage_object.StorageObjectArray) {}
   rpc moveMany (storage_object.StorageObjectMoveMany) returns (storage_object.StorageObjectArray) {}
+  rpc updatePublicMany (storage_object.StorageObjectUpdatePublicMany) returns (storage_object.StorageObjectArray) {}
 }
 
 service StorageObjectAdminService {
@@ -40,6 +41,7 @@ service StorageObjectAdminService {
   rpc deleteById (IdField) returns (storage_object.StorageObject) {}
   rpc deleteByIds (IdsField) returns (storage_object.StorageObjectArray) {}
   rpc moveByIds (storage_object.StorageObjectMoveByIds) returns (storage_object.StorageObjectArray) {}
+  rpc updatePublicByIds (storage_object.StorageObjectUpdatePublicByIds) returns (storage_object.StorageObjectArray) {}
 }
 
 service StorageObjectWebService {

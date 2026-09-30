@@ -113,4 +113,10 @@ export class StorageObjectProxyService {
       this.storageObjectClient.moveMany({ ids, parent }).pipe(GrpcRxPipe.rpcException),
     );
   }
+
+  updatePublicMany(ids: string[], isPublic: boolean): Promise<NestStorage.StorageObjectArray> {
+    return firstValueFrom(
+      this.storageObjectClient.updatePublicMany({ ids, isPublic }).pipe(GrpcRxPipe.rpcException),
+    );
+  }
 }

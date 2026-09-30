@@ -201,6 +201,56 @@ describe('StorageObjectValidationService', () => {
     });
   });
 
+  describe('validateVisibility', () => {
+    it('lets anything be made public without reading', async () => {
+      const result = await service.validateVisibility([{ id: 'a', parentId: 'p' }], true);
+
+      expect(result.isRight()).toBe(true);
+      expect(repository.isExists).not.toHaveBeenCalled();
+    });
+
+    // A folder made private by the same call is no folder to follow; a root has none.
+    it('looks for a public folder among the folders outside the set', async () => {
+      const result = await service.validateVisibility(
+        [
+          { id: 'folder', parentId: 'p' },
+          { id: 'child', parentId: 'folder' },
+          { id: 'other', parentId: 'p' },
+          { id: 'root', parentId: undefined },
+        ],
+        false,
+      );
+
+      expect(result.isRight()).toBe(true);
+      expect(repository.isExists).toHaveBeenCalledWith({
+        ids: ['p'],
+        isPublic: true,
+        isDeleted: false,
+      });
+    });
+
+    it('refuses to make private an object whose folder is public', async () => {
+      repository.isExists.mockResolvedValue(true);
+
+      const result = await service.validateVisibility([{ id: 'a', parentId: 'p' }], false);
+
+      expect(result.isLeft() && result.value).toBeInstanceOf(BadRequestException);
+    });
+
+    it('reads nothing when every folder is made private along with its content', async () => {
+      const result = await service.validateVisibility(
+        [
+          { id: 'root', parentId: undefined },
+          { id: 'child', parentId: 'root' },
+        ],
+        false,
+      );
+
+      expect(result.isRight()).toBe(true);
+      expect(repository.isExists).not.toHaveBeenCalled();
+    });
+  });
+
   describe('validatePlacement', () => {
     it('looks the parent up among the owner’s live folders only', async () => {
       const result = await service.validatePlacement('root', 'owner');

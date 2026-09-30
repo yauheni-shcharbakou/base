@@ -233,6 +233,22 @@ export interface StorageObjectMoveByIds {
 }
 
 /**
+ * Objects of one owner made public or private together under one tree lock: all or none. A folder
+ * takes its whole subtree along. An object cannot be made private while its folder is public,
+ * unless that folder is made private by the same call.
+ */
+export interface StorageObjectUpdatePublicMany {
+  ids: string[];
+  isPublic: boolean;
+  userId?: string;
+}
+
+export interface StorageObjectUpdatePublicByIds {
+  ids: string[];
+  isPublic: boolean;
+}
+
+/**
  * A folder tree made under `parent` at once, under one tree lock: all or none. `paths` are
  * "/"-separated and relative to `parent` ("img", "img/2024"), each nested path's parent path listed
  * too. A top-level name taken in `parent` gets a ` (n)` suffix; the folders below it are new. Answered
@@ -2533,6 +2549,192 @@ export const StorageObjectMoveByIds: MessageFns<StorageObjectMoveByIds> = {
     const message = createBaseStorageObjectMoveByIds();
     message.ids = object.ids?.map((e) => e) || [];
     message.parent = object.parent ?? '';
+    return message;
+  },
+};
+
+function createBaseStorageObjectUpdatePublicMany(): StorageObjectUpdatePublicMany {
+  return { ids: [], isPublic: false, userId: undefined };
+}
+
+export const StorageObjectUpdatePublicMany: MessageFns<StorageObjectUpdatePublicMany> = {
+  encode(
+    message: StorageObjectUpdatePublicMany,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.isPublic !== false) {
+      writer.uint32(16).bool(message.isPublic);
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(26).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectUpdatePublicMany {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectUpdatePublicMany();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.isPublic = reader.bool();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectUpdatePublicMany {
+    return {
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
+      isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
+    };
+  },
+
+  toJSON(message: StorageObjectUpdatePublicMany): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    if (message.isPublic !== false) {
+      obj.isPublic = message.isPublic;
+    }
+    if (message.userId !== undefined) {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectUpdatePublicMany>, I>>(
+    base?: I,
+  ): StorageObjectUpdatePublicMany {
+    return StorageObjectUpdatePublicMany.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdatePublicMany>, I>>(
+    object: I,
+  ): StorageObjectUpdatePublicMany {
+    const message = createBaseStorageObjectUpdatePublicMany();
+    message.ids = object.ids?.map((e) => e) || [];
+    message.isPublic = object.isPublic ?? false;
+    message.userId = object.userId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseStorageObjectUpdatePublicByIds(): StorageObjectUpdatePublicByIds {
+  return { ids: [], isPublic: false };
+}
+
+export const StorageObjectUpdatePublicByIds: MessageFns<StorageObjectUpdatePublicByIds> = {
+  encode(
+    message: StorageObjectUpdatePublicByIds,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.isPublic !== false) {
+      writer.uint32(16).bool(message.isPublic);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectUpdatePublicByIds {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectUpdatePublicByIds();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+        case 2: {
+          if (tag !== 16) {
+            break;
+          }
+
+          message.isPublic = reader.bool();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectUpdatePublicByIds {
+    return {
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
+      isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
+    };
+  },
+
+  toJSON(message: StorageObjectUpdatePublicByIds): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    if (message.isPublic !== false) {
+      obj.isPublic = message.isPublic;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectUpdatePublicByIds>, I>>(
+    base?: I,
+  ): StorageObjectUpdatePublicByIds {
+    return StorageObjectUpdatePublicByIds.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectUpdatePublicByIds>, I>>(
+    object: I,
+  ): StorageObjectUpdatePublicByIds {
+    const message = createBaseStorageObjectUpdatePublicByIds();
+    message.ids = object.ids?.map((e) => e) || [];
+    message.isPublic = object.isPublic ?? false;
     return message;
   },
 };
