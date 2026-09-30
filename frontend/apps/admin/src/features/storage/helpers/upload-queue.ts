@@ -18,6 +18,9 @@ export type QueuedUpload = {
   userId: string;
   // Where it goes: a folder of `userId`, by the name it showed where it was dropped.
   folder: { id: string; name: string };
+  // The uploaded folder it came in, made for the upload: the top of its tree, under the name it
+  // was made with. The upload box shows the folder as one row. None for a file dropped alone.
+  group?: { id: string; name: string };
   status: QueuedUploadStatus;
   // 0–100, while `uploading`.
   progress: number;
@@ -157,4 +160,66 @@ export const summarizeUploads = (items: QueuedUpload[]): UploadSummary => {
 
   summary.progress = bytes ? (sent * 100) / bytes : 0;
   return summary;
+};
+
+/** A row of the upload box: a file dropped alone, or an uploaded folder with all its files. */
+export type UploadRow =
+  | { type: 'file'; key: string; item: QueuedUpload }
+  | {
+      type: 'folder';
+      key: string;
+      folder: { id: string; name: string };
+      items: QueuedUpload[];
+      summary: UploadSummary;
+    };
+
+type FolderUploadRow = Extract<UploadRow, { type: 'folder' }>;
+
+/** The queue as the upload box lists it: a folder's files folded into one row where it first shows. */
+export const groupUploads = (items: QueuedUpload[]): UploadRow[] => {
+  const rows: UploadRow[] = [];
+  const folderRows = new Map<string, FolderUploadRow>();
+
+  items.forEach((item) => {
+    const row = item.group && folderRows.get(item.group.id);
+
+    if (row) {
+      row.items.push(item);
+    } else if (item.group) {
+      const created: FolderUploadRow = {
+        type: 'folder',
+        key: item.group.id,
+        folder: item.group,
+        items: [item],
+        summary: summarizeUploads([]),
+      };
+
+      folderRows.set(item.group.id, created);
+      rows.push(created);
+    } else {
+      rows.push({ type: 'file', key: item.key, item });
+    }
+  });
+
+  folderRows.forEach((row) => {
+    row.summary = summarizeUploads(row.items);
+  });
+
+  return rows;
+};
+
+export type UploadRowStatus = 'active' | 'failed' | 'done';
+
+/** A folder is on its way while any of its files is, and failed once only failures are left. */
+export const getUploadRowStatus = (row: UploadRow): UploadRowStatus => {
+  if (row.type === 'file') {
+    const { status } = row.item;
+    return status === 'failed' || status === 'done' ? status : 'active';
+  }
+
+  if (row.summary.active) {
+    return 'active';
+  }
+
+  return row.summary.failed ? 'failed' : 'done';
 };

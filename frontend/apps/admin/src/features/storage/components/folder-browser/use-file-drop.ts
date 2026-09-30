@@ -102,11 +102,17 @@ export const useFileDrop = ({ userId, folder }: Options) => {
 
       if (accepted.length) {
         storageUploadQueue.enqueue(
-          accepted.map(({ file, kind }) => ({
-            file,
-            kind,
-            folder: folderByPath.get(pathByFile.get(file) ?? '') ?? target,
-          })),
+          accepted.map(({ file, kind }) => {
+            const path = pathByFile.get(file) ?? '';
+
+            return {
+              file,
+              kind,
+              folder: folderByPath.get(path) ?? target,
+              // The top of its tree: the upload box shows each uploaded folder as one row.
+              group: path ? folderByPath.get(path.split('/')[0]) : undefined,
+            };
+          }),
           userId,
         );
       }

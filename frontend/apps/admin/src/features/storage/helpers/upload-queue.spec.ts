@@ -1,6 +1,8 @@
 import { BrowserStorage } from '@packages/proto';
 import {
   getCompleteDeadline,
+  getUploadRowStatus,
+  groupUploads,
   isRateLimited,
   pickUploadWork,
   QueuedUpload,
@@ -112,5 +114,56 @@ describe('summarizeUploads', () => {
     ]);
 
     expect(summary).toEqual({ total: 4, done: 1, failed: 1, active: 2, progress: 37.5 });
+  });
+});
+
+describe('groupUploads', () => {
+  const img = { id: 'img', name: 'img' };
+
+  it('folds a folder’s files into one row where the folder first shows', () => {
+    const rows = groupUploads([
+      itemOf('a'),
+      itemOf('b', { group: img, status: 'done' }),
+      itemOf('c'),
+      itemOf('d', { group: img, status: 'uploading', progress: 50 }),
+    ]);
+
+    expect(rows.map(({ type, key }) => `${type}:${key}`)).toEqual([
+      'file:a',
+      'folder:img',
+      'file:c',
+    ]);
+
+    const folder = rows[1];
+
+    expect(folder.type === 'folder' && folder.items.map(({ key }) => key)).toEqual(['b', 'd']);
+    expect(folder.type === 'folder' && folder.summary).toMatchObject({
+      total: 2,
+      done: 1,
+      active: 1,
+      progress: 75,
+    });
+  });
+});
+
+describe('getUploadRowStatus', () => {
+  const folderOf = (...statuses: QueuedUpload['status'][]) =>
+    groupUploads(
+      statuses.map((status, i) => itemOf(`k${i}`, { group: { id: 'g', name: 'g' }, status })),
+    )[0];
+
+  it('keeps a folder on its way while any of its files is', () => {
+    expect(getUploadRowStatus(folderOf('done', 'failed', 'uploaded'))).toBe('active');
+  });
+
+  it('fails a folder once only failures are left to settle', () => {
+    expect(getUploadRowStatus(folderOf('done', 'failed'))).toBe('failed');
+    expect(getUploadRowStatus(folderOf('done', 'done'))).toBe('done');
+  });
+
+  it('reads a file row by its own status', () => {
+    expect(getUploadRowStatus(groupUploads([itemOf('a', { status: 'completing' })])[0])).toBe(
+      'active',
+    );
   });
 });

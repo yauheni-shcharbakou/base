@@ -1,7 +1,16 @@
 'use client';
 
 import { pathProvider } from '@/common/providers';
-import { getStorageItemKind, QueuedUpload, summarizeUploads } from '@/features/storage/helpers';
+import {
+  getStorageItemKind,
+  getUploadRowStatus,
+  groupUploads,
+  QueuedUpload,
+  StorageItemKind,
+  summarizeUploads,
+  UploadRow,
+  UploadRowStatus,
+} from '@/features/storage/helpers';
 import {
   FOLDER_CONTENT_QUERY_KEY,
   storageUploadQueue,
@@ -17,11 +26,13 @@ import {
   Box,
   Button,
   CircularProgress,
+  Collapse,
   IconButton,
   LinearProgress,
   Link,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Paper,
@@ -42,7 +53,15 @@ const { FILE, IMAGE, STORAGE_OBJECT, VIDEO } = StorageDatabaseEntity;
 // Finished uploads reach the listings in one refresh, not one per file.
 const REFRESH_DELAY_MS = 500;
 
-const getTitle = ({ total, done, failed, active }: ReturnType<typeof summarizeUploads>) => {
+// Counted in rows, as Drive does: an uploaded folder is one item, however many files it holds.
+const getTitle = (rows: UploadRow[]) => {
+  const statuses = rows.map(getUploadRowStatus);
+  const count = (status: UploadRowStatus) => statuses.filter((each) => each === status).length;
+  const total = rows.length;
+  const active = count('active');
+  const failed = count('failed');
+  const done = count('done');
+
   if (active) {
     return `Uploading ${active} ${active === 1 ? 'item' : 'items'}`;
   }
@@ -60,18 +79,10 @@ const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
       return <CheckCircleRounded color="success" fontSize="small" />;
     case 'failed':
       return (
-        <Stack direction="row">
-          <Tooltip title="Retry">
-            <IconButton size="small" onClick={() => storageUploadQueue.retry([item.key])}>
-              <ReplayRounded fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Dismiss">
-            <IconButton size="small" onClick={() => storageUploadQueue.dismiss([item.key])}>
-              <CloseRounded fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
+        <RowActions
+          onRetry={() => storageUploadQueue.retry([item.key])}
+          onDismiss={() => storageUploadQueue.dismiss([item.key])}
+        />
       );
     case 'uploading':
       return <CircularProgress size={20} variant="determinate" value={item.progress} />;
@@ -89,7 +100,23 @@ const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
   }
 };
 
-const UploadRow: FC<{ item: QueuedUpload }> = ({ item }) => {
+const RowActions: FC<{ onRetry: () => void; onDismiss: () => void }> = ({ onRetry, onDismiss }) => (
+  <Stack direction="row">
+    <Tooltip title="Retry">
+      <IconButton size="small" onClick={onRetry}>
+        <ReplayRounded fontSize="small" />
+      </IconButton>
+    </Tooltip>
+    <Tooltip title="Dismiss">
+      <IconButton size="small" onClick={onDismiss}>
+        <CloseRounded fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  </Stack>
+);
+
+// `nested`: one of an uploaded folder's files, shown under its row.
+const FileUploadRow: FC<{ item: QueuedUpload; nested?: boolean }> = ({ item, nested }) => {
   const extension = item.file.name.includes('.') ? item.file.name.split('.').pop() : undefined;
   const kind = getStorageItemKind({
     type: item.kind,
@@ -97,7 +124,11 @@ const UploadRow: FC<{ item: QueuedUpload }> = ({ item }) => {
   });
 
   return (
-    <ListItem dense secondaryAction={<UploadState item={item} />} sx={{ pr: 11 }}>
+    <ListItem
+      dense
+      secondaryAction={<UploadState item={item} />}
+      sx={{ pr: 11, pl: nested ? 6 : 2 }}
+    >
       <ListItemIcon sx={{ minWidth: 36 }}>
         <StorageItemIcon kind={kind} fontSize="small" />
       </ListItemIcon>
@@ -131,15 +162,103 @@ const UploadRow: FC<{ item: QueuedUpload }> = ({ item }) => {
   );
 };
 
+type FolderRow = Extract<UploadRow, { type: 'folder' }>;
+
+const getFolderProgressText = ({ summary: { total, done, failed, active } }: FolderRow) => {
+  if (active) {
+    return `${done} of ${total} uploaded`;
+  }
+
+  return failed ? `${failed} of ${total} failed` : `${total} ${total === 1 ? 'file' : 'files'}`;
+};
+
+/**
+ * An uploaded folder as Drive shows it: one row, with the progress of all its files. A click
+ * unfolds the files underneath, the failed ones first, each with its own error and retry.
+ */
+const FolderUploadRow: FC<{ row: FolderRow }> = ({ row }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const status = getUploadRowStatus(row);
+  const keys = row.items.map(({ key }) => key);
+  const failed = row.items.filter((item) => item.status === 'failed');
+  const files = [...failed, ...row.items.filter((item) => item.status !== 'failed')];
+
+  const state = {
+    active: <CircularProgress size={20} variant="determinate" value={row.summary.progress} />,
+    // Dismissed whole: its uploaded files leave the box with the failed ones.
+    failed: (
+      <RowActions
+        onRetry={() => storageUploadQueue.retry(failed.map(({ key }) => key))}
+        onDismiss={() => storageUploadQueue.dismiss(keys)}
+      />
+    ),
+    done: <CheckCircleRounded color="success" fontSize="small" />,
+  }[status];
+
+  return (
+    <>
+      <ListItem dense disablePadding secondaryAction={state}>
+        <ListItemButton
+          dense
+          aria-expanded={isOpen}
+          onClick={() => setIsOpen((open) => !open)}
+          sx={{ pr: 11 }}
+        >
+          <ListItemIcon sx={{ minWidth: 36 }}>
+            <StorageItemIcon kind={StorageItemKind.FOLDER} fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary={
+              <Link
+                component={NextLink}
+                href={pathProvider.getContentPath(STORAGE, STORAGE_OBJECT, row.folder.id)}
+                color="inherit"
+                underline="hover"
+                // The name opens the folder; the rest of the row unfolds it.
+                onClick={(event) => event.stopPropagation()}
+              >
+                {row.folder.name}
+              </Link>
+            }
+            secondary={
+              <Box component="span" sx={{ color: status === 'failed' ? 'error.main' : undefined }}>
+                {getFolderProgressText(row)}
+              </Box>
+            }
+            slotProps={{
+              primary: { noWrap: true, title: row.folder.name },
+              secondary: { noWrap: true },
+            }}
+          />
+          <ExpandMoreRounded
+            fontSize="small"
+            color="action"
+            sx={{ ml: 1, transform: isOpen ? 'rotate(180deg)' : undefined }}
+          />
+        </ListItemButton>
+      </ListItem>
+      <Collapse in={isOpen} unmountOnExit>
+        <List disablePadding aria-label={`Files of ${row.folder.name}`}>
+          {files.map((item) => (
+            <FileUploadRow key={item.key} item={item} nested />
+          ))}
+        </List>
+      </Collapse>
+    </>
+  );
+};
+
 /**
  * Drive's upload box, in the corner of every page: the queue of files dropped on the folder
- * browser, each with its progress, and a retry for what failed. It refreshes the folder listings
- * and the media lists as uploads finish, and asks before the page is left mid-upload.
+ * browser, each with its progress — an uploaded folder as one row for all its files, unfolded on a
+ * click — and a retry for what failed. It refreshes the folder listings and the media lists as
+ * uploads finish, and asks before the page is left mid-upload.
  */
 export const StorageUploadPanel: FC = () => {
   const items = useStorageUploads();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const summary = summarizeUploads(items);
+  const rows = groupUploads(items);
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const doneCount = useRef(0);
@@ -193,7 +312,7 @@ export const StorageUploadPanel: FC = () => {
     >
       <Stack direction="row" alignItems="center" gap={1} sx={{ pl: 2, pr: 1, py: 1 }}>
         <Typography variant="subtitle2" sx={{ flex: 1 }} aria-live="polite">
-          {getTitle(summary)}
+          {getTitle(rows)}
         </Typography>
         {!!summary.failed && !summary.active && (
           <Button size="small" onClick={() => storageUploadQueue.retry()}>
@@ -224,9 +343,13 @@ export const StorageUploadPanel: FC = () => {
       {!!summary.active && <LinearProgress variant="determinate" value={summary.progress} />}
       {!isCollapsed && (
         <List disablePadding sx={{ maxHeight: 320, overflowY: 'auto' }}>
-          {items.map((item) => (
-            <UploadRow key={item.key} item={item} />
-          ))}
+          {rows.map((row) =>
+            row.type === 'folder' ? (
+              <FolderUploadRow key={row.key} row={row} />
+            ) : (
+              <FileUploadRow key={row.key} item={row.item} />
+            ),
+          )}
         </List>
       )}
     </Paper>

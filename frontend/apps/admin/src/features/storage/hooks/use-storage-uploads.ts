@@ -31,8 +31,11 @@ import { BrowserStorage } from '@packages/proto';
 import { useSyncExternalStore } from 'react';
 import { monotonicFactory } from 'ulid';
 
-/** A file to upload, the kind it goes as, and the folder of the owner it goes into. */
-export type UploadRequest = Pick<QueuedUpload, 'file' | 'kind' | 'folder'>;
+/**
+ * A file to upload, the kind it goes as, the folder of the owner it goes into, and the uploaded
+ * folder it came in, if any.
+ */
+export type UploadRequest = Pick<QueuedUpload, 'file' | 'kind' | 'folder' | 'group'>;
 
 const { FILE, IMAGE, VIDEO } = BrowserStorage.StorageObjectType;
 
@@ -96,12 +99,13 @@ class StorageUploadQueue {
   getSnapshot = () => this.items;
 
   enqueue(files: UploadRequest[], userId: string) {
-    const added = files.map<QueuedUpload>(({ file, kind, folder }) => ({
+    const added = files.map<QueuedUpload>(({ file, kind, folder, group }) => ({
       key: this.nextKey(),
       file,
       kind,
       userId,
       folder,
+      group,
       status: 'queued',
       progress: 0,
     }));
