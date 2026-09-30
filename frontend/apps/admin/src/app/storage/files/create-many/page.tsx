@@ -1,8 +1,7 @@
 'use client';
 
-import { ONE_MB_BYTES } from '@/common/constants';
 import { UploadManyPage } from '@/features/storage/components';
-import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { UPLOAD_RULES, uploadViaPresignedUrl } from '@/features/storage/helpers';
 import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 
@@ -23,7 +22,7 @@ export default function FileCreateMany() {
       }}
       uploaderProps={{
         dropzoneProps: {
-          maxSize: 100 * ONE_MB_BYTES,
+          maxSize: UPLOAD_RULES.FILE.maxSize,
           accept: {
             'application/pdf': [],
           },

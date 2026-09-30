@@ -2,6 +2,7 @@ import { DevtoolsProvider } from '@/common/components';
 import { pathProvider } from '@/common/providers';
 import { authProvider } from '@/features/auth/providers';
 import { grpcDataProvider, grpcUploadDataProvider } from '@/features/grpc/providers';
+import { StorageUploadPanel } from '@/features/storage/components/uploader/storage-upload-panel';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined';
@@ -142,6 +143,7 @@ export default async function RootLayout({
                   >
                     {children}
                     <RefineKbar />
+                    <StorageUploadPanel />
                   </Refine>
                 </DevtoolsProvider>
               </RefineSnackbarProvider>

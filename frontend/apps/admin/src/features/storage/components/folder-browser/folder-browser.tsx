@@ -18,7 +18,9 @@ import {
   useFolderSelection,
   useMarqueeSelection,
   useMoveStorageObjects,
+  useRootFolderLabel,
 } from '@/features/storage/hooks';
+import CloudUploadOutlined from '@mui/icons-material/CloudUploadOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SearchOffRounded from '@mui/icons-material/SearchOffRounded';
@@ -31,6 +33,7 @@ import {
   CardHeader,
   Divider,
   LinearProgress,
+  Paper,
   Skeleton,
   Stack,
   TablePagination,
@@ -51,6 +54,7 @@ import { FolderNewMenu } from './folder-new-menu';
 import { FolderSelectionBar } from './folder-selection-bar';
 import { FolderToolbar } from './folder-toolbar';
 import { MoveStorageItemsDialog } from './move-storage-items-dialog';
+import { useFileDrop } from './use-file-drop';
 import { DropFolder, FolderItemBehavior, useFolderItemBehavior } from './use-folder-item-behavior';
 import { isControl, isTyping, useWindowKeyDown } from './use-window-key-down';
 
@@ -104,7 +108,8 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
  * Finder's gallery does. A folder opens in place; a file, image or video opens in a new tab once
  * its upload is done, and its details otherwise. In the grid and the list a click selects, as in
  * Drive, and the selection moves or deletes together — from its bar, an item's "⋮", a drag onto a
- * folder or a breadcrumb, or the keyboard.
+ * folder or a breadcrumb, or the keyboard. Files dropped from the desktop upload into the folder, or
+ * into the subfolder or breadcrumb they land on.
  */
 export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPreferences }) => {
   const router = useRouter();
@@ -131,6 +136,9 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   const [pendingMove, setPendingMove] = useState<Item[]>();
   const contentRef = useRef<HTMLDivElement>(null);
   const isGallery = params.view === FolderView.GALLERY;
+  const rootLabel = useRootFolderLabel(content?.folder.userId);
+  const shownFolder = content && { id: folderId, name: content.folder.name || rootLabel };
+  const fileDrop = useFileDrop({ userId: content?.folder.userId, folder: shownFolder });
 
   const selection = useFolderSelection({
     items: content?.items,
@@ -247,6 +255,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     onOpen: openItem,
     onDragStart: selection.ensureSelected,
     onDrop: move,
+    onFilesDrop: fileDrop.uploadDropped,
   });
 
   const behavior: FolderItemBehavior = {
@@ -415,8 +424,10 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     );
   }
 
+  const fileDropTarget = fileDrop.isOver ? (behavior.dropTarget ?? shownFolder) : undefined;
+
   return (
-    <Card sx={{ position: 'relative' }}>
+    <Card {...fileDrop.zoneProps} sx={{ position: 'relative' }}>
       {isFetching && !isPending && (
         <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0 }} />
       )}
@@ -428,7 +439,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
               folder={content.folder}
               ancestors={content.ancestors}
               getAncestorHref={getAncestorLink}
-              getDropProps={isGallery ? undefined : behavior.getDropProps}
+              getDropProps={behavior.getDropProps}
               dropTargetId={behavior.dropTargetId}
             />
           ) : (
@@ -437,7 +448,13 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         }
         action={
           <Stack direction="row" gap={1}>
-            {content && <FolderNewMenu folderId={folderId} userId={content.folder.userId} />}
+            {content && shownFolder && (
+              <FolderNewMenu
+                folderId={folderId}
+                userId={content.folder.userId}
+                onUpload={(files) => fileDrop.upload(files, shownFolder)}
+              />
+            )}
             <Button
               size="small"
               startIcon={<InfoOutlined />}
@@ -512,6 +529,45 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onCancel={() => setPendingDelete(undefined)}
         onConfirm={confirmDelete}
       />
+      {fileDropTarget && (
+        // Drive's drop area: the folder outlined, and where the files are going.
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            border: 2,
+            borderColor: 'primary.main',
+            borderRadius: 1,
+            bgcolor: (theme) => alpha(theme.palette.primary.main, behavior.dropTarget ? 0 : 0.04),
+            pointerEvents: 'none',
+            zIndex: 1,
+          }}
+        >
+          <Paper
+            elevation={6}
+            sx={{
+              position: 'fixed',
+              left: '50%',
+              bottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              px: 2,
+              py: 1,
+              maxWidth: 'calc(100vw - 32px)',
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+            }}
+          >
+            <CloudUploadOutlined />
+            <Typography variant="body2" noWrap>
+              Drop files to upload them to “{fileDropTarget.name}”
+            </Typography>
+          </Paper>
+        </Box>
+      )}
       {content && (
         <MoveStorageItemsDialog
           items={pendingMove}

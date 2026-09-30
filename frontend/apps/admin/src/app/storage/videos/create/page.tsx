@@ -1,7 +1,6 @@
 'use client';
 
 import { AppCreate, ControlledTextField } from '@/common/components';
-import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
 import { FieldErr } from '@/common/types';
 import { UserSelect } from '@/features/auth/components';
@@ -10,7 +9,7 @@ import {
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
-import { storageMetaSchema } from '@/features/storage/helpers';
+import { storageMetaSchema, toDropzoneAccept, UPLOAD_RULES } from '@/features/storage/helpers';
 import { usePresetPlacement, useSingleFileUpload } from '@/features/storage/hooks';
 import { videoActionProvider, type CreatedVideo } from '@/features/storage/providers';
 import { getGenericVideTitle, uploadViaTus } from '@/features/video/helpers';
@@ -141,12 +140,8 @@ export default function VideoCreate() {
             control={control}
             fieldName="file"
             dropzoneProps={{
-              maxSize: 2 * ONE_GB_BYTES,
-              accept: {
-                'video/mp4': [],
-                'video/quicktime': [],
-                'video/webm': [],
-              },
+              maxSize: UPLOAD_RULES.VIDEO.maxSize,
+              accept: toDropzoneAccept(UPLOAD_RULES.VIDEO.mimeTypes),
             }}
             fieldErr={errors?.file}
             selected={file}

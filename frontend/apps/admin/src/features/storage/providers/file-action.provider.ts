@@ -3,6 +3,10 @@ import { createFile, createManyFiles } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
 import type { BrowserStorage } from '@packages/proto';
 
+// What a file the browser cannot type — no extension, an unknown one — is uploaded as. The
+// pre-signed PUT signs the type, so it cannot be left empty.
+const UNKNOWN_MIME_TYPE = 'application/octet-stream';
+
 /** A created file with the pre-signed PUT for its bytes, flattened like `CreatedVideo`. */
 export type CreatedFile = BrowserStorage.File & {
   upload: BrowserStorage.FilePresignedUpload;
@@ -19,7 +23,7 @@ export class FileActionProvider {
       file: {
         originalName: file.name,
         size: file.size,
-        mimeType: file.type,
+        mimeType: file.type || UNKNOWN_MIME_TYPE,
       },
       userId,
     };
@@ -44,7 +48,7 @@ export class FileActionProvider {
       items: items.map(({ file }) => ({
         originalName: file.name,
         size: file.size,
-        mimeType: file.type,
+        mimeType: file.type || UNKNOWN_MIME_TYPE,
       })),
       userId,
     };

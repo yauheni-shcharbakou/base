@@ -16,6 +16,8 @@ export * from './name-conflict';
 export * from './presigned-upload';
 export * from './storage-batch';
 export * from './storage-meta.schema';
+export * from './upload-queue';
+export * from './upload-rules';
 
 export const getFileSize = (sizeInBytes = 0): string => {
   if (!sizeInBytes) {

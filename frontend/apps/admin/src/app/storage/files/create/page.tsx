@@ -1,7 +1,6 @@
 'use client';
 
 import { AppCreate } from '@/common/components';
-import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
 import { FieldErr } from '@/common/types';
 import { UserSelect } from '@/features/auth/components';
@@ -11,7 +10,7 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { usePresetPlacement, useSingleFileUpload } from '@/features/storage/hooks';
-import { storageMetaSchema, uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { storageMetaSchema, UPLOAD_RULES, uploadViaPresignedUrl } from '@/features/storage/helpers';
 import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
@@ -107,7 +106,7 @@ export default function FileCreate() {
             control={control}
             fieldName="file"
             dropzoneProps={{
-              maxSize: 100 * ONE_MB_BYTES,
+              maxSize: UPLOAD_RULES.FILE.maxSize,
               accept: {
                 'application/pdf': [],
               },

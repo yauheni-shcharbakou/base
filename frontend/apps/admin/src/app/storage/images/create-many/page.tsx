@@ -1,8 +1,7 @@
 'use client';
 
-import { ONE_MB_BYTES } from '@/common/constants';
 import { UploadManyPage } from '@/features/storage/components';
-import { uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { toDropzoneAccept, UPLOAD_RULES, uploadViaPresignedUrl } from '@/features/storage/helpers';
 import { CreatedImage, imageActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 
@@ -23,14 +22,8 @@ export default function ImageCreateMany() {
       }}
       uploaderProps={{
         dropzoneProps: {
-          maxSize: 100 * ONE_MB_BYTES,
-          accept: {
-            'image/jpeg': [],
-            'image/png': [],
-            'image/webp': [],
-            'image/gif': [],
-            'image/svg+xml': [],
-          },
+          maxSize: UPLOAD_RULES.IMAGE.maxSize,
+          accept: toDropzoneAccept(UPLOAD_RULES.IMAGE.mimeTypes),
         },
         maxFiles: 100,
         allowedTypes: ['jpeg', 'png', 'jpg', 'webp', 'gif', 'svg'],

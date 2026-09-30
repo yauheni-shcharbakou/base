@@ -1,7 +1,6 @@
 'use client';
 
 import { AppCreate, ControlledTextField } from '@/common/components';
-import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
 import { FieldErr } from '@/common/types';
 import { UserSelect } from '@/features/auth/components';
@@ -11,7 +10,12 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { usePresetPlacement, useSingleFileUpload } from '@/features/storage/hooks';
-import { storageMetaSchema, uploadViaPresignedUrl } from '@/features/storage/helpers';
+import {
+  storageMetaSchema,
+  toDropzoneAccept,
+  UPLOAD_RULES,
+  uploadViaPresignedUrl,
+} from '@/features/storage/helpers';
 import { CreatedImage, imageActionProvider } from '@/features/storage/providers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
@@ -130,14 +134,8 @@ export default function ImageCreate() {
             control={control}
             fieldName="file"
             dropzoneProps={{
-              maxSize: 100 * ONE_MB_BYTES,
-              accept: {
-                'image/jpeg': [],
-                'image/png': [],
-                'image/webp': [],
-                'image/gif': [],
-                'image/svg+xml': [],
-              },
+              maxSize: UPLOAD_RULES.IMAGE.maxSize,
+              accept: toDropzoneAccept(UPLOAD_RULES.IMAGE.mimeTypes),
             }}
             fieldErr={errors?.file}
             selected={file}
