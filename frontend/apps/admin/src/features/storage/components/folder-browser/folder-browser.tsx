@@ -19,7 +19,6 @@ import {
   useMarqueeSelection,
   useMoveStorageObjects,
 } from '@/features/storage/hooks';
-import AddRounded from '@mui/icons-material/AddRounded';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SearchOffRounded from '@mui/icons-material/SearchOffRounded';
@@ -48,6 +47,7 @@ import { FolderBreadcrumbs } from './folder-breadcrumbs';
 import { FolderGalleryView } from './folder-gallery-view';
 import { FolderGridView } from './folder-grid-view';
 import { FolderListView } from './folder-list-view';
+import { FolderNewMenu } from './folder-new-menu';
 import { FolderSelectionBar } from './folder-selection-bar';
 import { FolderToolbar } from './folder-toolbar';
 import { MoveStorageItemsDialog } from './move-storage-items-dialog';
@@ -437,21 +437,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         }
         action={
           <Stack direction="row" gap={1}>
-            {content && (
-              <Button
-                size="small"
-                startIcon={<AddRounded />}
-                component={NextLink}
-                href={`${pathProvider.getCreatePath(STORAGE, STORAGE_OBJECT)}?${new URLSearchParams(
-                  {
-                    userId: content.folder.userId,
-                    parent: folderId,
-                  },
-                )}`}
-              >
-                New
-              </Button>
-            )}
+            {content && <FolderNewMenu folderId={folderId} userId={content.folder.userId} />}
             <Button
               size="small"
               startIcon={<InfoOutlined />}

@@ -12,7 +12,7 @@ import {
   StorageUploaderProps,
 } from '@/features/storage/components';
 import { storageMetaSchema } from '@/features/storage/helpers';
-import { useMultipleFileUpload } from '@/features/storage/hooks';
+import { useMultipleFileUpload, usePresetPlacement } from '@/features/storage/hooks';
 import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
@@ -92,6 +92,7 @@ export const UploadManyPage = <Entity extends CreatedUploadEntity>(props: Props<
   const parent = watch('parent');
   const selectedFiles = watch('files');
   const userId = watch('userId');
+  const { presetUserId } = usePresetPlacement(userId, (id) => setValue('parent', id));
 
   const handleSave = async (data: Params) => {
     const isSuccess = await handleUpload<Entity>(
@@ -121,11 +122,13 @@ export const UploadManyPage = <Entity extends CreatedUploadEntity>(props: Props<
             fieldName="userId"
             fieldErr={errors?.userId as FieldErr}
             control={control}
-            defaultValue={user?.id}
+            defaultValue={presetUserId ?? user?.id}
             required
             onOptionsLoaded={(options) => {
-              if (user?.id && (options ?? []).some((option) => option.value === user.id)) {
-                setValue('userId', user?.id);
+              const owner = presetUserId ?? user?.id;
+
+              if (owner && (options ?? []).some((option) => option.value === owner)) {
+                setValue('userId', owner);
               }
             }}
           />

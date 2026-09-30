@@ -11,7 +11,7 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { storageMetaSchema } from '@/features/storage/helpers';
-import { useSingleFileUpload } from '@/features/storage/hooks';
+import { usePresetPlacement, useSingleFileUpload } from '@/features/storage/hooks';
 import { videoActionProvider, type CreatedVideo } from '@/features/storage/providers';
 import { getGenericVideTitle, uploadViaTus } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
@@ -53,6 +53,7 @@ export default function VideoCreate() {
 
   const parent = watch('parent');
   const userId = watch('userId');
+  const { presetUserId } = usePresetPlacement(userId, (id) => setValue('parent', id));
   const file = watch('file');
 
   const handleFileChange = (selectedFile?: File) => {
@@ -106,7 +107,7 @@ export default function VideoCreate() {
             fieldName="userId"
             fieldErr={errors?.userId as FieldErr}
             control={control}
-            defaultValue={user?.id}
+            defaultValue={presetUserId ?? user?.id}
             required
           />
 

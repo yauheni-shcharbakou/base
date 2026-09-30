@@ -10,7 +10,7 @@ import {
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
-import { useSingleFileUpload } from '@/features/storage/hooks';
+import { usePresetPlacement, useSingleFileUpload } from '@/features/storage/hooks';
 import { storageMetaSchema, uploadViaPresignedUrl } from '@/features/storage/helpers';
 import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { Box, Stack } from '@mui/material';
@@ -52,6 +52,7 @@ export default function FileCreate() {
 
   const parent = watch('parent');
   const userId = watch('userId');
+  const { presetUserId } = usePresetPlacement(userId, (id) => setValue('parent', id));
   const file = watch('file');
 
   const handleFileChange = (selectedFile?: File) => {
@@ -91,7 +92,7 @@ export default function FileCreate() {
             fieldName="userId"
             fieldErr={errors?.userId as FieldErr}
             control={control}
-            defaultValue={user?.id}
+            defaultValue={presetUserId ?? user?.id}
             required
           />
 

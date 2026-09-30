@@ -5,6 +5,7 @@ import {
   getFolderLabel,
   getFolderTrail,
   searchFolders,
+  stepFolderPick,
   toFolderTree,
 } from '@/features/storage/helpers';
 import { getErrorMessage } from '@/common/helpers';
@@ -38,7 +39,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
-import React, { FC, useMemo, useState } from 'react';
+import React, { FC, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 type Folder = BrowserStorage.StorageObjectPopulated;
 
@@ -66,7 +67,9 @@ type Props = {
  * Drive's folder picker: one folder at a time, with its path above and its subfolders below. A click
  * picks a subfolder, a double click or its arrow opens it, and the path or the back arrow goes up.
  * With none picked, the answer is the folder shown. A search looks through every folder of the
- * owner by name, and a new folder can be made in the one shown — it comes out picked.
+ * owner by name, and a new folder can be made in the one shown — it comes out picked. The keys are
+ * Finder's: ↑ / ↓ pick, → opens, ← goes up with the folder left picked, Enter confirms; ↓ leaves the
+ * search for the list.
  */
 export const FolderPickerDialog: FC<Props> = ({
   open,
@@ -89,6 +92,11 @@ export const FolderPickerDialog: FC<Props> = ({
   const [query, setQuery] = useState('');
   const [newName, setNewName] = useState<string>();
   const creation = useCreateFolder();
+  const listRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const rowRefs = useRef(new Map<string, HTMLElement>());
+  // Set by a key: the picked row takes the focus once it shows, or the list when none is picked.
+  const shouldFocus = useRef(false);
 
   const tree = useMemo(() => toFolderTree(folders.data ?? []), [folders.data]);
   const blocked = useMemo(() => getBlockedFolderIds(tree, blockedIds ?? []), [tree, blockedIds]);
@@ -110,15 +118,86 @@ export const FolderPickerDialog: FC<Props> = ({
 
   const labelOf = (folder: Folder) => folder.name || rootLabel;
 
-  const go = (folder: Folder) => {
+  useEffect(() => {
+    if (!shouldFocus.current) {
+      return;
+    }
+
+    shouldFocus.current = false;
+    const row = picked ? rowRefs.current.get(picked) : undefined;
+
+    if (row) {
+      row.focus();
+      row.scrollIntoView({ block: 'nearest' });
+    } else {
+      listRef.current?.focus();
+    }
+  });
+
+  // `pick` stands for the folder picked in the one opened — the one just left, on the way up.
+  const go = (folder: Folder, pick: string | null = null) => {
     if (blocked.has(folder.id)) {
       return;
     }
 
     setLocation(folder.id);
-    setPickedId(null);
+    setPickedId(pick);
     setQuery('');
     stopCreating();
+  };
+
+  // The keys work wherever the focus is in the dialog — on a row, the list, the dialog itself —
+  // except in a field or on a button, which keep theirs; from the search, ↓ goes on into the list.
+  const onDialogKeyDown = (event: KeyboardEvent) => {
+    const element = event.target as HTMLElement;
+    const isInRows = !!listRef.current?.contains(element);
+    const isControl = !!element.closest('input, textarea, button, a');
+
+    if (isInRows || !isControl || (element === searchRef.current && event.key === 'ArrowDown')) {
+      onRowsKeyDown(event);
+    }
+  };
+
+  const onRowsKeyDown = (event: KeyboardEvent) => {
+    const pickable = rows.filter((row) => !blocked.has(row.id)).map(({ id }) => id);
+    const current = picked || undefined;
+
+    switch (event.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        const next = stepFolderPick(pickable, current, event.key === 'ArrowDown' ? 1 : -1);
+
+        if (next) {
+          event.preventDefault();
+          shouldFocus.current = true;
+          setPickedId(next);
+        }
+        break;
+      }
+      case 'ArrowRight': {
+        const folder = current && pickable.includes(current) ? tree.byId.get(current) : undefined;
+
+        if (folder) {
+          event.preventDefault();
+          shouldFocus.current = true;
+          go(folder);
+        }
+        break;
+      }
+      case 'ArrowLeft':
+        if (!isSearching && parent && shownId) {
+          event.preventDefault();
+          shouldFocus.current = true;
+          go(parent, shownId);
+        }
+        break;
+      case 'Enter':
+        if (canConfirm && target) {
+          event.preventDefault();
+          onConfirm(target);
+        }
+        break;
+    }
   };
 
   const stopCreating = () => {
@@ -235,11 +314,18 @@ export const FolderPickerDialog: FC<Props> = ({
               <ListItemButton
                 selected={folder.id === picked}
                 disabled={isBlocked}
-                ref={
-                  isInitialPick
-                    ? (element) => element?.scrollIntoView({ block: 'nearest' })
-                    : undefined
-                }
+                ref={(element: HTMLElement | null) => {
+                  if (!element) {
+                    rowRefs.current.delete(folder.id);
+                    return;
+                  }
+
+                  rowRefs.current.set(folder.id, element);
+
+                  if (isInitialPick) {
+                    element.scrollIntoView({ block: 'nearest' });
+                  }
+                }}
                 onClick={() => setPickedId(folder.id)}
                 onDoubleClick={() => go(folder)}
               >
@@ -266,7 +352,14 @@ export const FolderPickerDialog: FC<Props> = ({
       maxWidth="sm"
       fullWidth
       aria-labelledby="folder-picker-title"
-      slotProps={{ transition: { onExited: reset } }}
+      onKeyDown={onDialogKeyDown}
+      slotProps={{
+        transition: {
+          // The dialog takes the focus as it opens; the search is where typing should go.
+          onEntered: () => searchRef.current?.focus(),
+          onExited: reset,
+        },
+      }}
     >
       <DialogTitle id="folder-picker-title" sx={{ wordBreak: 'break-word' }}>
         {title}
@@ -280,10 +373,10 @@ export const FolderPickerDialog: FC<Props> = ({
             setPickedId(null);
             stopCreating();
           }}
+          inputRef={searchRef}
           placeholder="Search folders"
           size="small"
           fullWidth
-          autoFocus
           sx={{ mt: 1 }}
           slotProps={{
             input: {
@@ -353,7 +446,10 @@ export const FolderPickerDialog: FC<Props> = ({
         )}
         {newName !== undefined && renderNewFolder()}
         <Box
+          ref={listRef}
+          tabIndex={-1}
           sx={{
+            outline: 'none',
             height: 320,
             overflowY: 'auto',
             border: 1,

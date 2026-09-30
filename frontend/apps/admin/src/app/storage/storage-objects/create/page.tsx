@@ -11,13 +11,12 @@ import { UserSelect } from '@/features/auth/components';
 import { SelectOption } from '@/common/components';
 import { FolderPickerField, MediaSelect } from '@/features/storage/components';
 import { isLeafType, MEDIA_BY_TYPE } from '@/features/storage/helpers';
-import { useStorageObjectForm } from '@/features/storage/hooks';
+import { usePresetPlacement, useStorageObjectForm } from '@/features/storage/hooks';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { BrowserAuth, BrowserStorage } from '@packages/proto';
 import { useGetIdentity } from '@refinedev/core';
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import zod from 'zod';
 
 const schema = {
@@ -34,11 +33,6 @@ type Params = SchemaTypeOf<typeof schema>;
 
 export default function StorageObjectCreate() {
   const { data: user } = useGetIdentity<BrowserAuth.User>();
-  // Opened from a folder: its owner and the folder itself, filled in.
-  const searchParams = useSearchParams();
-  const presetUserId = searchParams.get('userId') || undefined;
-  const presetParent = searchParams.get('parent') || undefined;
-  const previousUserId = useRef<string | undefined>(undefined);
 
   const {
     formState: { errors },
@@ -57,17 +51,7 @@ export default function StorageObjectCreate() {
 
   const [mediaOptions, setMediaOptions] = useState<SelectOption[]>([]);
 
-  // Another owner has other folders: a folder picked from the old owner's is not theirs. The folder
-  // the page was opened for stands only for its own owner, and only until the owner changes.
-  useEffect(() => {
-    if (!userId) {
-      return;
-    }
-
-    const isPreset = !previousUserId.current && userId === presetUserId;
-    previousUserId.current = userId;
-    setValue('parent', isPreset ? (presetParent ?? '') : '');
-  }, [userId, presetUserId, presetParent, setValue]);
+  const { presetUserId } = usePresetPlacement(userId, (id) => setValue('parent', id));
 
   // Another owner or another type lists other media: a pick from the old list no longer applies.
   useEffect(() => {

@@ -3,6 +3,7 @@ import {
   getFolderLabel,
   getFolderTrail,
   searchFolders,
+  stepFolderPick,
   toFolderTree,
 } from './folder-tree';
 
@@ -72,5 +73,22 @@ describe('getFolderLabel', () => {
   it('shows a path, and the root by its given name', () => {
     expect(getFolderLabel(folders[3], 'Root')).toBe('/docs/v10');
     expect(getFolderLabel(folders[0], 'Root')).toBe('Root');
+  });
+});
+
+describe('stepFolderPick', () => {
+  const ids = ['a', 'b', 'c'];
+
+  it('steps down and up, and holds at the ends', () => {
+    expect(stepFolderPick(ids, 'a', 1)).toBe('b');
+    expect(stepFolderPick(ids, 'b', -1)).toBe('a');
+    expect(stepFolderPick(ids, 'c', 1)).toBe('c');
+    expect(stepFolderPick(ids, 'a', -1)).toBe('a');
+  });
+
+  it('starts from an end with nothing picked, or a pick the list lacks', () => {
+    expect(stepFolderPick(ids, undefined, 1)).toBe('a');
+    expect(stepFolderPick(ids, 'gone', -1)).toBe('c');
+    expect(stepFolderPick([], undefined, 1)).toBeUndefined();
   });
 });

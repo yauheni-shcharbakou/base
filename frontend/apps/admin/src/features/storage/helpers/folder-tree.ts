@@ -82,3 +82,22 @@ export const searchFolders = <T extends TreeFolder>(folders: T[], query: string)
 /** A folder as a field shows it: its path, and the owner's root by the name given to it. */
 export const getFolderLabel = (folder: TreeFolder, rootLabel: string): string =>
   folder.parentId ? (folder.folderPath ?? folder.name).replace(/\/$/, '') : rootLabel;
+
+/**
+ * The folder an arrow key picks in a list of `ids` — the ones that can be picked, in the order they
+ * show: the next or the previous one, held at the ends. From none picked, ↓ takes the first and ↑
+ * the last.
+ */
+export const stepFolderPick = (
+  ids: string[],
+  current: string | undefined,
+  step: 1 | -1,
+): string | undefined => {
+  const index = current ? ids.indexOf(current) : -1;
+
+  if (index < 0) {
+    return step > 0 ? ids[0] : ids[ids.length - 1];
+  }
+
+  return ids[Math.min(Math.max(index + step, 0), ids.length - 1)];
+};
