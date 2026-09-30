@@ -7,6 +7,7 @@ import {
   FOLDER_PAGE_SIZES,
   FolderPreferences,
   FolderView,
+  formatFolderStats,
   getChildOnPath,
   getFolderItemTarget,
   MAX_SELECTION,
@@ -528,6 +529,13 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             />
           ) : (
             <Skeleton width={240} height={32} />
+          )
+        }
+        subheader={
+          content?.folder.folderStats && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {formatFolderStats(content.folder.folderStats)}
+            </Typography>
           )
         }
         action={

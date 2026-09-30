@@ -3,7 +3,7 @@
 import { AppShow, RecordView, RefButtonContainer, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/storage/components';
-import { getFileSize } from '@/features/storage/helpers';
+import { formatFileSize } from '@/features/storage/helpers';
 import { VideoPlayer } from '@/features/video/components';
 import { getVideoDuration } from '@/features/video/helpers';
 import { ExpandMore } from '@mui/icons-material';
@@ -79,7 +79,7 @@ export default function VideoShow() {
             )}
             <StringEntityField label="Duration" value={getVideoDuration(record?.duration || 0)} />
             <StringEntityField label="Views" value={record?.views?.toString()} />
-            <StringEntityField label="Size" value={getFileSize(record?.file?.size)} />
+            <StringEntityField label="Size" value={formatFileSize(record?.file?.size)} />
           </RecordView>
         </AccordionDetails>
       </Accordion>

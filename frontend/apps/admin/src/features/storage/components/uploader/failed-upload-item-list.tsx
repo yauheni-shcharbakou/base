@@ -1,4 +1,4 @@
-import { getFileSize } from '@/features/storage/helpers';
+import { formatFileSize } from '@/features/storage/helpers';
 import { StorageUploadItem } from '@/features/storage/types';
 import { Delete } from '@mui/icons-material';
 import { IconButton, List as MuiList, ListItem, Stack, Typography } from '@mui/material';
@@ -24,7 +24,7 @@ const FailedItem = React.memo<FailedItemProps>(({ uploadItem, onDelete, frozen }
     >
       <Stack direction="row" alignItems="center" spacing={2}>
         <Typography variant="body2" color="warning" sx={{ flexGrow: 1 }}>
-          {uploadItem.file.name} ({getFileSize(uploadItem.file.size)})
+          {uploadItem.file.name} ({formatFileSize(uploadItem.file.size)})
         </Typography>
 
         <IconButton

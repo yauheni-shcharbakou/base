@@ -9,6 +9,7 @@ import { File } from '../file/file';
 import { Image } from '../image/image';
 import { Video } from '../video/video';
 import {
+  StorageObjectFolderStats,
   StorageObjectType,
   storageObjectTypeFromJSON,
   storageObjectTypeToJSON,
@@ -32,6 +33,7 @@ export interface StorageObjectPopulated {
   videoId?: string;
   image?: Image;
   video?: Video;
+  folderStats?: StorageObjectFolderStats;
 }
 
 /**
@@ -58,6 +60,7 @@ export interface StorageObjectFolderItem {
   videoId?: string;
   image?: Image;
   video?: Video;
+  folderStats?: StorageObjectFolderStats;
   previewUrl?: string;
 }
 
@@ -79,6 +82,7 @@ function createBaseStorageObjectPopulated(): StorageObjectPopulated {
     videoId: undefined,
     image: undefined,
     video: undefined,
+    folderStats: undefined,
   };
 }
 
@@ -131,6 +135,9 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     }
     if (message.video !== undefined) {
       Video.encode(message.video, writer.uint32(130).fork()).join();
+    }
+    if (message.folderStats !== undefined) {
+      StorageObjectFolderStats.encode(message.folderStats, writer.uint32(138).fork()).join();
     }
     return writer;
   },
@@ -270,6 +277,14 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
           message.video = Video.decode(reader, reader.uint32());
           continue;
         }
+        case 17: {
+          if (tag !== 138) {
+            break;
+          }
+
+          message.folderStats = StorageObjectFolderStats.decode(reader, reader.uint32());
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -297,6 +312,9 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
       videoId: isSet(object.videoId) ? globalThis.String(object.videoId) : undefined,
       image: isSet(object.image) ? Image.fromJSON(object.image) : undefined,
       video: isSet(object.video) ? Video.fromJSON(object.video) : undefined,
+      folderStats: isSet(object.folderStats)
+        ? StorageObjectFolderStats.fromJSON(object.folderStats)
+        : undefined,
     };
   },
 
@@ -350,6 +368,9 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
     if (message.video !== undefined) {
       obj.video = Video.toJSON(message.video);
     }
+    if (message.folderStats !== undefined) {
+      obj.folderStats = StorageObjectFolderStats.toJSON(message.folderStats);
+    }
     return obj;
   },
 
@@ -385,6 +406,10 @@ export const StorageObjectPopulated: MessageFns<StorageObjectPopulated> = {
       object.video !== undefined && object.video !== null
         ? Video.fromPartial(object.video)
         : undefined;
+    message.folderStats =
+      object.folderStats !== undefined && object.folderStats !== null
+        ? StorageObjectFolderStats.fromPartial(object.folderStats)
+        : undefined;
     return message;
   },
 };
@@ -407,6 +432,7 @@ function createBaseStorageObjectFolderItem(): StorageObjectFolderItem {
     videoId: undefined,
     image: undefined,
     video: undefined,
+    folderStats: undefined,
     previewUrl: undefined,
   };
 }
@@ -463,6 +489,9 @@ export const StorageObjectFolderItem: MessageFns<StorageObjectFolderItem> = {
     }
     if (message.video !== undefined) {
       Video.encode(message.video, writer.uint32(130).fork()).join();
+    }
+    if (message.folderStats !== undefined) {
+      StorageObjectFolderStats.encode(message.folderStats, writer.uint32(146).fork()).join();
     }
     if (message.previewUrl !== undefined) {
       writer.uint32(138).string(message.previewUrl);
@@ -605,6 +634,14 @@ export const StorageObjectFolderItem: MessageFns<StorageObjectFolderItem> = {
           message.video = Video.decode(reader, reader.uint32());
           continue;
         }
+        case 18: {
+          if (tag !== 146) {
+            break;
+          }
+
+          message.folderStats = StorageObjectFolderStats.decode(reader, reader.uint32());
+          continue;
+        }
         case 17: {
           if (tag !== 138) {
             break;
@@ -640,6 +677,9 @@ export const StorageObjectFolderItem: MessageFns<StorageObjectFolderItem> = {
       videoId: isSet(object.videoId) ? globalThis.String(object.videoId) : undefined,
       image: isSet(object.image) ? Image.fromJSON(object.image) : undefined,
       video: isSet(object.video) ? Video.fromJSON(object.video) : undefined,
+      folderStats: isSet(object.folderStats)
+        ? StorageObjectFolderStats.fromJSON(object.folderStats)
+        : undefined,
       previewUrl: isSet(object.previewUrl) ? globalThis.String(object.previewUrl) : undefined,
     };
   },
@@ -694,6 +734,9 @@ export const StorageObjectFolderItem: MessageFns<StorageObjectFolderItem> = {
     if (message.video !== undefined) {
       obj.video = Video.toJSON(message.video);
     }
+    if (message.folderStats !== undefined) {
+      obj.folderStats = StorageObjectFolderStats.toJSON(message.folderStats);
+    }
     if (message.previewUrl !== undefined) {
       obj.previewUrl = message.previewUrl;
     }
@@ -731,6 +774,10 @@ export const StorageObjectFolderItem: MessageFns<StorageObjectFolderItem> = {
     message.video =
       object.video !== undefined && object.video !== null
         ? Video.fromPartial(object.video)
+        : undefined;
+    message.folderStats =
+      object.folderStats !== undefined && object.folderStats !== null
+        ? StorageObjectFolderStats.fromPartial(object.folderStats)
         : undefined;
     message.previewUrl = object.previewUrl ?? undefined;
     return message;

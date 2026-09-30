@@ -3,7 +3,7 @@
 import { AppShow, RecordView, RefButtonContainer, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/storage/components';
-import { getFileSize } from '@/features/storage/helpers';
+import { formatFileSize } from '@/features/storage/helpers';
 import { ImagePreview } from '@/features/image/components';
 import { OpenInBrowserOutlined, ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
@@ -91,7 +91,7 @@ export default function ImageShow() {
             <StringEntityField label="Alt" value={record?.alt} />
             <StringEntityField label="Width" value={record?.width?.toString()} />
             <StringEntityField label="Height" value={record?.height?.toString()} />
-            <StringEntityField label="Size" value={getFileSize(record?.file?.size)} />
+            <StringEntityField label="Size" value={formatFileSize(record?.file?.size)} />
           </RecordView>
         </AccordionDetails>
       </Accordion>

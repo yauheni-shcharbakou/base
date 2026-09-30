@@ -2,7 +2,7 @@
 
 import { CreateManyButton, ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
-import { getFileSize } from '@/features/storage/helpers';
+import { formatFileSize } from '@/features/storage/helpers';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
@@ -20,7 +20,7 @@ export default function FileList() {
         })
         .string('originalName', { headerName: 'Name' })
         .string('extension', { maxWidth: 100, align: 'center' })
-        .string('size', { maxWidth: 100, valueGetter: (value) => getFileSize(value) })
+        .string('size', { maxWidth: 100, valueGetter: (value) => formatFileSize(value) })
         .enum('uploadStatus')
         .date('createdAt')
         .actions({

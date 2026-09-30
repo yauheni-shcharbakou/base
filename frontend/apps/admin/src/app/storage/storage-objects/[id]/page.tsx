@@ -11,7 +11,7 @@ import {
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/storage/components';
 import {
-  getFileSize,
+  formatFileSize,
   getFileUploadStatusColor,
   getFolderContentPath,
 } from '@/features/storage/helpers';
@@ -19,7 +19,7 @@ import { ImagePreview } from '@/features/image/components';
 import { VideoPlayer } from '@/features/video/components';
 import { getVideoDuration } from '@/features/video/helpers';
 import { ExpandMore, FolderOpenOutlined, OpenInBrowserOutlined } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import React, { useMemo } from 'react';
@@ -201,6 +201,29 @@ export default function StorageObjectShow() {
         </AccordionDetails>
       </Accordion>
 
+      {record?.folderStats && (
+        <Accordion defaultExpanded>
+          <AccordionSummary
+            expandIcon={<ExpandMore />}
+            aria-controls="folder-stats-content"
+            id="folder-stats"
+          >
+            <Typography component="span">Folder info</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            {/* The whole subtree: subfolders at any depth, and only the files whose upload is READY. */}
+            <Stack gap={1}>
+              <StringEntityField label="Files" value={String(record.folderStats.fileCount)} />
+              <StringEntityField label="Folders" value={String(record.folderStats.folderCount)} />
+              <StringEntityField
+                label="Size"
+                value={formatFileSize(record.folderStats.totalSize)}
+              />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+      )}
+
       {record?.file && (
         <Accordion>
           <AccordionSummary expandIcon={<ExpandMore />} aria-controls="file-content" id="file">
@@ -209,7 +232,7 @@ export default function StorageObjectShow() {
           <AccordionDetails>
             <RecordView record={record.file}>
               <StringEntityField label="Original name" value={record.file.originalName} />
-              <StringEntityField label="Size" value={getFileSize(record.file.size)} />
+              <StringEntityField label="Size" value={formatFileSize(record.file.size)} />
               <StringEntityField label="Mime type" value={record.file.mimeType} />
               <StringEntityField label="Extension" value={record.file.extension} />
               <StringEntityField

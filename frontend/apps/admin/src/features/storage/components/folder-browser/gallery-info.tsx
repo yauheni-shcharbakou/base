@@ -2,7 +2,7 @@
 
 import {
   formatDateTime,
-  getFileSize,
+  formatFileSize,
   getFileUploadStatusColor,
   getStorageItemKind,
   STORAGE_ITEM_KIND_LABELS,
@@ -67,7 +67,8 @@ export const GalleryInfo: FC<Props> = ({ item }) => {
         </Stack>
         <Typography variant="body2" color="text.secondary">
           {STORAGE_ITEM_KIND_LABELS[kind]}
-          {item.file ? ` · ${getFileSize(item.file.size)}` : ''}
+          {item.file ? ` · ${formatFileSize(item.file.size)}` : ''}
+          {item.folderStats ? ` · ${formatFileSize(item.folderStats.totalSize)}` : ''}
         </Typography>
 
         <Divider />
@@ -80,6 +81,13 @@ export const GalleryInfo: FC<Props> = ({ item }) => {
           </InfoRow>
         )}
         {item.video && <InfoRow label="Duration">{getVideoDuration(item.video.duration)}</InfoRow>}
+        {/* A folder's whole subtree: subfolders at any depth, files once their upload is READY. */}
+        {item.folderStats && (
+          <>
+            <InfoRow label="Files">{item.folderStats.fileCount}</InfoRow>
+            <InfoRow label="Folders">{item.folderStats.folderCount}</InfoRow>
+          </>
+        )}
         {item.file?.mimeType && <InfoRow label="MIME type">{item.file.mimeType}</InfoRow>}
         <InfoRow label="Public">{item.isPublic ? 'Yes' : 'No'}</InfoRow>
         {!item.isFolder && (

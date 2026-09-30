@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  getFileSize,
+  formatFileSize,
   getStorageItemKind,
   STORAGE_ITEM_KIND_LABELS,
 } from '@/features/storage/helpers';
@@ -87,7 +87,8 @@ export const GalleryBar: FC<Props> = ({
         <Typography variant="caption" noWrap sx={{ opacity: 0.8 }}>
           {position && `${position} · `}
           {STORAGE_ITEM_KIND_LABELS[kind]}
-          {item.file ? ` · ${getFileSize(item.file.size)}` : ''}
+          {item.file ? ` · ${formatFileSize(item.file.size)}` : ''}
+          {item.folderStats ? ` · ${formatFileSize(item.folderStats.totalSize)}` : ''}
         </Typography>
       </Stack>
 

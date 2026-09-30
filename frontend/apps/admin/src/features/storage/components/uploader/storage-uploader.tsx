@@ -1,7 +1,7 @@
 'use client';
 
 import { FieldErr } from '@/common/types';
-import { getFileSize } from '@/features/storage/helpers';
+import { formatFileSize } from '@/features/storage/helpers';
 import { Box, Button, Card, Stack, Typography } from '@mui/material';
 import React, { MouseEvent, ReactNode } from 'react';
 import { Control, Controller, ControllerRenderProps, FieldValues } from 'react-hook-form';
@@ -66,7 +66,7 @@ const DropzoneField = <V extends FieldValues = FieldValues, E = any, T = V>({
   required,
   allowedTypes,
 }: DropzoneFieldProps<V, E, T>) => {
-  const maxFileSize = getFileSize(dropzoneProps?.maxSize);
+  const maxFileSize = formatFileSize(dropzoneProps?.maxSize);
   const selectLabel = multi ? 'Select files' : 'Select file';
   const removeLabel = multi ? 'Remove files' : 'Remove file';
   const hasSelection = !!(multi ? selected?.length : selected?.name);
@@ -116,7 +116,7 @@ const DropzoneField = <V extends FieldValues = FieldValues, E = any, T = V>({
     }
 
     if (hasSelection) {
-      return `${selected!.name}, ${getFileSize(selected!.size) + requiredLabel}`;
+      return `${selected!.name}, ${formatFileSize(selected!.size) + requiredLabel}`;
     }
 
     if (isDragActive) {

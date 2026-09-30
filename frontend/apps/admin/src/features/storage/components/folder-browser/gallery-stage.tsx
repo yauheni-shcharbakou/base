@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  getFileSize,
+  formatFileSize,
   getFolderItemOpenUrl,
   getStorageItemKind,
   PdfControls,
@@ -247,7 +247,7 @@ export const GalleryStage: FC<Props> = ({
       <Typography variant="body2" color={mutedColor} textAlign="center">
         {STORAGE_ITEM_KIND_LABELS[kind]}
         {item.file?.extension ? ` · ${item.file.extension.toUpperCase()}` : ''}
-        {isViewer && item.file ? ` · ${getFileSize(item.file.size)}` : ''}
+        {isViewer && item.file ? ` · ${formatFileSize(item.file.size)}` : ''}
       </Typography>
       {pdfFailure && (
         <Typography variant="body2" color={mutedColor} textAlign="center">

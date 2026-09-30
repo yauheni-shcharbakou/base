@@ -19,7 +19,7 @@ describe('getUploadKind', () => {
 describe('sortUploads', () => {
   it('refuses an empty file and one over its kind’s limit', () => {
     const big = fileOf('big.png', 'image/png');
-    Object.defineProperty(big, 'size', { value: 101 * 1024 * 1024 });
+    Object.defineProperty(big, 'size', { value: 100_000_001 });
 
     const { accepted, rejected } = sortUploads([
       fileOf('a.pdf', 'application/pdf'),

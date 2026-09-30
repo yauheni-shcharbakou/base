@@ -1,12 +1,13 @@
-import { ONE_KB_BYTES, ONE_MB_BYTES } from '@/common/constants';
 import { TextFieldProps } from '@mui/material';
 import { BrowserStorage } from '@packages/proto';
 
 export * from './file-kind';
+export * from './file-size';
 export * from './folder-content-params';
 export * from './folder-item-target';
 export * from './folder-preferences';
 export * from './folder-selection';
+export * from './folder-stats';
 export * from './folder-tree';
 export * from './gallery-navigation';
 export * from './marquee';
@@ -20,18 +21,6 @@ export * from './upload-queue';
 export * from './upload-rules';
 export * from './upload-tree';
 export * from './visibility-lock';
-
-export const getFileSize = (sizeInBytes = 0): string => {
-  if (!sizeInBytes) {
-    return '0 KB';
-  }
-
-  if (sizeInBytes > ONE_MB_BYTES) {
-    return `${(sizeInBytes / ONE_MB_BYTES).toFixed(2)} MB`;
-  }
-
-  return `${(sizeInBytes / ONE_KB_BYTES).toFixed(2)} KB`;
-};
 
 const dateTimeFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',

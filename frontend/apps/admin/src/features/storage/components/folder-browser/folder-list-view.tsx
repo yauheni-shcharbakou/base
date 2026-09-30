@@ -3,7 +3,8 @@
 import {
   FolderContentParams,
   formatDateTime,
-  getFileSize,
+  formatFileSize,
+  formatFolderStats,
   getStorageItemKind,
   STORAGE_ITEM_KIND_LABELS,
 } from '@/features/storage/helpers';
@@ -172,7 +173,17 @@ export const FolderListView: FC<Props> = ({
                 <TableCell>{STORAGE_ITEM_KIND_LABELS[kind]}</TableCell>
                 <TableCell>{formatDateTime(item.updatedAt ?? item.createdAt)}</TableCell>
                 <TableCell>{formatDateTime(item.createdAt)}</TableCell>
-                <TableCell align="right">{item.file ? getFileSize(item.file.size) : '—'}</TableCell>
+                <TableCell align="right">
+                  {/* A folder's size is its whole subtree's, with what it holds: muted, since it
+                      is a sum rather than a file's own. */}
+                  {item.folderStats ? (
+                    <Typography variant="body2" component="span" color="text.secondary">
+                      {formatFolderStats(item.folderStats)}
+                    </Typography>
+                  ) : (
+                    formatFileSize(item.file?.size)
+                  )}
+                </TableCell>
                 <TableCell padding="checkbox">
                   <StorageItemMenu
                     item={item}

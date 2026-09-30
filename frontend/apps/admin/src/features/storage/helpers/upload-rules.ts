@@ -1,5 +1,6 @@
 import { ONE_GB_BYTES, ONE_MB_BYTES } from '@/common/constants';
 import { BrowserStorage } from '@packages/proto';
+import { formatFileSize } from './file-size';
 
 const { FILE, IMAGE, VIDEO } = BrowserStorage.StorageObjectType;
 
@@ -52,9 +53,6 @@ export type SortedUploads = {
   rejected: { name: string; reason: string }[];
 };
 
-const formatLimit = (bytes: number) =>
-  bytes >= ONE_GB_BYTES ? `${bytes / ONE_GB_BYTES} GB` : `${bytes / ONE_MB_BYTES} MB`;
-
 /** Splits dropped files into what can be uploaded and what cannot: empty, or over its limit. */
 export const sortUploads = (files: File[]): SortedUploads => {
   const sorted: SortedUploads = { accepted: [], rejected: [] };
@@ -66,7 +64,7 @@ export const sortUploads = (files: File[]): SortedUploads => {
     if (!file.size) {
       sorted.rejected.push({ name: file.name, reason: 'empty' });
     } else if (file.size > maxSize) {
-      sorted.rejected.push({ name: file.name, reason: `over ${formatLimit(maxSize)}` });
+      sorted.rejected.push({ name: file.name, reason: `over ${formatFileSize(maxSize)}` });
     } else {
       sorted.accepted.push({ file, kind });
     }

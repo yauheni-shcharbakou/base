@@ -1,6 +1,6 @@
 'use client';
 
-import { getStorageItemKind } from '@/features/storage/helpers';
+import { formatFolderStats, getStorageItemKind } from '@/features/storage/helpers';
 import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import { Box, Card, Checkbox, Stack, Typography } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
@@ -83,9 +83,17 @@ export const FolderItemCard: FC<Props> = ({ item, behavior, onPreviewError }) =>
           sx={{ p: 0 }}
         />
       </Box>
-      <Typography variant="body2" fontWeight={500} noWrap title={item.name} sx={{ flex: 1 }}>
-        {item.name}
-      </Typography>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} noWrap title={item.name}>
+          {item.name}
+        </Typography>
+        {/* A folder's whole subtree, under its name. */}
+        {item.folderStats && (
+          <Typography variant="caption" color="text.secondary" noWrap component="div">
+            {formatFolderStats(item.folderStats)}
+          </Typography>
+        )}
+      </Box>
       {item.isPublic && (
         <Box component="span" title="Public" sx={{ display: 'flex', flexShrink: 0 }}>
           <PublicOutlined sx={{ fontSize: 16, color: 'text.secondary' }} />
