@@ -20,16 +20,22 @@ type FieldOptions = {
   isArray?: true;
 };
 
+// A field is required unless declared `{ required: false }`. `IsNotEmpty` refuses only '', null and
+// undefined, so a proto3 scalar left at its default `false`/0/[] still passes; an unset `optional`
+// field or message arrives as undefined/null and needs `{ required: false }`.
+const IsPresent = (options?: FieldOptions): PropertyDecorator =>
+  options?.required === false ? IsOptional() : IsNotEmpty();
+
 export const ULIDField = (options?: FieldOptions) => {
   const isArray = !!options?.isArray;
   const type: ApiPropertyOptions['type'] = isArray ? [String] : String;
 
   const decorators: PropertyDecorator[] = [
-    ApiProperty({ type } as ApiPropertyOptions),
+    ApiProperty({ type, required: options?.required } as ApiPropertyOptions),
     IsULID({ each: isArray }),
   ];
 
-  decorators.push(options?.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
 
   if (isArray) {
     decorators.push(TransformToArray());
@@ -43,11 +49,11 @@ export const StringField = (options?: FieldOptions) => {
   const type: ApiPropertyOptions['type'] = isArray ? [String] : String;
 
   const decorators: PropertyDecorator[] = [
-    ApiProperty({ type } as ApiPropertyOptions),
+    ApiProperty({ type, required: options?.required } as ApiPropertyOptions),
     IsString({ each: isArray }),
   ];
 
-  decorators.push(options?.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
 
   if (isArray) {
     decorators.push(TransformToArray());
@@ -63,7 +69,7 @@ export const BooleanField = (options?: Omit<FieldOptions, 'isArray'>) => {
     TransformToBoolean(),
   ];
 
-  decorators.push(options?.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
   return applyDecorators(...decorators);
 };
 
@@ -74,7 +80,7 @@ export const NumberField = (options?: Omit<FieldOptions, 'isArray'>) => {
     Type(() => Number),
   ];
 
-  decorators.push(options?.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
   return applyDecorators(...decorators);
 };
 
@@ -85,7 +91,7 @@ export const DateField = (options?: Omit<FieldOptions, 'isArray'>) => {
     TransformToDate(),
   ];
 
-  decorators.push(options?.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
   return applyDecorators(...decorators);
 };
 
@@ -100,7 +106,7 @@ export const ObjectField = (Dto: ClassType, options?: FieldOptions) => {
     Type(() => Dto),
   ];
 
-  decorators.push(options?.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
 
   if (isArray) {
     decorators.push(TransformToArray());
@@ -114,19 +120,19 @@ type EnumFieldOptions = FieldOptions & {
 };
 
 export const EnumField = (enumType: ApiPropertyOptions['enum'], options?: EnumFieldOptions) => {
-  const isArray = !!options.isArray;
+  const isArray = !!options?.isArray;
 
   const decorators: PropertyDecorator[] = [
     ApiProperty({
-      required: options.required,
+      required: options?.required,
       enum: enumType,
-      enumName: options.enumName,
+      enumName: options?.enumName,
       isArray,
     }),
     IsEnum(enumType, { each: isArray }),
   ];
 
-  decorators.push(options.required ? IsNotEmpty() : IsOptional());
+  decorators.push(IsPresent(options));
 
   if (isArray) {
     decorators.push(TransformToArray());

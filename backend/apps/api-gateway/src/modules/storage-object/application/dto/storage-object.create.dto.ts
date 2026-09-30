@@ -3,10 +3,14 @@ import { EnumField, ULIDField } from '@common/application/decorators/field.decor
 import { StorageMetaDto } from '@common/application/dto/storage/storage-meta.dto';
 import { OmitType } from '@nestjs/swagger';
 
+// Unlike `StorageMeta`, a created object's `parent` is optional.
 export class StorageObjectCreateDto
-  extends StorageMetaDto
+  extends OmitType(StorageMetaDto, ['parent'] as const)
   implements NestStorage.StorageObjectCreate
 {
+  @ULIDField({ required: false })
+  parent?: string;
+
   @EnumField(NestStorage.StorageObjectType, { enumName: 'StorageObjectType' })
   type: NestStorage.StorageObjectType;
 

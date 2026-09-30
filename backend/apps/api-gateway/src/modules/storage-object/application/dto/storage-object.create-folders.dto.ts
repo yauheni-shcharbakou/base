@@ -1,6 +1,6 @@
 import { NestStorage } from '@backend/proto';
 import { StringField, ULIDField } from '@common/application/decorators/field.decorator.dto';
-import { ArrayMaxSize, ArrayMinSize, IsNotEmpty, Matches } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, Matches } from 'class-validator';
 
 // An uploaded directory's folders: past this, the admin refuses the drop before calling.
 const MAX_TREE_FOLDERS = 500;
@@ -15,7 +15,6 @@ export class StorageObjectCreateFoldersDto implements NestStorage.StorageObjectC
   userId: string;
 
   @ULIDField()
-  @IsNotEmpty()
   parent: string;
 
   @StringField({ isArray: true })
