@@ -17,6 +17,7 @@ service FileService {
   rpc createOne (file.FileCreateOne) returns (file.FileCreated) {}
   rpc createMany (file.FileCreateMany) returns (file.FileCreatedArray) {}
   rpc completeUpload (file.FileCompleteUpload) returns (file.File) {}
+  rpc completeMany (file.FileCompleteMany) returns (file.FileCompleteResults) {}
   rpc deleteOne (file.FileQuery) returns (file.File) {}
 }
 
@@ -28,6 +29,7 @@ service FileAdminService {
   rpc createOne (storage.file.FileCreateOne) returns (storage.file.FileCreated) {}
   rpc createMany (storage.file.FileCreateMany) returns (storage.file.FileCreatedArray) {}
   rpc completeUpload (IdField) returns (storage.file.File) {}
+  rpc completeByIds (IdsField) returns (storage.file.FileCompleteResults) {}
   rpc deleteById (IdField) returns (storage.file.File) {}
 }
 

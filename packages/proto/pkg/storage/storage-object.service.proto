@@ -19,6 +19,7 @@ service StorageObjectService {
   rpc getRootFolder (UserIdField) returns (storage_object.StorageObject) {}
   rpc isExists (storage_object.StorageObjectQuery) returns (Boolean) {}
   rpc createOne (storage_object.StorageObjectCreate) returns (storage_object.StorageObject) {}
+  rpc createFolders (storage_object.StorageObjectCreateFolders) returns (storage_object.StorageObjectArray) {}
   rpc updateOne (storage_object.StorageObjectUpdateOne) returns (storage_object.StorageObject) {}
   rpc deleteOne (storage_object.StorageObjectQuery) returns (storage_object.StorageObject) {}
   rpc deleteMany (storage_object.StorageObjectDeleteMany) returns (storage_object.StorageObjectArray) {}
@@ -34,6 +35,7 @@ service StorageObjectAdminService {
   rpc getRootFolder (UserIdField) returns (storage_object.StorageObject) {}
   rpc isExists (storage_object.StorageObjectQuery) returns (Boolean) {}
   rpc createOne (storage_object.StorageObjectCreate) returns (storage_object.StorageObject) {}
+  rpc createFolders (storage_object.StorageObjectCreateFolders) returns (storage_object.StorageObjectArray) {}
   rpc updateById (storage_object.StorageObjectUpdateById) returns (storage_object.StorageObject) {}
   rpc deleteById (IdField) returns (storage_object.StorageObject) {}
   rpc deleteByIds (IdsField) returns (storage_object.StorageObjectArray) {}

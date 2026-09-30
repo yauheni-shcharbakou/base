@@ -168,3 +168,15 @@ export interface StorageObjectMoveByIds {
   ids: string[];
   parent: string;
 }
+
+/**
+ * A folder tree made under `parent` at once, under one tree lock: all or none. `paths` are
+ * "/"-separated and relative to `parent` ("img", "img/2024"), each nested path's parent path listed
+ * too. A top-level name taken in `parent` gets a ` (n)` suffix; the folders below it are new. Answered
+ * in `paths` order.
+ */
+export interface StorageObjectCreateFolders {
+  userId: string;
+  parent: string;
+  paths: string[];
+}

@@ -13,12 +13,14 @@ import {
   Metadata,
   ServiceError,
 } from '@grpc/grpc-js';
-import { IdField } from '../common/fields';
+import { IdField, IdsField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { StringMap } from '../common/types';
 import { DownloadMap, GetUrlMap, GetUrlMapShort } from './common/common.messages';
 import { File } from './file/file';
 import {
+  FileCompleteMany,
+  FileCompleteResults,
   FileCompleteUpload,
   FileCreated,
   FileCreatedArray,
@@ -100,6 +102,17 @@ const FileServiceService = {
     requestDeserialize: (value: Buffer): FileCompleteUpload => FileCompleteUpload.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+  completeMany: {
+    path: '/storage.FileService/completeMany' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: FileCompleteMany): Buffer =>
+      Buffer.from(FileCompleteMany.encode(value).finish()),
+    requestDeserialize: (value: Buffer): FileCompleteMany => FileCompleteMany.decode(value),
+    responseSerialize: (value: FileCompleteResults): Buffer =>
+      Buffer.from(FileCompleteResults.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCompleteResults => FileCompleteResults.decode(value),
   },
   deleteOne: {
     path: '/storage.FileService/deleteOne' as const,
@@ -218,6 +231,21 @@ export interface GrpcFileServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
+  completeMany(
+    request: FileCompleteMany,
+    callback: (error: ServiceError | null, response: FileCompleteResults) => void,
+  ): ClientUnaryCall;
+  completeMany(
+    request: FileCompleteMany,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: FileCompleteResults) => void,
+  ): ClientUnaryCall;
+  completeMany(
+    request: FileCompleteMany,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: FileCompleteResults) => void,
+  ): ClientUnaryCall;
   deleteOne(
     request: FileQuery,
     callback: (error: ServiceError | null, response: File) => void,
@@ -308,6 +336,15 @@ export const GrpcFileServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: File) => Buffer;
       readonly responseDeserialize: (value: Buffer) => File;
     };
+    readonly completeMany: {
+      readonly path: '/storage.FileService/completeMany';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: FileCompleteMany) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => FileCompleteMany;
+      readonly responseSerialize: (value: FileCompleteResults) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCompleteResults;
+    };
     readonly deleteOne: {
       readonly path: '/storage.FileService/deleteOne';
       readonly requestStream: false;
@@ -392,6 +429,16 @@ const FileAdminServiceService = {
     requestDeserialize: (value: Buffer): IdField => IdField.decode(value),
     responseSerialize: (value: File): Buffer => Buffer.from(File.encode(value).finish()),
     responseDeserialize: (value: Buffer): File => File.decode(value),
+  },
+  completeByIds: {
+    path: '/storage.FileAdminService/completeByIds' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: IdsField): Buffer => Buffer.from(IdsField.encode(value).finish()),
+    requestDeserialize: (value: Buffer): IdsField => IdsField.decode(value),
+    responseSerialize: (value: FileCompleteResults): Buffer =>
+      Buffer.from(FileCompleteResults.encode(value).finish()),
+    responseDeserialize: (value: Buffer): FileCompleteResults => FileCompleteResults.decode(value),
   },
   deleteById: {
     path: '/storage.FileAdminService/deleteById' as const,
@@ -510,6 +557,21 @@ export interface GrpcFileAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: File) => void,
   ): ClientUnaryCall;
+  completeByIds(
+    request: IdsField,
+    callback: (error: ServiceError | null, response: FileCompleteResults) => void,
+  ): ClientUnaryCall;
+  completeByIds(
+    request: IdsField,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: FileCompleteResults) => void,
+  ): ClientUnaryCall;
+  completeByIds(
+    request: IdsField,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: FileCompleteResults) => void,
+  ): ClientUnaryCall;
   deleteById(
     request: IdField,
     callback: (error: ServiceError | null, response: File) => void,
@@ -599,6 +661,15 @@ export const GrpcFileAdminServiceClient = makeGenericClientConstructor(
       readonly requestDeserialize: (value: Buffer) => IdField;
       readonly responseSerialize: (value: File) => Buffer;
       readonly responseDeserialize: (value: Buffer) => File;
+    };
+    readonly completeByIds: {
+      readonly path: '/storage.FileAdminService/completeByIds';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: IdsField) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => IdsField;
+      readonly responseSerialize: (value: FileCompleteResults) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => FileCompleteResults;
     };
     readonly deleteById: {
       readonly path: '/storage.FileAdminService/deleteById';
@@ -966,6 +1037,22 @@ export class GrpcFileRepository {
     });
   }
 
+  completeMany(
+    request: FileCompleteMany,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<FileCompleteResults> {
+    return new Promise<FileCompleteResults>((resolve, reject) => {
+      this.client.completeMany(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
   deleteOne(
     request: FileQuery,
     metadata: Metadata = new Metadata(),
@@ -1101,6 +1188,22 @@ export class GrpcFileAdminRepository {
   ): Promise<File> {
     return new Promise<File>((resolve, reject) => {
       this.client.completeUpload(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  completeByIds(
+    request: IdsField,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<FileCompleteResults> {
+    return new Promise<FileCompleteResults>((resolve, reject) => {
+      this.client.completeByIds(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

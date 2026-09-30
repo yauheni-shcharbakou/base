@@ -7,12 +7,11 @@ import {
 } from '@backend/proto';
 import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
+import { IdsFieldDto } from '@common/application/dto/ids-field.dto';
 import { UserIdFieldDto } from '@common/application/dto/user-id-field.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
-import {
-  StorageObjectIdsDto,
-  StorageObjectMoveByIdsDto,
-} from '@modules/storage-object/application/dto/storage-object.batch.dto';
+import { StorageObjectMoveByIdsDto } from '@modules/storage-object/application/dto/storage-object.batch.dto';
+import { StorageObjectCreateFoldersDto } from '@modules/storage-object/application/dto/storage-object.create-folders.dto';
 import { StorageObjectCreateDto } from '@modules/storage-object/application/dto/storage-object.create.dto';
 import { StorageObjectGetFolderContentDto } from '@modules/storage-object/application/dto/storage-object.get-folder-content.dto';
 import { StorageObjectGetFoldersDto } from '@modules/storage-object/application/dto/storage-object.get-folders.dto';
@@ -69,6 +68,13 @@ export class GrpcStorageObjectAdminController implements GrpcStorageObjectAdminS
     return this.storageObjectService.createOne(request);
   }
 
+  @ValidateGrpcPayload(StorageObjectCreateFoldersDto)
+  createFolders(
+    request: NestStorage.StorageObjectCreateFolders,
+  ): Promise<NestStorage.StorageObjectArray> {
+    return this.storageObjectService.createFolders(request);
+  }
+
   @ValidateGrpcPayload(StorageObjectUpdateByIdDto)
   updateById({
     id,
@@ -82,7 +88,7 @@ export class GrpcStorageObjectAdminController implements GrpcStorageObjectAdminS
     return this.storageObjectService.deleteOne({ id });
   }
 
-  @ValidateGrpcPayload(StorageObjectIdsDto)
+  @ValidateGrpcPayload(IdsFieldDto)
   deleteByIds({ ids }: NestCommon.IdsField): Promise<NestStorage.StorageObjectArray> {
     return this.storageObjectService.deleteMany(ids);
   }

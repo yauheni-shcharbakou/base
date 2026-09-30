@@ -5,12 +5,14 @@
 import { type Metadata } from '@grpc/grpc-js';
 import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
-import { IdField } from '../common/fields';
+import { IdField, IdsField } from '../common/fields';
 import { GetList } from '../common/messages';
 import { StringMap } from '../common/types';
 import { DownloadMap, GetUrlMap, GetUrlMapShort } from './common/common.messages';
 import { File } from './file/file';
 import {
+  FileCompleteMany,
+  FileCompleteResults,
   FileCompleteUpload,
   FileCreated,
   FileCreatedArray,
@@ -36,6 +38,8 @@ export interface GrpcFileServiceClient {
   createMany(request: FileCreateMany, metadata?: Metadata): Observable<FileCreatedArray>;
 
   completeUpload(request: FileCompleteUpload, metadata?: Metadata): Observable<File>;
+
+  completeMany(request: FileCompleteMany, metadata?: Metadata): Observable<FileCompleteResults>;
 
   deleteOne(request: FileQuery, metadata?: Metadata): Observable<File>;
 }
@@ -70,6 +74,11 @@ export interface GrpcFileServiceController {
     ...args: any[]
   ): Promise<File> | Observable<File> | File;
 
+  completeMany(
+    request: FileCompleteMany,
+    ...args: any[]
+  ): Promise<FileCompleteResults> | Observable<FileCompleteResults> | FileCompleteResults;
+
   deleteOne(request: FileQuery, ...args: any[]): Promise<File> | Observable<File> | File;
 }
 
@@ -83,6 +92,7 @@ function FileServiceControllerMethods() {
       'createOne',
       'createMany',
       'completeUpload',
+      'completeMany',
       'deleteOne',
     ];
     for (const method of grpcMethods) {
@@ -111,6 +121,8 @@ export interface GrpcFileAdminServiceClient {
   createMany(request: FileCreateMany, metadata?: Metadata): Observable<FileCreatedArray>;
 
   completeUpload(request: IdField, metadata?: Metadata): Observable<File>;
+
+  completeByIds(request: IdsField, metadata?: Metadata): Observable<FileCompleteResults>;
 
   deleteById(request: IdField, metadata?: Metadata): Observable<File>;
 }
@@ -142,6 +154,11 @@ export interface GrpcFileAdminServiceController {
 
   completeUpload(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
 
+  completeByIds(
+    request: IdsField,
+    ...args: any[]
+  ): Promise<FileCompleteResults> | Observable<FileCompleteResults> | FileCompleteResults;
+
   deleteById(request: IdField, ...args: any[]): Promise<File> | Observable<File> | File;
 }
 
@@ -155,6 +172,7 @@ function FileAdminServiceControllerMethods() {
       'createOne',
       'createMany',
       'completeUpload',
+      'completeByIds',
       'deleteById',
     ];
     for (const method of grpcMethods) {

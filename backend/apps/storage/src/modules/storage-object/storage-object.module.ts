@@ -5,6 +5,7 @@ import { Module } from '@nestjs/common';
 import { StorageObjectPlacementService } from './application/services/storage-object.placement.service';
 import { StorageObjectValidationService } from './application/services/storage-object.validation.service';
 import { StorageObjectCleanupUseCase } from './application/use-cases/storage-object.cleanup.use-case';
+import { StorageObjectCreateFoldersUseCase } from './application/use-cases/storage-object.create-folders.use-case';
 import { StorageObjectCreateOneUseCase } from './application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectCreateRootFolderUseCase } from './application/use-cases/storage-object.create-root-folder.use-case';
 import { StorageObjectDeleteManyUseCase } from './application/use-cases/storage-object.delete-many.use-case';
@@ -43,6 +44,7 @@ import { RedisStorageObjectController } from './interface/redis/redis.storage-ob
     StorageObjectCreateRootFolderUseCase,
     StorageObjectDeleteRootFolderUseCase,
     StorageObjectCreateOneUseCase,
+    StorageObjectCreateFoldersUseCase,
     StorageObjectCleanupUseCase,
     CronStorageObjectScheduler,
   ],

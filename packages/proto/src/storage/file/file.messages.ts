@@ -89,3 +89,25 @@ export interface FileCompleteUpload {
   id: string;
   userId?: string;
 }
+
+/**
+ * Files completed together. Each is completed on its own, as `completeUpload` would: one that has
+ * not been uploaded yet does not keep the others from being completed.
+ */
+export interface FileCompleteMany {
+  ids: string[];
+  userId?: string;
+}
+
+/** What completing `id` came to: the completed file, or the gRPC status and message it failed with. */
+export interface FileCompleteResult {
+  id: string;
+  file?: File;
+  code?: number;
+  error?: string;
+}
+
+/** Answers a `FileCompleteMany` in request order, one result per requested id. */
+export interface FileCompleteResults {
+  items: FileCompleteResult[];
+}

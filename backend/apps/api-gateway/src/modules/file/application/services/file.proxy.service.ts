@@ -46,6 +46,12 @@ export class FileProxyService {
     );
   }
 
+  completeMany(ids: string[], userId?: string): Promise<NestStorage.FileCompleteResults> {
+    return firstValueFrom(
+      this.fileClient.completeMany({ ids, userId }).pipe(GrpcRxPipe.rpcException),
+    );
+  }
+
   deleteOne(query: Partial<NestStorage.FileQuery>): Promise<NestStorage.File> {
     const requestQuery: NestStorage.FileQuery = this.fileMapper.transformQuery(query);
     return firstValueFrom(this.fileClient.deleteOne(requestQuery).pipe(GrpcRxPipe.rpcException));

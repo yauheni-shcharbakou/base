@@ -178,3 +178,13 @@ message StorageObjectMoveByIds {
   repeated string ids = 1;
   string parent = 2;
 }
+
+// A folder tree made under `parent` at once, under one tree lock: all or none. `paths` are
+// "/"-separated and relative to `parent` ("img", "img/2024"), each nested path's parent path listed
+// too. A top-level name taken in `parent` gets a ` (n)` suffix; the folders below it are new. Answered
+// in `paths` order.
+message StorageObjectCreateFolders {
+  string userId = 1;
+  string parent = 2;
+  repeated string paths = 3;
+}

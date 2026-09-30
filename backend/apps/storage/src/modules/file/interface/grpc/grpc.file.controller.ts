@@ -1,10 +1,14 @@
-import { GrpcController, GrpcRxPipe } from '@backend/grpc';
+import { GrpcController, GrpcExceptionMapper, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcFileServiceController,
   GrpcFileTransport,
   NestCommon,
   NestStorage,
 } from '@backend/proto';
+import {
+  FileCompleteManyUseCase,
+  FileCompletion,
+} from '@modules/file/application/use-cases/file.complete-many.use-case';
 import { FileCompleteUploadUseCase } from '@modules/file/application/use-cases/file.complete-upload.use-case';
 import { FileCreateManyUseCase } from '@modules/file/application/use-cases/file.create-many.use-case';
 import { FileCreateOneUseCase } from '@modules/file/application/use-cases/file.create-one.use-case';
@@ -12,7 +16,22 @@ import { FileDeleteUseCase } from '@modules/file/application/use-cases/file.dele
 import { FileGetDownloadMapUseCase } from '@modules/file/application/use-cases/file.get-download-map.use-case';
 import { FileGetUrlMapUseCase } from '@modules/file/application/use-cases/file.get-url-map.use-case';
 import { FileGetUseCase } from '@modules/file/application/use-cases/file.get.use-case';
-import { from, Observable } from 'rxjs';
+import { from, map, Observable } from 'rxjs';
+
+// A file that failed to complete answers with the status and message it would have failed with alone.
+const toCompleteResult = ({ id, result }: FileCompletion): NestStorage.FileCompleteResult => {
+  if (result.isRight()) {
+    return { id, file: result.value };
+  }
+
+  const exception = GrpcExceptionMapper.toRpcException(result.value);
+
+  return {
+    id,
+    code: GrpcExceptionMapper.getStatus(exception),
+    error: GrpcExceptionMapper.getMessage(exception),
+  };
+};
 
 @GrpcController()
 @GrpcFileTransport.ControllerMethods()
@@ -24,6 +43,7 @@ export class GrpcFileController implements GrpcFileServiceController {
     private readonly greateOneUseCase: FileCreateOneUseCase,
     private readonly createManyUseCase: FileCreateManyUseCase,
     private readonly completeUploadUseCase: FileCompleteUploadUseCase,
+    private readonly completeManyUseCase: FileCompleteManyUseCase,
     private readonly deleteUseCase: FileDeleteUseCase,
   ) {}
 
@@ -54,6 +74,15 @@ export class GrpcFileController implements GrpcFileServiceController {
 
   completeUpload(request: NestStorage.FileCompleteUpload): Observable<NestStorage.File> {
     return from(this.completeUploadUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  completeMany(request: NestStorage.FileCompleteMany): Observable<NestStorage.FileCompleteResults> {
+    const stream$ = from(this.completeManyUseCase.execute(request));
+    return stream$.pipe(
+      GrpcRxPipe.unwrapEither,
+      map((completions) => completions.map(toCompleteResult)),
+      GrpcRxPipe.toArrayItems,
+    );
   }
 
   deleteOne(request: NestStorage.FileQuery): Observable<NestStorage.File> {

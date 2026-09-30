@@ -31,6 +31,7 @@ describe('GrpcStorageObjectController batch writes', () => {
       unused,
       deleteManyUseCase as never,
       moveManyUseCase as never,
+      unused,
     );
   });
 

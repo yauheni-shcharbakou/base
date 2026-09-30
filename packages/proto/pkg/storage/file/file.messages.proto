@@ -96,3 +96,23 @@ message FileCompleteUpload {
   string id = 1;
   optional string userId = 2;
 }
+
+// Files completed together. Each is completed on its own, as `completeUpload` would: one that has
+// not been uploaded yet does not keep the others from being completed.
+message FileCompleteMany {
+  repeated string ids = 1;
+  optional string userId = 2;
+}
+
+// What completing `id` came to: the completed file, or the gRPC status and message it failed with.
+message FileCompleteResult {
+  string id = 1;
+  optional File file = 2;
+  optional int32 code = 3;
+  optional string error = 4;
+}
+
+// Answers a `FileCompleteMany` in request order, one result per requested id.
+message FileCompleteResults {
+  repeated FileCompleteResult items = 1;
+}

@@ -7,6 +7,7 @@ import {
 } from '@backend/proto';
 import { GetListDto } from '@common/application/dto/get-list.dto';
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
+import { IdsFieldDto } from '@common/application/dto/ids-field.dto';
 import { GetUrlMapShortDto } from '@common/application/dto/storage/get-url-map.dto';
 import { AdminGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { FileCreateManyDto } from '@modules/file/application/dto/file.create-many.dto';
@@ -51,6 +52,11 @@ export class GrpcFileAdminController implements GrpcFileAdminServiceController {
   @ValidateGrpcPayload(IdFieldDto)
   completeUpload({ id }: NestCommon.IdField): Promise<NestStorage.File> {
     return this.fileService.completeUpload(id);
+  }
+
+  @ValidateGrpcPayload(IdsFieldDto)
+  completeByIds({ ids }: NestCommon.IdsField): Promise<NestStorage.FileCompleteResults> {
+    return this.fileService.completeMany(ids);
   }
 
   @ValidateGrpcPayload(IdFieldDto)

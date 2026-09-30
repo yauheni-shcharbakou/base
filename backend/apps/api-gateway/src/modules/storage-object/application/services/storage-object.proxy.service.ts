@@ -71,6 +71,14 @@ export class StorageObjectProxyService {
     );
   }
 
+  createFolders(
+    request: NestStorage.StorageObjectCreateFolders,
+  ): Promise<NestStorage.StorageObjectArray> {
+    return firstValueFrom(
+      this.storageObjectClient.createFolders(request).pipe(GrpcRxPipe.rpcException),
+    );
+  }
+
   updateOne(
     query: Partial<NestStorage.StorageObjectQuery>,
     update: NestStorage.StorageObjectUpdate,

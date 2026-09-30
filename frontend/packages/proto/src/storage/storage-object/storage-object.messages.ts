@@ -232,6 +232,18 @@ export interface StorageObjectMoveByIds {
   parent: string;
 }
 
+/**
+ * A folder tree made under `parent` at once, under one tree lock: all or none. `paths` are
+ * "/"-separated and relative to `parent` ("img", "img/2024"), each nested path's parent path listed
+ * too. A top-level name taken in `parent` gets a ` (n)` suffix; the folders below it are new. Answered
+ * in `paths` order.
+ */
+export interface StorageObjectCreateFolders {
+  userId: string;
+  parent: string;
+  paths: string[];
+}
+
 function createBaseStorageObjectQuery(): StorageObjectQuery {
   return {
     id: undefined,
@@ -2521,6 +2533,107 @@ export const StorageObjectMoveByIds: MessageFns<StorageObjectMoveByIds> = {
     const message = createBaseStorageObjectMoveByIds();
     message.ids = object.ids?.map((e) => e) || [];
     message.parent = object.parent ?? '';
+    return message;
+  },
+};
+
+function createBaseStorageObjectCreateFolders(): StorageObjectCreateFolders {
+  return { userId: '', parent: '', paths: [] };
+}
+
+export const StorageObjectCreateFolders: MessageFns<StorageObjectCreateFolders> = {
+  encode(
+    message: StorageObjectCreateFolders,
+    writer: BinaryWriter = new BinaryWriter(),
+  ): BinaryWriter {
+    if (message.userId !== '') {
+      writer.uint32(10).string(message.userId);
+    }
+    if (message.parent !== '') {
+      writer.uint32(18).string(message.parent);
+    }
+    for (const v of message.paths) {
+      writer.uint32(26).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): StorageObjectCreateFolders {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStorageObjectCreateFolders();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.parent = reader.string();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
+            break;
+          }
+
+          message.paths.push(reader.string());
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): StorageObjectCreateFolders {
+    return {
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      parent: isSet(object.parent) ? globalThis.String(object.parent) : '',
+      paths: globalThis.Array.isArray(object?.paths)
+        ? object.paths.map((e: any) => globalThis.String(e))
+        : [],
+    };
+  },
+
+  toJSON(message: StorageObjectCreateFolders): unknown {
+    const obj: any = {};
+    if (message.userId !== '') {
+      obj.userId = message.userId;
+    }
+    if (message.parent !== '') {
+      obj.parent = message.parent;
+    }
+    if (message.paths?.length) {
+      obj.paths = message.paths;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<StorageObjectCreateFolders>, I>>(
+    base?: I,
+  ): StorageObjectCreateFolders {
+    return StorageObjectCreateFolders.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<StorageObjectCreateFolders>, I>>(
+    object: I,
+  ): StorageObjectCreateFolders {
+    const message = createBaseStorageObjectCreateFolders();
+    message.userId = object.userId ?? '';
+    message.parent = object.parent ?? '';
+    message.paths = object.paths?.map((e) => e) || [];
     return message;
   },
 };

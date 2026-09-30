@@ -1,7 +1,9 @@
 import { NestStorage } from '@backend/proto';
 import { ObjectField, ULIDField } from '@common/application/decorators/field.decorator.dto';
+import { MAX_BATCH_SIZE } from '@common/application/dto/ids-field.dto';
 import { StorageManyMetaDto } from '@common/application/dto/storage/storage-meta.dto';
 import { OmitType } from '@nestjs/swagger';
+import { ArrayMaxSize } from 'class-validator';
 import { FileCreateDto } from './file.create.dto';
 
 export class FileCreateManyDto implements NestStorage.FileCreateMany {
@@ -9,6 +11,7 @@ export class FileCreateManyDto implements NestStorage.FileCreateMany {
   storage?: StorageManyMetaDto;
 
   @ObjectField(FileCreateDto, { isArray: true })
+  @ArrayMaxSize(MAX_BATCH_SIZE)
   items: FileCreateDto[];
 
   @ULIDField()

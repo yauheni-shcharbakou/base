@@ -13,6 +13,7 @@ import { StorageObject } from './storage-object/storage-object';
 import {
   StorageObjectArray,
   StorageObjectCreate,
+  StorageObjectCreateFolders,
   StorageObjectCreateWeb,
   StorageObjectDeleteMany,
   StorageObjectFolderContent,
@@ -49,6 +50,11 @@ export interface GrpcStorageObjectServiceClient {
   isExists(request: StorageObjectQuery, metadata?: Metadata): Observable<Boolean>;
 
   createOne(request: StorageObjectCreate, metadata?: Metadata): Observable<StorageObject>;
+
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata?: Metadata,
+  ): Observable<StorageObjectArray>;
 
   updateOne(request: StorageObjectUpdateOne, metadata?: Metadata): Observable<StorageObject>;
 
@@ -103,6 +109,11 @@ export interface GrpcStorageObjectServiceController {
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
 
+  createFolders(
+    request: StorageObjectCreateFolders,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
   updateOne(
     request: StorageObjectUpdateOne,
     ...args: any[]
@@ -135,6 +146,7 @@ function StorageObjectServiceControllerMethods() {
       'getRootFolder',
       'isExists',
       'createOne',
+      'createFolders',
       'updateOne',
       'deleteOne',
       'deleteMany',
@@ -175,6 +187,11 @@ export interface GrpcStorageObjectAdminServiceClient {
   isExists(request: StorageObjectQuery, metadata?: Metadata): Observable<Boolean>;
 
   createOne(request: StorageObjectCreate, metadata?: Metadata): Observable<StorageObject>;
+
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata?: Metadata,
+  ): Observable<StorageObjectArray>;
 
   updateById(request: StorageObjectUpdateById, metadata?: Metadata): Observable<StorageObject>;
 
@@ -229,6 +246,11 @@ export interface GrpcStorageObjectAdminServiceController {
     ...args: any[]
   ): Promise<StorageObject> | Observable<StorageObject> | StorageObject;
 
+  createFolders(
+    request: StorageObjectCreateFolders,
+    ...args: any[]
+  ): Promise<StorageObjectArray> | Observable<StorageObjectArray> | StorageObjectArray;
+
   updateById(
     request: StorageObjectUpdateById,
     ...args: any[]
@@ -261,6 +283,7 @@ function StorageObjectAdminServiceControllerMethods() {
       'getRootFolder',
       'isExists',
       'createOne',
+      'createFolders',
       'updateById',
       'deleteById',
       'deleteByIds',

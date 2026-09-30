@@ -99,6 +99,28 @@ export interface FileCompleteUpload {
   userId?: string;
 }
 
+/**
+ * Files completed together. Each is completed on its own, as `completeUpload` would: one that has
+ * not been uploaded yet does not keep the others from being completed.
+ */
+export interface FileCompleteMany {
+  ids: string[];
+  userId?: string;
+}
+
+/** What completing `id` came to: the completed file, or the gRPC status and message it failed with. */
+export interface FileCompleteResult {
+  id: string;
+  file?: File;
+  code?: number;
+  error?: string;
+}
+
+/** Answers a `FileCompleteMany` in request order, one result per requested id. */
+export interface FileCompleteResults {
+  items: FileCompleteResult[];
+}
+
 function createBaseFileQuery(): FileQuery {
   return {
     id: undefined,
@@ -1236,6 +1258,257 @@ export const FileCompleteUpload: MessageFns<FileCompleteUpload> = {
     const message = createBaseFileCompleteUpload();
     message.id = object.id ?? '';
     message.userId = object.userId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseFileCompleteMany(): FileCompleteMany {
+  return { ids: [], userId: undefined };
+}
+
+export const FileCompleteMany: MessageFns<FileCompleteMany> = {
+  encode(message: FileCompleteMany, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.ids) {
+      writer.uint32(10).string(v!);
+    }
+    if (message.userId !== undefined) {
+      writer.uint32(18).string(message.userId);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FileCompleteMany {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileCompleteMany();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.ids.push(reader.string());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.userId = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileCompleteMany {
+    return {
+      ids: globalThis.Array.isArray(object?.ids)
+        ? object.ids.map((e: any) => globalThis.String(e))
+        : [],
+      userId: isSet(object.userId) ? globalThis.String(object.userId) : undefined,
+    };
+  },
+
+  toJSON(message: FileCompleteMany): unknown {
+    const obj: any = {};
+    if (message.ids?.length) {
+      obj.ids = message.ids;
+    }
+    if (message.userId !== undefined) {
+      obj.userId = message.userId;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileCompleteMany>, I>>(base?: I): FileCompleteMany {
+    return FileCompleteMany.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileCompleteMany>, I>>(object: I): FileCompleteMany {
+    const message = createBaseFileCompleteMany();
+    message.ids = object.ids?.map((e) => e) || [];
+    message.userId = object.userId ?? undefined;
+    return message;
+  },
+};
+
+function createBaseFileCompleteResult(): FileCompleteResult {
+  return { id: '', file: undefined, code: undefined, error: undefined };
+}
+
+export const FileCompleteResult: MessageFns<FileCompleteResult> = {
+  encode(message: FileCompleteResult, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.id !== '') {
+      writer.uint32(10).string(message.id);
+    }
+    if (message.file !== undefined) {
+      File.encode(message.file, writer.uint32(18).fork()).join();
+    }
+    if (message.code !== undefined) {
+      writer.uint32(24).int32(message.code);
+    }
+    if (message.error !== undefined) {
+      writer.uint32(34).string(message.error);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FileCompleteResult {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileCompleteResult();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.id = reader.string();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.file = File.decode(reader, reader.uint32());
+          continue;
+        }
+        case 3: {
+          if (tag !== 24) {
+            break;
+          }
+
+          message.code = reader.int32();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.error = reader.string();
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileCompleteResult {
+    return {
+      id: isSet(object.id) ? globalThis.String(object.id) : '',
+      file: isSet(object.file) ? File.fromJSON(object.file) : undefined,
+      code: isSet(object.code) ? globalThis.Number(object.code) : undefined,
+      error: isSet(object.error) ? globalThis.String(object.error) : undefined,
+    };
+  },
+
+  toJSON(message: FileCompleteResult): unknown {
+    const obj: any = {};
+    if (message.id !== '') {
+      obj.id = message.id;
+    }
+    if (message.file !== undefined) {
+      obj.file = File.toJSON(message.file);
+    }
+    if (message.code !== undefined) {
+      obj.code = Math.round(message.code);
+    }
+    if (message.error !== undefined) {
+      obj.error = message.error;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileCompleteResult>, I>>(base?: I): FileCompleteResult {
+    return FileCompleteResult.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileCompleteResult>, I>>(object: I): FileCompleteResult {
+    const message = createBaseFileCompleteResult();
+    message.id = object.id ?? '';
+    message.file =
+      object.file !== undefined && object.file !== null ? File.fromPartial(object.file) : undefined;
+    message.code = object.code ?? undefined;
+    message.error = object.error ?? undefined;
+    return message;
+  },
+};
+
+function createBaseFileCompleteResults(): FileCompleteResults {
+  return { items: [] };
+}
+
+export const FileCompleteResults: MessageFns<FileCompleteResults> = {
+  encode(message: FileCompleteResults, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    for (const v of message.items) {
+      FileCompleteResult.encode(v!, writer.uint32(10).fork()).join();
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): FileCompleteResults {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseFileCompleteResults();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 10) {
+            break;
+          }
+
+          message.items.push(FileCompleteResult.decode(reader, reader.uint32()));
+          continue;
+        }
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): FileCompleteResults {
+    return {
+      items: globalThis.Array.isArray(object?.items)
+        ? object.items.map((e: any) => FileCompleteResult.fromJSON(e))
+        : [],
+    };
+  },
+
+  toJSON(message: FileCompleteResults): unknown {
+    const obj: any = {};
+    if (message.items?.length) {
+      obj.items = message.items.map((e) => FileCompleteResult.toJSON(e));
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<FileCompleteResults>, I>>(base?: I): FileCompleteResults {
+    return FileCompleteResults.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<FileCompleteResults>, I>>(
+    object: I,
+  ): FileCompleteResults {
+    const message = createBaseFileCompleteResults();
+    message.items = object.items?.map((e) => FileCompleteResult.fromPartial(e)) || [];
     return message;
   },
 };

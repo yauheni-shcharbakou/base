@@ -5,6 +5,7 @@ import {
   NestCommon,
   NestStorage,
 } from '@backend/proto';
+import { StorageObjectCreateFoldersUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-folders.use-case';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-many.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
@@ -40,6 +41,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     private readonly createOneUseCase: StorageObjectCreateOneUseCase,
     private readonly deleteManyUseCase: StorageObjectDeleteManyUseCase,
     private readonly moveManyUseCase: StorageObjectMoveManyUseCase,
+    private readonly createFoldersUseCase: StorageObjectCreateFoldersUseCase,
   ) {}
 
   getById(request: NestCommon.IdField): Observable<NestStorage.StorageObjectPopulated> {
@@ -103,6 +105,13 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
 
   createOne(request: NestStorage.StorageObjectCreate): Observable<NestStorage.StorageObject> {
     return from(this.createOneUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  createFolders(
+    request: NestStorage.StorageObjectCreateFolders,
+  ): Observable<NestStorage.StorageObjectArray> {
+    const stream$ = from(this.populate(this.createFoldersUseCase.execute(request), false));
+    return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
   updateOne(request: NestStorage.StorageObjectUpdateOne): Observable<NestStorage.StorageObject> {

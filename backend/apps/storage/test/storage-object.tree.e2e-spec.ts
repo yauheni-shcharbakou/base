@@ -10,6 +10,7 @@ import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entit
 import { PgFileRepositoryImpl } from '@modules/file/infrastructure/pg/repositories/pg.file.repository.impl';
 import { PgImageRepositoryImpl } from '@modules/image/infrastructure/pg/repositories/pg.image.repository.impl';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
+import { StorageObjectCreateFoldersUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-folders.use-case';
 import { StorageObjectCreateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.create-one.use-case';
 import { StorageObjectDeleteManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-many.use-case';
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
@@ -48,6 +49,7 @@ describe('storage-object tree against Postgres', () => {
   let deleteOne: StorageObjectDeleteOneUseCase;
   let deleteMany: StorageObjectDeleteManyUseCase;
   let moveMany: StorageObjectMoveManyUseCase;
+  let createFolders: StorageObjectCreateFoldersUseCase;
   let getFolderContent: StorageObjectGetFolderContentUseCase;
   let fileRepository: PgFileRepositoryImpl;
   let imageRepository: PgImageRepositoryImpl;
@@ -73,6 +75,7 @@ describe('storage-object tree against Postgres', () => {
     deleteOne = new StorageObjectDeleteOneUseCase(repository);
     deleteMany = new StorageObjectDeleteManyUseCase(repository, validation);
     moveMany = new StorageObjectMoveManyUseCase(repository, validation);
+    createFolders = new StorageObjectCreateFoldersUseCase(repository, validation);
     // The Bunny signers read their keys from the env; these stubs keep the signed key readable.
     const fileSigner = {
       getFileSignedUrl: (providerId: string) => right(`https://storage.test/${providerId}`),
@@ -570,6 +573,74 @@ describe('storage-object tree against Postgres', () => {
 
       assert.ok(deleted.isLeft() && deleted.value instanceof BadRequestException);
       assert.deepEqual(await names(root), ['docs']);
+    });
+  });
+
+  describe('folder tree create', () => {
+    withDb('makes a whole tree, suffixing only a top-level name taken in the target', async () => {
+      await createFolder('img', root);
+
+      const created = await createFolders.execute({
+        userId: USER_ID,
+        parent: root,
+        paths: ['img', 'img/2024', 'img/2024/may', 'docs'],
+      });
+      const ids = created.unwrap().map(({ id }) => id);
+      const byId = await paths(ids);
+
+      assert.deepEqual(
+        ids.map((id) => byId.get(id)),
+        ['/img (1)/', '/img (1)/2024/', '/img (1)/2024/may/', '/docs/'],
+      );
+    });
+
+    withDb('makes the tree public under a public target', async () => {
+      const target = await createFolder('target', root);
+      await repository.updateAndCascadePublic(target, { set: { isPublic: true } });
+
+      const created = await createFolders.execute({
+        userId: USER_ID,
+        parent: target,
+        paths: ['a', 'a/b'],
+      });
+
+      assert.deepEqual(await publicIds(), [target, ...created.unwrap().map(({ id }) => id)].sort());
+    });
+
+    withDb('makes nothing under another owner’s folder', async () => {
+      const otherRoot = await createObject({ name: '', userId: OTHER_USER_ID });
+
+      const created = await createFolders.execute({
+        userId: USER_ID,
+        parent: otherRoot,
+        paths: ['a'],
+      });
+      const theirs = await read(() => repository.getMany({ parent: otherRoot }));
+
+      assert.ok(created.isLeft() && created.value instanceof NotFoundException);
+      assert.deepEqual(theirs, []);
+    });
+
+    // The lock's transaction rolls the levels saved before a failure back with them.
+    withDb('rolls the whole tree back when a level cannot be saved', async () => {
+      const original = repository.saveMany.bind(repository);
+      let calls = 0;
+      repository.saveMany = (rows) =>
+        ++calls === 2 ? Promise.resolve(left(new Error('write failed'))) : original(rows);
+
+      try {
+        const created = await createFolders.execute({
+          userId: USER_ID,
+          parent: root,
+          paths: ['a', 'a/b'],
+        });
+        assert.ok(created.isLeft());
+      } finally {
+        repository.saveMany = original;
+      }
+
+      const children = await read(() => repository.getMany({ parent: root }));
+      assert.deepEqual(children, []);
     });
   });
 

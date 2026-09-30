@@ -21,6 +21,7 @@ import { StorageObject } from './storage-object/storage-object';
 import {
   StorageObjectArray,
   StorageObjectCreate,
+  StorageObjectCreateFolders,
   StorageObjectCreateWeb,
   StorageObjectDeleteMany,
   StorageObjectFolderContent,
@@ -128,6 +129,18 @@ const StorageObjectServiceService = {
     responseSerialize: (value: StorageObject): Buffer =>
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  createFolders: {
+    path: '/storage.StorageObjectService/createFolders' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectCreateFolders): Buffer =>
+      Buffer.from(StorageObjectCreateFolders.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectCreateFolders =>
+      StorageObjectCreateFolders.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
   },
   updateOne: {
     path: '/storage.StorageObjectService/updateOne' as const,
@@ -299,6 +312,21 @@ export interface GrpcStorageObjectServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
+  createFolders(
+    request: StorageObjectCreateFolders,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
   updateOne(
     request: StorageObjectUpdateOne,
     callback: (error: ServiceError | null, response: StorageObject) => void,
@@ -443,6 +471,15 @@ export const GrpcStorageObjectServiceClient = makeGenericClientConstructor(
       readonly responseSerialize: (value: StorageObject) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObject;
     };
+    readonly createFolders: {
+      readonly path: '/storage.StorageObjectService/createFolders';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectCreateFolders) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectCreateFolders;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
+    };
     readonly updateOne: {
       readonly path: '/storage.StorageObjectService/updateOne';
       readonly requestStream: false;
@@ -573,6 +610,18 @@ const StorageObjectAdminServiceService = {
     responseSerialize: (value: StorageObject): Buffer =>
       Buffer.from(StorageObject.encode(value).finish()),
     responseDeserialize: (value: Buffer): StorageObject => StorageObject.decode(value),
+  },
+  createFolders: {
+    path: '/storage.StorageObjectAdminService/createFolders' as const,
+    requestStream: false as const,
+    responseStream: false as const,
+    requestSerialize: (value: StorageObjectCreateFolders): Buffer =>
+      Buffer.from(StorageObjectCreateFolders.encode(value).finish()),
+    requestDeserialize: (value: Buffer): StorageObjectCreateFolders =>
+      StorageObjectCreateFolders.decode(value),
+    responseSerialize: (value: StorageObjectArray): Buffer =>
+      Buffer.from(StorageObjectArray.encode(value).finish()),
+    responseDeserialize: (value: Buffer): StorageObjectArray => StorageObjectArray.decode(value),
   },
   updateById: {
     path: '/storage.StorageObjectAdminService/updateById' as const,
@@ -741,6 +790,21 @@ export interface GrpcStorageObjectAdminServiceClient extends Client {
     options: Partial<CallOptions>,
     callback: (error: ServiceError | null, response: StorageObject) => void,
   ): ClientUnaryCall;
+  createFolders(
+    request: StorageObjectCreateFolders,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata: Metadata,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata: Metadata,
+    options: Partial<CallOptions>,
+    callback: (error: ServiceError | null, response: StorageObjectArray) => void,
+  ): ClientUnaryCall;
   updateById(
     request: StorageObjectUpdateById,
     callback: (error: ServiceError | null, response: StorageObject) => void,
@@ -884,6 +948,15 @@ export const GrpcStorageObjectAdminServiceClient = makeGenericClientConstructor(
       readonly requestDeserialize: (value: Buffer) => StorageObjectCreate;
       readonly responseSerialize: (value: StorageObject) => Buffer;
       readonly responseDeserialize: (value: Buffer) => StorageObject;
+    };
+    readonly createFolders: {
+      readonly path: '/storage.StorageObjectAdminService/createFolders';
+      readonly requestStream: false;
+      readonly responseStream: false;
+      readonly requestSerialize: (value: StorageObjectCreateFolders) => Buffer;
+      readonly requestDeserialize: (value: Buffer) => StorageObjectCreateFolders;
+      readonly responseSerialize: (value: StorageObjectArray) => Buffer;
+      readonly responseDeserialize: (value: Buffer) => StorageObjectArray;
     };
     readonly updateById: {
       readonly path: '/storage.StorageObjectAdminService/updateById';
@@ -1337,6 +1410,22 @@ export class GrpcStorageObjectRepository {
     });
   }
 
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.createFolders(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
   updateOne(
     request: StorageObjectUpdateOne,
     metadata: Metadata = new Metadata(),
@@ -1536,6 +1625,22 @@ export class GrpcStorageObjectAdminRepository {
   ): Promise<StorageObject> {
     return new Promise<StorageObject>((resolve, reject) => {
       this.client.createOne(request, metadata, options, (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      });
+    });
+  }
+
+  createFolders(
+    request: StorageObjectCreateFolders,
+    metadata: Metadata = new Metadata(),
+    options: Partial<CallOptions> = {},
+  ): Promise<StorageObjectArray> {
+    return new Promise<StorageObjectArray>((resolve, reject) => {
+      this.client.createFolders(request, metadata, options, (err, response) => {
         if (err) {
           reject(err);
         } else {

@@ -6,9 +6,11 @@ import { StorageObjectModule } from '@modules/storage-object/storage-object.modu
 import { StorageModule } from '@modules/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { FileMapper } from './application/mappers/file.mapper';
+import { FileCompletionService } from './application/services/file.completion.service';
 import { FileDropService } from './application/services/file.drop.service';
 import { FilePurgeService } from './application/services/file.purge.service';
 import { FileCleanupUseCase } from './application/use-cases/file.cleanup.use-case';
+import { FileCompleteManyUseCase } from './application/use-cases/file.complete-many.use-case';
 import { FileCompleteUploadUseCase } from './application/use-cases/file.complete-upload.use-case';
 import { FileCreateManyUseCase } from './application/use-cases/file.create-many.use-case';
 import { FileCreateOneUseCase } from './application/use-cases/file.create-one.use-case';
@@ -39,12 +41,14 @@ import { RedisFileController } from './interface/redis/redis.file.controller';
     FileMapper,
     FilePurgeService,
     FileDropService,
+    FileCompletionService,
     FileGetUrlMapUseCase,
     FileGetDownloadMapUseCase,
     FileGetUseCase,
     FileCreateOneUseCase,
     FileCreateManyUseCase,
     FileCompleteUploadUseCase,
+    FileCompleteManyUseCase,
     FileDeleteUseCase,
     FileDeleteByOwnerUseCase,
     FileCleanupUseCase,
