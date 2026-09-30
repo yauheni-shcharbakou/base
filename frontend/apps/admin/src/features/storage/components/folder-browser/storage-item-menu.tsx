@@ -9,11 +9,12 @@ import {
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined';
 import DriveFileMoveOutlined from '@mui/icons-material/DriveFileMoveOutlined';
-import EditOutlined from '@mui/icons-material/EditOutlined';
+import DriveFileRenameOutlineOutlined from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MoreVertOutlined from '@mui/icons-material/MoreVertOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
+import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import {
   Divider,
   IconButton,
@@ -22,6 +23,7 @@ import {
   ListItemText,
   Menu,
   MenuItem,
+  Switch,
 } from '@mui/material';
 import { Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
@@ -37,9 +39,17 @@ type Props = {
   onDelete?: (item: Item) => void;
   // Without it, the menu offers no Move.
   onMove?: (item: Item) => void;
+  // Without it, the menu offers no Rename. Never offered for several items, as in Drive.
+  onRename?: (item: Item) => void;
+  // Without it, the menu offers no Public switch. Acts on what Move and Delete act on.
+  onPublicChange?: (item: Item, isPublic: boolean) => void;
+  // Whether everything the switch acts on is public; the item's own visibility by default.
+  isPublic?: boolean;
+  // The folder shown is public, so nothing in it can be made private.
+  isPublicLocked?: boolean;
   // As the menu opens — Drive makes its item the selection unless it is part of it.
   onMenuOpen?: (item: Item) => void;
-  // How many items Move and Delete act on: the whole selection when the item is part of it.
+  // How many items Move, Delete and Public act on: the whole selection when the item is part of it.
   actionCount?: number;
   buttonProps?: IconButtonProps;
 };
@@ -48,14 +58,19 @@ const { STORAGE } = Database;
 const { STORAGE_OBJECT } = StorageDatabaseEntity;
 
 /**
- * An item's "⋮": what a click does not — its details, its edit form, a download, a move, a delete.
- * Move and Delete act on the whole selection when the item is part of it, as in Drive.
+ * An item's "⋮": what a click does not — its details, a rename, its visibility, a download, a move,
+ * a delete. Move, Delete and the Public switch act on the whole selection when the item is part of
+ * it, as in Drive; Rename takes one item only.
  */
 export const StorageItemMenu: FC<Props> = ({
   item,
   getFolderHref = getFolderContentPath,
   onDelete,
   onMove,
+  onRename,
+  onPublicChange,
+  isPublic = item.isPublic,
+  isPublicLocked = false,
   onMenuOpen,
   actionCount = 1,
   buttonProps,
@@ -110,16 +125,48 @@ export const StorageItemMenu: FC<Props> = ({
           </ListItemIcon>
           <ListItemText>Details</ListItemText>
         </MenuItem>
-        <MenuItem
-          component={NextLink}
-          href={pathProvider.getEditPath(STORAGE, STORAGE_OBJECT, item.id)}
-          onClick={close}
-        >
-          <ListItemIcon>
-            <EditOutlined fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
-        </MenuItem>
+        {onRename && actionCount === 1 && (
+          <MenuItem
+            onClick={() => {
+              close();
+              onRename(item);
+            }}
+          >
+            <ListItemIcon>
+              <DriveFileRenameOutlineOutlined fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Rename</ListItemText>
+          </MenuItem>
+        )}
+        {onPublicChange && (
+          <MenuItem
+            // Nothing in a public folder goes private: on, and locked.
+            disabled={isPublic && isPublicLocked}
+            onClick={() => {
+              close();
+              onPublicChange(item, !isPublic);
+            }}
+          >
+            <ListItemIcon>
+              <PublicOutlined fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              secondary={
+                isPublic && isPublicLocked ? 'Inherited from the public folder' : undefined
+              }
+            >
+              Public{many}
+            </ListItemText>
+            <Switch
+              size="small"
+              edge="end"
+              checked={isPublic}
+              tabIndex={-1}
+              inputProps={{ 'aria-label': `Public${many}` }}
+              sx={{ ml: 2, pointerEvents: 'none' }}
+            />
+          </MenuItem>
+        )}
         {downloadUrl && (
           <MenuItem component="a" href={downloadUrl} download onClick={close}>
             <ListItemIcon>

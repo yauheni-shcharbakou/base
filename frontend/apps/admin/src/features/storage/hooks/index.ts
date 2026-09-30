@@ -6,6 +6,8 @@ export * from './use-delete-storage-objects';
 export * from './use-folder-selection';
 export * from './use-marquee-selection';
 export * from './use-move-storage-objects';
+export * from './use-rename-storage-object';
+export * from './use-set-storage-objects-public';
 export * from './use-root-folder-label';
 export * from './use-user-folders';
 export * from './use-create-folder';

@@ -29,6 +29,10 @@ type Props = {
   onToggleInfo: () => void;
   onOpen: (item: Item) => void;
   onDelete?: (item: Item) => void;
+  onRename?: (item: Item) => void;
+  onPublicChange?: (item: Item, isPublic: boolean) => void;
+  // The folder shown is public: nothing in it goes private.
+  isPublicLocked?: boolean;
   onPreviewError?: () => void;
   getFolderHref?: (id: string) => string;
   playerControls?: RefObject<BunnyPlayerControls | null>;
@@ -98,6 +102,9 @@ export const GalleryViewer: FC<Props> = ({
   onToggleInfo,
   onOpen,
   onDelete,
+  onRename,
+  onPublicChange,
+  isPublicLocked,
   onPreviewError,
   getFolderHref,
   playerControls,
@@ -167,6 +174,9 @@ export const GalleryViewer: FC<Props> = ({
             onToggleViewer={onExit}
             onOpen={onOpen}
             onDelete={onDelete}
+            onRename={onRename}
+            onPublicChange={onPublicChange}
+            isPublicLocked={isPublicLocked}
             getFolderHref={getFolderHref}
           />
         )}

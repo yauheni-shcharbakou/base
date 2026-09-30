@@ -1,4 +1,5 @@
 import {
+  capSelection,
   clickSelection,
   deselectAll,
   Direction,
@@ -29,6 +30,8 @@ type Options = {
   initialFocus?: string;
   // Where the keyboard is, for the URL: Back comes to this page with the item marked.
   onFocusChange: (id?: string) => void;
+  // Items were left out of a selection that would have grown past `MAX_SELECTION`.
+  onLimit?: () => void;
 };
 
 const initial = (focus?: string): FolderSelection => (focus ? focusOnly(focus) : EMPTY_SELECTION);
@@ -37,9 +40,16 @@ const initial = (focus?: string): FolderSelection => (focus ? focusOnly(focus) :
  * Google Drive's selection over a folder, held in memory — only the item the keyboard is on reaches
  * the URL. It lasts across the folder's pages, sorts and both of Drive's views, so a selection can
  * be gathered page by page; what an item on another page is — its name, whether it is a folder — is
- * remembered from the page it was selected on. The rules are the pure `folder-selection` helpers.
+ * remembered from the page it was selected on. It holds at most `MAX_SELECTION` items, so every
+ * action on it is one gateway call. The rules are the pure `folder-selection` helpers.
  */
-export const useFolderSelection = ({ items, resetKey, initialFocus, onFocusChange }: Options) => {
+export const useFolderSelection = ({
+  items,
+  resetKey,
+  initialFocus,
+  onFocusChange,
+  onLimit,
+}: Options) => {
   const [stored, setStored] = useState(() => initial(initialFocus));
   const [storedKey, setStoredKey] = useState(resetKey);
   // The selected items as last seen, for those the page no longer shows.
@@ -60,7 +70,14 @@ export const useFolderSelection = ({ items, resetKey, initialFocus, onFocusChang
   );
 
   const update = useCallback(
-    (next: FolderSelection) => {
+    (wanted: FolderSelection) => {
+      // Held to what one batch call takes, whatever grew it: a click, a range, ⌘A, the marquee.
+      const { selection: next, isCapped } = capSelection(selection, wanted);
+
+      if (isCapped) {
+        onLimit?.();
+      }
+
       const onPage = new Map(items?.map((item) => [item.id, item]));
       const remembered = new Map<string, Item>();
 
@@ -79,7 +96,7 @@ export const useFolderSelection = ({ items, resetKey, initialFocus, onFocusChang
         onFocusChange(next.focus);
       }
     },
-    [items, selection.focus, onFocusChange],
+    [items, selection, onFocusChange, onLimit],
   );
 
   // In the order they were selected: a move writes them in that order.

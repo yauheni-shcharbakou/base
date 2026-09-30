@@ -28,3 +28,34 @@ export const dropFromFolderListings = (
     },
   );
 };
+
+type Written = Pick<BrowserStorage.StorageObject, 'id' | 'name' | 'isPublic' | 'updatedAt'>;
+
+/**
+ * Writes renamed or re-published objects into every cached folder listing at once — its items and
+ * the folder it shows — so the change shows before the refetch that follows. A folder's subtree,
+ * which its visibility reaches too, is left to that refetch.
+ */
+export const patchFolderListings = (queryClient: QueryClient, written: Written[]) => {
+  const byId = new Map(written.map((row) => [row.id, row]));
+  const patch = <T extends Written>(object: T): T => {
+    const row = byId.get(object.id);
+    return row
+      ? { ...object, name: row.name, isPublic: row.isPublic, updatedAt: row.updatedAt }
+      : object;
+  };
+
+  queryClient.setQueriesData<BrowserStorage.StorageObjectFolderContent>(
+    { queryKey: FOLDER_CONTENT_QUERY_KEY },
+    (content) => {
+      if (
+        !content ||
+        (!byId.has(content.folder.id) && !content.items.some(({ id }) => byId.has(id)))
+      ) {
+        return content;
+      }
+
+      return { ...content, folder: patch(content.folder), items: content.items.map(patch) };
+    },
+  );
+};

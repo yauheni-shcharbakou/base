@@ -1,4 +1,5 @@
 import {
+  capSelection,
   clickSelection,
   deselectAll,
   EMPTY_SELECTION,
@@ -186,5 +187,51 @@ describe('getArrowTargetId', () => {
 
   it('starts at the first item when none has the keyboard', () => {
     expect(getArrowTargetId(rects, undefined, 'down')).toBe('f1');
+  });
+});
+
+describe('capSelection', () => {
+  const selection = (selected: string[], focus?: string): FolderSelection => ({
+    ids: new Set(selected),
+    anchor: selected[0],
+    focus,
+  });
+
+  it('leaves a selection within the limit alone', () => {
+    const next = selection(['a', 'b', 'c']);
+
+    expect(capSelection(EMPTY_SELECTION, next, 3)).toEqual({ selection: next, isCapped: false });
+  });
+
+  it('keeps what was selected and takes the new items in order until it is full', () => {
+    const { selection: capped, isCapped } = capSelection(
+      selection(['d']),
+      selection(['a', 'b', 'c', 'd', 'e'], 'e'),
+      3,
+    );
+
+    expect(isCapped).toBe(true);
+    expect(Array.from(capped.ids)).toEqual(['d', 'a', 'b']);
+    // The keyboard stays where it went.
+    expect(capped.focus).toBe('e');
+    expect(capped.anchor).toBe('a');
+  });
+
+  it('adds nothing to a selection that is full already', () => {
+    const { selection: capped, isCapped } = capSelection(
+      selection(['a', 'b']),
+      selectAll(selection(['a', 'b']), order),
+      2,
+    );
+
+    expect(isCapped).toBe(true);
+    expect(ids(capped)).toEqual(['a', 'b']);
+  });
+
+  it('lets a full selection shrink', () => {
+    const full = selection(['a', 'b']);
+    const next = toggleSelection(full, 'a');
+
+    expect(capSelection(full, next, 2)).toEqual({ selection: next, isCapped: false });
   });
 });

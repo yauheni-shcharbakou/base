@@ -1,6 +1,7 @@
 'use client';
 
 import { getStorageItemKind } from '@/features/storage/helpers';
+import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import { Box, Card, Checkbox, Stack, Typography } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC, useEffect, useRef } from 'react';
@@ -85,12 +86,21 @@ export const FolderItemCard: FC<Props> = ({ item, behavior, onPreviewError }) =>
       <Typography variant="body2" fontWeight={500} noWrap title={item.name} sx={{ flex: 1 }}>
         {item.name}
       </Typography>
+      {item.isPublic && (
+        <Box component="span" title="Public" sx={{ display: 'flex', flexShrink: 0 }}>
+          <PublicOutlined sx={{ fontSize: 16, color: 'text.secondary' }} />
+        </Box>
+      )}
       <StorageItemMenu
         item={item}
         getFolderHref={menu.getFolderHref}
         onMenuOpen={menu.onMenuOpen}
         onMove={menu.onMove}
         onDelete={menu.onDelete}
+        onRename={menu.onRename}
+        onPublicChange={menu.onPublicChange}
+        isPublic={menu.getActionsPublic(item)}
+        isPublicLocked={menu.isPublicLocked}
         actionCount={menu.getActionCount(item)}
       />
     </Stack>

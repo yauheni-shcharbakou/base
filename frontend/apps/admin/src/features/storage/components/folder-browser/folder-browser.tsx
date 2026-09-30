@@ -1,5 +1,6 @@
 'use client';
 
+import { useReplacingNotification } from '@/common/hooks';
 import { pathProvider } from '@/common/providers';
 import {
   Direction,
@@ -8,7 +9,7 @@ import {
   FolderView,
   getChildOnPath,
   getFolderItemTarget,
-  StorageBatchError,
+  MAX_SELECTION,
 } from '@/features/storage/helpers';
 import {
   ITEM_ID_ATTRIBUTE,
@@ -19,6 +20,7 @@ import {
   useMarqueeSelection,
   useMoveStorageObjects,
   useRootFolderLabel,
+  useSetStorageObjectsPublic,
 } from '@/features/storage/hooks';
 import CloudUploadOutlined from '@mui/icons-material/CloudUploadOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
@@ -55,6 +57,7 @@ import { FolderNewMenu } from './folder-new-menu';
 import { FolderSelectionBar } from './folder-selection-bar';
 import { FolderToolbar } from './folder-toolbar';
 import { MoveStorageItemsDialog } from './move-storage-items-dialog';
+import { RenameStorageItemDialog } from './rename-storage-item-dialog';
 import { useFileDrop } from './use-file-drop';
 import { DropFolder, FolderItemBehavior, useFolderItemBehavior } from './use-folder-item-behavior';
 import { isControl, isTyping, useWindowKeyDown } from './use-window-key-down';
@@ -108,8 +111,9 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
  * A folder of a user's storage, browsed the way Google Drive does — grid or list — or the way
  * Finder's gallery does. A folder opens in place; a file, image or video opens in a new tab once
  * its upload is done, and its details otherwise. In the grid and the list a click selects, as in
- * Drive, and the selection moves or deletes together — from its bar, an item's "⋮", a drag onto a
- * folder or a breadcrumb, or the keyboard. Files dropped from the desktop upload into the folder, or
+ * Drive, and the selection — up to 100 items — moves, deletes or turns public or private together:
+ * from its bar, an item's "⋮", a drag onto a folder or a breadcrumb, or the keyboard. An item's "⋮"
+ * renames it. Files dropped from the desktop upload into the folder, or
  * into the subfolder or breadcrumb they land on.
  */
 export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPreferences }) => {
@@ -133,8 +137,11 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   } = useFolderContent(folderId, initialPreferences);
   const deletion = useDeleteStorageObjects();
   const moving = useMoveStorageObjects();
+  const publicity = useSetStorageObjectsPublic();
+  const notify = useReplacingNotification();
   const [pendingDelete, setPendingDelete] = useState<Item[]>();
   const [pendingMove, setPendingMove] = useState<Item[]>();
+  const [pendingRename, setPendingRename] = useState<Item>();
   const contentRef = useRef<HTMLDivElement>(null);
   const isGallery = params.view === FolderView.GALLERY;
   const rootLabel = useRootFolderLabel(content?.folder.userId);
@@ -148,6 +155,16 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     resetKey: [folderId, isGallery, params.search ?? '', params.types.join(',')].join('|'),
     initialFocus: params.focus,
     onFocusChange: useCallback((id?: string) => setParams({ focus: id }, 'replace'), [setParams]),
+    // Every action on a selection is one gateway call, which takes no more.
+    onLimit: useCallback(
+      () =>
+        notify({
+          type: 'error',
+          message: `You can select up to ${MAX_SELECTION} items`,
+          key: 'storage-selection-limit',
+        }),
+      [notify],
+    ),
   });
 
   const marquee = useMarqueeSelection(contentRef, {
@@ -207,17 +224,23 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     [setParams],
   );
 
-  // What Move and Delete on an item act on: the whole selection when the item is part of it.
+  // What Move, Delete and Public on an item act on: the whole selection when the item is part of it.
   const getActionItems = (item: Item) =>
     selection.selectedIds.has(item.id) && selection.selectedItems.length > 1
       ? selection.selectedItems
       : [item];
 
-  // What went through leaves the selection, whether the whole run did or only its first batches.
+  // What went through leaves the selection — a call is all or none.
   const dropDone = (items: Item[], error: unknown) => {
-    const done = error instanceof StorageBatchError ? (error.done as Item[]) : error ? [] : items;
-    selection.remove(done.map(({ id }) => id));
+    if (!error) {
+      selection.remove(items.map(({ id }) => id));
+    }
   };
+
+  // Nothing in a public folder goes private: the service refuses it, and the admin offers it not.
+  const isPublicLocked = !!content?.folder.isPublic;
+
+  const setPublic = (items: Item[], isPublic: boolean) => publicity.mutate({ items, isPublic });
 
   const move = (items: Item[], target: DropFolder) =>
     moving.mutate(
@@ -269,7 +292,11 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       onMenuOpen: selection.ensureSelected,
       onMove: (item) => setPendingMove(getActionItems(item)),
       onDelete: (item) => setPendingDelete(getActionItems(item)),
+      onRename: setPendingRename,
+      onPublicChange: (item, isPublic) => setPublic(getActionItems(item), isPublic),
       getActionCount: (item) => getActionItems(item).length,
+      getActionsPublic: (item) => getActionItems(item).every((action) => action.isPublic),
+      isPublicLocked,
     },
   };
 
@@ -280,6 +307,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       !content ||
       pendingDelete ||
       pendingMove ||
+      pendingRename ||
       event.defaultPrevented ||
       isTyping(event.target)
     ) {
@@ -318,6 +346,21 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
           selection.selectAll();
         }
         break;
+      case 'F2': {
+        // Drive's and Finder's rename: the one item selected, or the one the keyboard is on.
+        const target =
+          selectedItems.length === 1
+            ? selectedItems[0]
+            : selectedItems.length
+              ? undefined
+              : content.items.find(({ id }) => id === selection.focusedId);
+
+        if (target) {
+          event.preventDefault();
+          setPendingRename(target);
+        }
+        break;
+      }
       case 'Escape':
         if (selectedItems.length) {
           event.preventDefault();
@@ -395,6 +438,9 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             onPrefetch={prefetchPage}
             onOpen={openItem}
             onDelete={(item) => setPendingDelete([item])}
+            onRename={setPendingRename}
+            onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
+            isPublicLocked={isPublicLocked}
             onPreviewError={refreshPreviews}
             getFolderHref={getFolderHref}
           />
@@ -481,6 +527,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
               onClear={selection.clear}
               onMove={() => setPendingMove(selection.selectedItems)}
               onDelete={() => setPendingDelete(selection.selectedItems)}
+              onPublicChange={(isPublic) => setPublic(selection.selectedItems, isPublic)}
+              isPublicLocked={isPublicLocked}
             />
           </Box>
         )}
@@ -531,6 +579,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onCancel={() => setPendingDelete(undefined)}
         onConfirm={confirmDelete}
       />
+      <RenameStorageItemDialog item={pendingRename} onClose={() => setPendingRename(undefined)} />
       {fileDropTarget && (
         // Drive's drop area: the folder outlined.
         <Box

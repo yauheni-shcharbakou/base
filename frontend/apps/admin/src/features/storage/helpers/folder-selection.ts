@@ -11,6 +11,12 @@ export type FolderSelection = {
 
 export const EMPTY_SELECTION: FolderSelection = { ids: new Set() };
 
+/**
+ * The most items a selection holds — what one batch call of the gateway takes, so every action on
+ * a selection is one call, all or none.
+ */
+export const MAX_SELECTION = 100;
+
 export type SelectionModifiers = {
   // ⌘ on a Mac, Ctrl elsewhere: add or take one item.
   toggle?: boolean;
@@ -122,6 +128,30 @@ export const removeFromSelection = (
     anchor: selection.anchor && !gone.has(selection.anchor) ? selection.anchor : undefined,
     focus: selection.focus && !gone.has(selection.focus) ? selection.focus : undefined,
   };
+};
+
+/**
+ * A selection held to `limit` items. A selection that grows past it keeps what it had and takes the
+ * new items in the order given until it is full; one that does not grow — a click, a narrowing
+ * range — is left alone. `isCapped` says items were left out.
+ */
+export const capSelection = (
+  current: FolderSelection,
+  next: FolderSelection,
+  limit = MAX_SELECTION,
+): { selection: FolderSelection; isCapped: boolean } => {
+  if (next.ids.size <= limit) {
+    return { selection: next, isCapped: false };
+  }
+
+  const kept = Array.from(next.ids).filter((id) => current.ids.has(id));
+  const added = Array.from(next.ids).filter((id) => !current.ids.has(id));
+  const ids = new Set(
+    kept.slice(0, limit).concat(added.slice(0, Math.max(0, limit - kept.length))),
+  );
+
+  // The keyboard stays where it went, selected or not — as on a folder marked on the way up.
+  return { selection: { ...next, ids }, isCapped: true };
 };
 
 /**

@@ -180,6 +180,10 @@ export const FolderListView: FC<Props> = ({
                     onMenuOpen={menu.onMenuOpen}
                     onMove={menu.onMove}
                     onDelete={menu.onDelete}
+                    onRename={menu.onRename}
+                    onPublicChange={menu.onPublicChange}
+                    isPublic={menu.getActionsPublic(item)}
+                    isPublicLocked={menu.isPublicLocked}
                     actionCount={menu.getActionCount(item)}
                   />
                 </TableCell>

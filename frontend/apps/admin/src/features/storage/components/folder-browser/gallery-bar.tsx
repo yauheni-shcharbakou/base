@@ -29,6 +29,10 @@ type Props = {
   onToggleViewer: () => void;
   onOpen: (item: Item) => void;
   onDelete?: (item: Item) => void;
+  onRename?: (item: Item) => void;
+  onPublicChange?: (item: Item, isPublic: boolean) => void;
+  // The folder shown is public: nothing in it goes private.
+  isPublicLocked?: boolean;
   getFolderHref?: (id: string) => string;
 };
 
@@ -48,6 +52,9 @@ export const GalleryBar: FC<Props> = ({
   onToggleViewer,
   onOpen,
   onDelete,
+  onRename,
+  onPublicChange,
+  isPublicLocked,
   getFolderHref,
 }) => {
   const kind = getStorageItemKind(item);
@@ -110,6 +117,9 @@ export const GalleryBar: FC<Props> = ({
           item={item}
           getFolderHref={getFolderHref}
           onDelete={onDelete}
+          onRename={onRename}
+          onPublicChange={onPublicChange}
+          isPublicLocked={isPublicLocked}
           buttonProps={{ size: 'medium', sx: white }}
         />
         <Tooltip title={isViewer ? 'Exit full screen (Space)' : 'Full screen (Space)'}>

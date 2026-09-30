@@ -124,3 +124,31 @@ export async function createStorageFolders(
       .items;
   });
 }
+
+/**
+ * Renames an object in place. A name taken in its folder is refused with a 409, not suffixed — the
+ * caller typed it.
+ */
+export async function renameStorageObject(
+  id: string,
+  name: string,
+): Promise<ActionResult<ClientStorage.StorageObject>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return storageObjectGrpcRepository.updateById({ id, update: { set: { name } } }, metadata);
+  });
+}
+
+/**
+ * Makes objects of one owner public or private in one gateway call — all or none, each folder with
+ * its subtree. Making private an object whose folder is public is refused with a 400.
+ */
+export async function setStorageObjectsPublic(
+  ids: string[],
+  isPublic: boolean,
+): Promise<ActionResult<ClientStorage.StorageObject[]>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return (await storageObjectGrpcRepository.updatePublicByIds({ ids, isPublic }, metadata)).items;
+  });
+}

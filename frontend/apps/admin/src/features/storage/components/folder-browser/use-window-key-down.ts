@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react';
 
-/** Keys belong to what has focus when it is a field, an open menu or a confirmation. */
+/**
+ * Keys belong to what has focus when it is a field, an open menu, a confirmation, or a dialog that
+ * keeps its keys (`data-keeps-keys` — not every dialog does: the gallery's viewer is one too).
+ */
 export const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable ||
     !!target.closest(
-      'input, textarea, select, [role="menu"], [role="listbox"], [role="alertdialog"]',
+      'input, textarea, select, [role="menu"], [role="listbox"], [role="alertdialog"], [data-keeps-keys]',
     ));
 
 /** Enter and Space already press a focused control. */

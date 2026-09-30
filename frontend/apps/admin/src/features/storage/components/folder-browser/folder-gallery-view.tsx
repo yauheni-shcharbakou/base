@@ -38,6 +38,10 @@ type Props = {
   onPrefetch: (page: number) => void;
   onOpen: (item: Item) => void;
   onDelete?: (item: Item) => void;
+  onRename?: (item: Item) => void;
+  onPublicChange?: (item: Item, isPublic: boolean) => void;
+  // The folder shown is public: nothing in it goes private.
+  isPublicLocked?: boolean;
   onPreviewError?: () => void;
   getFolderHref?: (id: string) => string;
 };
@@ -66,10 +70,10 @@ const exitFullscreen = async () => {
  * Finder's gallery view: the selected item large, the page as a strip of small thumbnails below,
  * its details over the stage on demand. The keys are Finder's — ←/→ step (on to the next or
  * previous page at an edge), Home/End jump to the ends of the folder, Enter or ⌘↓ opens, Space
- * toggles the full-screen viewer, I the details, ⌘⌫ or Delete deletes, and K / J / L / M drive a
- * playing video (going up is the folder browser's, in every view). The selection is kept in the URL.
- * A click in the strip only selects: a video plays on a click on its poster, or by itself in the
- * viewer.
+ * toggles the full-screen viewer, I the details, F2 renames, ⌘⌫ or Delete deletes, and
+ * K / J / L / M drive a playing video (going up is the folder browser's, in every view). The
+ * selection is kept in the URL. A click in the strip only selects: a video plays on a click on its
+ * poster, or by itself in the viewer.
  */
 export const FolderGalleryView: FC<Props> = ({
   items,
@@ -86,6 +90,9 @@ export const FolderGalleryView: FC<Props> = ({
   onPrefetch,
   onOpen,
   onDelete,
+  onRename,
+  onPublicChange,
+  isPublicLocked,
   onPreviewError,
   getFolderHref,
 }) => {
@@ -331,6 +338,12 @@ export const FolderGalleryView: FC<Props> = ({
         }
         break;
       }
+      case 'F2':
+        if (!selected || !onRename) {
+          return;
+        }
+        onRename(selected);
+        break;
       case 'Delete':
       case 'Backspace':
         // A bare Backspace is the folder browser's: up to the parent.
@@ -390,6 +403,9 @@ export const FolderGalleryView: FC<Props> = ({
             onToggleViewer={() => enterViewer()}
             onOpen={onOpen}
             onDelete={onDelete}
+            onRename={onRename}
+            onPublicChange={onPublicChange}
+            isPublicLocked={isPublicLocked}
             getFolderHref={getFolderHref}
           />
         )}
@@ -463,6 +479,9 @@ export const FolderGalleryView: FC<Props> = ({
         onToggleInfo={toggleInfo}
         onOpen={onOpen}
         onDelete={onDelete}
+        onRename={onRename}
+        onPublicChange={onPublicChange}
+        isPublicLocked={isPublicLocked}
         onPreviewError={onPreviewError}
         getFolderHref={getFolderHref}
         playerControls={playerControls}

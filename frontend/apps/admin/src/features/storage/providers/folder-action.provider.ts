@@ -7,6 +7,8 @@ import {
   getRootFolder,
   getUserFolders,
   moveStorageObjects,
+  renameStorageObject,
+  setStorageObjectsPublic,
 } from '@/features/storage/actions';
 import type { FolderContentRequest } from '@/features/storage/types';
 import type { BrowserStorage } from '@packages/proto';
@@ -48,5 +50,13 @@ export class FolderActionProvider {
     paths: string[],
   ): Promise<BrowserStorage.StorageObject[]> {
     return unwrapActionResult(await createStorageFolders(userId, parent, paths));
+  }
+
+  async rename(id: string, name: string): Promise<BrowserStorage.StorageObject> {
+    return unwrapActionResult(await renameStorageObject(id, name));
+  }
+
+  async setPublic(ids: string[], isPublic: boolean): Promise<BrowserStorage.StorageObject[]> {
+    return unwrapActionResult(await setStorageObjectsPublic(ids, isPublic));
   }
 }

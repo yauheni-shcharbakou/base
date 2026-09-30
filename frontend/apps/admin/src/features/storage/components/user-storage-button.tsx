@@ -2,11 +2,11 @@
 
 import { RowActionButton } from '@/common/components';
 import { getErrorMessage } from '@/common/helpers/error.helpers';
+import { useReplacingNotification } from '@/common/hooks';
 import { getFolderContentPath } from '@/features/storage/helpers';
 import { folderActionProvider } from '@/features/storage/providers';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import { CircularProgress } from '@mui/material';
-import { useNotification } from '@refinedev/core';
 import { useRouter } from 'next/navigation';
 import React, { FC, useState } from 'react';
 
@@ -18,7 +18,7 @@ type Props = {
 export const UserStorageButton: FC<Props> = ({ userId }) => {
   const [isLoading, setLoading] = useState(false);
   const router = useRouter();
-  const { open } = useNotification();
+  const notify = useReplacingNotification();
 
   const handleClick = async () => {
     setLoading(true);
@@ -27,7 +27,7 @@ export const UserStorageButton: FC<Props> = ({ userId }) => {
       const root = await folderActionProvider.getRootFolder(userId);
       router.push(getFolderContentPath(root.id));
     } catch (error) {
-      open?.({
+      notify({
         type: 'error',
         message: 'Storage is unavailable',
         description: getErrorMessage(error),

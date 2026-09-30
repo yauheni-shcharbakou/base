@@ -1,19 +1,21 @@
 'use client';
 
 import { AppEdit, ControlledBooleanField, TextEditField } from '@/common/components';
+import { useReplacingNotification } from '@/common/hooks';
 import { FolderPickerField } from '@/features/storage/components';
-import { useStorageObjectForm } from '@/features/storage/hooks';
-import { Box } from '@mui/material';
+import { getVisibilityLock } from '@/features/storage/helpers';
+import { useStorageObjectForm, useUserFolders } from '@/features/storage/hooks';
+import { Box, FormHelperText } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
-import { useNotification } from '@refinedev/core';
 import { useEffect } from 'react';
+import { useWatch } from 'react-hook-form';
 import zod from 'zod';
 
 const schema = {
   parent: zod.string().optional(),
   name: zod.string().optional(),
-  isPublic: zod.boolean(),
+  isPublic: zod.boolean().optional(),
 };
 
 type Params = SchemaTypeOf<typeof schema>;
@@ -27,8 +29,15 @@ export default function StorageObjectEdit() {
     handleSubmit,
     setValue,
   } = useStorageObjectForm<typeof schema, BrowserStorage.StorageObject>(schema);
-  const { open } = useNotification();
+  const notify = useReplacingNotification();
   const entity = query?.data?.data;
+  // The folder picker reads the same list: one call for both.
+  const folders = useUserFolders(entity?.parentId ? entity.userId : undefined);
+  const parentId = useWatch({ control, name: 'parent' }) || entity?.parentId;
+  const parentFolder = folders.data?.find(({ id }) => id === parentId);
+  // In a public folder, or on a move, the folder decides; the checkbox shows what will be saved.
+  const visibilityLock = getVisibilityLock(parentFolder, !!entity && parentId !== entity.parentId);
+  const lockedIsPublic = visibilityLock?.isPublic;
 
   // Not a field of the entity, which has `parentId`: the form's reset from the record leaves it out.
   useEffect(() => {
@@ -37,10 +46,16 @@ export default function StorageObjectEdit() {
     }
   }, [entity, setValue]);
 
+  // Back to the record's own value once nothing holds it, as when a move is undone.
+  useEffect(() => {
+    if (entity) {
+      setValue('isPublic', lockedIsPublic ?? entity.isPublic);
+    }
+  }, [entity, lockedIsPublic, setValue]);
+
   const handleSave = async (data: Params) => {
-    const updateData: Params = {
-      isPublic: data.isPublic,
-    };
+    // A held visibility is not the caller's to send: the service decides it the same way.
+    const updateData: Params = visibilityLock ? {} : { isPublic: data.isPublic };
 
     const isNameChanged = !!data.name && data.name !== entity?.name;
     const isParentChanged = !!data.parent && data.parent !== entity?.parentId;
@@ -61,7 +76,7 @@ export default function StorageObjectEdit() {
     const savedName = (result?.data as BrowserStorage.StorageObject | undefined)?.name;
 
     if (isParentChanged && savedName && savedName !== requestedName) {
-      open?.({
+      notify({
         type: 'success',
         message: `Moved as “${savedName}”`,
         description: `“${requestedName}” was taken in that folder.`,
@@ -98,7 +113,11 @@ export default function StorageObjectEdit() {
           fieldName="isPublic"
           label="Public"
           defaultValue={entity?.isPublic}
+          fieldProps={{ disabled: !!visibilityLock }}
         />
+        {visibilityLock && (
+          <FormHelperText sx={{ mt: -0.5 }}>{visibilityLock.reason}</FormHelperText>
+        )}
       </Box>
     </AppEdit>
   );

@@ -150,6 +150,12 @@ export type FolderItemBehavior = ReturnType<typeof useFolderItemBehavior> & {
     onMenuOpen: (item: Item) => void;
     onMove: (item: Item) => void;
     onDelete: (item: Item) => void;
+    onRename: (item: Item) => void;
+    onPublicChange: (item: Item, isPublic: boolean) => void;
     getActionCount: (item: Item) => number;
+    // Whether everything the item's actions take is public.
+    getActionsPublic: (item: Item) => boolean;
+    // The folder shown is public: nothing in it goes private.
+    isPublicLocked: boolean;
   };
 };

@@ -1,9 +1,10 @@
+import { useReplacingNotification } from '@/common/hooks';
 import { getErrorMessage } from '@/common/helpers';
-import { getRenamedItems, runInBatches, StorageBatchError } from '@/features/storage/helpers';
+import { getRenamedItems } from '@/features/storage/helpers';
 import { folderActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
-import { useInvalidate, useNotification } from '@refinedev/core';
+import { useInvalidate } from '@refinedev/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { dropFromFolderListings } from './folder-listing-cache';
 import { FOLDER_CONTENT_QUERY_KEY } from './use-folder-content';
@@ -21,15 +22,14 @@ const describeItems = (items: Item[]) =>
   items.length === 1 ? `“${items[0].name}”` : `${items.length} items`;
 
 /**
- * Moves folder items into another folder of their owner — one gateway call, all or none, per 100
- * items (`runInBatches`). A name taken there comes back suffixed — never refused — and the
- * notification says which. A run stopped part way fails with a `StorageBatchError` naming the items
- * that moved.
+ * Moves folder items into another folder of their owner — one gateway call, all or none: a
+ * selection holds no more than it takes (`MAX_SELECTION`). A name taken there comes back suffixed —
+ * never refused — and the notification says which.
  */
 export const useMoveStorageObjects = () => {
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
-  const { open } = useNotification();
+  const notify = useReplacingNotification();
 
   const refresh = (items: Item[], target: MoveRequest['target']) => {
     // Out of the folder they left at once; the refetch fills the page and the target's listing.
@@ -46,16 +46,14 @@ export const useMoveStorageObjects = () => {
 
   return useMutation({
     mutationFn: ({ items, target }: MoveRequest) =>
-      runInBatches(items, (batch) =>
-        folderActionProvider.moveMany(
-          batch.map(({ id }) => id),
-          target.id,
-        ),
+      folderActionProvider.moveMany(
+        items.map(({ id }) => id),
+        target.id,
       ),
     onSuccess: (moved, { items, target }) => {
       const renamed = getRenamedItems(items, moved);
 
-      open?.({
+      notify({
         type: 'success',
         message: `${describeItems(items)} moved to “${target.name}”`,
         description: renamed.length
@@ -66,21 +64,12 @@ export const useMoveStorageObjects = () => {
 
       refresh(items, target);
     },
-    onError: (error, { items, target }) => {
-      const done = error instanceof StorageBatchError ? (error.done as Item[]) : [];
-
-      open?.({
+    onError: (error, { items, target }) =>
+      notify({
         type: 'error',
-        message: done.length
-          ? `Moved ${done.length} of ${items.length} items to “${target.name}”`
-          : `Could not move ${describeItems(items)}`,
-        description: getErrorMessage(error instanceof StorageBatchError ? error.cause : error),
+        message: `Could not move ${describeItems(items)} to “${target.name}”`,
+        description: getErrorMessage(error),
         key: 'storage-object-move',
-      });
-
-      if (done.length) {
-        refresh(done, target);
-      }
-    },
+      }),
   });
 };
