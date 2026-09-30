@@ -1,63 +1,69 @@
 import { getErrorMessage } from '@/common/helpers';
-import { deleteOne } from '@/features/grpc/actions';
-import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
+import { runInBatches, StorageBatchError } from '@/features/storage/helpers';
+import { folderActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
 import { useInvalidate, useNotification } from '@refinedev/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { dropFromFolderListings } from './folder-listing-cache';
 import { FOLDER_CONTENT_QUERY_KEY } from './use-folder-content';
 
 type Item = Pick<BrowserStorage.StorageObjectFolderItem, 'id' | 'name'>;
 
 const { STORAGE_OBJECT } = StorageDatabaseEntity;
 
+const describeItems = (items: Item[]) =>
+  items.length === 1 ? `“${items[0].name}”` : `${items.length} items`;
+
 /**
- * Deletes a folder item — a folder with everything under it. The service only marks the subtree
- * deleted, with no restore, so the caller confirms first. Every cached listing goes stale: the
- * item's folder lost it, and a deleted folder's own pages are gone.
+ * Deletes folder items — each folder with everything under it — one gateway call, all or none, per
+ * 100 items (`runInBatches`); a run stopped part way fails with a `StorageBatchError` naming the
+ * items deleted. The service only marks the subtrees deleted, with no restore, so the caller
+ * confirms first. Every cached listing goes stale: the items' folder lost them, and a deleted
+ * folder's own pages are gone.
  */
-export const useDeleteStorageObject = () => {
+export const useDeleteStorageObjects = () => {
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const { open } = useNotification();
 
+  const refresh = (items: Item[]) => {
+    // Gone from the screen at once; the refetch then brings the page's next items up.
+    dropFromFolderListings(queryClient, items);
+    queryClient.invalidateQueries({ queryKey: FOLDER_CONTENT_QUERY_KEY });
+    invalidate({ resource: STORAGE_OBJECT, invalidates: ['list', 'many'] });
+    items.forEach(({ id }) =>
+      invalidate({ resource: STORAGE_OBJECT, id, invalidates: ['detail'] }),
+    );
+  };
+
   return useMutation({
-    mutationFn: async (item: Item) =>
-      unwrapActionResult(await deleteOne({ resource: STORAGE_OBJECT, id: item.id })),
-    onSuccess: (_, item) => {
+    mutationFn: (items: Item[]) =>
+      runInBatches(items, (batch) => folderActionProvider.deleteMany(batch.map(({ id }) => id))),
+    onSuccess: (_, items) => {
       open?.({
         type: 'success',
-        message: `“${item.name}” deleted`,
-        key: `storage-object-delete-${item.id}`,
+        message: `${describeItems(items)} deleted`,
+        key: 'storage-object-delete',
       });
 
-      // Gone from the screen at once; the refetch then brings the page's next item up.
-      queryClient.setQueriesData<BrowserStorage.StorageObjectFolderContent>(
-        { queryKey: FOLDER_CONTENT_QUERY_KEY },
-        (content) =>
-          content?.items.some(({ id }) => id === item.id)
-            ? {
-                ...content,
-                items: content.items.filter(({ id }) => id !== item.id),
-                total: content.total - 1,
-              }
-            : content,
-      );
-
-      queryClient.invalidateQueries({ queryKey: FOLDER_CONTENT_QUERY_KEY });
-      invalidate({
-        resource: STORAGE_OBJECT,
-        id: item.id,
-        invalidates: ['list', 'many', 'detail'],
-      });
+      refresh(items);
     },
-    onError: (error, item) => {
+    onError: (error, items) => {
+      const done = error instanceof StorageBatchError ? (error.done as Item[]) : [];
+
       open?.({
         type: 'error',
-        message: `Could not delete “${item.name}”`,
-        description: getErrorMessage(error),
-        key: `storage-object-delete-${item.id}`,
+        message: done.length
+          ? `Deleted ${done.length} of ${items.length} items`
+          : `Could not delete ${describeItems(items)}`,
+        description: getErrorMessage(error instanceof StorageBatchError ? error.cause : error),
+        key: 'storage-object-delete',
       });
+
+      if (done.length) {
+        refresh(done);
+      }
     },
   });
 };

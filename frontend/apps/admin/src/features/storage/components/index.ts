@@ -1,6 +1,6 @@
 export * from './download-button';
 export * from './folder-browser';
-export * from './folder-select';
+export * from './folder-picker';
 export * from './media-select';
 export * from './pages';
 export * from './uploader';

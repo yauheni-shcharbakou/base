@@ -2,13 +2,24 @@
 
 import { pathProvider } from '@/common/providers';
 import {
+  Direction,
   FOLDER_PAGE_SIZES,
   FolderPreferences,
   FolderView,
   getChildOnPath,
   getFolderItemTarget,
+  StorageBatchError,
 } from '@/features/storage/helpers';
-import { useDeleteStorageObject, useFolderContent } from '@/features/storage/hooks';
+import {
+  ITEM_ID_ATTRIBUTE,
+  readItemRects,
+  useDeleteStorageObjects,
+  useFolderContent,
+  useFolderSelection,
+  useMarqueeSelection,
+  useMoveStorageObjects,
+} from '@/features/storage/hooks';
+import AddRounded from '@mui/icons-material/AddRounded';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SearchOffRounded from '@mui/icons-material/SearchOffRounded';
@@ -26,18 +37,22 @@ import {
   TablePagination,
   Typography,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback, useRef, useState } from 'react';
 import { DeleteStorageItemDialog } from './delete-storage-item-dialog';
 import { FolderBreadcrumbs } from './folder-breadcrumbs';
 import { FolderGalleryView } from './folder-gallery-view';
 import { FolderGridView } from './folder-grid-view';
 import { FolderListView } from './folder-list-view';
+import { FolderSelectionBar } from './folder-selection-bar';
 import { FolderToolbar } from './folder-toolbar';
-import { isTyping, useWindowKeyDown } from './use-window-key-down';
+import { MoveStorageItemsDialog } from './move-storage-items-dialog';
+import { DropFolder, FolderItemBehavior, useFolderItemBehavior } from './use-folder-item-behavior';
+import { isControl, isTyping, useWindowKeyDown } from './use-window-key-down';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
 
@@ -49,6 +64,13 @@ type Props = {
 
 const { STORAGE } = Database;
 const { STORAGE_OBJECT } = StorageDatabaseEntity;
+
+const DIRECTION_BY_KEY: Partial<Record<string, Direction>> = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+};
 
 const LoadingGrid: FC = () => (
   <Box
@@ -80,7 +102,9 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
 /**
  * A folder of a user's storage, browsed the way Google Drive does — grid or list — or the way
  * Finder's gallery does. A folder opens in place; a file, image or video opens in a new tab once
- * its upload is done, and its details otherwise.
+ * its upload is done, and its details otherwise. In the grid and the list a click selects, as in
+ * Drive, and the selection moves or deletes together — from its bar, an item's "⋮", a drag onto a
+ * folder or a breadcrumb, or the keyboard.
  */
 export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPreferences }) => {
   const router = useRouter();
@@ -101,8 +125,27 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     refreshPreviews,
     prefetchPage,
   } = useFolderContent(folderId, initialPreferences);
-  const deletion = useDeleteStorageObject();
-  const [pendingDelete, setPendingDelete] = useState<Item>();
+  const deletion = useDeleteStorageObjects();
+  const moving = useMoveStorageObjects();
+  const [pendingDelete, setPendingDelete] = useState<Item[]>();
+  const [pendingMove, setPendingMove] = useState<Item[]>();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isGallery = params.view === FolderView.GALLERY;
+
+  const selection = useFolderSelection({
+    items: content?.items,
+    // A new folder or filter starts a new selection, and so does the gallery, which has its own.
+    // Another page, order, or Drive's other view keeps it.
+    resetKey: [folderId, isGallery, params.search ?? '', params.types.join(',')].join('|'),
+    initialFocus: params.item,
+    onFocusChange: useCallback((id?: string) => setParams({ item: id }, 'replace'), [setParams]),
+  });
+
+  const marquee = useMarqueeSelection(contentRef, {
+    selectedIds: selection.selectedIds,
+    onSelect: selection.setIds,
+    onClear: selection.clear,
+  });
 
   const openItem = useCallback(
     (item: Item) => {
@@ -155,9 +198,152 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     [setParams],
   );
 
-  const confirmDelete = (item: Item) =>
-    deletion.mutate(item, { onSettled: () => setPendingDelete(undefined) });
+  // What Move and Delete on an item act on: the whole selection when the item is part of it.
+  const getActionItems = (item: Item) =>
+    selection.selectedIds.has(item.id) && selection.selectedItems.length > 1
+      ? selection.selectedItems
+      : [item];
 
+  // What went through leaves the selection, whether the whole run did or only its first batches.
+  const dropDone = (items: Item[], error: unknown) => {
+    const done = error instanceof StorageBatchError ? (error.done as Item[]) : error ? [] : items;
+    selection.remove(done.map(({ id }) => id));
+  };
+
+  const move = (items: Item[], target: DropFolder) =>
+    moving.mutate(
+      { items, target },
+      {
+        onSettled: (_, error) => {
+          setPendingMove(undefined);
+          dropDone(items, error);
+        },
+      },
+    );
+
+  const confirmDelete = (items: Item[]) =>
+    deletion.mutate(items, {
+      onSettled: (_, error) => {
+        setPendingDelete(undefined);
+        dropDone(items, error);
+      },
+    });
+
+  // Out of the gallery, its item is no selection: the grid and the list start with none.
+  const changeParams = useCallback(
+    (patch: Parameters<typeof setParams>[0]) =>
+      setParams(
+        isGallery && patch.view && patch.view !== FolderView.GALLERY
+          ? { ...patch, item: undefined }
+          : patch,
+      ),
+    [setParams, isGallery],
+  );
+
+  const itemBehavior = useFolderItemBehavior({
+    selectedItems: selection.selectedItems,
+    selectedIds: selection.selectedIds,
+    onClick: selection.click,
+    onOpen: openItem,
+    onDragStart: selection.ensureSelected,
+    onDrop: move,
+  });
+
+  const behavior: FolderItemBehavior = {
+    ...itemBehavior,
+    selectedIds: selection.selectedIds,
+    focusedId: selection.focusedId,
+    onToggle: selection.toggle,
+    menu: {
+      getFolderHref,
+      onMenuOpen: selection.ensureSelected,
+      onMove: (item) => setPendingMove(getActionItems(item)),
+      onDelete: (item) => setPendingDelete(getActionItems(item)),
+      getActionCount: (item) => getActionItems(item).length,
+    },
+  };
+
+  // Drive's keys over the grid and the list; the gallery has its own. A dialog keeps its keys.
+  useWindowKeyDown((event) => {
+    if (
+      isGallery ||
+      !content ||
+      pendingDelete ||
+      pendingMove ||
+      event.defaultPrevented ||
+      isTyping(event.target)
+    ) {
+      return;
+    }
+
+    const isModified = event.metaKey || event.ctrlKey;
+    const direction = DIRECTION_BY_KEY[event.key];
+    const { selectedItems } = selection;
+
+    if (direction) {
+      // ⌘↑ is up to the parent; ⌘↓ opens, as in Finder.
+      if (isModified) {
+        const focused = content.items.find(({ id }) => id === selection.focusedId);
+
+        if (direction === 'down' && focused) {
+          event.preventDefault();
+          openItem(focused);
+        }
+
+        return;
+      }
+
+      if (selection.step(readItemRects(contentRef.current), direction, event.shiftKey)) {
+        event.preventDefault();
+      }
+
+      return;
+    }
+
+    switch (event.key) {
+      case 'a':
+      case 'A':
+        if (isModified && !event.altKey) {
+          event.preventDefault();
+          selection.selectAll();
+        }
+        break;
+      case 'Escape':
+        if (selectedItems.length) {
+          event.preventDefault();
+          selection.clear();
+        }
+        break;
+      case 'Delete':
+      case 'Backspace':
+        // A bare Backspace is up to the parent.
+        if ((event.key === 'Delete' || isModified) && selectedItems.length) {
+          event.preventDefault();
+          setPendingDelete(selectedItems);
+        }
+        break;
+      case 'Enter': {
+        const target = event.target as HTMLElement;
+        const itemElement = target.closest?.(`[${ITEM_ID_ATTRIBUTE}]`);
+
+        // A control inside an item — its "⋮", its checkbox — presses itself.
+        if (isControl(target) && target !== itemElement) {
+          return;
+        }
+
+        const id = itemElement?.getAttribute(ITEM_ID_ATTRIBUTE) ?? selection.focusedId;
+        const item = content.items.find((candidate) => candidate.id === id);
+
+        if (item) {
+          event.preventDefault();
+          openItem(item);
+        }
+        break;
+      }
+    }
+  });
+
+  const isSelecting = !isGallery && !!selection.selectedItems.length;
   const isFiltered = !!params.search || !!params.types.length;
 
   const renderView = (items: Item[]) => {
@@ -176,12 +362,10 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         return (
           <FolderListView
             items={items}
-            selectedId={params.item}
+            behavior={behavior}
             params={params}
             onSortChange={(sortBy, sortOrder) => setParams({ sortBy, sortOrder })}
-            onOpen={openItem}
-            onDelete={setPendingDelete}
-            getFolderHref={getFolderHref}
+            onToggleAll={selection.toggleAll}
           />
         );
       case FolderView.GALLERY:
@@ -200,21 +384,14 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             onPageChange={changePage}
             onPrefetch={prefetchPage}
             onOpen={openItem}
-            onDelete={setPendingDelete}
+            onDelete={(item) => setPendingDelete([item])}
             onPreviewError={refreshPreviews}
             getFolderHref={getFolderHref}
           />
         );
       default:
         return (
-          <FolderGridView
-            items={items}
-            selectedId={params.item}
-            onOpen={openItem}
-            onDelete={setPendingDelete}
-            onPreviewError={refreshPreviews}
-            getFolderHref={getFolderHref}
-          />
+          <FolderGridView items={items} behavior={behavior} onPreviewError={refreshPreviews} />
         );
     }
   };
@@ -251,27 +428,82 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
               folder={content.folder}
               ancestors={content.ancestors}
               getAncestorHref={getAncestorLink}
+              getDropProps={isGallery ? undefined : behavior.getDropProps}
+              dropTargetId={behavior.dropTargetId}
             />
           ) : (
             <Skeleton width={240} height={32} />
           )
         }
         action={
-          <Button
-            size="small"
-            startIcon={<InfoOutlined />}
-            component={NextLink}
-            href={pathProvider.getShowPath(STORAGE, STORAGE_OBJECT, folderId)}
-          >
-            Details
-          </Button>
+          <Stack direction="row" gap={1}>
+            {content && (
+              <Button
+                size="small"
+                startIcon={<AddRounded />}
+                component={NextLink}
+                href={`${pathProvider.getCreatePath(STORAGE, STORAGE_OBJECT)}?${new URLSearchParams(
+                  {
+                    userId: content.folder.userId,
+                    parent: folderId,
+                  },
+                )}`}
+              >
+                New
+              </Button>
+            )}
+            <Button
+              size="small"
+              startIcon={<InfoOutlined />}
+              component={NextLink}
+              href={pathProvider.getShowPath(STORAGE, STORAGE_OBJECT, folderId)}
+            >
+              Details
+            </Button>
+          </Stack>
         }
       />
-      <Box sx={{ px: 2, pb: 1 }}>
-        <FolderToolbar params={params} total={content?.total} onChange={setParams} />
+      {/* The selection bar lies over the toolbar, which keeps its place: the items below never
+          jump as a selection starts or ends, and a search being typed survives it. */}
+      <Box sx={{ position: 'relative', px: 2, pb: 1 }}>
+        <Box sx={{ visibility: isSelecting ? 'hidden' : undefined }}>
+          <FolderToolbar params={params} total={content?.total} onChange={changeParams} />
+        </Box>
+        {isSelecting && (
+          <Box sx={{ position: 'absolute', top: 0, left: 16, right: 16 }}>
+            <FolderSelectionBar
+              count={selection.selectedItems.length}
+              onClear={selection.clear}
+              onMove={() => setPendingMove(selection.selectedItems)}
+              onDelete={() => setPendingDelete(selection.selectedItems)}
+            />
+          </Box>
+        )}
       </Box>
       <Divider />
-      <CardContent>{content ? renderView(content.items) : <LoadingGrid />}</CardContent>
+      <CardContent
+        ref={contentRef}
+        {...(isGallery ? {} : marquee.handlers)}
+        sx={{ position: 'relative', minHeight: 240 }}
+      >
+        {content ? renderView(content.items) : <LoadingGrid />}
+        {marquee.box && (
+          <Box
+            aria-hidden
+            sx={{
+              position: 'absolute',
+              left: marquee.box.left,
+              top: marquee.box.top,
+              width: marquee.box.right - marquee.box.left,
+              height: marquee.box.bottom - marquee.box.top,
+              border: 1,
+              borderColor: 'primary.main',
+              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+      </CardContent>
       {!!content?.total && (
         <>
           <Divider />
@@ -289,11 +521,20 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         </>
       )}
       <DeleteStorageItemDialog
-        item={pendingDelete}
+        items={pendingDelete}
         isDeleting={deletion.isPending}
         onCancel={() => setPendingDelete(undefined)}
         onConfirm={confirmDelete}
       />
+      {content && (
+        <MoveStorageItemsDialog
+          items={pendingMove}
+          folder={content.folder}
+          isMoving={moving.isPending}
+          onCancel={() => setPendingMove(undefined)}
+          onConfirm={move}
+        />
+      )}
     </Card>
   );
 };

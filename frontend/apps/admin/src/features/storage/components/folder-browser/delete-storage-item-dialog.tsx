@@ -12,28 +12,50 @@ import {
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC, useRef } from 'react';
 
+type Item = BrowserStorage.StorageObjectFolderItem;
+
 type Props = {
-  item?: BrowserStorage.StorageObjectFolderItem;
+  // The items to delete — shown while there are any.
+  items?: Item[];
   isDeleting: boolean;
   onCancel: () => void;
-  onConfirm: (item: BrowserStorage.StorageObjectFolderItem) => void;
+  onConfirm: (items: Item[]) => void;
+};
+
+const getTitle = (items: Item[]) =>
+  items.length === 1 ? `Delete “${items[0].name}”?` : `Delete ${items.length} items?`;
+
+const getWarning = (items: Item[]) => {
+  const folders = items.filter((item) => item.isFolder).length;
+
+  if (!folders) {
+    return '';
+  }
+
+  if (items.length === 1) {
+    return 'The folder and everything in it will be deleted. ';
+  }
+
+  return folders === 1
+    ? 'The folder among them goes with everything in it. '
+    : 'The folders among them go with everything in them. ';
 };
 
 /**
- * Confirms a delete, which cannot be undone: the service marks the item — a folder with everything
- * under it — deleted, and never restores it. Delete has the focus, so ⌘⌫ then Enter deletes, as
+ * Confirms a delete of one item or several, which cannot be undone: the service marks the items — a
+ * folder with everything under it — deleted, and never restores them. Delete has the focus, so ⌘⌫ then Enter deletes, as
  * Finder's "Delete Immediately" does. An `alertdialog`, so the page's shortcuts leave its keys alone.
  */
-export const DeleteStorageItemDialog: FC<Props> = ({ item, isDeleting, onCancel, onConfirm }) => {
-  // The item stays on screen while the dialog fades out after it is gone.
-  const shown = useRef(item);
-  shown.current = item ?? shown.current;
-  const target = shown.current;
+export const DeleteStorageItemDialog: FC<Props> = ({ items, isDeleting, onCancel, onConfirm }) => {
+  // The items stay on screen while the dialog fades out after they are gone.
+  const shown = useRef(items);
+  shown.current = items?.length ? items : shown.current;
+  const targets = shown.current ?? [];
   const deleteButton = useRef<HTMLButtonElement>(null);
 
   return (
     <Dialog
-      open={!!item}
+      open={!!items?.length}
       onClose={() => !isDeleting && onCancel()}
       maxWidth="xs"
       fullWidth
@@ -46,11 +68,11 @@ export const DeleteStorageItemDialog: FC<Props> = ({ item, isDeleting, onCancel,
       }}
     >
       <DialogTitle id="delete-storage-item-title" sx={{ wordBreak: 'break-word' }}>
-        Delete “{target?.name}”?
+        {getTitle(targets)}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {target?.isFolder && 'The folder and everything in it will be deleted. '}
+          {getWarning(targets)}
           This can’t be undone.
         </DialogContentText>
       </DialogContent>
@@ -64,7 +86,7 @@ export const DeleteStorageItemDialog: FC<Props> = ({ item, isDeleting, onCancel,
           variant="contained"
           disabled={isDeleting}
           startIcon={isDeleting ? <CircularProgress size={16} color="inherit" /> : undefined}
-          onClick={() => item && onConfirm(item)}
+          onClick={() => items?.length && onConfirm(items)}
         >
           Delete
         </Button>

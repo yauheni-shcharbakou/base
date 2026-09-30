@@ -4,16 +4,14 @@ import { Box, Stack, Typography } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC, ReactNode } from 'react';
 import { FolderItemCard } from './folder-item-card';
+import type { FolderItemBehavior } from './use-folder-item-behavior';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
 
 type Props = {
   items: Item[];
-  selectedId?: string;
-  onOpen: (item: Item) => void;
-  onDelete?: (item: Item) => void;
+  behavior: FolderItemBehavior;
   onPreviewError?: () => void;
-  getFolderHref?: (id: string) => string;
 };
 
 const Section: FC<{ title: string; minWidth: number; children: ReactNode }> = ({
@@ -38,7 +36,7 @@ const Section: FC<{ title: string; minWidth: number; children: ReactNode }> = ({
 );
 
 /** Google Drive's grid: the page's folders, which the listing puts first, then its files. */
-export const FolderGridView: FC<Props> = ({ items, selectedId, ...cardProps }) => {
+export const FolderGridView: FC<Props> = ({ items, behavior, onPreviewError }) => {
   const folders = items.filter((item) => item.isFolder);
   const files = items.filter((item) => !item.isFolder);
 
@@ -47,12 +45,7 @@ export const FolderGridView: FC<Props> = ({ items, selectedId, ...cardProps }) =
       {!!folders.length && (
         <Section title="Folders" minWidth={220}>
           {folders.map((item) => (
-            <FolderItemCard
-              key={item.id}
-              item={item}
-              isSelected={item.id === selectedId}
-              {...cardProps}
-            />
+            <FolderItemCard key={item.id} item={item} behavior={behavior} />
           ))}
         </Section>
       )}
@@ -62,8 +55,8 @@ export const FolderGridView: FC<Props> = ({ items, selectedId, ...cardProps }) =
             <FolderItemCard
               key={item.id}
               item={item}
-              isSelected={item.id === selectedId}
-              {...cardProps}
+              behavior={behavior}
+              onPreviewError={onPreviewError}
             />
           ))}
         </Section>

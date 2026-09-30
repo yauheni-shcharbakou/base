@@ -6,10 +6,15 @@ export * from './file-kind';
 export * from './folder-content-params';
 export * from './folder-item-target';
 export * from './folder-preferences';
+export * from './folder-selection';
+export * from './folder-tree';
 export * from './gallery-navigation';
+export * from './marquee';
 export * from './media-options';
+export * from './moved-items';
 export * from './name-conflict';
 export * from './presigned-upload';
+export * from './storage-batch';
 export * from './storage-meta.schema';
 
 export const getFileSize = (sizeInBytes = 0): string => {

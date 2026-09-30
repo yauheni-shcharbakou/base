@@ -10,6 +10,7 @@ import {
 import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import {
   Box,
+  Checkbox,
   Stack,
   Table,
   TableBody,
@@ -24,21 +25,19 @@ import { BrowserCommon, BrowserStorage } from '@packages/proto';
 import React, { FC, useEffect, useRef } from 'react';
 import { StorageItemIcon } from './storage-item-icon';
 import { StorageItemMenu } from './storage-item-menu';
+import type { FolderItemBehavior } from './use-folder-item-behavior';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
 
 type Props = {
   items: Item[];
-  // Marked — the folder just left, as Finder selects it.
-  selectedId?: string;
+  behavior: FolderItemBehavior;
   params: Pick<FolderContentParams, 'sortBy' | 'sortOrder'>;
   onSortChange: (
     sortBy: BrowserStorage.StorageObjectSortField,
     sortOrder: BrowserCommon.Sort,
   ) => void;
-  onOpen: (item: Item) => void;
-  onDelete?: (item: Item) => void;
-  getFolderHref?: (id: string) => string;
+  onToggleAll: () => void;
 };
 
 const { NAME, TYPE, UPDATED_AT, CREATED_AT } = BrowserStorage.StorageObjectSortField;
@@ -52,23 +51,34 @@ const FIRST_ORDER: Record<BrowserStorage.StorageObjectSortField, BrowserCommon.S
   [CREATED_AT]: desc,
 };
 
-/** Google Drive's list: one row per item, sorted by clicking a column. Folders stay on top. */
+// A row's checkbox shows under the pointer, and on every row once one is selected.
+const rowSx = {
+  cursor: 'default',
+  userSelect: 'none',
+  '& .item-check': { opacity: 0 },
+  '&:hover .item-check, &[data-selecting] .item-check, & .item-check.Mui-checked': { opacity: 1 },
+} as const;
+
+/**
+ * Google Drive's list: one row per item, sorted by clicking a column, folders on top. A click
+ * selects a row, a double click opens it; a folder's row takes a drop of other items.
+ */
 export const FolderListView: FC<Props> = ({
   items,
-  selectedId,
+  behavior,
   params,
   onSortChange,
-  onOpen,
-  onDelete,
-  getFolderHref,
+  onToggleAll,
 }) => {
-  const selectedRow = useRef<HTMLTableRowElement>(null);
+  const focusedRow = useRef<HTMLTableRowElement>(null);
+  const { selectedIds, focusedId, dropTargetId, menu } = behavior;
+  const selectedCount = items.filter(({ id }) => selectedIds.has(id)).length;
 
-  // The marked row comes into view with the focus, so Enter goes straight back in.
+  // The row the keyboard is on comes into view with the focus, so Enter opens it.
   useEffect(() => {
-    selectedRow.current?.scrollIntoView({ block: 'nearest' });
-    selectedRow.current?.focus({ preventScroll: true });
-  }, [selectedId]);
+    focusedRow.current?.scrollIntoView({ block: 'nearest' });
+    focusedRow.current?.focus({ preventScroll: true });
+  }, [focusedId]);
 
   const sortLabel = (field: BrowserStorage.StorageObjectSortField, label: string) => {
     const isActive = params.sortBy === field;
@@ -94,6 +104,15 @@ export const FolderListView: FC<Props> = ({
       <Table size="small" sx={{ '& td, & th': { whiteSpace: 'nowrap' } }}>
         <TableHead>
           <TableRow>
+            <TableCell padding="checkbox">
+              <Checkbox
+                size="small"
+                checked={!!items.length && selectedCount === items.length}
+                indeterminate={!!selectedCount && selectedCount < items.length}
+                onChange={onToggleAll}
+                inputProps={{ 'aria-label': 'Select all on this page' }}
+              />
+            </TableCell>
             <TableCell sx={{ width: '100%' }}>{sortLabel(NAME, 'Name')}</TableCell>
             <TableCell>{sortLabel(TYPE, 'Type')}</TableCell>
             <TableCell>{sortLabel(UPDATED_AT, 'Last modified')}</TableCell>
@@ -109,19 +128,32 @@ export const FolderListView: FC<Props> = ({
             return (
               <TableRow
                 key={item.id}
-                ref={item.id === selectedId ? selectedRow : undefined}
+                ref={item.id === focusedId ? focusedRow : undefined}
                 hover
-                selected={item.id === selectedId}
-                aria-current={item.id === selectedId || undefined}
+                selected={selectedIds.has(item.id)}
+                aria-selected={selectedIds.has(item.id)}
                 tabIndex={0}
-                onClick={() => onOpen(item)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && event.target === event.currentTarget) {
-                    onOpen(item);
-                  }
+                data-selecting={selectedIds.size ? '' : undefined}
+                {...behavior.getItemProps(item)}
+                sx={{
+                  ...rowSx,
+                  ...(item.id === dropTargetId && {
+                    outline: '2px solid',
+                    outlineColor: 'primary.main',
+                    outlineOffset: -2,
+                  }),
                 }}
-                sx={{ cursor: 'pointer' }}
               >
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    className="item-check"
+                    size="small"
+                    checked={selectedIds.has(item.id)}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={() => behavior.onToggle(item)}
+                    inputProps={{ 'aria-label': `Select ${item.name}` }}
+                  />
+                </TableCell>
                 <TableCell sx={{ maxWidth: 0 }}>
                   <Stack direction="row" alignItems="center" gap={1.5} sx={{ minWidth: 0 }}>
                     <StorageItemIcon kind={kind} fontSize="small" />
@@ -140,7 +172,14 @@ export const FolderListView: FC<Props> = ({
                 <TableCell>{formatDateTime(item.createdAt)}</TableCell>
                 <TableCell align="right">{item.file ? getFileSize(item.file.size) : '—'}</TableCell>
                 <TableCell padding="checkbox">
-                  <StorageItemMenu item={item} getFolderHref={getFolderHref} onDelete={onDelete} />
+                  <StorageItemMenu
+                    item={item}
+                    getFolderHref={menu.getFolderHref}
+                    onMenuOpen={menu.onMenuOpen}
+                    onMove={menu.onMove}
+                    onDelete={menu.onDelete}
+                    actionCount={menu.getActionCount(item)}
+                  />
                 </TableCell>
               </TableRow>
             );

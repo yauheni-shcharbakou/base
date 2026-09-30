@@ -59,3 +59,51 @@ export async function getRootFolder(
     return storageObjectGrpcRepository.getRootFolder({ userId }, metadata);
   });
 }
+
+/** Deletes objects of one owner in one gateway call — all or none, each folder with its subtree. */
+export async function deleteStorageObjects(
+  ids: string[],
+): Promise<ActionResult<ClientStorage.StorageObject[]>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return (await storageObjectGrpcRepository.deleteByIds({ ids }, metadata)).items;
+  });
+}
+
+/**
+ * Moves objects of one owner into `parent` in one gateway call — all or none. A name taken there
+ * comes back suffixed, so the answer is each object under the name it ended up with.
+ */
+export async function moveStorageObjects(
+  ids: string[],
+  parent: string,
+): Promise<ActionResult<ClientStorage.StorageObject[]>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return (await storageObjectGrpcRepository.moveByIds({ ids, parent }, metadata)).items;
+  });
+}
+
+/**
+ * Makes a folder of `userId` inside `parent`. It is public in a public folder and private anywhere
+ * else; a name taken there is refused with a 409, not suffixed — the caller typed it.
+ */
+export async function createStorageFolder(
+  userId: string,
+  parent: string,
+  name: string,
+): Promise<ActionResult<ClientStorage.StorageObject>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return storageObjectGrpcRepository.createOne(
+      {
+        userId,
+        parent,
+        name,
+        isPublic: false,
+        type: ClientStorage.StorageObjectType.FOLDER,
+      },
+      metadata,
+    );
+  });
+}

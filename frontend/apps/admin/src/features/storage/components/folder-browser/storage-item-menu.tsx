@@ -8,6 +8,7 @@ import {
 } from '@/features/storage/helpers';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined';
+import DriveFileMoveOutlined from '@mui/icons-material/DriveFileMoveOutlined';
 import EditOutlined from '@mui/icons-material/EditOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
@@ -34,17 +35,29 @@ type Props = {
   getFolderHref?: (id: string) => string;
   // Without it, the menu offers no Delete.
   onDelete?: (item: Item) => void;
+  // Without it, the menu offers no Move.
+  onMove?: (item: Item) => void;
+  // As the menu opens — Drive makes its item the selection unless it is part of it.
+  onMenuOpen?: (item: Item) => void;
+  // How many items Move and Delete act on: the whole selection when the item is part of it.
+  actionCount?: number;
   buttonProps?: IconButtonProps;
 };
 
 const { STORAGE } = Database;
 const { STORAGE_OBJECT } = StorageDatabaseEntity;
 
-/** An item's "⋮": what a click does not — its details, its edit form, a download, a delete. */
+/**
+ * An item's "⋮": what a click does not — its details, its edit form, a download, a move, a delete.
+ * Move and Delete act on the whole selection when the item is part of it, as in Drive.
+ */
 export const StorageItemMenu: FC<Props> = ({
   item,
   getFolderHref = getFolderContentPath,
   onDelete,
+  onMove,
+  onMenuOpen,
+  actionCount = 1,
   buttonProps,
 }) => {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -53,6 +66,7 @@ export const StorageItemMenu: FC<Props> = ({
 
   // The card behind the button opens the item: nothing here may reach it.
   const stop = (event: MouseEvent) => event.stopPropagation();
+  const many = actionCount > 1 ? ` ${actionCount} items` : '';
   const close = () => setAnchor(null);
 
   return (
@@ -63,6 +77,7 @@ export const StorageItemMenu: FC<Props> = ({
         {...buttonProps}
         onClick={(event) => {
           stop(event);
+          onMenuOpen?.(item);
           setAnchor(event.currentTarget);
         }}
       >
@@ -113,6 +128,19 @@ export const StorageItemMenu: FC<Props> = ({
             <ListItemText>Download</ListItemText>
           </MenuItem>
         )}
+        {onMove && (
+          <MenuItem
+            onClick={() => {
+              close();
+              onMove(item);
+            }}
+          >
+            <ListItemIcon>
+              <DriveFileMoveOutlined fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Move{many} to…</ListItemText>
+          </MenuItem>
+        )}
         {onDelete && <Divider />}
         {onDelete && (
           <MenuItem
@@ -125,7 +153,7 @@ export const StorageItemMenu: FC<Props> = ({
             <ListItemIcon sx={{ color: 'inherit' }}>
               <DeleteOutlined fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <ListItemText>Delete{many}</ListItemText>
           </MenuItem>
         )}
       </Menu>
