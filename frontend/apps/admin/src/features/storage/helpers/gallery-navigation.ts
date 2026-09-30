@@ -120,3 +120,31 @@ export const pickArrival = (
   const first = items.findIndex((item) => !item.isFolder);
   return first < 0 ? { page: 'next' } : { index: first };
 };
+
+/**
+ * Where the item on show stands in the whole folder, as "n / total" — among the files alone when the
+ * viewer steps over files only: the folders, all before them, are counted out of both numbers.
+ */
+export const getOverallPosition = (
+  {
+    index,
+    page,
+    pageSize,
+    total,
+    folderTotal,
+  }: {
+    index: number;
+    page: number;
+    pageSize: number;
+    total: number;
+    folderTotal: number;
+  },
+  isFilesOnly: boolean,
+): string | undefined => {
+  if (index < 0) {
+    return;
+  }
+
+  const skipped = isFilesOnly ? folderTotal : 0;
+  return `${(page - 1) * pageSize + index + 1 - skipped} / ${total - skipped}`;
+};

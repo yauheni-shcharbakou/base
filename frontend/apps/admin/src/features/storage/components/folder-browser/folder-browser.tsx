@@ -240,6 +240,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     pageCount,
     pageSize: params.pageSize,
     total: content?.total ?? 0,
+    folderTotal: content?.folderTotal ?? 0,
     currentId: isGallery ? params.focus : viewerId,
     onCurrentChange: isGallery ? selectItem : setViewerId,
     onPageChange: changePage,

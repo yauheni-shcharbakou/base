@@ -1135,6 +1135,29 @@ describe('storage-object tree against Postgres', () => {
       assert.deepEqual(await names({ pagination: { page: 3, limit: 2 } }), ['e.bin']);
     });
 
+    // Read off the page where the folders end, counted where the page cannot tell — under the same
+    // scope and filters as the page itself.
+    withDb('tells how many of the content are folders, on every page', async () => {
+      for (const name of ['f1', 'f2', 'f3']) {
+        await createFolder(name, root);
+      }
+      for (const name of ['x2', 'y2', 'z2']) {
+        await createNamedLeaf(`${name}.bin`);
+      }
+
+      const folderTotal = async (request: Partial<NestStorage.StorageObjectGetFolderContent>) =>
+        (await content(request)).unwrap().folderTotal;
+
+      for (const page of [1, 2, 3]) {
+        assert.equal(await folderTotal({ pagination: { page, limit: 2 } }), 3, `page ${page}`);
+      }
+
+      // `f2`, then the three files: a page of files alone, past the first.
+      assert.equal(
+        await folderTotal({ query: { types: [], search: '2' }, pagination: { page: 3, limit: 1 } }),
+        1,
+      );
+    });
 
     // Rows created in one batch can share a timestamp; the id still puts them in one order, so an
     // offset page never repeats or skips one.

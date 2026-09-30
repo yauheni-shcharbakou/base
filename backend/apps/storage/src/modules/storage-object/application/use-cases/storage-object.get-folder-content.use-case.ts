@@ -77,17 +77,18 @@ export class StorageObjectGetFolderContentUseCase {
       return left(ancestors.value);
     }
 
+    const query = {
+      parent: folder.value.id,
+      userId: request.userId,
+      isDeleted: false,
+      types: request.query?.types,
+      isPublic: request.query?.isPublic,
+      nameContains: request.query?.search,
+    };
     const { items, total } =
       await this.storageObjectRepository.getList<NestStorage.StorageObjectPopulated>(
         {
-          query: {
-            parent: folder.value.id,
-            userId: request.userId,
-            isDeleted: false,
-            types: request.query?.types,
-            isPublic: request.query?.isPublic,
-            nameContains: request.query?.search,
-          },
+          query,
           sorters: this.getSorters(request.sorters),
           pagination: request.pagination,
         },
@@ -95,12 +96,48 @@ export class StorageObjectGetFolderContentUseCase {
         { populate: ['file', 'image', 'video'] },
       );
 
+    const folderTotal =
+      this.getFolderTotal(items, total, request.pagination) ??
+      (await this.storageObjectRepository.count({ ...query, isFolder: true }));
+
     return right({
       folder: folder.value,
       ancestors: ancestors.value,
       items: items.map((item) => this.toFolderItem(item)),
       total,
+      folderTotal,
     });
+  }
+
+  // How many of `total` are folders, when the page itself tells: folders come first, so every row
+  // before a page's first file is one. Unknown — `undefined`, and a count — only for a page of files
+  // past the first, a full page of folders, or a page past the end.
+  private getFolderTotal(
+    items: NestStorage.StorageObjectPopulated[],
+    total: number,
+    pagination?: NestCommon.Pagination,
+  ): number | undefined {
+    const page = pagination?.page || 1;
+    // The repository's own default limit is its business: without one, only page 1 has an offset.
+    const offset = page === 1 ? 0 : pagination?.limit && (page - 1) * pagination.limit;
+    const folders = items.filter((item) => item.isFolder).length;
+
+    if (offset === undefined) {
+      return;
+    }
+
+    if (folders < items.length && (folders > 0 || offset === 0)) {
+      return offset + folders;
+    }
+
+    // The last page, and all folders: none of the folder's objects is a file. An empty page is that
+    // only as the first, of an empty folder.
+    if (
+      folders === items.length &&
+      (items.length ? offset + items.length === total : offset === 0)
+    ) {
+      return total;
+    }
   }
 
   private toFolderItem(

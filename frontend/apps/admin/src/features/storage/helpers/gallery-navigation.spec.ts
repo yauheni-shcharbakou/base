@@ -1,4 +1,10 @@
-import { getNeighbourId, pickArrival, stepFiles, stepGallery } from './gallery-navigation';
+import {
+  getNeighbourId,
+  getOverallPosition,
+  pickArrival,
+  stepFiles,
+  stepGallery,
+} from './gallery-navigation';
 
 const at = (index: number, page = 1, pageCount = 1, count = 5) => ({
   index,
@@ -106,5 +112,23 @@ describe('pickArrival', () => {
 
   it('has nothing to land on in an empty page', () => {
     expect(pickArrival([], 'first', true)).toBeNull();
+  });
+});
+
+describe('getOverallPosition', () => {
+  // Page 2 of 25 a page: 30 objects, 27 of them folders — so page 2 holds two folders, then files.
+  const place = (index: number) => ({ index, page: 2, pageSize: 25, total: 30, folderTotal: 27 });
+
+  it('counts every item in the gallery', () => {
+    expect(getOverallPosition(place(3), false)).toBe('29 / 30');
+  });
+
+  it('counts the files alone over the grid and the list', () => {
+    expect(getOverallPosition(place(2), true)).toBe('1 / 3');
+    expect(getOverallPosition(place(4), true)).toBe('3 / 3');
+  });
+
+  it('says nothing for an item not on the page', () => {
+    expect(getOverallPosition(place(-1), true)).toBeUndefined();
   });
 });

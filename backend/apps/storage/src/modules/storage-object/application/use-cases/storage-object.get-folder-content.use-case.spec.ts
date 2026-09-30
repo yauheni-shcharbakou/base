@@ -58,7 +58,7 @@ const request = (
 });
 
 describe('StorageObjectGetFolderContentUseCase', () => {
-  let repository: { getOne: jest.Mock; getAncestors: jest.Mock; getList: jest.Mock };
+  let repository: Record<'getOne' | 'getAncestors' | 'getList' | 'count', jest.Mock>;
   let fileService: { getFileSignedUrl: jest.Mock };
   let videoService: { getThumbnailUrl: jest.Mock };
   let useCase: StorageObjectGetFolderContentUseCase;
@@ -68,6 +68,7 @@ describe('StorageObjectGetFolderContentUseCase', () => {
       getOne: jest.fn().mockResolvedValue(right(folder)),
       getAncestors: jest.fn().mockResolvedValue(right(ancestors)),
       getList: jest.fn().mockResolvedValue({ items, total: 7 }),
+      count: jest.fn().mockResolvedValue(3),
     };
     fileService = {
       getFileSignedUrl: jest.fn((providerId: string) =>
@@ -92,7 +93,13 @@ describe('StorageObjectGetFolderContentUseCase', () => {
   it('answers with the folder, the folders above it and a page of its content', async () => {
     const result = await useCase.execute(request());
 
-    expect(result.isRight() && result.value).toEqual({ folder, ancestors, items, total: 7 });
+    expect(result.isRight() && result.value).toEqual({
+      folder,
+      ancestors,
+      items,
+      total: 7,
+      folderTotal: 0,
+    });
     expect(repository.getAncestors).toHaveBeenCalledWith('folder');
   });
 
@@ -261,4 +268,48 @@ describe('StorageObjectGetFolderContentUseCase', () => {
     });
   });
 
+  // Folders come first, so a page mostly tells how many there are; a count runs only when it cannot.
+  describe('folderTotal', () => {
+    const subfolder = { id: 'sub', isFolder: true } as NestStorage.StorageObjectPopulated;
+    const file = { id: 'file', isFolder: false } as NestStorage.StorageObjectPopulated;
+
+    const folderTotal = async (
+      page: NestStorage.StorageObjectPopulated[],
+      total: number,
+      pagination?: NestCommon.Pagination,
+    ) => {
+      repository.getList.mockResolvedValue({ items: page, total });
+      const result = await useCase.execute(request({ pagination }));
+      return result.isRight() ? result.value.folderTotal : undefined;
+    };
+
+    it.each([
+      ['the first page, folders then files', [subfolder, subfolder, file], 9, undefined, 2],
+      ['a later page where the folders end', [subfolder, file, file], 9, { page: 2, limit: 3 }, 4],
+      ['the first page, files only', [file, file], 2, { page: 1, limit: 3 }, 0],
+      ['the last page, folders only', [subfolder, subfolder], 5, { page: 2, limit: 3 }, 5],
+      ['an empty folder', [], 0, undefined, 0],
+    ])('reads it off %s, with no count', async (_, page, total, pagination, expected) => {
+      expect(await folderTotal(page, total, pagination)).toBe(expected);
+      expect(repository.count).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['a later page of files only', [file, file, file], 9, { page: 3, limit: 3 }],
+      ['the last page, files only', [file], 7, { page: 3, limit: 3 }],
+      ['a full page of folders', [subfolder, subfolder, subfolder], 9, { page: 1, limit: 3 }],
+      ['a page past the end', [], 4, { page: 3, limit: 3 }],
+      ['a later page with no limit', [subfolder, file], 9, { page: 2 }],
+    ])('counts the folders under the same scope for %s', async (_, page, total, pagination) => {
+      expect(await folderTotal(page, total, pagination)).toBe(3);
+      expect(repository.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          parent: 'folder',
+          userId: 'user-1',
+          isDeleted: false,
+          isFolder: true,
+        }),
+      );
+    });
+  });
 });

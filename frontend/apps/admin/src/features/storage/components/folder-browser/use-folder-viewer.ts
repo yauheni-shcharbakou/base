@@ -2,6 +2,7 @@ import {
   GalleryDirection,
   getFolderItemOpenUrl,
   getNeighbourId,
+  getOverallPosition,
   getStorageItemKind,
   PdfControls,
   pickArrival,
@@ -35,6 +36,8 @@ type Options = {
   pageCount: number;
   pageSize: number;
   total: number;
+  // How many of `total` are folders.
+  folderTotal: number;
   // The item on show: the gallery's selection, or the viewer's own over the grid and the list.
   currentId?: string;
   onCurrentChange: (id: string) => void;
@@ -84,6 +87,7 @@ export const useFolderViewer = ({
   pageCount,
   pageSize,
   total,
+  folderTotal,
   currentId,
   onCurrentChange,
   onPageChange,
@@ -404,8 +408,8 @@ export const useFolderViewer = ({
     isOpen,
     current,
     position,
-    // Where the item stands in the whole folder.
-    overall: index >= 0 ? `${(page - 1) * pageSize + index + 1} / ${total}` : undefined,
+    // Where the item stands in the whole folder — among its files, over the grid and the list.
+    overall: getOverallPosition({ index, page, pageSize, total, folderTotal }, isFilesOnly),
     canPrev: !!getStep('prev'),
     canNext: !!getStep('next'),
     startTime: start?.id === current?.id ? start?.seconds : undefined,

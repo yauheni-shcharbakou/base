@@ -160,14 +160,16 @@ export interface StorageObjectAncestor {
  * A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
  * the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
  * down to the folder's parent, none for the root itself. Items carry their file, image or video, but
- * no `folderPath`: a subfolder's is the folder's own followed by its name. A READY image or video
- * also carries a signed `previewUrl`.
+ * no `folderPath`: a subfolder's is the folder's own followed by its name. A READY image or video,
+ * or a file with a preview of its own, also carries a signed `previewUrl`. `folderTotal` is how many
+ * of `total` are folders — the rest are leaves, all of them after the folders.
  */
 export interface StorageObjectFolderContent {
   folder: StorageObject;
   ancestors: StorageObjectAncestor[];
   items: StorageObjectFolderItem[];
   total: number;
+  folderTotal: number;
 }
 
 export interface StorageObjectCreate {
@@ -1487,7 +1489,7 @@ export const StorageObjectAncestor: MessageFns<StorageObjectAncestor> = {
 };
 
 function createBaseStorageObjectFolderContent(): StorageObjectFolderContent {
-  return { folder: undefined, ancestors: [], items: [], total: 0 };
+  return { folder: undefined, ancestors: [], items: [], total: 0, folderTotal: 0 };
 }
 
 export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> = {
@@ -1506,6 +1508,9 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
     }
     if (message.total !== 0) {
       writer.uint32(32).int32(message.total);
+    }
+    if (message.folderTotal !== 0) {
+      writer.uint32(40).int32(message.folderTotal);
     }
     return writer;
   },
@@ -1549,6 +1554,14 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
           message.total = reader.int32();
           continue;
         }
+        case 5: {
+          if (tag !== 40) {
+            break;
+          }
+
+          message.folderTotal = reader.int32();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -1568,6 +1581,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
         ? object.items.map((e: any) => StorageObjectFolderItem.fromJSON(e))
         : [],
       total: isSet(object.total) ? globalThis.Number(object.total) : 0,
+      folderTotal: isSet(object.folderTotal) ? globalThis.Number(object.folderTotal) : 0,
     };
   },
 
@@ -1584,6 +1598,9 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
     }
     if (message.total !== 0) {
       obj.total = Math.round(message.total);
+    }
+    if (message.folderTotal !== 0) {
+      obj.folderTotal = Math.round(message.folderTotal);
     }
     return obj;
   },
@@ -1604,6 +1621,7 @@ export const StorageObjectFolderContent: MessageFns<StorageObjectFolderContent> 
     message.ancestors = object.ancestors?.map((e) => StorageObjectAncestor.fromPartial(e)) || [];
     message.items = object.items?.map((e) => StorageObjectFolderItem.fromPartial(e)) || [];
     message.total = object.total ?? 0;
+    message.folderTotal = object.folderTotal ?? 0;
     return message;
   },
 };
