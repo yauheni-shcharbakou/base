@@ -10,6 +10,7 @@ import {
   DEFAULT_THROTTLE,
   GRPC_THROTTLER_OPTIONS,
   PUBLIC_THROTTLE,
+  READ_THROTTLE,
 } from '../constants/grpc.throttle.constants';
 import {
   DefaultGrpcController,
@@ -22,12 +23,16 @@ import { GrpcThrottlerGuard } from './grpc.throttler.guard';
 class UserController {
   getOne() {}
   getList() {}
+  updateOne() {}
+  deleteById() {}
 }
 
 @PublicGrpcController()
 class AuthController {
   login() {}
   refreshToken() {}
+  // A read by name, on a public controller.
+  isExists() {}
 }
 
 type Controller = typeof UserController | typeof AuthController;
@@ -89,8 +94,8 @@ describe('GrpcThrottlerGuard', () => {
     ]);
   });
 
-  it('counts an authenticated caller by user id, across handlers', async () => {
-    const method = (index: number) => (index % 2 ? 'getOne' : 'getList');
+  it('counts an authenticated caller’s writes by user id, across handlers', async () => {
+    const method = (index: number) => (index % 2 ? 'updateOne' : 'deleteById');
 
     await pass(
       times(DEFAULT_THROTTLE.limit, (index) =>
@@ -98,13 +103,60 @@ describe('GrpcThrottlerGuard', () => {
       ),
     );
 
-    expect(await rejection(context(UserController, 'getOne', { 'user-id': 'u1' }))).toEqual({
+    const refused = await rejection(context(UserController, 'updateOne', { 'user-id': 'u1' }));
+
+    expect(refused).toMatchObject({
       code: status.RESOURCE_EXHAUSTED,
       details: 'Too many requests',
     });
+    // Whole seconds until the window resets, within the minute it lasts.
+    const retryAfter = Number((refused as { metadata: Metadata }).metadata.get('retry-after')[0]);
+    expect(retryAfter).toBeGreaterThanOrEqual(1);
+    expect(retryAfter).toBeLessThanOrEqual(60);
 
     // Every admin reaches the gateway through the same Next server, so one peer.
-    await pass([context(UserController, 'getOne', { 'user-id': 'u2' })]);
+    await pass([context(UserController, 'updateOne', { 'user-id': 'u2' })]);
+  });
+
+  it('counts an authenticated caller’s reads apart, with the looser limit', async () => {
+    const method = (index: number) => (index % 2 ? 'getOne' : 'getList');
+
+    await pass(
+      times(READ_THROTTLE.limit, (index) =>
+        context(UserController, method(index), { 'user-id': 'u1' }),
+      ),
+    );
+
+    expect(await rejection(context(UserController, 'getOne', { 'user-id': 'u1' }))).toMatchObject({
+      code: status.RESOURCE_EXHAUSTED,
+    });
+  });
+
+  // An upload's writes must not hold up browsing, nor browsing an upload.
+  it('lets reads through once writes are spent, and writes once reads are', async () => {
+    await pass(
+      times(DEFAULT_THROTTLE.limit, () =>
+        context(UserController, 'updateOne', { 'user-id': 'u1' }),
+      ),
+    );
+    await pass([context(UserController, 'getOne', { 'user-id': 'u1' })]);
+
+    await pass(
+      times(READ_THROTTLE.limit, () => context(UserController, 'getList', { 'user-id': 'u2' })),
+    );
+    await pass([context(UserController, 'deleteById', { 'user-id': 'u2' })]);
+  });
+
+  it('holds a public read to the public limit', async () => {
+    await pass(
+      times(PUBLIC_THROTTLE.limit, () =>
+        context(AuthController, 'isExists', { 'x-client-ip': '203.0.113.9' }),
+      ),
+    );
+
+    expect(
+      await rejection(context(AuthController, 'isExists', { 'x-client-ip': '203.0.113.9' })),
+    ).toMatchObject({ code: status.RESOURCE_EXHAUSTED });
   });
 
   it('counts a public caller by the forwarded client address, with the stricter limit', async () => {
@@ -154,7 +206,7 @@ describe('GrpcThrottlerGuard', () => {
   it('does not count stream calls', async () => {
     await pass(
       times(DEFAULT_THROTTLE.limit * 2, () =>
-        context(UserController, 'getOne', { 'user-id': 'u1' }, { data: of({}) }),
+        context(UserController, 'updateOne', { 'user-id': 'u1' }, { data: of({}) }),
       ),
     );
   });

@@ -4,7 +4,10 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { ThrottlerGuard, ThrottlerLimitDetail } from '@nestjs/throttler';
 import { isObservable } from 'rxjs';
-import { CLIENT_IP_METADATA_KEY } from '../constants/grpc.throttle.constants';
+import {
+  CLIENT_IP_METADATA_KEY,
+  RETRY_AFTER_METADATA_KEY,
+} from '../constants/grpc.throttle.constants';
 
 interface GrpcThrottlerRequest {
   isPublic: boolean;
@@ -58,13 +61,18 @@ export class GrpcThrottlerGuard extends ThrottlerGuard {
     return `${name}:${tracker}`;
   }
 
+  // With how long the caller waits: grpc-js sends an error's `metadata` as its trailers.
   protected async throwThrottlingException(
     context: ExecutionContext,
     detail: ThrottlerLimitDetail,
   ): Promise<void> {
+    const metadata = new Metadata();
+    metadata.set(RETRY_AFTER_METADATA_KEY, String(Math.max(detail.timeToExpire, 1)));
+
     throw new RpcException({
       code: status.RESOURCE_EXHAUSTED,
       details: await this.getErrorMessage(context, detail),
+      metadata,
     });
   }
 

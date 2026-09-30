@@ -14,7 +14,7 @@ export const DefaultGrpcController = () => {
 export const PublicGrpcController = () => {
   return applyDecorators(
     SkipAuth(),
-    Throttle({ default: PUBLIC_THROTTLE }),
+    Throttle({ default: PUBLIC_THROTTLE, read: PUBLIC_THROTTLE }),
     DefaultGrpcController(),
   );
 };

@@ -45,17 +45,25 @@ is its gRPC subclass, and the controller decorators apply it as `UseGuards(GrpcA
 GrpcThrottlerGuard)` — a controller built without them is not limited. Limits live in
 `common/interface/grpc/constants/grpc.throttle.constants.ts`:
 
-- **Authenticated** (`@DefaultGrpcController()` / `@AdminGrpcController()`): 100 / 60s **per user**,
-  keyed by the `user-id` the access guard resolves. That is why the throttler runs *after* it — and
-  why a call over the limit has still cost an `auth.me` round trip.
+- **Authenticated** (`@DefaultGrpcController()` / `@AdminGrpcController()`): **per user**, keyed by
+  the `user-id` the access guard resolves, in two buckets — every call is counted by one of them.
+  Reads — the rpcs named in `READ_RPCS` (`getById`, `getList`, `getFolderContent`, `getUrlMap`,
+  `isExists`, `me`, …) — get 300 / 60s (`READ_THROTTLE`); everything else, 100 / 60s
+  (`DEFAULT_THROTTLE`). So a batch upload's creates and confirmations cannot stall the pages the
+  admin browses meanwhile, and the other way round. Each named throttler's `skipIf` picks the
+  bucket by handler name. The list is explicit rather than a `get*` rule: an rpc left out of it is
+  counted as a write, the stricter bucket — add a new read there. The throttler runs *after* the
+  access guard, which is why a call over the limit has still cost an `auth.me` round trip.
 - **Public** (`@PublicGrpcController()`, i.e. login / refresh / logout): 10 / 60s **per client address**, set
-  with `@Throttle` in the decorator. A `user-id` a public caller sends is ignored. The address is the
+  with `@Throttle` in the decorator over both buckets. A `user-id` a public caller sends is ignored. The address is the
   `x-client-ip` metadata the admin's Next server sets from `x-forwarded-for` / `x-real-ip`
   (`AuthService.getClientMetadata`); without it, the peer host (port dropped). The Next server is
   the only gRPC client, so the peer alone is one bucket for every visitor. `x-client-ip` is trusted
   because the gRPC port is published on the private network only — expose it and that stops holding.
-- The count is per caller across **all** handlers, not per handler (`generateKey` override). Stream
-  calls are not counted. An exceeded limit is `RESOURCE_EXHAUSTED`.
+- The count is per caller and bucket across **all** handlers, not per handler (`generateKey` override: `<bucket>:<tracker>`). Stream
+  calls are not counted. An exceeded limit is `RESOURCE_EXHAUSTED`, with a `retry-after` trailer
+  (`RETRY_AFTER_METADATA_KEY`): whole seconds until that bucket's window resets, which the admin's
+  upload queue waits out.
 - **Counters live in Redis**: `CacheModule.forRoot({ namespace: 'api-gateway' })` in `app.module.ts`,
   and `CacheThrottlerStorage` (`common/infrastructure/storages`) as the throttler's `storage`, wired
   by `GRPC_THROTTLER_MODULE_OPTIONS` — keys `cache:api-gateway:throttle:<encoded key>`, a fixed
