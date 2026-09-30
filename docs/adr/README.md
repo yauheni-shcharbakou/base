@@ -59,3 +59,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0030](0030-a-move-suffixes-a-taken-name.md) | A move lands under a suffixed name, only a typed name is refused, and batch tree writes are one call | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin`, `@packages/proto` |
 | [0031](0031-gallery-pdf-rendered-by-pdfjs.md) | The gallery renders a PDF with pdf.js, loaded whole through the `open` route | Accepted | `frontend.admin` |
 | [0032](0032-pdf-preview-drawn-by-pdfjs-in-a-worker.md) | A PDF's grid preview is its first page, drawn by pdf.js in a worker thread and kept on `files` | Accepted | `backend.storage`, `@packages/proto`, `frontend.admin` |
+| [0033](0033-folder-stats-computed-on-read.md) | A folder's file count, folder count and size are computed on read, never stored | Accepted | `backend.storage`, `@packages/proto`, `frontend.admin` |

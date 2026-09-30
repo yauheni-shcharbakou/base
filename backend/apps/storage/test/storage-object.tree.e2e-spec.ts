@@ -334,7 +334,7 @@ describe('storage-object tree against Postgres', () => {
           list: await countStatements(() =>
             repository.getList<NestStorage.StorageObjectPopulated>(
               { query: { userId: USER_ID }, pagination: { page: 1, limit: 100 } },
-              { populate: [...POPULATE] },
+              { populate: [...POPULATE, 'folderStats'] },
             ),
           ),
         });
@@ -1394,8 +1394,72 @@ describe('storage-object tree against Postgres', () => {
       });
     });
 
-    // The folder with its path, the walk up, the page with its to-one media joins and its COUNT:
-    // what an N+1 would break is that this stays four however much the page holds.
+    // A file of a given size and status, placed like an upload.
+    const placeSized = async (
+      name: string,
+      parent: string,
+      size: number,
+      uploadStatus = NestStorage.FileUploadStatus.READY,
+    ) => {
+      const file = await fileRepository.saveAndPlaceOne({
+        file: { ...fileMeta(`file-${++placed}`), size, uploadStatus, userId: USER_ID },
+        storageObject: placement(name, parent),
+      });
+
+      return file.unwrap();
+    };
+
+    withDb(
+      "counts a folder's whole subtree: live subfolders, READY leaves and their bytes",
+      async () => {
+        const docs = await createFolder('docs', root);
+        const sub = await createFolder('sub', docs);
+        await placeSized('a.bin', docs, 2_000_000_000);
+        await placeSized('pending.bin', docs, 7, NestStorage.FileUploadStatus.PENDING);
+        await placeSized('failed.bin', sub, 7, NestStorage.FileUploadStatus.FAILED);
+        await placeImage('i.png', sub);
+        await placeVideo('v.mp4', sub);
+        await placeSized('top.bin', root, 2_000_000_000);
+        const gone = await createFolder('gone', root);
+        await createFolder('inner', gone);
+        await placeSized('gone.bin', gone, 5);
+        (await repository.markDeletedWithDescendants(gone)).unwrap();
+
+        const { folder, items } = (await content()).unwrap();
+        const byName = new Map(items.map((item) => [item.name, item]));
+
+        // Past `int32`: the sum arrives as a plain number, not as a string or a Long.
+        assert.deepEqual(folder.folderStats, {
+          fileCount: 4,
+          folderCount: 2,
+          totalSize: 4_000_000_002,
+        });
+        assert.deepEqual(byName.get('docs')?.folderStats, {
+          fileCount: 3,
+          folderCount: 1,
+          totalSize: 2_000_000_002,
+        });
+        assert.equal(byName.get('top.bin')?.folderStats ?? undefined, undefined);
+        assert.equal(byName.has('gone'), false);
+      },
+    );
+
+    withDb('counts an empty folder as zeros, not as nothing', async () => {
+      const empty = await createFolder('empty', root);
+
+      const folder = await read(() =>
+        repository.getOne<NestStorage.StorageObjectPopulated>(
+          { id: empty },
+          { populate: ['folderStats'] },
+        ),
+      );
+
+      assert.deepEqual(folder.unwrap().folderStats, { fileCount: 0, folderCount: 0, totalSize: 0 });
+    });
+
+    // The folder with its path and stats, the walk up, the page with its to-one media joins, each
+    // subfolder's stats and its COUNT: what an N+1 would break is that this stays four however much
+    // the page holds.
     withDb('reads a page in the same number of statements however much it holds', async () => {
       const cost = () =>
         countStatements(() =>
@@ -1432,12 +1496,20 @@ describe('storage-object tree against Postgres', () => {
       .execute('update "storage-objects" set parent_id = ? where id = ?', [b, a], 'run');
 
     const cyclePaths = await paths([a, b]);
+    const cycleStats = await read(() =>
+      repository.getOne<NestStorage.StorageObjectPopulated>(
+        { id: a },
+        { populate: ['folderStats'] },
+      ),
+    );
     const children = await read(() => repository.getAllChildrenIds(a));
     const ancestors = await read(() => repository.getAncestors(a));
     const cascaded = await repository.updateAndCascadePublic(a, { set: { isPublic: true } });
     const marked = await repository.markDeletedWithDescendants(a);
 
     assert.equal(typeof cyclePaths.get(a), 'string');
+    // `b` below `a`, and `a` again below `b`: each id reached once.
+    assert.equal(cycleStats.unwrap().folderStats?.folderCount, 2);
     assert.deepEqual([...children.unwrap()].sort(), [a, b].sort());
     assert.equal(ancestors.unwrap().length, MAX_FOLDER_DEPTH);
     assert.equal(cascaded.isRight(), true);

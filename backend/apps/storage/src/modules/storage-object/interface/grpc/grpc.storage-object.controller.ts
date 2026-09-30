@@ -29,6 +29,13 @@ const POPULATE: (keyof NestStorage.StorageObjectPopulated)[] = [
   'folderPath',
 ];
 
+// And a folder's `folderStats`, a walk of its whole subtree: only for the reads that show it — a
+// single object and the admin's list — not for `getMany`, nor the rows a write reads back.
+const POPULATE_WITH_STATS: (keyof NestStorage.StorageObjectPopulated)[] = [
+  ...POPULATE,
+  'folderStats',
+];
+
 @GrpcController()
 @GrpcStorageObjectTransport.ControllerMethods()
 export class GrpcStorageObjectController implements GrpcStorageObjectServiceController {
@@ -50,7 +57,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     const stream$ = from(
       this.getUseCase.getOne<NestStorage.StorageObjectPopulated>(
         { id: request.id, isDeleted: false },
-        { populate: POPULATE },
+        { populate: POPULATE_WITH_STATS },
       ),
     );
 
@@ -72,7 +79,7 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
     return from(
       this.getUseCase.getList<NestStorage.StorageObjectPopulated>(
         { ...request, query: { isDeleted: false } },
-        { populate: POPULATE },
+        { populate: POPULATE_WITH_STATS },
       ),
     );
   }

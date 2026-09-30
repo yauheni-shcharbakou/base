@@ -64,7 +64,7 @@ export class StorageObjectGetFolderContentUseCase {
         type: NestStorage.StorageObjectType.FOLDER,
         isDeleted: false,
       },
-      { populate: ['folderPath'] },
+      { populate: ['folderPath', 'folderStats'] },
     );
 
     if (folder.isLeft()) {
@@ -92,8 +92,9 @@ export class StorageObjectGetFolderContentUseCase {
           sorters: this.getSorters(request.sorters),
           pagination: request.pagination,
         },
-        // No path per item: a subfolder's is the folder's own followed by its name.
-        { populate: ['file', 'image', 'video'] },
+        // No path per item: a subfolder's is the folder's own followed by its name. Its stats are
+        // its own, one walk of its subtree per subfolder.
+        { populate: ['file', 'image', 'video', 'folderStats'] },
       );
 
     const folderTotal =

@@ -33,6 +33,8 @@ message StorageObjectPopulated {
     image.Image image = 15;
     video.Video video = 16;
   }
+
+  optional StorageObjectFolderStats folderStats = 17;
 }
 
 // An item of a folder listing: `StorageObjectPopulated` field for field (keep the two in step), plus
@@ -66,5 +68,6 @@ message StorageObjectFolderItem {
     video.Video video = 16;
   }
 
+  optional StorageObjectFolderStats folderStats = 18;
   optional string previewUrl = 17;
 }

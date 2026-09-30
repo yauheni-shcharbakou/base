@@ -6,7 +6,7 @@ import { wrappers } from 'protobufjs';
 import { File } from '../file/file';
 import { Image } from '../image/image';
 import { Video } from '../video/video';
-import { StorageObjectType } from './storage-object';
+import { StorageObjectFolderStats, StorageObjectType } from './storage-object';
 
 export interface StorageObjectPopulated {
   id: string;
@@ -25,6 +25,7 @@ export interface StorageObjectPopulated {
   videoId?: string;
   image?: Image;
   video?: Video;
+  folderStats?: StorageObjectFolderStats;
 }
 
 /**
@@ -51,6 +52,7 @@ export interface StorageObjectFolderItem {
   videoId?: string;
   image?: Image;
   video?: Video;
+  folderStats?: StorageObjectFolderStats;
   previewUrl?: string;
 }
 

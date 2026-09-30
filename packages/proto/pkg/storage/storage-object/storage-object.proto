@@ -30,4 +30,16 @@ message StorageObject {
     string imageId = 12;
     string videoId = 13;
   }
+
+  // A folder's whole subtree; only on the reads that ask for it, and never on a leaf.
+  optional StorageObjectFolderStats folderStats = 14;
+}
+
+// What a folder holds, counted over its whole subtree: its live subfolders at any depth, and the
+// leaves whose upload is READY. `totalSize` is the sum of those leaves' sizes in bytes, a `double`
+// because a sum outgrows `int32` past 2 GiB, and an `int64` reaches Node as a `Long`.
+message StorageObjectFolderStats {
+  int32 fileCount = 1;
+  int32 folderCount = 2;
+  double totalSize = 3;
 }

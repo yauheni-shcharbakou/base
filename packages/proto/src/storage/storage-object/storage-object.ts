@@ -24,4 +24,17 @@ export interface StorageObject {
   folderPath?: string;
   imageId?: string;
   videoId?: string;
+  /** A folder's whole subtree; only on the reads that ask for it, and never on a leaf. */
+  folderStats?: StorageObjectFolderStats;
+}
+
+/**
+ * What a folder holds, counted over its whole subtree: its live subfolders at any depth, and the
+ * leaves whose upload is READY. `totalSize` is the sum of those leaves' sizes in bytes, a `double`
+ * because a sum outgrows `int32` past 2 GiB, and an `int64` reaches Node as a `Long`.
+ */
+export interface StorageObjectFolderStats {
+  fileCount: number;
+  folderCount: number;
+  totalSize: number;
 }

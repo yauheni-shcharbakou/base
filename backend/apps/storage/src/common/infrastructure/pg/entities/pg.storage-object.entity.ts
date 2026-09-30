@@ -29,6 +29,9 @@ const TABLE = StorageDatabaseEntity.STORAGE_OBJECT;
 // this deep. Every walk up the tree stops at it: the path formula and the repository's ancestors.
 export const MAX_FOLDER_DEPTH = 64;
 
+// A leaf of `folderStats`, over its row `o` and its file `f`: counted once its upload is READY.
+const READY_LEAF = `not o.is_folder and f.upload_status = '${NestStorage.FileUploadStatus.READY}'`;
+
 /**
  * A user owns exactly one root folder. Enforced in the database rather than by a read-then-write
  * check, because the `auth.user.create` subscriber is at-least-once: two replicas (or a stalled
@@ -177,6 +180,44 @@ export class PgStorageObjectEntity
     { lazy: true },
   )
   folderPath?: string;
+
+  /**
+   * What a folder holds, derived from the tree on every read like `folderPath`, and null for a leaf:
+   * its live subfolders at any depth, the leaves among them whose upload is READY, and the sum of
+   * those leaves' sizes. An image or a video counts through its backing file, which carries the
+   * status and the size. Nothing is stored, so no write — an upload turning READY, a move, a delete —
+   * has to keep a counter in step (ADR-0033).
+   *
+   * Lazy, and one walk down per row: a correlated subquery of the same SELECT that steps through live
+   * children by `parent_id` (indexed) and aggregates what it reached. `UNION` over ids ends it on a
+   * `parent_id` cycle. The folders of one page hold disjoint subtrees, so a listing walks about as
+   * many rows as the subtree of the folder it lists.
+   */
+  @Formula(
+    (cols) => `(case
+      when not ${cols.isFolder} then null
+      else (
+        with recursive sub (id) as (
+            select c.id from "${StorageDatabaseEntity.STORAGE_OBJECT}" c
+            where c.parent_id = ${cols.id} and not c.is_deleted
+          union
+            select c.id from sub
+            inner join "${StorageDatabaseEntity.STORAGE_OBJECT}" c on c.parent_id = sub.id
+            where not c.is_deleted
+        )
+        select json_build_object(
+          'fileCount', count(*) filter (where ${READY_LEAF}),
+          'folderCount', count(*) filter (where o.is_folder),
+          'totalSize', coalesce(sum(f.size) filter (where ${READY_LEAF}), 0)
+        )
+        from sub
+        inner join "${StorageDatabaseEntity.STORAGE_OBJECT}" o on o.id = sub.id
+        left join "${StorageDatabaseEntity.FILE}" f on f.id = o.file_id
+      )
+    end)`,
+    { lazy: true, type: 'json' },
+  )
+  folderStats?: NestStorage.StorageObjectFolderStats;
 
   @OneToOne({
     entity: () => PgImageEntity,

@@ -103,7 +103,7 @@ describe('StorageObjectGetFolderContentUseCase', () => {
     expect(repository.getAncestors).toHaveBeenCalledWith('folder');
   });
 
-  it('reads the folder as a live folder of the owner, with its path', async () => {
+  it('reads the folder as a live folder of the owner, with its path and stats', async () => {
     await useCase.execute(request());
 
     expect(repository.getOne).toHaveBeenCalledWith(
@@ -113,7 +113,7 @@ describe('StorageObjectGetFolderContentUseCase', () => {
         type: NestStorage.StorageObjectType.FOLDER,
         isDeleted: false,
       },
-      { populate: ['folderPath'] },
+      { populate: ['folderPath', 'folderStats'] },
     );
   });
 
@@ -139,14 +139,14 @@ describe('StorageObjectGetFolderContentUseCase', () => {
     expect(repository.getList).not.toHaveBeenCalled();
   });
 
-  it("lists the folder's live objects in its owner's tree, with their media", async () => {
+  it("lists the folder's live objects in its owner's tree, with their media and stats", async () => {
     await useCase.execute(request());
 
     expect(repository.getList).toHaveBeenCalledWith(
       expect.objectContaining({
         query: expect.objectContaining({ parent: 'folder', userId: 'user-1', isDeleted: false }),
       }),
-      { populate: ['file', 'image', 'video'] },
+      { populate: ['file', 'image', 'video', 'folderStats'] },
     );
   });
 

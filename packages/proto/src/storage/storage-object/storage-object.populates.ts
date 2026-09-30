@@ -5,7 +5,7 @@
 import type { File } from '../file/file';
 import type { Image } from '../image/image';
 import type { Video } from '../video/video';
-import type { StorageObjectType } from './storage-object';
+import type { StorageObjectFolderStats, StorageObjectType } from './storage-object';
 
 export interface StorageObjectPopulated {
   id: string;
@@ -24,6 +24,7 @@ export interface StorageObjectPopulated {
   videoId?: string;
   image?: Image;
   video?: Video;
+  folderStats?: StorageObjectFolderStats;
 }
 
 /**
@@ -50,5 +51,6 @@ export interface StorageObjectFolderItem {
   videoId?: string;
   image?: Image;
   video?: Video;
+  folderStats?: StorageObjectFolderStats;
   previewUrl?: string;
 }
