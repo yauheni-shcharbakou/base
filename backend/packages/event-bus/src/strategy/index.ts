@@ -26,7 +26,8 @@ export interface EventBusStrategy {
       // it, so a provider that refuses a delete is retried instead of leaving an orphan behind.
       purge: FilePurgeEvent;
       // A directly uploaded file (or image) just turned READY — emitted once, by the call that made
-      // it so. The image module consumes it to make the image's preview.
+      // it so. The image module consumes it to make an image's preview, the document module a PDF's
+      // first page.
       ready: NestStorage.File;
     };
     // Three stages, in order: `uploaded` = the bytes reached Bunny, `uploadFinish` = Bunny finished

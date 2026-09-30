@@ -36,6 +36,15 @@ const video = (uploadStatus = READY) =>
     video: { id: 'video', providerId: 'guid' },
   }) as NestStorage.StorageObjectPopulated;
 
+// A plain file's preview is on the file row itself: a PDF's first page (ADR-0032).
+const document = (uploadStatus = READY, previewProviderId?: string) =>
+  ({
+    id: 'doc',
+    type: FILE,
+    isFolder: false,
+    file: { id: 'doc-file', uploadStatus, providerId: 'dev/user-1/doc.pdf', previewProviderId },
+  }) as NestStorage.StorageObjectPopulated;
+
 const FOLDERS_FIRST = { field: 'isFolder', order: NestCommon.Sort.desc };
 const BY_ID = { field: 'id', order: NestCommon.Sort.asc };
 
@@ -224,20 +233,22 @@ describe('StorageObjectGetFolderContentUseCase', () => {
       },
     );
 
-    it('signs nothing for a folder or a plain file', async () => {
+    it('signs nothing for a folder or a plain file without a preview', async () => {
       const page = await listed(
         { id: 'sub', type: FOLDER, isFolder: true } as NestStorage.StorageObjectPopulated,
-        {
-          id: 'doc',
-          type: FILE,
-          isFolder: false,
-          file: { id: 'doc-file', uploadStatus: READY, providerId: 'dev/user-1/doc.pdf' },
-        } as NestStorage.StorageObjectPopulated,
+        document(),
       );
 
       expect(page.map((item) => 'previewUrl' in item)).toEqual([false, false]);
       expect(fileService.getFileSignedUrl).not.toHaveBeenCalled();
       expect(videoService.getThumbnailUrl).not.toHaveBeenCalled();
+    });
+
+    it("signs a READY plain file by its own preview key — a PDF's first page", async () => {
+      const [item] = await listed(document(READY, 'dev/user-1/doc.preview.webp'));
+
+      expect(item.previewUrl).toBe('https://storage.test/dev/user-1/doc.preview.webp');
+      expect(fileService.getFileSignedUrl).toHaveBeenCalledWith('dev/user-1/doc.preview.webp');
     });
 
     it('leaves the preview out when signing fails, and still answers', async () => {
@@ -249,4 +260,5 @@ describe('StorageObjectGetFolderContentUseCase', () => {
       expect('previewUrl' in item).toBe(false);
     });
   });
+
 });

@@ -275,10 +275,36 @@ export const GalleryStage: FC<Props> = ({
     </Stack>
   );
 
+  // A PDF with a first-page preview shows it while the document itself is on its way — or, too
+  // heavy to load by itself, until "Show preview".
+  const pdfPoster = isPdf && hasPreview && !pdfFailure && (
+    <Box sx={fill}>
+      <Image
+        src={item.previewUrl!}
+        alt={item.name}
+        fill
+        style={{ objectFit: 'contain' }}
+        onError={handlePreviewError}
+      />
+      <Stack sx={{ position: 'absolute', left: 0, right: 0, bottom: 24 }} alignItems="center">
+        {isPdfLoading ? (
+          <CircularProgress size={28} />
+        ) : (
+          openUrl && (
+            <Button variant="contained" onClick={() => setPdfSrc(openUrl)}>
+              Show preview
+            </Button>
+          )
+        )}
+      </Stack>
+    </Box>
+  );
+  const cover = pdfPoster || placeholder;
+
   if (isPdf && pdfSrc && !pdfFailure) {
     return (
       <Box sx={fill}>
-        {!isPdfShown && placeholder}
+        {!isPdfShown && cover}
         <PdfDocumentView
           url={pdfSrc}
           isViewer={isViewer}
@@ -290,5 +316,5 @@ export const GalleryStage: FC<Props> = ({
     );
   }
 
-  return placeholder;
+  return cover;
 };

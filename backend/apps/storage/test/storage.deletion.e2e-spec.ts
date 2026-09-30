@@ -745,7 +745,8 @@ describe('storage deletion against Postgres', () => {
       const image = await placeImage(folder, 'dev/image');
       (await imageRepository.setPreview(image.id, 'dev/image.preview.webp')).unwrap();
       await placeVideo(folder, 'video-guid');
-      await placeFile(nested, 'dev/nested');
+      const nestedFile = await placeFile(nested, 'dev/nested');
+      (await fileRepository.setPreview(nestedFile.id, 'dev/nested.preview.webp')).unwrap();
       const kept = await placeFile(root, 'dev/kept');
 
       const deleteOne = new StorageObjectDeleteOneUseCase(storageObjectRepository);
@@ -768,6 +769,7 @@ describe('storage deletion against Postgres', () => {
         `${FilePurgeType.FILE}:dev/image`,
         `${FilePurgeType.FILE}:dev/image.preview.webp`,
         `${FilePurgeType.FILE}:dev/nested`,
+        `${FilePurgeType.FILE}:dev/nested.preview.webp`,
         `${FilePurgeType.VIDEO}:video-guid`,
       ]);
     },

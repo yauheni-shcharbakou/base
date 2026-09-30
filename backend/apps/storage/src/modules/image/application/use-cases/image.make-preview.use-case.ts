@@ -1,7 +1,7 @@
 import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
-import { readToBuffer } from '@modules/image/application/helpers/read-to-buffer';
+import { readToBuffer } from '@common/application/helpers/read-to-buffer';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import {
   IMAGE_PREVIEW_MAX_SIDE,

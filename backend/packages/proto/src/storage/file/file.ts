@@ -28,6 +28,12 @@ export interface File {
   uploadStatus: FileUploadStatus;
   providerId?: string;
   userId: string;
+  /**
+   * The key of the object a grid shows for a plain file: the first page of a PDF, as a small webp
+   * made after upload. Unset until that is done, on any other file, and on one it cannot be made for
+   * (ADR-0032). An image's is `Image.previewProviderId`.
+   */
+  previewProviderId?: string;
 }
 
 wrappers['.google.protobuf.Timestamp'] = {

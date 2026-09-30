@@ -1027,6 +1027,22 @@ describe('storage-object tree against Postgres', () => {
       return file.unwrap();
     };
 
+    // A plain file a first-page preview is made for.
+    const placePdf = async (name: string, uploadStatus = NestStorage.FileUploadStatus.READY) => {
+      const file = await fileRepository.saveAndPlaceOne({
+        file: {
+          ...fileMeta(`file-${++placed}`),
+          mimeType: 'application/pdf',
+          extension: 'pdf',
+          uploadStatus,
+          userId: USER_ID,
+        },
+        storageObject: placement(name, root),
+      });
+
+      return file.unwrap();
+    };
+
     const placeImage = async (name: string, parent = root) => {
       const image = await imageRepository.saveAndPlaceOne({
         image: { width: 2, height: 3, alt: '', userId: USER_ID },
@@ -1118,6 +1134,7 @@ describe('storage-object tree against Postgres', () => {
       assert.equal(page.total, 5);
       assert.deepEqual(await names({ pagination: { page: 3, limit: 2 } }), ['e.bin']);
     });
+
 
     // Rows created in one batch can share a timestamp; the id still puts them in one order, so an
     // offset page never repeats or skips one.
@@ -1226,28 +1243,34 @@ describe('storage-object tree against Postgres', () => {
       assert.equal(items.get('clip.mp4')?.video?.title, 'video');
     });
 
-    // What the page populates is all the signing needs: the image's preview key, the video's guid.
-    // An image without a preview is never signed by its original.
-    withDb('signs a preview for each READY image and video, and for nothing else', async () => {
-      await createFolder('sub', root);
-      await placeFile('doc.bin');
-      const photo = await placeImage('photo.png');
-      await placeImage('bare.png');
-      await placeVideo('clip.mp4');
-      (await imageRepository.setPreview(photo.id, 'photo.preview.webp')).unwrap();
+    // What the page populates is all the signing needs: the image's preview key, the plain file's,
+    // the video's guid. An image without a preview is never signed by its original.
+    withDb(
+      'signs a preview for each READY image, video and PDF, and for nothing else',
+      async () => {
+        await createFolder('sub', root);
+        await placeFile('doc.bin');
+        const pdf = await placePdf('doc.pdf');
+        (await fileRepository.setPreview(pdf.id, 'doc.preview.webp')).unwrap();
+        const photo = await placeImage('photo.png');
+        await placeImage('bare.png');
+        await placeVideo('clip.mp4');
+        (await imageRepository.setPreview(photo.id, 'photo.preview.webp')).unwrap();
 
-      const items = new Map((await content()).unwrap().items.map((item) => [item.name, item]));
-      const clip = items.get('clip.mp4');
+        const items = new Map((await content()).unwrap().items.map((item) => [item.name, item]));
+        const clip = items.get('clip.mp4');
 
-      assert.equal(items.get('photo.png')?.previewUrl, 'https://storage.test/photo.preview.webp');
-      assert.equal(items.get('bare.png')?.previewUrl, undefined);
-      assert.equal(
-        clip?.previewUrl,
-        `https://stream.test/${clip?.video?.providerId}/thumbnail.jpg`,
-      );
-      assert.equal(items.get('doc.bin')?.previewUrl, undefined);
-      assert.equal(items.get('sub')?.previewUrl, undefined);
-    });
+        assert.equal(items.get('photo.png')?.previewUrl, 'https://storage.test/photo.preview.webp');
+        assert.equal(items.get('bare.png')?.previewUrl, undefined);
+        assert.equal(
+          clip?.previewUrl,
+          `https://stream.test/${clip?.video?.providerId}/thumbnail.jpg`,
+        );
+        assert.equal(items.get('doc.pdf')?.previewUrl, 'https://storage.test/doc.preview.webp');
+        assert.equal(items.get('doc.bin')?.previewUrl, undefined);
+        assert.equal(items.get('sub')?.previewUrl, undefined);
+      },
+    );
 
     describe('image preview bookkeeping', () => {
       const withoutPreview = async () =>
@@ -1302,6 +1325,49 @@ describe('storage-object tree against Postgres', () => {
 
         (await imageRepository.deleteWithFile(image.id)).unwrap();
         assert.equal((await imageRepository.setPreview(image.id, 'late')).unwrap(), false);
+      });
+    });
+
+    describe('document preview bookkeeping', () => {
+      const PDF = ['application/pdf'];
+      const withoutPreview = async (readyBefore = new Date(Date.now() + 60_000)) =>
+        (await read(() => fileRepository.getManyWithoutPreview(PDF, readyBefore, 10)))
+          .map((file) => file.id)
+          .sort();
+
+      withDb(
+        'sweeps READY PDFs with neither a preview nor a failure, and no other file',
+        async () => {
+          const done = await placePdf('done.pdf');
+          const failed = await placePdf('failed.pdf');
+          const waiting = await placePdf('waiting.pdf');
+          await placePdf('pending.pdf', NestStorage.FileUploadStatus.PENDING);
+          await placeFile('other.bin');
+          await placeImage('photo.png');
+
+          (await fileRepository.setPreview(done.id, 'done.preview.webp')).unwrap();
+          (await fileRepository.markPreviewFailed(failed.id)).unwrap();
+
+          assert.deepEqual(await withoutPreview(), [waiting.id]);
+        },
+      );
+
+      withDb('leaves a PDF READY since the cutoff to the event handler', async () => {
+        await placePdf('fresh.pdf');
+
+        assert.deepEqual(await withoutPreview(new Date(Date.now() - 60_000)), []);
+      });
+
+      withDb('keeps the first key recorded, and never shows the failure', async () => {
+        const file = await placePdf('race.pdf');
+
+        assert.equal((await fileRepository.setPreview(file.id, 'first')).unwrap(), true);
+        assert.equal((await fileRepository.setPreview(file.id, 'second')).unwrap(), false);
+        assert.equal((await fileRepository.markPreviewFailed(file.id)).unwrap(), false);
+
+        const [stored] = await read(() => fileRepository.getMany({ ids: [file.id] }));
+        assert.equal(stored.previewProviderId, 'first');
+        assert.equal('previewFailedAt' in stored, false);
       });
     });
 

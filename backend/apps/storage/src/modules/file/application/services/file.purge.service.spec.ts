@@ -41,6 +41,17 @@ describe('FilePurgeService', () => {
       ]);
     });
 
+    it("purges a plain file's own preview — a PDF's first page — beside it", async () => {
+      await service.purgeFiles([
+        { id: 'f1', providerId: 'dev/a.pdf', previewProviderId: 'dev/a.preview.webp' },
+      ]);
+
+      expect(eventBus.emitManyPurge).toHaveBeenCalledWith([
+        { type: FilePurgeType.FILE, providerId: 'dev/a.pdf' },
+        { type: FilePurgeType.FILE, providerId: 'dev/a.preview.webp' },
+      ]);
+    });
+
     it('purges a light original that is its own preview once', async () => {
       await service.purgeFiles([
         { id: 'f1', providerId: 'dev/a.png', image: { previewProviderId: 'dev/a.png' } },

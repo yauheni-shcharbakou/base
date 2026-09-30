@@ -121,4 +121,53 @@ export class PgFileRepositoryImpl
 
     return this.mapper.stringifyMany(entities) as FileWithMedia[];
   }
+
+  async getManyWithoutPreview(
+    mimeTypes: string[],
+    readyBefore: Date,
+    limit: number,
+  ): Promise<NestStorage.File[]> {
+    try {
+      const files = await this.repository.find(
+        {
+          mimeType: { $in: mimeTypes },
+          uploadStatus: NestStorage.FileUploadStatus.READY,
+          updatedAt: { $lt: readyBefore },
+          previewProviderId: null,
+          previewFailedAt: null,
+        } as FilterQuery<PgFileEntity>,
+        { orderBy: { id: 'asc' }, limit },
+      );
+
+      return this.mapper.stringifyMany(files);
+    } catch (error) {
+      throw this.toFailure('read previewless', error);
+    }
+  }
+
+  // Straight to the table, conditional on no key yet: the event handler and the sweep can race on
+  // one file, and the row may be deleted under either. Neither must overwrite what the other set.
+  async setPreview(id: string, previewProviderId: string): Promise<Either<Error, boolean>> {
+    return this.updateWithoutPreview(id, { previewProviderId });
+  }
+
+  async markPreviewFailed(id: string): Promise<Either<Error, boolean>> {
+    return this.updateWithoutPreview(id, { previewFailedAt: new Date() });
+  }
+
+  private async updateWithoutPreview(
+    id: string,
+    set: Partial<Pick<PgFileEntity, 'previewProviderId' | 'previewFailedAt'>>,
+  ): Promise<Either<Error, boolean>> {
+    try {
+      const affected = await this.repository.nativeUpdate(
+        { id, previewProviderId: null },
+        { ...set, updatedAt: new Date() },
+      );
+
+      return right(affected > 0);
+    } catch (error) {
+      return left(error as Error);
+    }
+  }
 }

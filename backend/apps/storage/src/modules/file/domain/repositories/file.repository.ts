@@ -31,4 +31,17 @@ export abstract class FileRepository extends DatabaseRepository<
   abstract getManyByOwner(userId: string, limit: number): Promise<FileWithMedia[]>;
   /** Every user that owns at least one file. */
   abstract getOwnerIds(): Promise<string[]>;
+  /**
+   * READY plain files of these types, READY since before `readyBefore`, with neither a preview nor
+   * a failure recorded — what the document sweep takes on, oldest first.
+   */
+  abstract getManyWithoutPreview(
+    mimeTypes: string[],
+    readyBefore: Date,
+    limit: number,
+  ): Promise<NestStorage.File[]>;
+  /** Records the file's preview key, unless one is set already: true when this call set it. */
+  abstract setPreview(id: string, previewProviderId: string): Promise<Either<Error, boolean>>;
+  /** Marks the file as one no retry can make a preview for, unless it has one. */
+  abstract markPreviewFailed(id: string): Promise<Either<Error, boolean>>;
 }

@@ -85,6 +85,12 @@ export interface File {
   uploadStatus: FileUploadStatus;
   providerId?: string;
   userId: string;
+  /**
+   * The key of the object a grid shows for a plain file: the first page of a PDF, as a small webp
+   * made after upload. Unset until that is done, on any other file, and on one it cannot be made for
+   * (ADR-0032). An image's is `Image.previewProviderId`.
+   */
+  previewProviderId?: string;
 }
 
 function createBaseFile(): File {
@@ -99,6 +105,7 @@ function createBaseFile(): File {
     uploadStatus: FileUploadStatus.PENDING,
     providerId: undefined,
     userId: '',
+    previewProviderId: undefined,
   };
 }
 
@@ -133,6 +140,9 @@ export const File: MessageFns<File> = {
     }
     if (message.userId !== '') {
       writer.uint32(82).string(message.userId);
+    }
+    if (message.previewProviderId !== undefined) {
+      writer.uint32(98).string(message.previewProviderId);
     }
     return writer;
   },
@@ -224,6 +234,14 @@ export const File: MessageFns<File> = {
           message.userId = reader.string();
           continue;
         }
+        case 12: {
+          if (tag !== 98) {
+            break;
+          }
+
+          message.previewProviderId = reader.string();
+          continue;
+        }
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -247,6 +265,9 @@ export const File: MessageFns<File> = {
         : FileUploadStatus.PENDING,
       providerId: isSet(object.providerId) ? globalThis.String(object.providerId) : undefined,
       userId: isSet(object.userId) ? globalThis.String(object.userId) : '',
+      previewProviderId: isSet(object.previewProviderId)
+        ? globalThis.String(object.previewProviderId)
+        : undefined,
     };
   },
 
@@ -282,6 +303,9 @@ export const File: MessageFns<File> = {
     if (message.userId !== '') {
       obj.userId = message.userId;
     }
+    if (message.previewProviderId !== undefined) {
+      obj.previewProviderId = message.previewProviderId;
+    }
     return obj;
   },
 
@@ -300,6 +324,7 @@ export const File: MessageFns<File> = {
     message.uploadStatus = object.uploadStatus ?? FileUploadStatus.PENDING;
     message.providerId = object.providerId ?? undefined;
     message.userId = object.userId ?? '';
+    message.previewProviderId = object.previewProviderId ?? undefined;
     return message;
   },
 };

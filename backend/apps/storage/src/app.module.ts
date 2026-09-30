@@ -2,6 +2,7 @@ import { EventBusHost } from '@backend/event-bus';
 import { GrpcModule } from '@backend/grpc';
 import { PgModule } from '@backend/pg';
 import { RedisModule } from '@backend/event-bus-redis';
+import { DocumentModule } from '@modules/document/document.module';
 import { FileModule } from '@modules/file/file.module';
 import { ImageModule } from '@modules/image/image.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
@@ -23,6 +24,7 @@ import ormConfig from './mikro-orm.config';
     FileModule,
     StorageObjectModule,
     ImageModule,
+    DocumentModule,
     VideoModule,
     UserModule,
   ],

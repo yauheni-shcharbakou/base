@@ -1,0 +1,194 @@
+import { FilePurgeType } from '@backend/event-bus';
+import { NestStorage } from '@backend/proto';
+import {
+  DocumentPreviewService,
+  DocumentPreviewUndecodableError,
+} from '@modules/document/domain/services/document.preview.service';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
+import { FileRepository } from '@modules/file/domain/repositories/file.repository';
+import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { left, right } from '@sweet-monads/either';
+import { Readable } from 'node:stream';
+import {
+  DOCUMENT_PREVIEW_MAX_BYTES,
+  DocumentMakePreviewUseCase,
+} from './document.make-preview.use-case';
+
+const { READY, PENDING } = NestStorage.FileUploadStatus;
+const BYTES = Buffer.from('%PDF-1.4 original bytes');
+const PREVIEW = { body: Buffer.from('webp'), contentType: 'image/webp' };
+
+const file = (overrides: Partial<NestStorage.File> = {}) =>
+  ({
+    id: 'file-1',
+    providerId: 'dev/u/a.pdf',
+    mimeType: 'application/pdf',
+    size: BYTES.length,
+    uploadStatus: READY,
+    ...overrides,
+  }) as NestStorage.File;
+
+describe('DocumentMakePreviewUseCase', () => {
+  let repository: Record<
+    'getById' | 'setPreview' | 'markPreviewFailed' | 'isExistsById',
+    jest.Mock
+  >;
+  let fileService: Record<'getObjectStream' | 'putObject' | 'createPreviewKey', jest.Mock>;
+  let previewService: { render: jest.Mock };
+  let purgeService: { purge: jest.Mock };
+  let useCase: DocumentMakePreviewUseCase;
+
+  const run = () => useCase.execute({ fileId: 'file-1' });
+
+  beforeAll(() => {
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+  });
+
+  beforeEach(() => {
+    repository = {
+      getById: jest.fn().mockResolvedValue(right(file())),
+      setPreview: jest.fn().mockResolvedValue(right(true)),
+      markPreviewFailed: jest.fn().mockResolvedValue(right(true)),
+      isExistsById: jest.fn().mockResolvedValue(true),
+    };
+    fileService = {
+      // A fresh stream per call: one is consumed by the read.
+      getObjectStream: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(right(Readable.from([BYTES])))),
+      putObject: jest.fn().mockResolvedValue(right(true)),
+      createPreviewKey: jest.fn().mockReturnValue('dev/u/a.preview.webp'),
+    };
+    previewService = { render: jest.fn().mockResolvedValue(right(PREVIEW)) };
+    purgeService = { purge: jest.fn().mockResolvedValue(undefined) };
+
+    useCase = new DocumentMakePreviewUseCase(
+      repository as unknown as FileRepository,
+      fileService as unknown as StorageFileService,
+      previewService as unknown as DocumentPreviewService,
+      purgeService as unknown as FilePurgeService,
+    );
+  });
+
+  it('draws the first page, stores the webp beside the PDF and records its key', async () => {
+    const result = await run();
+
+    expect(result.isRight()).toBe(true);
+    expect(fileService.getObjectStream).toHaveBeenCalledWith('dev/u/a.pdf');
+    expect(previewService.render).toHaveBeenCalledWith(BYTES);
+    expect(fileService.putObject).toHaveBeenCalledWith(
+      'dev/u/a.preview.webp',
+      PREVIEW.body,
+      'image/webp',
+    );
+    expect(repository.setPreview).toHaveBeenCalledWith('file-1', 'dev/u/a.preview.webp');
+  });
+
+  it.each([
+    [
+      'undecodable',
+      () =>
+        previewService.render.mockResolvedValue(left(new DocumentPreviewUndecodableError('bad'))),
+    ],
+    ['missing', () => fileService.getObjectStream.mockResolvedValue(right(null))],
+    [
+      'too heavy to draw',
+      () =>
+        repository.getById.mockResolvedValue(right(file({ size: DOCUMENT_PREVIEW_MAX_BYTES + 1 }))),
+    ],
+  ])('marks the preview failed when the document is %s, and answers right', async (_, arrange) => {
+    arrange();
+
+    const result = await run();
+
+    expect(result.isRight()).toBe(true);
+    expect(repository.markPreviewFailed).toHaveBeenCalledWith('file-1');
+    expect(repository.setPreview).not.toHaveBeenCalled();
+  });
+
+  it('never downloads a document too heavy to draw', async () => {
+    repository.getById.mockResolvedValue(right(file({ size: DOCUMENT_PREVIEW_MAX_BYTES + 1 })));
+
+    await run();
+
+    expect(fileService.getObjectStream).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      'the read',
+      () => fileService.getObjectStream.mockResolvedValue(left(new InternalServerErrorException())),
+    ],
+    [
+      'the write',
+      () => fileService.putObject.mockResolvedValue(left(new InternalServerErrorException())),
+    ],
+    ['the renderer', () => previewService.render.mockResolvedValue(left(new Error('no pdf.js')))],
+    [
+      'the stream',
+      () =>
+        fileService.getObjectStream.mockResolvedValue(
+          right(
+            new Readable({
+              read() {
+                this.destroy(new Error('socket hang up'));
+              },
+            }),
+          ),
+        ),
+    ],
+  ])('answers left when %s fails, so it is retried', async (_, arrange) => {
+    arrange();
+
+    const result = await run();
+
+    expect(result.isLeft()).toBe(true);
+    expect(repository.setPreview).not.toHaveBeenCalled();
+    expect(repository.markPreviewFailed).not.toHaveBeenCalled();
+  });
+
+  it('purges its own preview when the file was deleted meanwhile', async () => {
+    repository.setPreview.mockResolvedValue(right(false));
+    repository.isExistsById.mockResolvedValue(false);
+
+    await run();
+
+    expect(purgeService.purge).toHaveBeenCalledWith([
+      { type: FilePurgeType.FILE, providerId: 'dev/u/a.preview.webp' },
+    ]);
+  });
+
+  it('keeps the preview when a concurrent run recorded the same key first', async () => {
+    repository.setPreview.mockResolvedValue(right(false));
+
+    await run();
+
+    expect(purgeService.purge).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a deleted file', () => repository.getById.mockResolvedValue(left(new NotFoundException()))],
+    [
+      'a file that is no PDF',
+      () => repository.getById.mockResolvedValue(right(file({ mimeType: 'text/plain' }))),
+    ],
+    [
+      'a preview already made',
+      () => repository.getById.mockResolvedValue(right(file({ previewProviderId: 'k' }))),
+    ],
+    [
+      'an upload not READY',
+      () => repository.getById.mockResolvedValue(right(file({ uploadStatus: PENDING }))),
+    ],
+  ])('does nothing for %s', async (_, arrange) => {
+    arrange();
+
+    const result = await run();
+
+    expect(result.isRight()).toBe(true);
+    expect(fileService.getObjectStream).not.toHaveBeenCalled();
+    expect(repository.setPreview).not.toHaveBeenCalled();
+    expect(repository.markPreviewFailed).not.toHaveBeenCalled();
+  });
+});

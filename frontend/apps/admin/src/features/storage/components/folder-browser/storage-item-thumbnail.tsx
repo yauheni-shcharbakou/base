@@ -60,7 +60,11 @@ export const StorageItemThumbnail: FC<Props> = ({
           alt={item.image?.alt || item.name}
           fill
           loading="lazy"
-          style={{ objectFit: fit }}
+          // A page is read from its top, as in Drive: a crop keeps the title, not the middle.
+          style={{
+            objectFit: fit,
+            objectPosition: kind === StorageItemKind.PDF ? 'top' : undefined,
+          }}
           onError={() => {
             setFailedSrc(src);
             onPreviewError?.();

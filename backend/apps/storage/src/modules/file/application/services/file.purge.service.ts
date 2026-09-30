@@ -6,7 +6,7 @@ import _ from 'lodash';
 /**
  * A deleted file row, with the video or image it backed — enough to know what it left behind.
  */
-export type FilePurgeTarget = Pick<NestStorage.File, 'id' | 'providerId'> & {
+export type FilePurgeTarget = Pick<NestStorage.File, 'id' | 'providerId' | 'previewProviderId'> & {
   video?: Pick<NestStorage.Video, 'providerId'>;
   image?: Pick<NestStorage.Image, 'previewProviderId'>;
 };
@@ -41,13 +41,17 @@ export class FilePurgeService {
 
   // A video lives under the guid on its own row and never on its backing file; a plain file or an
   // image lives under the file row's `providerId`. A row with neither never reached the provider.
+  // The preview beside it is an image's, on the image row, or a plain file's — a PDF's first page —
+  // on the file row.
   async purgeFiles(files: FilePurgeTarget[]): Promise<void> {
     const events = _.flatMap(files, (file): FilePurgeEvent[] => {
       if (file.video?.providerId) {
         return [{ type: FilePurgeType.VIDEO, providerId: file.video.providerId }];
       }
 
-      return file.providerId ? toFileEvents(file.providerId, file.image?.previewProviderId) : [];
+      return file.providerId
+        ? toFileEvents(file.providerId, file.image?.previewProviderId ?? file.previewProviderId)
+        : [];
     });
 
     await this.purge(events);
@@ -55,8 +59,8 @@ export class FilePurgeService {
 }
 
 /**
- * The objects an image or plain file leaves in Bunny Storage: its own key, and an image's preview
- * when that is a separate object — a light original is its own preview, deleted once.
+ * The objects an image or plain file leaves in Bunny Storage: its own key, and its preview when
+ * that is a separate object — a light image is its own preview, deleted once.
  */
 export function toFileEvents(providerId: string, previewProviderId?: string): FilePurgeEvent[] {
   return _.uniq(_.compact([providerId, previewProviderId])).map((key) => ({
