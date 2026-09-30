@@ -1,6 +1,6 @@
 # CLAUDE.md — frontend.admin
 
-Guidance for working inside `frontend/apps/admin`. Stack basics (Next 15 App Router, Refine 5, MUI 6, `@frontend/proto`) are in the root `CLAUDE.md`. This file is the app-specific map.
+Guidance for working inside `frontend/apps/admin`: Next.js 15 (App Router) + Refine 5 + MUI 6, run with the `refine` CLI, talking to api-gateway through the `@frontend/proto` / `@packages/proto` gRPC clients. Refine's data providers live in `features/grpc/providers`, its auth provider in `features/auth/providers`; `src/common` holds the shared UI, hooks and helpers.
 
 ## What it is
 
@@ -58,12 +58,6 @@ The `file`/`image`/`video` resources are registered in `app/layout.tsx` with `da
 - `GridColumnsBuilder` (`common/utils/grid-columns.builder.tsx`) is a fluent builder for MUI `DataGrid` columns (`.string()/.enum()/.date()/.ref()/.actions()…`), memoized per list page with `useMemo`.
 - **List pages** (`common/components/pages/resource-list.page.tsx`) intentionally do **manual** URL sync (`syncWithLocation: false` + `router.push`/`useSearchParams`) behind an `isMounted` gate + `enabled: () => isMounted`. Do **not** migrate this to Refine's built-in `syncWithLocation` / a directly-rendered `DataGrid` — that was tried and reverted because Refine then never fires the initial `getList` (infinite loading) and React throws "state update on a component that hasn't mounted yet". See the note at the top of that file.
 - **Perf & hooks:** subscribe to specific fields with `watch('field')` / `useWatch` (never the whole-form `watch()`), and read one-off values inside handlers with `getValues()`. Keep hooks at component top level (not inside a `Controller` `render` prop or a conditional) — the shared ESLint preset now enforces `react-hooks/rules-of-hooks` (error) and `react-hooks/exhaustive-deps` (warn).
-
-## Layout (feature-sliced)
-
-- `src/app/` — App Router: resource pages + auth pages + `api/` route handlers.
-- `src/common/` — reusable Refine wrappers (`app-create/edit/show`), layouts, entity/edit fields, hooks (`use-validated-form`, `use-resource-show`), `config.service`, grid-columns builder.
-- `src/features/` — `grpc` (data access), `auth` (authProvider + JWT cookie), `storage`, `image`, `video`.
 
 ## Config & commands
 

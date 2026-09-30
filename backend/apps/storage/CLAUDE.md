@@ -74,25 +74,7 @@ pnpm storage:copy-zone  # one-off copy into a new storage zone — runbook in RE
 pnpm test             # jest: use-cases and services, ports mocked
 pnpm test:e2e         # node:test: deletion paths, folder tree, repository errors against Postgres (`pnpm docker:db`), the PDF renderer
 ```
-- **Two runners.** `src/**/*.spec.ts` is Jest. `test/*.e2e-spec.ts` runs on `node:test` under ts-node, because it drives the real repositories and Jest cannot load MikroORM. Those specs cover:
-  - the FK cascades, the subtree mark and the bottom-up folder delete;
-  - both sweeps of the file cleanup (stale uploads by status and TTL, media under a deleted object);
-  - a whole folder delete end to end;
-  - the folder tree: derived paths, the `isPublic` cascade, cycle termination, and the statement count of a populated page (the guard against an N+1 creeping into `folderPath` or `folderStats`);
-  - a folder's content: folders first under either name order, the ICU name order (case, accents, numbers by value), pages and their total, the id tie-break, deleted objects left out, the type/visibility/name filters (a literal `_`), the path and the folders above, another user's folder, a leaf and a deleted folder alike as `NotFound`, every leaf's media, the preview of each READY image and video (an image by its preview key only) and of a PDF by its own, `folderTotal` on every page and under a filter, the folder's and each subfolder's `folderStats` (READY leaves only, deleted subtrees left out, a sum past `int32`, zeros for an empty folder), and four statements per call;
-  - the preview bookkeeping: which images and PDFs the sweeps take, the cutoff they leave to the event, the first key kept over a second, nothing recorded on a deleted image — and both full delete paths purging a preview beside its original, a file's own included;
-  - the PDF renderer itself, in its worker (`document.preview.e2e-spec.ts`, no server needed): the first page fitted to 512 px either way, Node's buffer pool left intact, garbage bytes and a timeout as undecodable;
-  - a folder tree made at once: nested paths under their new parents, a taken top-level name suffixed, a public target's visibility, another owner's target refused, a failed level rolling the whole tree back;
-  - batch moves and deletes: suffixes across folders in order, the `isPublic` cascade, a target inside a moved folder, the whole batch rolled back on a failed write, other owners refused, several subtrees marked in one statement, the root refused;
-  - visibility: nothing made private in a public folder, in place or in a batch, unless its folder goes private in the same call; a batch's subtrees, its rollback, other owners refused;
-  - the tree lock: a second write of one owner queues and another owner's does not, two opposite moves let one through, a create queued behind its parent's deletion is refused, parallel creates get distinct names, a `left` rolls back — a media save placed under it included;
-  - the owner and name rules, and the constraints that back them against a row written by hand;
-  - `saveAndPlaceMany` of every media type keeps item order — the create-many contract answers by position;
-  - a leaf over existing media: another user's file is refused and survives the cleanup, the owner's own is placed and goes with its leaf, a file that is not READY is refused;
-  - the media lists a picker reads: the owner's unplaced READY files, images and videos, without a file that backs other media;
-  - `updateMany`/`deleteMany` throw what the database refuses, refuse a query that constrains nothing, and return `false` only when nothing matched;
-  - `distinct` returns every value of the match past the first 1000 rows, and throws a failed query;
-  - the error text a client reads: every repository's miss and the root-folder conflict name the resource ("Storage object not found"), not the ORM class.
+- **Two runners.** `src/**/*.spec.ts` is Jest. `test/*.e2e-spec.ts` runs on `node:test` under ts-node, because it drives the real repositories and Jest cannot load MikroORM.
 
   `test/pg.e2e.ts` gives each spec its own `storage_e2e[_<name>]` database (`node --test` runs spec files in parallel processes, and each drops its schema), wipes and migrates it from `src/migrations` on every run, and skips the suite when no server answers. Open the connection in a `before` hook, never in an async `describe` body: `node:test` exits 0 on an error thrown there. A spec that holds a transaction open (the tree-lock specs) must release it in a `finally`: a failed assertion that leaves it open hangs the run on closing the pool instead of failing it.
   > **Why not Jest:** [docs/adr/0017-database-specs-on-node-test.md](../../../docs/adr/0017-database-specs-on-node-test.md)

@@ -75,6 +75,11 @@ pnpm docker                   # full stack in prod mode
 pnpm gen:package              # scaffold a new package via turbo generator (packages only; apps are hand-made)
 ```
 
+**Run a shell command as one command, without `cd`.** The allow rules in `.claude/settings.json`
+(`Bash(git:*)`, `Bash(pnpm:*)`) are prefix matches, so `cd <dir> && …`, a chain or a pipe falls back
+to a permission prompt. Reach another directory through the tool itself — `git -C <path>`,
+`pnpm --filter <pkg>` / `pnpm -C <dir>` — or an absolute path.
+
 **Codegen — rerun after editing a contract, before `build`:**
 
 ```bash
@@ -202,9 +207,3 @@ an upload's outcome gets back in ([ADR-0014](docs/adr/0014-video-uploads-bypass-
 File and image bytes take the same shortcut to Bunny Storage — a pre-signed S3 PUT, then an
 explicit `completeUpload` call in place of the webhook Storage does not have
 ([ADR-0015](docs/adr/0015-file-uploads-presigned-s3-put.md)). No RPC streams bytes any more.
-
-## Frontend admin
-
-Next.js 15 (App Router) + Refine 5 + MUI 6, run with the `refine` CLI. It consumes `@frontend/proto`/`@packages/proto` gRPC clients to talk to api-gateway. Refine data/auth providers live in `src/common/providers`; shared UI/hooks/helpers under `src/common`.
-
-gRPC calls run on the **Next server** (server actions + `app/api` route handlers), never from the browser — `@grpc/grpc-js` is a Node client. The path is: browser → Next server action → gRPC → api-gateway.
