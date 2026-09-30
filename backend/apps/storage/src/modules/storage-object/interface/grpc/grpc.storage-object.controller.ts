@@ -14,6 +14,8 @@ import { StorageObjectGetUseCase } from '@modules/storage-object/application/use
 import { StorageObjectIsExistsUseCase } from '@modules/storage-object/application/use-cases/storage-object.is-exists.use-case';
 import { StorageObjectMoveManyUseCase } from '@modules/storage-object/application/use-cases/storage-object.move-many.use-case';
 import { StorageObjectUpdateOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.update-one.use-case';
+import { Either } from '@sweet-monads/either';
+import _ from 'lodash';
 import { from, map, Observable } from 'rxjs';
 
 // `folderPath` is a lazy formula: listed here, it rides in the same SELECT as the rows and the
@@ -115,12 +117,33 @@ export class GrpcStorageObjectController implements GrpcStorageObjectServiceCont
   deleteMany(
     request: NestStorage.StorageObjectDeleteMany,
   ): Observable<NestStorage.StorageObjectArray> {
-    const stream$ = from(this.deleteManyUseCase.execute(request));
+    const stream$ = from(this.populate(this.deleteManyUseCase.execute(request), true));
     return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
   moveMany(request: NestStorage.StorageObjectMoveMany): Observable<NestStorage.StorageObjectArray> {
-    const stream$ = from(this.moveManyUseCase.execute(request));
+    const stream$ = from(this.populate(this.moveManyUseCase.execute(request), false));
     return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
+  }
+
+  /**
+   * A batch write's rows, read back with their media, in the order written. `StorageObjectArray`
+   * carries `StorageObjectPopulated`, and a written row holds its file, image or video as a bare
+   * reference, which the serializer refuses (`file: object expected`) — a folder has none, so only
+   * a batch with media ever failed.
+   */
+  private async populate(
+    written: Promise<Either<Error, NestStorage.StorageObject[]>>,
+    isDeleted: boolean,
+  ): Promise<Either<Error, NestStorage.StorageObjectPopulated[]>> {
+    return (await written).asyncMap(async (rows) => {
+      const read = await this.getUseCase.getMany<NestStorage.StorageObjectPopulated>(
+        { ids: rows.map(({ id }) => id), isDeleted },
+        { populate: POPULATE },
+      );
+      const byId = _.keyBy(read, 'id');
+
+      return rows.map(({ id }) => byId[id]);
+    });
   }
 }
