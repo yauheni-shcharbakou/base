@@ -29,8 +29,20 @@ export class AuthLoginUseCase {
       return left(new ForbiddenException('Invalid password'));
     }
 
-    // Every sign-in opens a session of its own, so a logout ends this one and no other.
+    // Every sign-in opens a session of its own, so a logout ends this one and no other. The row
+    // comes first: its id goes into the refresh token. Until the tokens are signed it expires now,
+    // so a sign-in that fails in between leaves a row the hourly sweep removes.
     const tokenId = randomUUID();
+
+    const session = await this.sessionRepository.saveOne({
+      user: user.value.id,
+      tokenId,
+      expiredAt: new Date(),
+    });
+
+    if (session.isLeft()) {
+      return left(new InternalServerErrorException('Session creation failed'));
+    }
 
     const tokens = await this.tokenService.generateTokens(
       {
@@ -38,20 +50,18 @@ export class AuthLoginUseCase {
         login: user.value.email,
         role: user.value.role,
       },
-      tokenId,
+      { sessionId: session.value.id, tokenId },
     );
 
     if (tokens.isLeft()) {
       return left(new InternalServerErrorException('Tokens generation failed'));
     }
 
-    const session = await this.sessionRepository.saveOne({
-      user: user.value.id,
-      tokenId,
-      expiredAt: tokens.value.refreshToken.expiredAt,
+    const issued = await this.sessionRepository.updateById(session.value.id, {
+      set: { expiredAt: tokens.value.refreshToken.expiredAt },
     });
 
-    if (session.isLeft()) {
+    if (issued.isLeft()) {
       return left(new InternalServerErrorException('Session creation failed'));
     }
 

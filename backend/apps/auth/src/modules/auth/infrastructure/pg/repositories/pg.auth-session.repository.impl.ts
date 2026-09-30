@@ -6,6 +6,7 @@ import {
   AuthSessionCreate,
   AuthSessionQuery,
   AuthSessionRepository,
+  AuthSessionRotation,
 } from '@modules/auth/domain/repositories/auth.session.repository';
 import { PgAuthSessionEntity } from '../entities/pg.auth-session.entity';
 import { PgAuthSessionMapper } from '../mappers/pg.auth-session.mapper';
@@ -21,5 +22,24 @@ export class PgAuthSessionRepositoryImpl
     protected readonly repository: EntityRepository<PgAuthSessionEntity>,
   ) {
     super(repository, new PgAuthSessionMapper());
+  }
+
+  // One `update … where id and token_id`: of two refreshes spending the same token, Postgres lets
+  // the second re-check the condition after the first commits, so exactly one matches.
+  async rotateToken(
+    id: string,
+    currentTokenId: string,
+    next: AuthSessionRotation,
+  ): Promise<boolean> {
+    try {
+      const updated = await this.repository.nativeUpdate(
+        { id, tokenId: currentTokenId },
+        { ...next, updatedAt: new Date() },
+      );
+
+      return updated > 0;
+    } catch (error) {
+      throw this.toFailure('rotate', error);
+    }
   }
 }

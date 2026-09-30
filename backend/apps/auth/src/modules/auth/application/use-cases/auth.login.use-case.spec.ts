@@ -15,6 +15,8 @@ const user = {
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
 };
 
+const SESSION_ID = '01JQ0000000000000000000001';
+
 const tokens: NestAuth.AuthTokens = {
   accessToken: { value: 'access', expiredAt: new Date('2026-01-01T01:00:00.000Z') },
   refreshToken: { value: 'refresh', expiredAt: new Date('2026-01-08T00:00:00.000Z') },
@@ -24,33 +26,38 @@ describe('AuthLoginUseCase', () => {
   let compare: jest.Mock;
   let generateTokens: jest.Mock;
   let saveOne: jest.Mock;
+  let updateById: jest.Mock;
   let useCase: AuthLoginUseCase;
 
   beforeEach(() => {
     compare = jest.fn().mockResolvedValue(true);
     generateTokens = jest.fn().mockResolvedValue(right(tokens));
-    saveOne = jest.fn().mockResolvedValue(right({}));
+    saveOne = jest.fn().mockResolvedValue(right({ id: SESSION_ID }));
+    updateById = jest.fn().mockResolvedValue(right({ id: SESSION_ID }));
 
     useCase = new AuthLoginUseCase(
       { getOneInternal: jest.fn().mockResolvedValue(right(user)) } as unknown as UserRepository,
       { generateTokens } as unknown as AuthTokenService,
       { compare } as unknown as CryptoService,
-      { saveOne } as unknown as AuthSessionRepository,
+      { saveOne, updateById } as unknown as AuthSessionRepository,
     );
   });
 
-  it('opens a session under the jti its refresh token carries', async () => {
+  it('opens a session and signs its id and token id into the refresh token', async () => {
     const result = await useCase.execute({ login: user.email, password: 'secret' });
 
     expect(result.isRight()).toBe(true);
 
-    const tokenId = generateTokens.mock.calls[0][1];
+    const [{ tokenId }] = saveOne.mock.calls[0];
 
-    expect(tokenId).toEqual(expect.any(String));
-    expect(saveOne).toHaveBeenCalledWith({
-      user: user.id,
+    expect(saveOne).toHaveBeenCalledWith({ user: user.id, tokenId, expiredAt: expect.any(Date) });
+    expect(generateTokens).toHaveBeenCalledWith(expect.objectContaining({ id: user.id }), {
+      sessionId: SESSION_ID,
       tokenId,
-      expiredAt: tokens.refreshToken.expiredAt,
+    });
+    // Until the tokens exist the session expires at once; then it lives as long as they do.
+    expect(updateById).toHaveBeenCalledWith(SESSION_ID, {
+      set: { expiredAt: tokens.refreshToken.expiredAt },
     });
   });
 
@@ -58,7 +65,7 @@ describe('AuthLoginUseCase', () => {
     await useCase.execute({ login: user.email, password: 'secret' });
     await useCase.execute({ login: user.email, password: 'secret' });
 
-    expect(generateTokens.mock.calls[0][1]).not.toBe(generateTokens.mock.calls[1][1]);
+    expect(saveOne.mock.calls[0][0].tokenId).not.toBe(saveOne.mock.calls[1][0].tokenId);
   });
 
   it('opens no session for a wrong password', async () => {
@@ -72,6 +79,15 @@ describe('AuthLoginUseCase', () => {
 
   it('returns no tokens when the session cannot be saved', async () => {
     saveOne.mockResolvedValue(left(new Error('connection terminated')));
+
+    const result = await useCase.execute({ login: user.email, password: 'secret' });
+
+    expect(result.value).toBeInstanceOf(InternalServerErrorException);
+    expect(generateTokens).not.toHaveBeenCalled();
+  });
+
+  it('returns no tokens when the session cannot be given their lifetime', async () => {
+    updateById.mockResolvedValue(left(new Error('connection terminated')));
 
     const result = await useCase.execute({ login: user.email, password: 'secret' });
 

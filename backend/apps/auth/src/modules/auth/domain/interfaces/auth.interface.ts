@@ -4,11 +4,19 @@ import type { NestCommon } from '@backend/proto';
 export type { AuthTokenPayload, AuthTokenPayloadParsed } from '@backend/common';
 
 /**
- * A refresh token names its session in the standard `jti` claim; one without it (issued before
- * sessions existed) is refused.
+ * A refresh token names its session twice: `sid` is the session's id, the same for its whole life,
+ * and the standard `jti` is the session's current `tokenId`, new with every refresh. A token
+ * without both is refused.
  */
 export interface AuthRefreshTokenPayloadParsed extends AuthTokenPayloadParsed {
+  sid: string;
   jti: string;
+}
+
+/** What a refresh token is signed for: see `AuthRefreshTokenPayloadParsed`. */
+export interface AuthRefreshTokenSession {
+  sessionId: string;
+  tokenId: string;
 }
 
 /**
@@ -17,7 +25,7 @@ export interface AuthRefreshTokenPayloadParsed extends AuthTokenPayloadParsed {
  */
 export interface AuthSession extends NestCommon.Entity {
   userId: string;
-  /** The `jti` every refresh token of this session carries. */
+  /** The `jti` of the session's one valid refresh token; each refresh replaces it. */
   tokenId: string;
   /** The `exp` of the session's latest refresh token; a refresh moves it forward. */
   expiredAt: Date;

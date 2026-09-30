@@ -1,6 +1,6 @@
 # 0028 — A refresh token is valid only while its session row exists, and keeps its `jti` across refreshes
 
-**Status:** Accepted (2026-09-30)
+**Status:** Accepted (2026-09-30); the `jti` kept across refreshes superseded by 0029 (2026-09-30)
 **Applies to:** `backend.auth`, `backend.api-gateway`, `frontend.admin`, `@packages/proto`, `@packages/common`
 
 ## Context

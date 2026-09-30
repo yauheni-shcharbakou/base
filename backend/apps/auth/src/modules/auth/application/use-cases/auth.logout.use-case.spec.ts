@@ -5,29 +5,33 @@ import { NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import { AuthLogoutUseCase } from './auth.logout.use-case';
 
-const TOKEN_ID = 'session-token-id';
-const payload = { id: 'user-id', jti: TOKEN_ID } as AuthRefreshTokenPayloadParsed;
+const SESSION_ID = '01JQ0000000000000000000001';
+const payload = {
+  id: 'user-id',
+  sid: SESSION_ID,
+  jti: 'token-id',
+} as AuthRefreshTokenPayloadParsed;
 
 describe('AuthLogoutUseCase', () => {
   let parseRefreshTokenPayload: jest.Mock;
-  let deleteOne: jest.Mock;
+  let deleteById: jest.Mock;
   let useCase: AuthLogoutUseCase;
 
   beforeEach(() => {
     parseRefreshTokenPayload = jest.fn().mockReturnValue(right(payload));
-    deleteOne = jest.fn().mockResolvedValue(right({}));
+    deleteById = jest.fn().mockResolvedValue(right({}));
 
     useCase = new AuthLogoutUseCase(
       { parseRefreshTokenPayload } as unknown as AuthTokenService,
-      { deleteOne } as unknown as AuthSessionRepository,
+      { deleteById } as unknown as AuthSessionRepository,
     );
   });
 
-  it("deletes the token's session", async () => {
+  it("deletes the token's session by its id, whichever of its tokens it is", async () => {
     const result = await useCase.execute({ refreshToken: 'refresh-token' });
 
     expect(result.isRight()).toBe(true);
-    expect(deleteOne).toHaveBeenCalledWith({ tokenId: TOKEN_ID });
+    expect(deleteById).toHaveBeenCalledWith(SESSION_ID);
   });
 
   it('succeeds without a delete for a token that no longer verifies', async () => {
@@ -36,18 +40,18 @@ describe('AuthLogoutUseCase', () => {
     const result = await useCase.execute({ refreshToken: 'expired' });
 
     expect(result.isRight()).toBe(true);
-    expect(deleteOne).not.toHaveBeenCalled();
+    expect(deleteById).not.toHaveBeenCalled();
   });
 
   it('succeeds for a session that is already gone', async () => {
-    deleteOne.mockResolvedValue(left(new NotFoundException('Session not found')));
+    deleteById.mockResolvedValue(left(new NotFoundException('Session not found')));
 
     expect((await useCase.execute({ refreshToken: 'refresh-token' })).isRight()).toBe(true);
   });
 
   it('fails when the delete itself fails', async () => {
     const failure = new Error('connection terminated');
-    deleteOne.mockResolvedValue(left(failure));
+    deleteById.mockResolvedValue(left(failure));
 
     const result = await useCase.execute({ refreshToken: 'refresh-token' });
 

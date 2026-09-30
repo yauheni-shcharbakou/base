@@ -6,12 +6,13 @@ import {
 import { AuthSessionRepository } from '@modules/auth/domain/repositories/auth.session.repository';
 import { AuthTokenService } from '@modules/auth/domain/services/auth.token.service';
 import { UserRepository } from '@modules/user/domain/repositories/user.repository';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import { AuthRefreshTokenUseCase } from './auth.refresh-token.use-case';
 
 const USER_ID = '01JQ0000000000000000000000';
-const TOKEN_ID = 'session-token-id';
+const SESSION_ID = '01JQ0000000000000000000001';
+const TOKEN_ID = 'current-token-id';
 const REFRESH_TOKEN = 'refresh-token';
 
 const user: NestAuth.User = {
@@ -22,7 +23,7 @@ const user: NestAuth.User = {
 };
 
 const session: AuthSession = {
-  id: '01JQ0000000000000000000001',
+  id: SESSION_ID,
   userId: USER_ID,
   tokenId: TOKEN_ID,
   expiredAt: new Date('2026-01-02T00:00:00.000Z'),
@@ -38,39 +39,53 @@ const payload = {
   id: USER_ID,
   login: user.email,
   role: user.role,
+  sid: SESSION_ID,
   jti: TOKEN_ID,
 } as AuthRefreshTokenPayloadParsed;
 
 describe('AuthRefreshTokenUseCase', () => {
   let parseRefreshTokenPayload: jest.Mock;
   let generateTokens: jest.Mock;
-  let getOne: jest.Mock;
-  let updateById: jest.Mock;
+  let getById: jest.Mock;
+  let rotateToken: jest.Mock;
+  let deleteById: jest.Mock;
   let useCase: AuthRefreshTokenUseCase;
 
   beforeEach(() => {
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
     parseRefreshTokenPayload = jest.fn().mockReturnValue(right(payload));
     generateTokens = jest.fn().mockResolvedValue(right(tokens));
-    getOne = jest.fn().mockResolvedValue(right(session));
-    updateById = jest.fn().mockResolvedValue(right(session));
+    getById = jest.fn().mockResolvedValue(right(session));
+    rotateToken = jest.fn().mockResolvedValue(true);
+    deleteById = jest.fn().mockResolvedValue(right(session));
 
     useCase = new AuthRefreshTokenUseCase(
       { getById: jest.fn().mockResolvedValue(right(user)) } as unknown as UserRepository,
       { parseRefreshTokenPayload, generateTokens } as unknown as AuthTokenService,
-      { getOne, updateById } as unknown as AuthSessionRepository,
+      { getById, rotateToken, deleteById } as unknown as AuthSessionRepository,
     );
   });
 
-  it('issues tokens for the same session and extends it to the new refresh token', async () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('replaces the spent token with a new one of the same session', async () => {
     const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
 
     expect(result.isRight()).toBe(true);
     expect(result.value).toEqual({ user, tokens });
-    expect(getOne).toHaveBeenCalledWith({ tokenId: TOKEN_ID });
-    expect(generateTokens).toHaveBeenCalledWith(expect.objectContaining({ id: USER_ID }), TOKEN_ID);
-    expect(updateById).toHaveBeenCalledWith(session.id, {
-      set: { expiredAt: tokens.refreshToken.expiredAt },
+    expect(getById).toHaveBeenCalledWith(SESSION_ID);
+
+    const [, signedFor] = generateTokens.mock.calls[0];
+
+    expect(signedFor.sessionId).toBe(SESSION_ID);
+    expect(signedFor.tokenId).not.toBe(TOKEN_ID);
+    expect(rotateToken).toHaveBeenCalledWith(SESSION_ID, TOKEN_ID, {
+      tokenId: signedFor.tokenId,
+      expiredAt: tokens.refreshToken.expiredAt,
     });
+    expect(deleteById).not.toHaveBeenCalled();
   });
 
   it('refuses a token that does not verify', async () => {
@@ -79,11 +94,11 @@ describe('AuthRefreshTokenUseCase', () => {
     const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
 
     expect(result.value).toBeInstanceOf(ForbiddenException);
-    expect(getOne).not.toHaveBeenCalled();
+    expect(getById).not.toHaveBeenCalled();
   });
 
   it('refuses a token whose session was ended by a logout', async () => {
-    getOne.mockResolvedValue(left(new NotFoundException('Session not found')));
+    getById.mockResolvedValue(left(new NotFoundException('Session not found')));
 
     const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
 
@@ -92,20 +107,42 @@ describe('AuthRefreshTokenUseCase', () => {
   });
 
   it('refuses a token whose session belongs to another user', async () => {
-    getOne.mockResolvedValue(right({ ...session, userId: 'someone-else' }));
+    getById.mockResolvedValue(right({ ...session, userId: 'someone-else' }));
 
     const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
 
     expect(result.value).toBeInstanceOf(ForbiddenException);
     expect(generateTokens).not.toHaveBeenCalled();
+    expect(deleteById).not.toHaveBeenCalled();
   });
 
-  it('withholds the new tokens when a logout deleted the session meanwhile', async () => {
-    updateById.mockResolvedValue(left(new NotFoundException('Session not found')));
+  it('ends the session when a replaced token is presented again', async () => {
+    getById.mockResolvedValue(right({ ...session, tokenId: 'a-later-token-id' }));
+
+    const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
+
+    expect(result.value).toBeInstanceOf(ForbiddenException);
+    expect(deleteById).toHaveBeenCalledWith(SESSION_ID);
+    expect(generateTokens).not.toHaveBeenCalled();
+  });
+
+  it('ends the session when another refresh spent the same token first', async () => {
+    rotateToken.mockResolvedValue(false);
 
     const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
 
     expect(result.isLeft()).toBe(true);
     expect(result.value).toBeInstanceOf(ForbiddenException);
+    expect(deleteById).toHaveBeenCalledWith(SESSION_ID);
+  });
+
+  it('still refuses when the reused session cannot be deleted, and logs it', async () => {
+    getById.mockResolvedValue(right({ ...session, tokenId: 'a-later-token-id' }));
+    deleteById.mockResolvedValue(left(new Error('connection terminated')));
+
+    const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });
+
+    expect(result.value).toBeInstanceOf(ForbiddenException);
+    expect(Logger.prototype.error).toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import { NestAuth } from '@backend/proto';
 import {
   AuthRefreshTokenPayloadParsed,
+  AuthRefreshTokenSession,
   AuthTokenPayload,
   AuthTokenPayloadParsed,
 } from '@modules/auth/domain/interfaces/auth.interface';
@@ -49,8 +50,8 @@ export class JwtAuthTokenServiceImpl implements AuthTokenService {
         _.pick(options, ['secret', 'issuer', 'audience']),
       );
 
-      // No `jti`, no session to check it against: a token from before sessions is refused.
-      if (!payload?.jti) {
+      // Without both, no session to check it against: an older token is refused.
+      if (!payload?.sid || !payload.jti) {
         throw new Error();
       }
 
@@ -62,7 +63,7 @@ export class JwtAuthTokenServiceImpl implements AuthTokenService {
 
   async generateTokens(
     payload: AuthTokenPayload,
-    sessionTokenId: string,
+    session: AuthRefreshTokenSession,
   ): Promise<Either<Error, NestAuth.AuthTokens>> {
     try {
       const accessTokenOptions = this.configService.get('accessToken', { infer: true });
@@ -79,7 +80,10 @@ export class JwtAuthTokenServiceImpl implements AuthTokenService {
             'audience',
           ]),
         ),
-        this.jwtService.signAsync(payload, { ...refreshTokenOptions, jwtid: sessionTokenId }),
+        this.jwtService.signAsync(
+          { ...payload, sid: session.sessionId },
+          { ...refreshTokenOptions, jwtid: session.tokenId },
+        ),
       ]);
 
       const accessTokenPayload = this.parseAccessTokenPayload(accessToken);

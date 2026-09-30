@@ -11,8 +11,24 @@ export interface AuthSessionCreate {
   expiredAt: Date;
 }
 
+export interface AuthSessionRotation {
+  tokenId: string;
+  expiredAt: Date;
+}
+
 export abstract class AuthSessionRepository extends DatabaseRepository<
   AuthSession,
   AuthSessionQuery,
   AuthSessionCreate
-> {}
+> {
+  /**
+   * Replaces the session's `tokenId` only while it still is `currentTokenId`, as one atomic write.
+   * `false` when it no longer was — another refresh spent the token first, or a logout deleted the
+   * session. A failure is thrown, never reported as `false`.
+   */
+  abstract rotateToken(
+    id: string,
+    currentTokenId: string,
+    next: AuthSessionRotation,
+  ): Promise<boolean>;
+}

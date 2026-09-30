@@ -127,7 +127,8 @@ export class AuthService {
    *
    * One gateway call per refresh token: the parallel requests of a page each arrive without an
    * access token, and they share the first one's refresh (`SingleFlight`) rather than spending the
-   * gateway's public rate limit — and, once refresh tokens rotate, refusing each other.
+   * gateway's public rate limit. It is also what keeps the session: refresh tokens rotate, and
+   * the gateway ends a session whose token is spent twice (ADR-0029).
    */
   async refreshSession(
     refreshToken: string | undefined,
