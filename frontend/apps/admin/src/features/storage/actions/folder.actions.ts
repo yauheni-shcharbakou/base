@@ -107,3 +107,20 @@ export async function createStorageFolder(
     );
   });
 }
+
+/**
+ * Makes an uploaded directory's folders inside `parent` in one call: `paths` are "/"-separated and
+ * relative to it, each nested one's parent listed too. A top-level name taken there gets a ` (n)`
+ * suffix. Answered in `paths` order.
+ */
+export async function createStorageFolders(
+  userId: string,
+  parent: string,
+  paths: string[],
+): Promise<ActionResult<ClientStorage.StorageObject[]>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return (await storageObjectGrpcRepository.createFolders({ userId, parent, paths }, metadata))
+      .items;
+  });
+}

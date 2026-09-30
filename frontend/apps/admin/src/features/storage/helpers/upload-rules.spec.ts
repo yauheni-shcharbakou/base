@@ -1,5 +1,5 @@
 import { BrowserStorage } from '@packages/proto';
-import { getUploadKind, readDroppedFiles, sortUploads, toDropzoneAccept } from './upload-rules';
+import { getUploadKind, sortUploads, toDropzoneAccept } from './upload-rules';
 
 const { FILE, IMAGE, VIDEO } = BrowserStorage.StorageObjectType;
 
@@ -32,34 +32,6 @@ describe('sortUploads', () => {
       { name: 'empty.txt', reason: 'empty' },
       { name: 'big.png', reason: 'over 100 MB' },
     ]);
-  });
-});
-
-describe('readDroppedFiles', () => {
-  const itemOf = (file: File, isDirectory = false) => ({
-    kind: 'file',
-    getAsFile: () => file,
-    webkitGetAsEntry: () => ({ isDirectory }),
-  });
-
-  it('leaves out folders and counts them', () => {
-    const file = fileOf('a.txt', 'text/plain');
-    const dropped = readDroppedFiles({
-      items: [itemOf(file), itemOf(fileOf('docs', ''), true)] as unknown as DataTransferItemList,
-      files: [] as unknown as FileList,
-    });
-
-    expect(dropped).toEqual({ files: [file], folderCount: 1 });
-  });
-
-  it('falls back on the file list without items', () => {
-    const file = fileOf('a.txt', 'text/plain');
-    const dropped = readDroppedFiles({
-      items: [] as unknown as DataTransferItemList,
-      files: [file] as unknown as FileList,
-    });
-
-    expect(dropped).toEqual({ files: [file], folderCount: 0 });
   });
 });
 

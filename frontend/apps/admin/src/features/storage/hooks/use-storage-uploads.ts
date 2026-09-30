@@ -2,14 +2,20 @@
 
 import { getErrorMessage } from '@/common/helpers';
 import { deleteOne } from '@/features/grpc/actions';
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
+import { completeFileUploads } from '@/features/storage/actions';
+import { putToPresignedUrl } from '@/features/storage/helpers/presigned-upload';
 import { hasUsableCredentials, pairCreatedEntities } from '@/features/storage/helpers/upload-batch';
 import {
+  getCompleteDeadline,
+  isRateLimited,
   pickUploadWork,
   QueuedUpload,
   UPLOAD_CONCURRENCY,
+  UPLOAD_RATE_LIMIT_PAUSE_MS,
+  UploadWork,
 } from '@/features/storage/helpers/upload-queue';
 import type { UploadKind } from '@/features/storage/helpers/upload-rules';
-import { uploadViaPresignedUrl } from '@/features/storage/helpers/presigned-upload';
 import {
   CreatedFile,
   CreatedImage,
@@ -25,7 +31,8 @@ import { BrowserStorage } from '@packages/proto';
 import { useSyncExternalStore } from 'react';
 import { monotonicFactory } from 'ulid';
 
-export type UploadTarget = Pick<QueuedUpload, 'userId' | 'folder'>;
+/** A file to upload, the kind it goes as, and the folder of the owner it goes into. */
+export type UploadRequest = Pick<QueuedUpload, 'file' | 'kind' | 'folder'>;
 
 const { FILE, IMAGE, VIDEO } = BrowserStorage.StorageObjectType;
 
@@ -49,32 +56,37 @@ const createRecords = (kind: UploadKind, items: QueuedUpload[]): Promise<Created
   }
 };
 
+// The bytes only. A file or an image is confirmed afterwards, with others (`complete`).
 const sendBytes = (item: QueuedUpload, onProgress: (percent: number) => void): Promise<void> => {
   switch (item.kind) {
-    case IMAGE: {
-      // An image completes by its file's id, not its own.
-      const { fileId, upload } = item.entity as CreatedImage;
-      return uploadViaPresignedUrl(item.file, upload, fileId, { onProgress });
-    }
     case VIDEO:
       return uploadViaTus(item.file, (item.entity as CreatedVideo).upload, { onProgress });
-    default: {
-      const { id, upload } = item.entity as CreatedFile;
-      return uploadViaPresignedUrl(item.file, upload, id, { onProgress });
-    }
+    default:
+      return putToPresignedUrl(item.file, (item.entity as CreatedFile | CreatedImage).upload, {
+        onProgress,
+      });
   }
 };
 
+// What confirms an upload: a file's own id, an image's backing file's.
+const getFileId = ({ kind, entity }: QueuedUpload): string =>
+  kind === IMAGE ? (entity as CreatedImage).fileId : (entity as CreatedFile).id;
+
 /**
  * Drive's upload queue: files dropped on the folder browser, created and uploaded in the order they
- * came, a few transfers at a time, while the admin moves on to other pages. It lives outside React,
- * so no page owns it; `StorageUploadPanel` shows it and refreshes the listings as items finish.
+ * came, a few transfers at a time, while the admin moves on to other pages. Every step that calls
+ * the backend takes many files at once — records made ten at a time, uploads confirmed twenty at a
+ * time — and a call refused by the gateway's rate limit pauses the queue instead of failing files.
+ * It lives outside React, so no page owns it; `StorageUploadPanel` shows it and refreshes the
+ * listings as items finish.
  */
 class StorageUploadQueue {
   private items: QueuedUpload[] = [];
   private running = 0;
   private listeners = new Set<() => void>();
   private nextKey = monotonicFactory();
+  private pausedUntil = 0;
+  private wakeTimer?: ReturnType<typeof setTimeout>;
 
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -83,12 +95,13 @@ class StorageUploadQueue {
 
   getSnapshot = () => this.items;
 
-  enqueue(files: { file: File; kind: UploadKind }[], target: UploadTarget) {
-    const added = files.map<QueuedUpload>(({ file, kind }) => ({
-      ...target,
+  enqueue(files: UploadRequest[], userId: string) {
+    const added = files.map<QueuedUpload>(({ file, kind, folder }) => ({
       key: this.nextKey(),
       file,
       kind,
+      userId,
+      folder,
       status: 'queued',
       progress: 0,
     }));
@@ -112,6 +125,7 @@ class StorageUploadQueue {
               ...item,
               status: 'queued',
               progress: 0,
+              uploadedAt: undefined,
               error: undefined,
               entity:
                 item.entity && hasUsableCredentials(item.entity, now) ? item.entity : undefined,
@@ -161,22 +175,52 @@ class StorageUploadQueue {
   }
 
   private pump() {
-    while (this.running < UPLOAD_CONCURRENCY) {
+    clearTimeout(this.wakeTimer);
+
+    while (this.running < UPLOAD_CONCURRENCY && Date.now() >= this.pausedUntil) {
       const work = pickUploadWork(this.items);
 
       if (!work) {
-        return;
+        break;
       }
 
       this.running += 1;
 
-      const run = work.type === 'upload' ? this.upload(work.key) : this.create(work.keys);
+      const run = this.run(work);
 
       run.finally(() => {
         this.running -= 1;
         this.pump();
       });
     }
+
+    this.scheduleWake();
+  }
+
+  private run(work: UploadWork): Promise<void> {
+    switch (work.type) {
+      case 'upload':
+        return this.upload(work.key);
+      case 'create':
+        return this.create(work.keys);
+      default:
+        return this.complete(work.keys);
+    }
+  }
+
+  // Nothing wakes the queue when uploaded items fall due or a pause runs out: a timer does. With
+  // every slot busy there is no need — the next run to end pumps again.
+  private scheduleWake() {
+    const now = Date.now();
+    const wakeAt = this.pausedUntil > now ? this.pausedUntil : getCompleteDeadline(this.items);
+
+    if (wakeAt !== undefined && this.running < UPLOAD_CONCURRENCY) {
+      this.wakeTimer = setTimeout(() => this.pump(), Math.max(wakeAt - now, 0));
+    }
+  }
+
+  private pauseForRateLimit() {
+    this.pausedUntil = Date.now() + UPLOAD_RATE_LIMIT_PAUSE_MS;
   }
 
   private async create(keys: string[]) {
@@ -188,6 +232,37 @@ class StorageUploadQueue {
       // Back in the queue, now with credentials: the next turn uploads them.
       this.patch(keys, (item) => ({ status: 'queued', entity: created.get(item.key) }));
     } catch (error) {
+      if (isRateLimited(error)) {
+        this.pauseForRateLimit();
+        this.patch(keys, { status: 'queued' });
+        return;
+      }
+
+      this.patch(keys, { status: 'failed', error: getErrorMessage(error) });
+    }
+  }
+
+  private async complete(keys: string[]) {
+    this.patch(keys, { status: 'completing' });
+    const items = this.items.filter(({ key }) => keys.includes(key));
+
+    try {
+      const results = unwrapActionResult(await completeFileUploads(items.map(getFileId)));
+
+      this.patch(keys, (item) => {
+        const result = results[items.indexOf(item)];
+
+        return result?.file
+          ? { status: 'done' }
+          : { status: 'failed', error: result?.error ?? 'The upload was not confirmed' };
+      });
+    } catch (error) {
+      if (isRateLimited(error)) {
+        this.pauseForRateLimit();
+        this.patch(keys, { status: 'uploaded' });
+        return;
+      }
+
       this.patch(keys, { status: 'failed', error: getErrorMessage(error) });
     }
   }
@@ -207,7 +282,12 @@ class StorageUploadQueue {
           this.patch([key], { progress });
         }
       });
-      this.patch([key], { status: 'done', progress: 100 });
+      this.patch(
+        [key],
+        item.kind === VIDEO
+          ? { status: 'done', progress: 100 }
+          : { status: 'uploaded', progress: 100, uploadedAt: Date.now() },
+      );
     } catch (error) {
       this.patch([key], { status: 'failed', error: getErrorMessage(error) });
     }

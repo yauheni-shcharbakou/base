@@ -18,6 +18,7 @@ export * from './storage-batch';
 export * from './storage-meta.schema';
 export * from './upload-queue';
 export * from './upload-rules';
+export * from './upload-tree';
 
 export const getFileSize = (sizeInBytes = 0): string => {
   if (!sizeInBytes) {

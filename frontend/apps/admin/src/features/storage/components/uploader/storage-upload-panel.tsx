@@ -75,7 +75,10 @@ const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
       );
     case 'uploading':
       return <CircularProgress size={20} variant="determinate" value={item.progress} />;
+    // Made, or sent and being confirmed: nothing to measure.
     case 'creating':
+    case 'uploaded':
+    case 'completing':
       return <CircularProgress size={20} />;
     default:
       return (

@@ -1,6 +1,7 @@
 import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import {
   createStorageFolder,
+  createStorageFolders,
   deleteStorageObjects,
   getFolderContent,
   getRootFolder,
@@ -39,5 +40,13 @@ export class FolderActionProvider {
     name: string,
   ): Promise<BrowserStorage.StorageObject> {
     return unwrapActionResult(await createStorageFolder(userId, parent, name));
+  }
+
+  async createFolders(
+    userId: string,
+    parent: string,
+    paths: string[],
+  ): Promise<BrowserStorage.StorageObject[]> {
+    return unwrapActionResult(await createStorageFolders(userId, parent, paths));
   }
 }

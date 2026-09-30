@@ -13,3 +13,16 @@ export async function completeFileUpload(id: string): Promise<ActionResult<Clien
     return fileGrpcRepository.completeUpload({ id }, metadata);
   });
 }
+
+/**
+ * Confirms up to a hundred direct uploads in one call, each on its own: the answer holds, in `ids`
+ * order, the completed file or the error a single confirmation would have given.
+ */
+export async function completeFileUploads(
+  ids: string[],
+): Promise<ActionResult<ClientStorage.FileCompleteResult[]>> {
+  return runAction(async () => {
+    const metadata = await authService.getAuthMetadata();
+    return (await fileGrpcRepository.completeByIds({ ids }, metadata)).items;
+  });
+}

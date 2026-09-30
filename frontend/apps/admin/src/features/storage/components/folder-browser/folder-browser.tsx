@@ -31,6 +31,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CircularProgress,
   Divider,
   LinearProgress,
   Paper,
@@ -452,7 +453,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
               <FolderNewMenu
                 folderId={folderId}
                 userId={content.folder.userId}
-                onUpload={(files) => fileDrop.upload(files, shownFolder)}
+                onUpload={(files) => fileDrop.uploadFiles(files, shownFolder)}
+                onUploadFolder={(files) => fileDrop.uploadDirectory(files, shownFolder)}
               />
             )}
             <Button
@@ -530,7 +532,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onConfirm={confirmDelete}
       />
       {fileDropTarget && (
-        // Drive's drop area: the folder outlined, and where the files are going.
+        // Drive's drop area: the folder outlined.
         <Box
           aria-hidden
           sx={{
@@ -543,30 +545,41 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             pointerEvents: 'none',
             zIndex: 1,
           }}
+        />
+      )}
+      {(fileDropTarget || fileDrop.preparing) && (
+        // Where the files are going, and then that their folders are being read and made.
+        <Paper
+          elevation={6}
+          role="status"
+          sx={{
+            position: 'fixed',
+            left: '50%',
+            bottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2,
+            py: 1,
+            maxWidth: 'calc(100vw - 32px)',
+            bgcolor: 'primary.main',
+            color: 'primary.contrastText',
+            pointerEvents: 'none',
+            zIndex: (theme) => theme.zIndex.snackbar,
+          }}
         >
-          <Paper
-            elevation={6}
-            sx={{
-              position: 'fixed',
-              left: '50%',
-              bottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
-              transform: 'translateX(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              px: 2,
-              py: 1,
-              maxWidth: 'calc(100vw - 32px)',
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-            }}
-          >
+          {fileDropTarget ? (
             <CloudUploadOutlined />
-            <Typography variant="body2" noWrap>
-              Drop files to upload them to “{fileDropTarget.name}”
-            </Typography>
-          </Paper>
-        </Box>
+          ) : (
+            <CircularProgress size={20} color="inherit" />
+          )}
+          <Typography variant="body2" noWrap>
+            {fileDropTarget
+              ? `Drop files or folders to upload them to “${fileDropTarget.name}”`
+              : `Preparing the upload to “${fileDrop.preparing?.name}”…`}
+          </Typography>
+        </Paper>
       )}
       {content && (
         <MoveStorageItemsDialog

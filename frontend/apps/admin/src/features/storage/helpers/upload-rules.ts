@@ -77,35 +77,3 @@ export const sortUploads = (files: File[]): SortedUploads => {
 
 /** A drag that carries files from outside the page — the desktop, a file manager. */
 export const isFileDrag = (types: readonly string[]) => types.includes('Files');
-
-/**
- * The files of a drop, and how many folders came with them. A folder is not uploaded: there is no
- * tree upload, and its entry reads as a nameless empty file. Read during the drop event — the list
- * is emptied once it returns.
- */
-export const readDroppedFiles = (
-  dataTransfer: Pick<DataTransfer, 'items' | 'files'>,
-): { files: File[]; folderCount: number } => {
-  const items = Array.from(dataTransfer.items ?? []).filter(({ kind }) => kind === 'file');
-
-  if (!items.length) {
-    return { files: Array.from(dataTransfer.files ?? []), folderCount: 0 };
-  }
-
-  const dropped = { files: [] as File[], folderCount: 0 };
-
-  items.forEach((item) => {
-    if (item.webkitGetAsEntry?.()?.isDirectory) {
-      dropped.folderCount += 1;
-      return;
-    }
-
-    const file = item.getAsFile();
-
-    if (file) {
-      dropped.files.push(file);
-    }
-  });
-
-  return dropped;
-};

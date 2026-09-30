@@ -1,5 +1,13 @@
 import { BrowserStorage } from '@packages/proto';
-import { pickUploadWork, QueuedUpload, summarizeUploads } from './upload-queue';
+import {
+  getCompleteDeadline,
+  isRateLimited,
+  pickUploadWork,
+  QueuedUpload,
+  summarizeUploads,
+  UPLOAD_COMPLETE_BATCH,
+  UPLOAD_COMPLETE_DELAY_MS,
+} from './upload-queue';
 
 const { FILE, VIDEO } = BrowserStorage.StorageObjectType;
 const NOW = 1_000_000_000_000;
@@ -40,8 +48,57 @@ describe('pickUploadWork', () => {
     expect(pickUploadWork(items, NOW)).toEqual({ type: 'create', keys: ['a'] });
   });
 
+  describe('confirming', () => {
+    const uploaded = (key: string, uploadedAt = NOW) =>
+      itemOf(key, { status: 'uploaded', progress: 100, uploadedAt, entity: fresh });
+
+    it('waits for more uploads to confirm with while others are on their way', () => {
+      const items = [uploaded('a'), itemOf('b', { status: 'uploading' })];
+      expect(pickUploadWork(items, NOW + UPLOAD_COMPLETE_DELAY_MS - 1)).toBeUndefined();
+    });
+
+    it('confirms once the oldest has waited long enough', () => {
+      const items = [uploaded('a'), uploaded('b', NOW + 500), itemOf('c', { status: 'uploading' })];
+
+      expect(getCompleteDeadline(items)).toBe(NOW + UPLOAD_COMPLETE_DELAY_MS);
+      expect(pickUploadWork(items, NOW + UPLOAD_COMPLETE_DELAY_MS)).toEqual({
+        type: 'complete',
+        keys: ['a', 'b'],
+      });
+    });
+
+    it('confirms at once when nothing else is on its way', () => {
+      const items = [uploaded('a'), itemOf('b', { status: 'done' })];
+      expect(pickUploadWork(items, NOW)).toEqual({ type: 'complete', keys: ['a'] });
+    });
+
+    it('confirms a full batch at once, and no more than one', () => {
+      const items = [
+        ...Array.from({ length: UPLOAD_COMPLETE_BATCH + 1 }, (_, i) => uploaded(`u${i}`)),
+        itemOf('q', { entity: fresh }),
+      ];
+      const work = pickUploadWork(items, NOW);
+
+      expect(work?.type).toBe('complete');
+      expect(work?.type === 'complete' && work.keys).toHaveLength(UPLOAD_COMPLETE_BATCH);
+    });
+
+    it('goes on uploading while the uploaded wait', () => {
+      const items = [uploaded('a'), itemOf('b', { entity: fresh })];
+      expect(pickUploadWork(items, NOW)).toEqual({ type: 'upload', key: 'b' });
+    });
+  });
+
   it('has nothing to do without a queued item', () => {
     expect(pickUploadWork([itemOf('a', { status: 'failed' })], NOW)).toBeUndefined();
+  });
+});
+
+describe('isRateLimited', () => {
+  it('tells the gateway’s rate limit from any other refusal', () => {
+    expect(isRateLimited(Object.assign(new Error('slow down'), { statusCode: 429 }))).toBe(true);
+    expect(isRateLimited(Object.assign(new Error('bad'), { statusCode: 400 }))).toBe(false);
+    expect(isRateLimited(undefined)).toBe(false);
   });
 });
 
