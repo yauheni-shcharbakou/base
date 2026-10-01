@@ -52,15 +52,6 @@ export async function login(request: ClientAuth.AuthLogin): Promise<AuthActionRe
   }
 }
 
-export async function logout(): Promise<AuthActionResponse> {
-  await authService.logout();
-
-  return {
-    success: true,
-    redirectTo: '/login',
-  };
-}
-
 // Signed out is a 401 (no refresh token, or a refused one) or a 403 (not an admin), which the auth
 // provider's `getIdentity` reads as no identity.
 export async function me(): Promise<ActionResult<ClientAuth.User>> {

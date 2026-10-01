@@ -1,3 +1,4 @@
+import { LOGOUT_PATH } from '@/features/auth/helpers/logout-path';
 import { authService } from '@/features/auth/services';
 import { AUTH_COOKIE_NAMES } from '@/features/auth/services/auth.service';
 import { reportError } from '@/features/grpc/helpers/report-error';
@@ -20,6 +21,12 @@ export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get('refresh-token')?.value;
 
   if (!refreshToken || request.cookies.has('access-token')) {
+    return NextResponse.next();
+  }
+
+  // A sign-out ends the session by the refresh token it has; refreshing first would spend a
+  // rate-limited call on a session about to end, and set the cookies the handler then deletes.
+  if (request.nextUrl.pathname === LOGOUT_PATH) {
     return NextResponse.next();
   }
 

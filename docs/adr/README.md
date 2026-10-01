@@ -62,3 +62,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0033](0033-folder-stats-computed-on-read.md) | A folder's file count, folder count and size are computed on read, never stored | Accepted | `backend.storage`, `@packages/proto`, `frontend.admin` |
 | [0034](0034-image-original-spooled-to-a-temp-file.md) | An image's original is spooled to a temp file for its preview, never held in a JS buffer | Accepted | `backend.storage` |
 | [0035](0035-client-address-from-one-trusted-header.md) | The client address is read from one header the proxy overwrites | Accepted | `frontend.admin`, `backend.api-gateway` |
+| [0036](0036-a-session-ends-with-a-document-load.md) | A session ends with a document load, not a soft navigation | Accepted | `frontend.admin` |
