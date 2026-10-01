@@ -4,15 +4,13 @@ The storage zone must be created **with S3 compatibility on** (dashboard toggle,
 `bunny` CLI `--s3`) — Bunny cannot enable it on an existing zone. Moving off an older zone is the
 runbook [below](#moving-to-a-new-storage-zone).
 
-#### Storage > General
+#### Storage > Access > S3
 
-`Name` => env `BUNNY_STORAGE_ZONE` (also the S3 bucket and access key id)
+`Access Key ID (Storage Zone Name / Bucket)` => env `BUNNY_STORAGE_ZONE` (also the S3 bucket and access key id)
 
-`Main region` => env `BUNNY_STORAGE_S3_REGION` (`de`, `ny`, `uk`, `se`, `sg`, `la`, `jh`, `syd`)
+`Secret Access Key` => env `BUNNY_STORAGE_API_KEY` (also the S3 secret)
 
-#### Storage > Access > API / HTTP
-
-`Access Key (Password)` => env `BUNNY_STORAGE_API_KEY` (also the S3 secret)
+`S3 Region Endpoint URL` => env `BUNNY_STORAGE_S3_REGION` (`de`, `ny`, `uk`, `se`, `sg`, `la`, `jh`, `syd`)
 
 #### CDN > General > Origin
 
