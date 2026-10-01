@@ -4,6 +4,7 @@ import { getNeighbourId, getShortcutKey } from '@/features/storage/helpers';
 import { Box, CircularProgress, Stack } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC, useEffect, useRef } from 'react';
+import { MenuPosition, openOwnMenu } from './context-menu';
 import { GalleryBar } from './gallery-bar';
 import { GalleryInfo } from './gallery-info';
 import { GalleryStage } from './gallery-stage';
@@ -30,6 +31,8 @@ type Props = {
   onDelete?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
+  // A right click on an item of the strip: its menu, by the pointer.
+  onContextMenu?: (item: Item, position: MenuPosition) => void;
   // The folder shown is public: nothing in it goes private.
   isPublicLocked?: boolean;
   onPreviewError?: () => void;
@@ -46,7 +49,8 @@ type Props = {
  * PgUp/PgDn scroll a shown PDF, and K / J / L / M drive a playing video (going up is the folder
  * browser's, in every view). The viewer, once open, has the keys. The selection is kept in the URL.
  * A click in the strip only selects: a video plays on a click on its poster, or by itself in the
- * viewer.
+ * viewer. A right click there opens the item's menu; the stage keeps the browser's own — an
+ * image's, a player's.
  */
 export const FolderGalleryView: FC<Props> = ({
   items,
@@ -61,6 +65,7 @@ export const FolderGalleryView: FC<Props> = ({
   onDelete,
   onRename,
   onPublicChange,
+  onContextMenu,
   isPublicLocked,
   onPreviewError,
   getFolderHref,
@@ -224,6 +229,7 @@ export const FolderGalleryView: FC<Props> = ({
             onToggleInfo={toggleInfo}
             onToggleViewer={() => viewer.open(selected.id)}
             onOpen={onOpenExternal}
+            onUploadAgain={onUploadAgain}
             onDelete={onDelete}
             onRename={onRename}
             onPublicChange={onPublicChange}
@@ -263,6 +269,9 @@ export const FolderGalleryView: FC<Props> = ({
               aria-selected={isSelected}
               onClick={() => onSelect(item.id)}
               onDoubleClick={() => onOpen(item)}
+              onContextMenu={
+                onContextMenu && openOwnMenu((position) => onContextMenu(item, position))
+              }
               sx={{
                 flex: '0 0 auto',
                 width: 48,

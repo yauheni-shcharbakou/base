@@ -7,6 +7,7 @@ import DriveFolderUploadOutlined from '@mui/icons-material/DriveFolderUploadOutl
 import { Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
 import React, { ChangeEvent, FC, ReactNode, RefObject, useRef, useState } from 'react';
 import { MenuShortcut } from './menu-shortcut';
+import { MenuPosition, passRightClickOn } from './context-menu';
 
 type Props = {
   // Drive's "New folder": the caller asks for its name, and owns its shortcut (Shift+F).
@@ -15,6 +16,10 @@ type Props = {
   onUpload: (files: File[]) => void;
   // A folder picked for Drive's "Folder upload": its files, each with its `webkitRelativePath`.
   onUploadFolder: (files: File[]) => void;
+  // Where a right click on the folder's empty space opens the menu, by the pointer. The caller
+  // owns it, and takes it back on `onPositionClose`.
+  position?: MenuPosition;
+  onPositionClose?: () => void;
 };
 
 // The directory picker has no React prop: `webkitdirectory` is set on the element itself.
@@ -24,13 +29,25 @@ const asDirectoryPicker = (input: HTMLInputElement | null) =>
 /**
  * Drive's "New": "Folder" makes one in this folder, "File upload" picks files that upload straight
  * into it, sorted into files, images and videos as a drop is, and "Folder upload" a folder that
- * comes with its whole tree.
+ * comes with its whole tree. One menu, opened from its button or — Drive's right click on the
+ * folder's empty space — at `position`; the pickers stay mounted either way, since a picker answers
+ * after the menu has shut.
  */
-export const FolderNewMenu: FC<Props> = ({ onCreateFolder, onUpload, onUploadFolder }) => {
+export const FolderNewMenu: FC<Props> = ({
+  onCreateFolder,
+  onUpload,
+  onUploadFolder,
+  position,
+  onPositionClose,
+}) => {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
-  const close = () => setAnchor(null);
+
+  const close = () => {
+    setAnchor(null);
+    onPositionClose?.();
+  };
 
   const pick = (upload: (files: File[]) => void) => (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
@@ -79,7 +96,14 @@ export const FolderNewMenu: FC<Props> = ({ onCreateFolder, onUpload, onUploadFol
         hidden
         onChange={pick(onUploadFolder)}
       />
-      <Menu anchorEl={anchor} open={!!anchor} onClose={close}>
+      <Menu
+        anchorEl={anchor}
+        anchorReference={position ? 'anchorPosition' : 'anchorEl'}
+        anchorPosition={position}
+        open={!!anchor || !!position}
+        onClose={close}
+        onContextMenu={passRightClickOn(close)}
+      >
         <MenuItem
           onClick={() => {
             close();

@@ -190,6 +190,7 @@ export const GalleryViewer: FC<Props> = ({
             onToggleInfo={onToggleInfo}
             onToggleViewer={onExit}
             onOpen={onOpen}
+            onUploadAgain={onUploadAgain}
             onDelete={onDelete}
             onRename={onRename}
             onPublicChange={onPublicChange}

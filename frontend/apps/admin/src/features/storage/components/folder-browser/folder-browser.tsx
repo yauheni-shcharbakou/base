@@ -49,6 +49,7 @@ import type { BrowserStorage } from '@packages/proto';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { MenuPosition, openOwnMenu } from './context-menu';
 import { CreateFolderDialog } from './create-folder-dialog';
 import { DeleteStorageItemDialog } from './delete-storage-item-dialog';
 import { FolderBreadcrumbs } from './folder-breadcrumbs';
@@ -61,6 +62,7 @@ import { FolderToolbar } from './folder-toolbar';
 import { GalleryViewer } from './gallery-viewer';
 import { MoveStorageItemsDialog } from './move-storage-items-dialog';
 import { RenameStorageItemDialog } from './rename-storage-item-dialog';
+import { StorageItemActionsMenu } from './storage-item-menu';
 import { useFileDrop } from './use-file-drop';
 import { DropFolder, FolderItemBehavior, useFolderItemBehavior } from './use-folder-item-behavior';
 import { useFolderViewer } from './use-folder-viewer';
@@ -125,6 +127,8 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
  * from its bar, an item's "⋮", a drag onto a folder or a breadcrumb, or the keyboard. An item's "⋮"
  * renames it. Files dropped from the desktop upload into the folder, or
  * into the subfolder or breadcrumb they land on; "New" makes a folder in it, or picks what to upload.
+ * A right click opens, by the pointer, an item's "⋮" — or "New", on the empty space around the items.
+ * A failed upload's "Upload again" is in that "⋮" too.
  */
 export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPreferences }) => {
   const router = useRouter();
@@ -153,6 +157,13 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   const [pendingMove, setPendingMove] = useState<Item[]>();
   const [pendingRename, setPendingRename] = useState<Item>();
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  // Drive's right click, one menu at a time: an item's own by the pointer — or, on the folder's
+  // empty space, "New". Shut, it keeps what it showed while it fades.
+  const [contextMenu, setContextMenu] = useState<{
+    position: MenuPosition;
+    item?: Item;
+    isOpen: boolean;
+  }>();
   const contentRef = useRef<HTMLDivElement>(null);
   const isGallery = params.view === FolderView.GALLERY;
   const rootLabel = useRootFolderLabel(content?.folder.userId);
@@ -418,11 +429,36 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     [setParams, isGallery],
   );
 
+  const closeContextMenu = () => setContextMenu((menu) => menu && { ...menu, isOpen: false });
+
+  // The item becomes the selection unless it is part of it, as its "⋮" makes it — the gallery's one
+  // selected item, in its strip. The held item is deleted already: it has no menu, as its "⋮" rests.
+  const openItemMenu = (item: Item, position: MenuPosition) => {
+    if (item.id === heldId) {
+      return;
+    }
+
+    if (isGallery) {
+      selectItem(item.id);
+    } else {
+      selection.ensureSelected(item);
+    }
+
+    setContextMenu({ position, item, isOpen: true });
+  };
+
+  // On the empty space around the items, which a click clears the selection from.
+  const openFolderMenu = openOwnMenu((position) => {
+    selection.clear();
+    setContextMenu({ position, isOpen: true });
+  });
+
   const itemBehavior = useFolderItemBehavior({
     selectedItems: selection.selectedItems,
     selectedIds: selection.selectedIds,
     onClick: selection.click,
     onOpen: openItem,
+    onContextMenu: openItemMenu,
     onDragStart: selection.ensureSelected,
     onDrop: move,
     onFilesDrop: fileDrop.uploadDropped,
@@ -439,6 +475,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       onMove: (item) => askMove(getActionItems(item)),
       onDelete: (item) => askDelete(getActionItems(item)),
       onRename: askRename,
+      onUploadAgain: reupload.uploadAgain,
       onPublicChange: (item, isPublic) => setPublic(getActionItems(item), isPublic),
       getActionCount: (item) => getActionItems(item).length,
       getActionsPublic: (item) => getActionItems(item).every((action) => action.isPublic),
@@ -585,6 +622,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             onDelete={(item) => askDelete([item])}
             onRename={askRename}
             onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
+            onContextMenu={openItemMenu}
             isPublicLocked={isPublicLocked}
             onPreviewError={refreshPreviews}
             getFolderHref={getFolderHref}
@@ -618,6 +656,13 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   }
 
   const fileDropTarget = fileDrop.isOver ? (behavior.dropTarget ?? shownFolder) : undefined;
+  const openMenuPosition = contextMenu?.isOpen ? contextMenu.position : undefined;
+  // As listed now, where it still is: the menu's switch follows a change made meanwhile.
+  const menuItem =
+    contextMenu?.item && (items.find(({ id }) => id === contextMenu.item?.id) ?? contextMenu.item);
+  // The gallery's stage keeps the browser's own menu — an image's, a player's — so only an empty
+  // folder has "New" under the pointer there; its strip's items have their own.
+  const hasFolderMenu = !!content && (!isGallery || !items.length);
 
   return (
     <Card {...fileDrop.zoneProps} sx={{ position: 'relative' }}>
@@ -653,6 +698,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
               onCreateFolder={() => setIsCreatingFolder(true)}
               onUpload={(files) => fileDrop.uploadFiles(files, shownFolder)}
               onUploadFolder={(files) => fileDrop.uploadDirectory(files, shownFolder)}
+              position={contextMenu?.item ? undefined : openMenuPosition}
+              onPositionClose={closeContextMenu}
             />
           )
         }
@@ -680,6 +727,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       <CardContent
         ref={contentRef}
         {...(isGallery ? {} : marquee.handlers)}
+        onContextMenu={hasFolderMenu ? openFolderMenu : undefined}
         sx={{ position: 'relative', minHeight: 240 }}
       >
         {content ? renderView(items) : <LoadingGrid />}
@@ -723,6 +771,26 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onConfirm={confirmDelete}
       />
       <RenameStorageItemDialog item={pendingRename} onClose={() => setPendingRename(undefined)} />
+      {menuItem && (
+        <StorageItemActionsMenu
+          // Opened anew at every point: a right click beside it moves it, and its first entry
+          // takes the focus again.
+          key={`${menuItem.id}:${contextMenu?.position.left}:${contextMenu?.position.top}`}
+          item={menuItem}
+          anchorPosition={openMenuPosition}
+          onClose={closeContextMenu}
+          getFolderHref={behavior.menu.getFolderHref}
+          // The gallery moves nothing, as its bar's "⋮" does not.
+          onMove={isGallery ? undefined : behavior.menu.onMove}
+          onDelete={behavior.menu.onDelete}
+          onRename={behavior.menu.onRename}
+          onUploadAgain={behavior.menu.onUploadAgain}
+          onPublicChange={behavior.menu.onPublicChange}
+          isPublic={behavior.menu.getActionsPublic(menuItem)}
+          isPublicLocked={behavior.menu.isPublicLocked}
+          actionCount={behavior.menu.getActionCount(menuItem)}
+        />
+      )}
       <GalleryViewer
         open={viewer.isOpen}
         item={viewer.current}

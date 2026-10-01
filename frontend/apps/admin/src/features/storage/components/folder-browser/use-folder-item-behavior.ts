@@ -2,6 +2,7 @@ import { isFileDrag } from '@/features/storage/helpers';
 import { ITEM_ID_ATTRIBUTE } from '@/features/storage/hooks';
 import type { BrowserStorage } from '@packages/proto';
 import { DragEvent, MouseEvent, useCallback, useRef, useState } from 'react';
+import { MenuPosition, openOwnMenu } from './context-menu';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
 
@@ -17,6 +18,8 @@ type Options = {
   selectedIds: ReadonlySet<string>;
   onClick: (item: Item, modifiers: { toggle: boolean; range: boolean }) => void;
   onOpen: (item: Item) => void;
+  // A right click on the item — or the keyboard's menu key with the item in focus.
+  onContextMenu: (item: Item, position: MenuPosition) => void;
   onDragStart: (item: Item) => void;
   onDrop: (items: Item[], target: DropFolder) => void;
   // Files from the desktop, dropped on a folder. None: a folder takes no files.
@@ -45,15 +48,16 @@ const showDragCount = (event: DragEvent, count: number) => {
 
 /**
  * What an item of the grid or the list does under the pointer, the way Drive's do: a click selects
- * (⌘ adds or takes, Shift a range), a double click opens, and a drag carries the selection — or the
- * item alone when it is not part of it — onto a folder of the page or a breadcrumb. Those take files
- * from the desktop too.
+ * (⌘ adds or takes, Shift a range), a double click opens, a right click opens its menu, and a drag
+ * carries the selection — or the item alone when it is not part of it — onto a folder of the page
+ * or a breadcrumb. Those take files from the desktop too.
  */
 export const useFolderItemBehavior = ({
   selectedItems,
   selectedIds,
   onClick,
   onOpen,
+  onContextMenu,
   onDragStart,
   onDrop,
   onFilesDrop,
@@ -119,6 +123,7 @@ export const useFolderItemBehavior = ({
       onClick: (event: MouseEvent) =>
         onClick(item, { toggle: event.metaKey || event.ctrlKey, range: event.shiftKey }),
       onDoubleClick: () => onOpen(item),
+      onContextMenu: openOwnMenu((position) => onContextMenu(item, position)),
       onDragStart: (event: DragEvent) => {
         const moved = selectedIds.has(item.id) ? selectedItems : [item];
 
@@ -134,7 +139,16 @@ export const useFolderItemBehavior = ({
       onDragEnd: endDrag,
       ...(item.isFolder ? getDropProps(item) : {}),
     }),
-    [selectedItems, selectedIds, onClick, onOpen, onDragStart, endDrag, getDropProps],
+    [
+      selectedItems,
+      selectedIds,
+      onClick,
+      onOpen,
+      onContextMenu,
+      onDragStart,
+      endDrag,
+      getDropProps,
+    ],
   );
 
   return { getItemProps, getDropProps, dropTarget, dropTargetId: dropTarget?.id };
@@ -151,6 +165,8 @@ export type FolderItemBehavior = ReturnType<typeof useFolderItemBehavior> & {
     onMove: (item: Item) => void;
     onDelete: (item: Item) => void;
     onRename: (item: Item) => void;
+    // A failed upload's way out: a new file in the item's place.
+    onUploadAgain: (item: Item) => void;
     onPublicChange: (item: Item, isPublic: boolean) => void;
     getActionCount: (item: Item) => number;
     // Whether everything the item's actions take is public.

@@ -3,6 +3,7 @@ import {
   findFailedUpload,
   findUploadOf,
   getCompleteDeadline,
+  getItemUploadState,
   getUploadFileId,
   getUploadProgress,
   getUploadRowStatus,
@@ -212,6 +213,61 @@ describe('getUploadProgress', () => {
     expect(progressOf({ status: 'done', replaces: 'item-1' })).toEqual(finishing);
     expect(progressOf({ status: 'failed', replaces: 'item-1' })).toEqual(finishing);
     expect(progressOf({ status: 'done', replaces: 'item-1' }, 'item-2')).toBeUndefined();
+  });
+});
+
+describe('getItemUploadState', () => {
+  const { PENDING, FAILED, READY } = BrowserStorage.FileUploadStatus;
+  const itemAt = (uploadStatus: BrowserStorage.FileUploadStatus) => ({
+    id: 'item-1',
+    file: { uploadStatus },
+  });
+  const reason = 'Upload not finished';
+
+  it('says nothing of an item that opens', () => {
+    const upload = itemOf('a', { status: 'uploading', progress: 42 });
+
+    expect(getItemUploadState(itemAt(READY), undefined, upload)).toBeUndefined();
+  });
+
+  it('tells this tab’s upload on its way, whatever the row says', () => {
+    const progress = { label: 'Uploading… 42%', percent: 42 };
+    const upload = itemOf('a', { status: 'uploading', progress: 42 });
+
+    expect(getItemUploadState(itemAt(PENDING), reason, upload)).toEqual({
+      type: 'progress',
+      progress,
+    });
+    expect(getItemUploadState(itemAt(FAILED), reason, upload)).toEqual({
+      type: 'progress',
+      progress,
+    });
+  });
+
+  it('is failed by the backend’s word', () => {
+    expect(getItemUploadState(itemAt(FAILED), reason, undefined)).toEqual({ type: 'failed' });
+  });
+
+  it('is failed once this tab’s upload died, though the row is still PENDING', () => {
+    const upload = itemOf('a', { status: 'failed' });
+
+    expect(getItemUploadState(itemAt(PENDING), reason, upload)).toEqual({ type: 'failed' });
+  });
+
+  it('is awaited without an upload here, and with no file at all', () => {
+    expect(getItemUploadState(itemAt(PENDING), reason, undefined)).toEqual({ type: 'waiting' });
+    expect(getItemUploadState({ id: 'item-1' }, 'No file to open', undefined)).toEqual({
+      type: 'waiting',
+    });
+  });
+
+  it('keeps the replaced item in progress once its replacement rests', () => {
+    const upload = itemOf('a', { status: 'failed', replaces: 'item-1' });
+
+    expect(getItemUploadState(itemAt(FAILED), reason, upload)).toEqual({
+      type: 'progress',
+      progress: { label: 'Finishing…' },
+    });
   });
 });
 

@@ -210,6 +210,38 @@ export const getUploadProgress = (
   }
 };
 
+export type ItemUploadState =
+  { type: 'progress'; progress: UploadProgress } | { type: 'failed' } | { type: 'waiting' };
+
+/**
+ * What a folder item that cannot be opened is at, for whatever shows it — its stage, its row of the
+ * list: this tab's upload on its way (`getUploadProgress`), an upload that failed, or one still
+ * awaited. `unavailableReason` is why it cannot be opened (`getFolderItemUnavailableReason`): none,
+ * and there is nothing to say. Failed is the backend's word, or this tab's — its own upload of the
+ * item died, though the row says PENDING until its upload window closes.
+ */
+export const getItemUploadState = (
+  item: { id: string; file?: { uploadStatus?: BrowserStorage.FileUploadStatus } },
+  unavailableReason: string | undefined,
+  upload: Pick<QueuedUpload, 'status' | 'progress' | 'replaces'> | undefined,
+): ItemUploadState | undefined => {
+  if (!unavailableReason) {
+    return undefined;
+  }
+
+  const progress = getUploadProgress(upload, item.id);
+
+  if (progress) {
+    return { type: 'progress', progress };
+  }
+
+  const isFailed =
+    item.file?.uploadStatus === BrowserStorage.FileUploadStatus.FAILED ||
+    upload?.status === 'failed';
+
+  return { type: isFailed ? 'failed' : 'waiting' };
+};
+
 export type UploadSummary = {
   total: number;
   done: number;

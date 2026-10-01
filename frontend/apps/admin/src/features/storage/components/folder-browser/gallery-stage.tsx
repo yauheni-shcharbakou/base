@@ -5,8 +5,8 @@ import {
   getFileUploadStatusColor,
   getFolderItemOpenUrl,
   getFolderItemUnavailableReason,
+  getItemUploadState,
   getStorageItemKind,
-  getUploadProgress,
   isUploadActive,
   PdfControls,
   shouldAutoloadPdf,
@@ -29,7 +29,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { BrowserStorage } from '@packages/proto';
+import type { BrowserStorage } from '@packages/proto';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import React, { FC, RefObject, useEffect, useState } from 'react';
@@ -146,15 +146,11 @@ export const GalleryStage: FC<Props> = ({
   const hasPreview = !!item.previewUrl && !isPreviewFailed;
   const unavailableReason = getFolderItemUnavailableReason(item);
   const uploadStatus = item.file?.uploadStatus;
+  const uploadState = getItemUploadState(item, unavailableReason, upload);
   // What this tab's own upload of the item is at, while it is on its way — the item's, or the one
   // taking its place: the row itself says PENDING, or FAILED, all along.
-  const progress = unavailableReason ? getUploadProgress(upload, item.id) : undefined;
-  // FAILED by the backend's word, or by this tab's: its own upload of the item died, though the row
-  // still says PENDING until its upload window closes.
-  const isUploadFailed =
-    !progress &&
-    (uploadStatus === BrowserStorage.FileUploadStatus.FAILED ||
-      (!!unavailableReason && upload?.status === 'failed'));
+  const progress = uploadState?.type === 'progress' ? uploadState.progress : undefined;
+  const isUploadFailed = uploadState?.type === 'failed';
   const mutedColor = isViewer ? 'grey.400' : 'text.secondary';
 
   const handlePreviewError = () => {

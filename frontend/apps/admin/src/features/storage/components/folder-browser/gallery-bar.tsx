@@ -30,6 +30,8 @@ type Props = {
   // Enters the viewer, or leaves it.
   onToggleViewer: () => void;
   onOpen: (item: Item) => void;
+  // A failed upload's way out, in the "⋮" as on the stage.
+  onUploadAgain?: (item: Item) => void;
   onDelete?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
@@ -54,6 +56,7 @@ export const GalleryBar: FC<Props> = ({
   onToggleInfo,
   onToggleViewer,
   onOpen,
+  onUploadAgain,
   onDelete,
   onRename,
   onPublicChange,
@@ -134,6 +137,7 @@ export const GalleryBar: FC<Props> = ({
           getFolderHref={getFolderHref}
           onDelete={onDelete}
           onRename={onRename}
+          onUploadAgain={onUploadAgain}
           onPublicChange={onPublicChange}
           isPublicLocked={isPublicLocked}
           buttonProps={{ size: 'medium', sx: whiteOrDisabled }}

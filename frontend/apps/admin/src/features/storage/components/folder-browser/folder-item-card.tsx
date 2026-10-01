@@ -106,6 +106,7 @@ export const FolderItemCard: FC<Props> = ({ item, behavior, onPreviewError }) =>
         onMove={menu.onMove}
         onDelete={menu.onDelete}
         onRename={menu.onRename}
+        onUploadAgain={menu.onUploadAgain}
         onPublicChange={menu.onPublicChange}
         isPublic={menu.getActionsPublic(item)}
         isPublicLocked={menu.isPublicLocked}

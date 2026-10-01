@@ -2,14 +2,14 @@
 
 import {
   getFolderItemUnavailableReason,
+  getItemUploadState,
   getStorageItemKind,
-  getUploadProgress,
 } from '@/features/storage/helpers';
 import { useUploadOf } from '@/features/storage/hooks';
 import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded';
 import ScheduleRounded from '@mui/icons-material/ScheduleRounded';
 import { Box, CircularProgress } from '@mui/material';
-import { BrowserStorage } from '@packages/proto';
+import type { BrowserStorage } from '@packages/proto';
 import React, { FC } from 'react';
 import { StorageItemIcon } from './storage-item-icon';
 
@@ -29,49 +29,40 @@ const slotSx = {
 
 /**
  * The icon of a row of the list: the item's kind — or, for a file that cannot be opened yet, what
- * its upload is at, in the same square, since a row has no room for a badge beside its name: a ring
- * for the progress of this tab's upload (`getUploadProgress`), a mark for a failed one, a clock for
- * one still awaited. The words are its title.
+ * its upload is at (`getItemUploadState`), in the same square, since a row has no room for a badge
+ * beside its name: a ring for the progress of this tab's upload, a mark for a failed one, a clock
+ * for one still awaited. The words are its title.
  */
 export const StorageItemRowIcon: FC<Props> = ({ item }) => {
   const upload = useUploadOf(item);
   const reason = getFolderItemUnavailableReason(item);
+  const state = getItemUploadState(item, reason, upload);
 
-  if (!reason) {
+  if (!state) {
     return <StorageItemIcon kind={getStorageItemKind(item)} fontSize="small" />;
   }
 
-  const progress = getUploadProgress(upload, item.id);
+  if (state.type === 'progress') {
+    const { label, percent } = state.progress;
 
-  if (progress) {
     return (
-      <Box component="span" title={progress.label} sx={slotSx}>
+      <Box component="span" title={label} sx={slotSx}>
         <CircularProgress
           size={16}
           thickness={5}
-          variant={progress.percent === undefined ? 'indeterminate' : 'determinate'}
-          value={progress.percent}
+          variant={percent === undefined ? 'indeterminate' : 'determinate'}
+          value={percent}
           aria-label={`Upload progress of ${item.name}`}
         />
       </Box>
     );
   }
 
-  // FAILED by the backend's word, or by this tab's: its own upload of the item died, though the row
-  // says PENDING until its upload window closes.
-  const isFailed =
-    item.file?.uploadStatus === BrowserStorage.FileUploadStatus.FAILED ||
-    upload?.status === 'failed';
+  const label = state.type === 'failed' ? 'Upload failed' : reason;
 
   return (
-    <Box
-      component="span"
-      role="img"
-      title={isFailed ? 'Upload failed' : reason}
-      aria-label={isFailed ? 'Upload failed' : reason}
-      sx={slotSx}
-    >
-      {isFailed ? (
+    <Box component="span" role="img" title={label} aria-label={label} sx={slotSx}>
+      {state.type === 'failed' ? (
         <ErrorOutlineRounded color="error" fontSize="small" />
       ) : (
         <ScheduleRounded color="disabled" fontSize="small" />
