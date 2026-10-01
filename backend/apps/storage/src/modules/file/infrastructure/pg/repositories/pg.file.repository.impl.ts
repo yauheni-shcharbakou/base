@@ -105,6 +105,24 @@ export class PgFileRepositoryImpl
     return this.mapper.stringifyMany(entities) as FileWithMedia[];
   }
 
+  // Straight to the table, like `setPreview`: `updateMany` reads the rows and then writes them,
+  // and would turn FAILED a row that went READY in between.
+  async failPendingBefore(createdBefore: Date): Promise<Either<Error, number>> {
+    try {
+      const affected = await this.repository.nativeUpdate(
+        {
+          uploadStatus: NestStorage.FileUploadStatus.PENDING,
+          createdAt: { $lte: createdBefore },
+        } as FilterQuery<PgFileEntity>,
+        { uploadStatus: NestStorage.FileUploadStatus.FAILED, updatedAt: new Date() },
+      );
+
+      return right(affected);
+    } catch (error) {
+      return left(error as Error);
+    }
+  }
+
   async getOwnerIds(): Promise<string[]> {
     const rows = await this.em.execute<{ user_id: string }[]>(
       `SELECT DISTINCT user_id FROM "${StorageDatabaseEntity.FILE}"`,

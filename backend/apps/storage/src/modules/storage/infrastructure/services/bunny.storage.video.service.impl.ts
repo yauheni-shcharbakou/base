@@ -47,6 +47,10 @@ export class BunnyStorageVideoServiceImpl implements StorageVideoService {
     this.streamConfig = configService.getOrThrow('bunny.stream', { infer: true });
   }
 
+  get uploadWindowMinutes(): number {
+    return this.streamConfig.tus.expiresInMinutes;
+  }
+
   async createVideo(
     data: StorageVideoCreateData,
   ): Promise<Either<InternalServerErrorException, string>> {

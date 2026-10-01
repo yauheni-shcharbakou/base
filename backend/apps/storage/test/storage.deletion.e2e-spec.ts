@@ -8,7 +8,10 @@ import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entit
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { FileDropService } from '@modules/file/application/services/file.drop.service';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
-import { FileCleanupUseCase } from '@modules/file/application/use-cases/file.cleanup.use-case';
+import {
+  FileCleanupUseCase,
+  UPLOAD_GRACE_MINUTES,
+} from '@modules/file/application/use-cases/file.cleanup.use-case';
 import { FileDeleteByOwnerUseCase } from '@modules/file/application/use-cases/file.delete-by-owner.use-case';
 import { StorageObjectPlacementService } from '@modules/storage-object/application/services/storage-object.placement.service';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
@@ -19,6 +22,8 @@ import { StorageObjectCreateOneUseCase } from '@modules/storage-object/applicati
 import { StorageObjectDeleteOneUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-one.use-case';
 import { StorageObjectDeleteRootFolderUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-root-folder.use-case';
 import { PgStorageObjectRepositoryImpl } from '@modules/storage-object/infrastructure/pg/repositories/pg.storage-object.repository.impl';
+import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
 import { PgVideoRepositoryImpl } from '@modules/video/infrastructure/pg/repositories/pg.video.repository.impl';
 import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
 import { BadRequestException } from '@nestjs/common';
@@ -172,10 +177,28 @@ describe('storage deletion against Postgres', () => {
 
   const TTL_HOURS = 24;
 
+  // The longer upload window, a video's: a PENDING row is called failed an hour of grace past it.
+  const UPLOAD_WINDOW_HOURS = 2;
+  const FAIL_AFTER_HOURS = UPLOAD_WINDOW_HOURS + UPLOAD_GRACE_MINUTES / 60;
+
   const fileCleanup = () =>
-    new FileCleanupUseCase(fileRepository, new FileDropService(fileRepository, filePurgeService), {
-      getOrThrow: () => TTL_HOURS,
-    } as unknown as ConfigService<Config>);
+    new FileCleanupUseCase(
+      fileRepository,
+      new FileDropService(fileRepository, filePurgeService),
+      { uploadWindowMinutes: 60 } as StorageFileService,
+      { uploadWindowMinutes: UPLOAD_WINDOW_HOURS * 60 } as StorageVideoService,
+      { getOrThrow: () => TTL_HOURS } as unknown as ConfigService<Config>,
+    );
+
+  const statusOf = async (fileId: string): Promise<string> => {
+    em.clear();
+    const [row] = await em
+      .getConnection()
+      .execute<{ upload_status: string }[]>(`select upload_status from "files" where id = ?`, [
+        fileId,
+      ]);
+    return row.upload_status;
+  };
 
   // `created_at` is set by the entity on insert; the stale sweep keys on it.
   const ageFile = async (fileId: string, hours: number) => {
@@ -661,6 +684,41 @@ describe('storage deletion against Postgres', () => {
 
       assert.equal((await storageObjectRepository.deleteEmptyDeletedFolders()).unwrap(), 0);
       assert.equal(await exists('storage-objects', folder), true);
+    });
+  });
+
+  // The cron's first step: an upload whose window has closed is called failed, long before the TTL.
+  describe('expired upload mark', () => {
+    const { PENDING, UPLOADED, READY, FAILED } = NestStorage.FileUploadStatus;
+
+    withDb('turns FAILED a PENDING row past the upload window, and keeps the row', async () => {
+      const file = await placeFile(root, 'dev/abandoned', PENDING);
+      const video = await placeVideo(root, 'abandoned-guid', PENDING);
+      await ageFile(file.id, FAIL_AFTER_HOURS + 1);
+      await ageFile(video.fileId, FAIL_AFTER_HOURS + 1);
+
+      em.clear();
+      await fileCleanup().execute();
+
+      assert.equal(await statusOf(file.id), FAILED);
+      assert.equal(await statusOf(video.fileId), FAILED);
+      assert.deepEqual(purged, []);
+    });
+
+    withDb('leaves an upload inside the window, and every other status', async () => {
+      const uploading = await placeFile(root, 'dev/uploading', PENDING);
+      const encoding = await placeVideo(root, 'encoding-guid', UPLOADED);
+      const ready = await placeFile(root, 'dev/ready', READY);
+      await ageFile(uploading.id, FAIL_AFTER_HOURS - 1);
+      await ageFile(encoding.fileId, FAIL_AFTER_HOURS + 1);
+      await ageFile(ready.id, FAIL_AFTER_HOURS + 1);
+
+      em.clear();
+      await fileCleanup().execute();
+
+      assert.equal(await statusOf(uploading.id), PENDING);
+      assert.equal(await statusOf(encoding.fileId), UPLOADED);
+      assert.equal(await statusOf(ready.id), READY);
     });
   });
 

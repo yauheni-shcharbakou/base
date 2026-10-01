@@ -36,6 +36,10 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
     this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
   }
 
+  get uploadWindowMinutes(): number {
+    return this.storageConfig.s3.uploadExpiresInMinutes;
+  }
+
   createFile(data: StorageFileCreateData): Either<InternalServerErrorException, string> {
     const extension = extname(data.originalName).replace(/^./g, '');
     const filePath = `${this.storageConfig.rootDir}/${data.userId}/${randomUUID()}.${extension}`;

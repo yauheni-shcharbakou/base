@@ -4,6 +4,8 @@ import { Either } from '@sweet-monads/either';
 import { Readable } from 'node:stream';
 
 export abstract class StorageFileService {
+  /** How long the credentials of `getUploadUrl` let an upload start. */
+  abstract readonly uploadWindowMinutes: number;
   abstract createFile(
     data: StorageFileCreateData,
   ):

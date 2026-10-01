@@ -4,6 +4,8 @@ import { Either } from '@sweet-monads/either';
 import { StorageVideo } from '../entities/storage.video.interface';
 
 export abstract class StorageVideoService {
+  /** How long the credentials of `getTusUpload` let an upload run. */
+  abstract readonly uploadWindowMinutes: number;
   abstract createVideo(
     data: StorageVideoCreateData,
   ):

@@ -29,6 +29,12 @@ export abstract class FileRepository extends DatabaseRepository<
    * owner, so this reaches every media the user holds.
    */
   abstract getManyByOwner(userId: string, limit: number): Promise<FileWithMedia[]>;
+  /**
+   * Turns FAILED every upload still PENDING that was created before `createdBefore`, and answers
+   * how many. One statement, conditional on the status: a confirmation or a provider callback that
+   * lands meanwhile is never overwritten.
+   */
+  abstract failPendingBefore(createdBefore: Date): Promise<Either<Error, number>>;
   /** Every user that owns at least one file. */
   abstract getOwnerIds(): Promise<string[]>;
   /**
