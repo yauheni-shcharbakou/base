@@ -4,7 +4,6 @@ FROM node:22-alpine AS base
 ENV CI=true
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
-ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
