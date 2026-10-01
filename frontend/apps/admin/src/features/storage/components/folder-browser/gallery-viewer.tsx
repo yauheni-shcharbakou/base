@@ -1,6 +1,7 @@
 'use client';
 
 import { getStorageItemKind, PdfControls, StorageItemKind } from '@/features/storage/helpers';
+import { useFoldUploadPanel } from '@/features/storage/hooks';
 import { BunnyPlayerControls } from '@/features/video/components';
 import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
@@ -92,7 +93,8 @@ const StepButton: FC<{
  * The folder browser's full-screen viewer, over any view: one item at a time over black, stepping
  * through the folder until it is left. An image fills the screen, a video plays on arrival, a PDF
  * shows its pages, anything else shows a placeholder to open it by. The keys are
- * `useFolderViewer`'s; the controls fade while the pointer rests.
+ * `useFolderViewer`'s; the controls fade while the pointer rests, and the upload box folds to its
+ * header while the viewer is open.
  */
 export const GalleryViewer: FC<Props> = ({
   open,
@@ -119,6 +121,10 @@ export const GalleryViewer: FC<Props> = ({
 }) => {
   const [isIdle, setIdle] = useState(false);
   const idleTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // The upload box lies over the viewer: open, it would cover the corner of the stage, and on a
+  // narrow window the stage's own buttons.
+  useFoldUploadPanel(open);
 
   const wake = useCallback(() => {
     setIdle(false);

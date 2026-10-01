@@ -14,8 +14,9 @@ import {
 import {
   FOLDER_CONTENT_QUERY_KEY,
   storageUploadQueue,
-  useDroppedUploadRecords,
+  useIsUploadPanelFolded,
   useStorageUploads,
+  useUploadRecordChanges,
 } from '@/features/storage/hooks';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
 import CloseRounded from '@mui/icons-material/CloseRounded';
@@ -28,6 +29,11 @@ import {
   Button,
   CircularProgress,
   Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   LinearProgress,
   Link,
@@ -92,16 +98,39 @@ const UploadProgress: FC<{ item: QueuedUpload }> = ({ item }) => {
   }
 };
 
-// What is still on its way, with the way to stop it: `name` is what the button stops.
+const activeStateSx = {
+  position: 'relative',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 0.5,
+  minWidth: 30,
+  minHeight: 30,
+  // Drive's: under the pointer — or with the keyboard on it — a row's progress gives way to its
+  // cancel. Where nothing hovers, on a touch screen, the two stand side by side.
+  '@media (hover: hover)': {
+    '& .upload-cancel': { position: 'absolute', opacity: 0 },
+    '.MuiListItem-root:hover & .upload-cancel, &:focus-within .upload-cancel': { opacity: 1 },
+    '.MuiListItem-root:hover & .upload-progress, &:focus-within .upload-progress': {
+      visibility: 'hidden',
+    },
+  },
+} as const;
+
+// What is still on its way — `children`, its progress — with the way to stop it: `name` is what
+// the button stops.
 const ActiveState: FC<{ name: string; onCancel: () => void; children: ReactNode }> = ({
   name,
   onCancel,
   children,
 }) => (
-  <Stack direction="row" alignItems="center" gap={0.5}>
-    {children}
+  <Box sx={activeStateSx}>
+    <Box className="upload-progress" sx={{ display: 'flex' }}>
+      {children}
+    </Box>
     <Tooltip title="Cancel">
       <IconButton
+        className="upload-cancel"
         size="small"
         aria-label={`Cancel the upload of ${name}`}
         // Not on a double click's second click: the row is gone by then, and the next one's button
@@ -115,7 +144,7 @@ const ActiveState: FC<{ name: string; onCancel: () => void; children: ReactNode 
         <CloseRounded fontSize="small" />
       </IconButton>
     </Tooltip>
-  </Stack>
+  </Box>
 );
 
 const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
@@ -291,36 +320,116 @@ const FolderUploadRow: FC<{ row: FolderRow }> = ({ row }) => {
   );
 };
 
+type CancelUploadsDialogProps = {
+  open: boolean;
+  // The files still on their way.
+  count: number;
+  // The failed ones, which leave the box with them.
+  failed: number;
+  onClose: () => void;
+  onConfirm: () => void;
+};
+
+/**
+ * Confirms cancelling every upload still on its way, as Drive's box does when it is closed
+ * mid-upload: one click would otherwise throw away a long transfer. An `alertdialog`, so the
+ * folder browser's shortcuts leave its keys alone; the safe answer has the focus.
+ */
+const CancelUploadsDialog: FC<CancelUploadsDialogProps> = ({
+  open,
+  count,
+  failed,
+  onClose,
+  onConfirm,
+}) => {
+  // The counts stay on screen while the dialog fades out after the uploads are gone.
+  const shown = useRef({ count, failed });
+  shown.current = count ? { count, failed } : shown.current;
+  const keepButton = useRef<HTMLButtonElement>(null);
+  const isOne = shown.current.count === 1;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      aria-labelledby="cancel-uploads-title"
+      slotProps={{
+        paper: { role: 'alertdialog' },
+        // Once in: the dialog's focus trap takes the focus as it opens, which wins over `autoFocus`.
+        transition: { onEntered: () => keepButton.current?.focus() },
+      }}
+      // Over the box itself, which lies above every other dialog.
+      sx={{ zIndex: (theme) => theme.zIndex.snackbar }}
+    >
+      <DialogTitle id="cancel-uploads-title">
+        {isOne ? 'Cancel the upload?' : `Cancel ${shown.current.count} uploads?`}
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          {isOne ? 'The file' : 'The files'} still on the way will not be uploaded
+          {shown.current.failed ? ', and what failed is removed' : ''}. What has been uploaded
+          stays.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button ref={keepButton} onClick={onClose}>
+          Keep uploading
+        </Button>
+        <Button color="error" variant="contained" onClick={onConfirm}>
+          {isOne ? 'Cancel upload' : 'Cancel uploads'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 /**
  * Drive's upload box, in the corner of every page: the queue of files dropped on the folder
- * browser, each with its progress and a cancel — an uploaded folder as one row for all its files,
- * unfolded on a click — and a retry for what failed. It refreshes the folder listings and the media
- * lists as uploads finish or fail, and as the record behind a cancelled or dismissed one goes; it
- * asks before the page is left mid-upload.
+ * browser, each with its progress, which gives way to a cancel under the pointer — an uploaded
+ * folder as one row for all its files, unfolded on a click — and a retry for what failed. Its
+ * close empties it, cancelling what is still running once confirmed. It refreshes the folder listings and the
+ * media lists as the records of new uploads are made, as uploads finish or fail, and as the record
+ * behind a cancelled or dismissed one goes; it asks before the page is left mid-upload, and folds to its header under the full-screen
+ * viewer.
  */
 export const StorageUploadPanel: FC = () => {
   const items = useStorageUploads();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  // The full-screen viewer folds the box to its header, which it would otherwise cover a corner
+  // of; opened by hand there, it stays open until the viewer is left.
+  const isFolded = useIsUploadPanelFolded();
+  const [wasFolded, setWasFolded] = useState(isFolded);
+  const [isFoldedCollapsed, setIsFoldedCollapsed] = useState(true);
+  const [isAskingCancel, setIsAskingCancel] = useState(false);
   const summary = summarizeUploads(items);
   const rows = groupUploads(items);
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
-  const seen = useRef({ settled: 0, dropped: 0 });
+  const seen = useRef({ settled: 0, recordChanges: 0 });
   // A failed upload shows in its folder too: its record was made, and the item there says what the
   // upload is at and offers to send it again.
   const settled = summary.done + summary.failed;
-  // A record deleted behind a cancelled or dismissed upload took its folder item with it.
-  const dropped = useDroppedUploadRecords();
+  // A record made is a folder item from then on, which shows the upload as it goes; one deleted
+  // behind a cancelled or dismissed upload took its item with it.
+  const recordChanges = useUploadRecordChanges();
+
+  // A refresh owed stays owed: a dismiss in the meantime lowers `settled`, which runs the effect
+  // again and takes the timer with it.
+  const isRefreshDue = useRef(false);
 
   useEffect(() => {
-    const hasMore = settled > seen.current.settled || dropped > seen.current.dropped;
-    seen.current = { settled, dropped };
+    isRefreshDue.current ||=
+      settled > seen.current.settled || recordChanges > seen.current.recordChanges;
+    seen.current = { settled, recordChanges };
 
-    if (!hasMore) {
+    if (!isRefreshDue.current) {
       return;
     }
 
     const timeout = setTimeout(() => {
+      isRefreshDue.current = false;
       queryClient.invalidateQueries({ queryKey: FOLDER_CONTENT_QUERY_KEY });
       [STORAGE_OBJECT, FILE, IMAGE, VIDEO].forEach((resource) =>
         invalidate({ resource, invalidates: ['list'] }),
@@ -328,7 +437,7 @@ export const StorageUploadPanel: FC = () => {
     }, REFRESH_DELAY_MS);
 
     return () => clearTimeout(timeout);
-  }, [settled, dropped, queryClient, invalidate]);
+  }, [settled, recordChanges, queryClient, invalidate]);
 
   useEffect(() => {
     if (!summary.active) {
@@ -340,68 +449,96 @@ export const StorageUploadPanel: FC = () => {
     return () => window.removeEventListener('beforeunload', warn);
   }, [summary.active]);
 
+  // The fold starts collapsed, and ends as the box was before it: a choice made under it is its own.
+  if (wasFolded !== isFolded) {
+    setWasFolded(isFolded);
+    setIsFoldedCollapsed(true);
+  }
+
+  // The uploads ended by themselves while the question stood: there is nothing left to ask about.
+  if (isAskingCancel && !summary.active) {
+    setIsAskingCancel(false);
+  }
+
   if (!items.length) {
     return null;
   }
 
+  const isShownCollapsed = isFolded ? isFoldedCollapsed : isCollapsed;
+  const isRunning = !!summary.active;
+  const closeLabel = isRunning ? 'Cancel all uploads' : 'Close';
+
   return (
-    <Paper
-      elevation={8}
-      role="region"
-      aria-label="Uploads"
-      sx={{
-        position: 'fixed',
-        right: 16,
-        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-        width: 360,
-        maxWidth: 'calc(100vw - 32px)',
-        zIndex: (theme) => theme.zIndex.snackbar - 1,
-        overflow: 'hidden',
-      }}
-    >
-      <Stack direction="row" alignItems="center" gap={1} sx={{ pl: 2, pr: 1, py: 1 }}>
-        <Typography variant="subtitle2" sx={{ flex: 1 }} aria-live="polite">
-          {getTitle(rows)}
-        </Typography>
-        {!!summary.failed && !summary.active && (
-          <Button size="small" onClick={() => storageUploadQueue.retry()}>
-            Retry all
-          </Button>
-        )}
-        <IconButton
-          size="small"
-          aria-label={isCollapsed ? 'Expand uploads' : 'Collapse uploads'}
-          onClick={() => setIsCollapsed((collapsed) => !collapsed)}
-        >
-          {isCollapsed ? <ExpandLessRounded /> : <ExpandMoreRounded />}
-        </IconButton>
-        {/* Closing forgets what has ended, and cancels nothing: a row still running has its own
-            Cancel, so the box stays until its uploads have ended. */}
-        <Tooltip title={summary.active ? 'Uploads are still running' : 'Close'}>
-          <span>
+    <>
+      <Paper
+        elevation={8}
+        role="region"
+        aria-label="Uploads"
+        sx={{
+          position: 'fixed',
+          right: 16,
+          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+          width: 360,
+          maxWidth: 'calc(100vw - 32px)',
+          zIndex: (theme) => theme.zIndex.snackbar - 1,
+          overflow: 'hidden',
+        }}
+      >
+        <Stack direction="row" alignItems="center" gap={1} sx={{ pl: 2, pr: 1, py: 1 }}>
+          <Typography variant="subtitle2" sx={{ flex: 1 }} aria-live="polite">
+            {getTitle(rows)}
+          </Typography>
+          {!!summary.failed && !isRunning && (
+            <Button size="small" onClick={() => storageUploadQueue.retry()}>
+              Retry all
+            </Button>
+          )}
+          <IconButton
+            size="small"
+            aria-label={isShownCollapsed ? 'Expand uploads' : 'Collapse uploads'}
+            onClick={() =>
+              isFolded ? setIsFoldedCollapsed(!isShownCollapsed) : setIsCollapsed(!isShownCollapsed)
+            }
+          >
+            {isShownCollapsed ? <ExpandLessRounded /> : <ExpandMoreRounded />}
+          </IconButton>
+          {/* Drive's: it forgets the uploads that have ended, and with some still on their way it
+              cancels those first, once that is confirmed. */}
+          <Tooltip title={closeLabel}>
             <IconButton
               size="small"
-              aria-label="Close uploads"
-              disabled={!!summary.active}
-              onClick={() => storageUploadQueue.dismiss()}
+              aria-label={isRunning ? closeLabel : 'Close uploads'}
+              onClick={() => (isRunning ? setIsAskingCancel(true) : storageUploadQueue.dismiss())}
             >
               <CloseRounded />
             </IconButton>
-          </span>
-        </Tooltip>
-      </Stack>
-      {!!summary.active && <LinearProgress variant="determinate" value={summary.progress} />}
-      {!isCollapsed && (
-        <List disablePadding sx={{ maxHeight: 320, overflowY: 'auto' }}>
-          {rows.map((row) =>
-            row.type === 'folder' ? (
-              <FolderUploadRow key={row.key} row={row} />
-            ) : (
-              <FileUploadRow key={row.key} item={row.item} />
-            ),
-          )}
-        </List>
-      )}
-    </Paper>
+          </Tooltip>
+        </Stack>
+        {isRunning && <LinearProgress variant="determinate" value={summary.progress} />}
+        {!isShownCollapsed && (
+          <List disablePadding sx={{ maxHeight: 320, overflowY: 'auto' }}>
+            {rows.map((row) =>
+              row.type === 'folder' ? (
+                <FolderUploadRow key={row.key} row={row} />
+              ) : (
+                <FileUploadRow key={row.key} item={row.item} />
+              ),
+            )}
+          </List>
+        )}
+      </Paper>
+      <CancelUploadsDialog
+        open={isAskingCancel}
+        count={summary.active}
+        failed={summary.failed}
+        onClose={() => setIsAskingCancel(false)}
+        onConfirm={() => {
+          setIsAskingCancel(false);
+          storageUploadQueue.cancel();
+          // The close it is: what has ended leaves the box too, a failed upload with its record.
+          storageUploadQueue.dismiss();
+        }}
+      />
+    </>
   );
 };

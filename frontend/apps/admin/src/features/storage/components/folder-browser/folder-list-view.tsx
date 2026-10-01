@@ -26,9 +26,8 @@ import {
 } from '@mui/material';
 import { BrowserCommon, BrowserStorage } from '@packages/proto';
 import React, { FC, useEffect, useRef } from 'react';
-import { StorageItemIcon } from './storage-item-icon';
 import { StorageItemMenu } from './storage-item-menu';
-import { StorageItemUploadBadge } from './storage-item-upload-badge';
+import { StorageItemRowIcon } from './storage-item-row-icon';
 import type { FolderItemBehavior } from './use-folder-item-behavior';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
@@ -66,7 +65,7 @@ const rowSx = {
 /**
  * Google Drive's list: one row per item, sorted by clicking a column, folders on top. A click
  * selects a row, a double click opens it; a folder's row takes a drop of other items. A file that
- * cannot be opened yet says what its upload is at beside its name.
+ * cannot be opened yet says what its upload is at in place of its icon (`StorageItemRowIcon`).
  */
 export const FolderListView: FC<Props> = ({
   items,
@@ -166,7 +165,7 @@ export const FolderListView: FC<Props> = ({
                 </TableCell>
                 <TableCell sx={{ maxWidth: 0 }}>
                   <Stack direction="row" alignItems="center" gap={1.5} sx={{ minWidth: 0 }}>
-                    <StorageItemIcon kind={kind} fontSize="small" />
+                    <StorageItemRowIcon item={item} />
                     <Typography variant="body2" noWrap title={item.name}>
                       {item.name}
                     </Typography>
@@ -175,7 +174,6 @@ export const FolderListView: FC<Props> = ({
                         <PublicOutlined sx={{ fontSize: 16, color: 'text.secondary' }} />
                       </Box>
                     )}
-                    <StorageItemUploadBadge item={item} />
                   </Stack>
                 </TableCell>
                 <TableCell>{STORAGE_ITEM_KIND_LABELS[kind]}</TableCell>

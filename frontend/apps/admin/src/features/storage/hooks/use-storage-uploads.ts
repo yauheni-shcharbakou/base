@@ -85,7 +85,8 @@ const sendBytes = (item: QueuedUpload, options: SendOptions): Promise<void> => {
  * the backend takes many files at once — records made ten at a time, uploads confirmed twenty at a
  * time — and a call refused by the gateway's rate limit pauses the queue instead of failing files.
  * An upload still on its way can be cancelled. It lives outside React, so no page owns it;
- * `StorageUploadPanel` shows it and refreshes the listings as items finish or their records go.
+ * `StorageUploadPanel` shows it and refreshes the listings as records are made, items finish or
+ * their records go.
  */
 class StorageUploadQueue {
   private items: QueuedUpload[] = [];
@@ -96,7 +97,7 @@ class StorageUploadQueue {
   private wakeTimer?: ReturnType<typeof setTimeout>;
   // The transfers in flight, by item key: what a cancel aborts.
   private transfers = new Map<string, AbortController>();
-  private dropped = 0;
+  private recordChanges = 0;
 
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -106,11 +107,11 @@ class StorageUploadQueue {
   getSnapshot = () => this.items;
 
   /**
-   * How many records the queue has deleted behind items that left it — dismissed after a failure,
-   * or cancelled. A record takes its folder item with it, so each is a reason to read the listings
-   * again.
+   * How many times the queue has changed the records behind its items: made, for the files of one
+   * create call, or deleted, behind an item that left it — dismissed after a failure, or cancelled.
+   * A record is a folder item, so each is a reason to read the listings again.
    */
-  getDropped = () => this.dropped;
+  getRecordChanges = () => this.recordChanges;
 
   /** Adds the files to the queue, and answers their keys in it, in order. */
   enqueue(files: UploadRequest[], userId: string): string[] {
@@ -238,7 +239,7 @@ class StorageUploadQueue {
     deleteOne({ resource: RESOURCE_BY_KIND[kind], id: entity.id })
       .catch(() => undefined)
       .then(() => {
-        this.dropped += 1;
+        this.recordChanges += 1;
         this.notify();
       });
   }
@@ -318,6 +319,8 @@ class StorageUploadQueue {
       items
         .filter(({ key }) => !left.has(key))
         .forEach(({ key, kind }) => this.dropRecord({ kind, entity: created.get(key) }));
+      // The records are folder items from here on: listed, they show the upload as it goes.
+      this.recordChanges += 1;
       // Back in the queue, now with credentials: the next turn uploads them.
       this.patch(keys, (item) => ({ status: 'queued', entity: created.get(item.key) }));
     } catch (error) {
@@ -411,11 +414,15 @@ export const useStorageUploads = () =>
     () => NO_UPLOADS,
   );
 
-const getNoDropped = () => 0;
+const getNoRecordChanges = () => 0;
 
-/** How many records the queue has deleted behind its items (`getDropped`). */
-export const useDroppedUploadRecords = () =>
-  useSyncExternalStore(storageUploadQueue.subscribe, storageUploadQueue.getDropped, getNoDropped);
+/** How many times the queue has made or deleted records behind its items (`getRecordChanges`). */
+export const useUploadRecordChanges = () =>
+  useSyncExternalStore(
+    storageUploadQueue.subscribe,
+    storageUploadQueue.getRecordChanges,
+    getNoRecordChanges,
+  );
 
 const getNoUpload = () => undefined;
 

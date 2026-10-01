@@ -97,7 +97,7 @@ export const StorageItemThumbnail: FC<Props> = ({
         />
       )}
 
-      {!compact && <StorageItemUploadBadge item={item} isOverlay />}
+      {!compact && <StorageItemUploadBadge item={item} />}
     </Box>
   );
 };

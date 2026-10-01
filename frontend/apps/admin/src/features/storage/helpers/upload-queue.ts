@@ -178,12 +178,11 @@ export const findUploadOf = (
   items.find((item) => item.replaces === id) ??
   (fileId ? items.find((item) => getUploadFileId(item) === fileId) : undefined);
 
-// `short` is the label for where there is no room — a row of the list. No `percent` while it cannot
-// be told: the bar runs without one.
-export type UploadProgress = { label: string; short: string; percent?: number };
+// No `percent` while it cannot be told: the bar runs without one.
+export type UploadProgress = { label: string; percent?: number };
 
-const WAITING: UploadProgress = { label: 'Waiting to upload…', short: 'Waiting' };
-const FINISHING: UploadProgress = { label: 'Finishing…', short: 'Finishing' };
+const WAITING: UploadProgress = { label: 'Waiting to upload…' };
+const FINISHING: UploadProgress = { label: 'Finishing…' };
 
 /**
  * What an item not yet openable says of its upload while this tab is at it — in place of the
@@ -199,11 +198,7 @@ export const getUploadProgress = (
     case 'creating':
       return WAITING;
     case 'uploading':
-      return {
-        label: `Uploading… ${upload.progress}%`,
-        short: `${upload.progress}%`,
-        percent: upload.progress,
-      };
+      return { label: `Uploading… ${upload.progress}%`, percent: upload.progress };
     case 'uploaded':
     case 'completing':
       return FINISHING;

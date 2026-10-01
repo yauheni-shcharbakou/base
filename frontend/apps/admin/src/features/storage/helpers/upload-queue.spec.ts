@@ -186,14 +186,13 @@ describe('getUploadProgress', () => {
   it('tells how far the bytes are', () => {
     expect(progressOf({ status: 'uploading', progress: 42 })).toEqual({
       label: 'Uploading… 42%',
-      short: '42%',
       percent: 42,
     });
   });
 
   it('has no percent before the bytes go, or once they are in', () => {
-    const waiting = { label: 'Waiting to upload…', short: 'Waiting' };
-    const finishing = { label: 'Finishing…', short: 'Finishing' };
+    const waiting = { label: 'Waiting to upload…' };
+    const finishing = { label: 'Finishing…' };
 
     expect(progressOf({ status: 'queued' })).toEqual(waiting);
     expect(progressOf({ status: 'creating' })).toEqual(waiting);
@@ -208,7 +207,7 @@ describe('getUploadProgress', () => {
   });
 
   it('keeps the replaced item waiting for the listing once its replacement rests', () => {
-    const finishing = { label: 'Finishing…', short: 'Finishing' };
+    const finishing = { label: 'Finishing…' };
 
     expect(progressOf({ status: 'done', replaces: 'item-1' })).toEqual(finishing);
     expect(progressOf({ status: 'failed', replaces: 'item-1' })).toEqual(finishing);
