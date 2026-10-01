@@ -1,10 +1,15 @@
 import { NestStorage } from '@backend/proto';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Either, left } from '@sweet-monads/either';
-import _ from 'lodash';
 import { StorageObjectValidationService } from '../services/storage-object.validation.service';
 
+/**
+ * Runs under the owner's tree lock, like every write that checks the tree first: the parent is
+ * still a live folder of the owner, its `isPublic` is current and the name is still free when the
+ * row lands. A leaf's media is the owner's own, so the same lock covers every other placement of
+ * it: the media creates place under it too.
+ */
 @Injectable()
 export class StorageObjectCreateOneUseCase {
   constructor(
@@ -15,32 +20,14 @@ export class StorageObjectCreateOneUseCase {
   async execute(
     createData: NestStorage.StorageObjectCreate,
   ): Promise<Either<Error, NestStorage.StorageObject>> {
-    if (!createData.parent) {
-      return left(new BadRequestException('Parent is required'));
-    }
+    return this.storageObjectRepository.withTreeLock(createData.userId, async () => {
+      const validated = await this.validationService.validateCreateData(createData);
 
-    const [name, placement] = await Promise.all([
-      this.validationService.validateObjectName(_.pick(createData, ['name', 'type', 'parent'])),
-      this.validationService.validatePlacement(
-        createData.parent,
-        _.pick(createData, ['name', 'type']),
-      ),
-    ]);
+      if (validated.isLeft()) {
+        return left(validated.value);
+      }
 
-    if (name.isLeft()) {
-      return left(name.value);
-    }
-
-    if (placement.isLeft()) {
-      return left(placement.value);
-    }
-
-    return this.storageObjectRepository.saveOne({
-      ...createData,
-      folderPath: placement.value.folderPath,
-      isPublic: placement.value.isPublic,
-      name: name.value,
-      isFolder: createData.type === NestStorage.StorageObjectType.FOLDER,
+      return this.storageObjectRepository.saveOne(validated.value);
     });
   }
 }

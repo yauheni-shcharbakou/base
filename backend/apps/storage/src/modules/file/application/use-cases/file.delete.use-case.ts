@@ -1,31 +1,36 @@
-import { DeleteUseCase } from '@backend/common';
 import { NestStorage } from '@backend/proto';
-import { FileRepository } from '@modules/file/domain/repositories/file.repository';
-import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
+import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 
 @Injectable()
-export class FileDeleteUseCase extends DeleteUseCase<NestStorage.File, NestStorage.FileQuery> {
+export class FileDeleteUseCase {
   constructor(
-    protected readonly repository: FileRepository,
-    private readonly storageFileService: StorageFileService,
-  ) {
-    super(repository);
-  }
+    private readonly repository: FileRepository,
+    private readonly filePurgeService: FilePurgeService,
+  ) {}
 
-  protected async afterSingleDeletion(
-    result: Either<NotFoundException, NestStorage.File>,
-  ): Promise<void> {
-    if (result.isLeft()) {
-      return;
+  // The media relations are read before the delete: a file backing a video or an image takes that
+  // row with it through the cascade, and the video's `providerId` is the only way to its Bunny
+  // Stream object, the image's `previewProviderId` the only way to its preview. Not gated on READY — with a direct upload the bytes can land before `completeUpload`.
+  async deleteOne(
+    query: Partial<NestStorage.FileQuery>,
+  ): Promise<Either<NotFoundException, NestStorage.File>> {
+    const file = await this.repository.getOne<FileWithMedia>(query, {
+      populate: ['video', 'image'],
+    });
+
+    if (file.isLeft()) {
+      return file;
     }
 
-    const isFileReady = result.value.uploadStatus === NestStorage.FileUploadStatus.READY;
-    const providerId = result.value.providerId;
+    const deleted = await this.repository.deleteById(file.value.id);
 
-    if (isFileReady && providerId) {
-      await this.storageFileService.deleteFile(result.value.providerId);
+    if (deleted.isRight()) {
+      await this.filePurgeService.purgeFiles([file.value]);
     }
+
+    return deleted;
   }
 }

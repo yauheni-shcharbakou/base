@@ -1,7 +1,7 @@
 import { GrpcExceptionMapper } from '@backend/grpc';
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 @Catch(RpcException)
 export class RpcExceptionFilter implements ExceptionFilter {

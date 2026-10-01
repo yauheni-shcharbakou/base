@@ -1,0 +1,70 @@
+{
+  "name": "@backend/event-bus-nats",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "format:generated": "prettier src/generated --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,compiler,test}/**/*.ts\" --fix",
+    "dev": "pnpm build --watch",
+    "compile": "tsx compiler/main.ts",
+    "build": "pnpm format:generated --log-level error && tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "@backend/common": "workspace:*",
+    "@backend/event-bus": "workspace:*",
+    "@backend/proto": "workspace:*",
+    "@nats-io/jetstream": "3.4.0",
+    "@nats-io/nats-core": "3.4.0",
+    "@nats-io/transport-node": "3.4.0",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
+    "@nestjs/microservices": "catalog:",
+    "@packages/common": "workspace:*",
+    "change-case-all": "catalog:",
+    "lodash": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nestjs/core": "catalog:",
+    "@nestjs/platform-express": "catalog:",
+    "@nestjs/testing": "catalog:",
+    "@packages/compiler-utils": "workspace:*",
+    "@packages/configs": "workspace:*",
+    "@types/jest": "catalog:",
+    "@types/lodash": "catalog:",
+    "@types/pug": "catalog:",
+    "prettier": "catalog:",
+    "pug": "catalog:",
+    "ts-morph": "catalog:",
+    "tsx": "catalog:",
+    "jest": "catalog:",
+    "ts-jest": "catalog:"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

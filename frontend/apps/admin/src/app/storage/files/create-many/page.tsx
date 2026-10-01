@@ -1,15 +1,14 @@
 'use client';
 
-import { ONE_MB_BYTES } from '@/common/constants';
 import { UploadManyPage } from '@/features/storage/components';
-import { fileActionProvider } from '@/features/storage/providers';
+import { UPLOAD_RULES, uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { StorageDatabaseEntity } from '@packages/common';
 
 export default function FileCreateMany() {
   return (
     <UploadManyPage
       resource={StorageDatabaseEntity.FILE}
-      fileResource={StorageDatabaseEntity.FILE}
       batchSize={10}
       createManyAction={async (filesBatch, form) => {
         return fileActionProvider.createMany(form.userId, filesBatch, {
@@ -17,9 +16,13 @@ export default function FileCreateMany() {
           isPublic: form.isPublic,
         });
       }}
+      uploadFileAction={(file, entity) => {
+        const { id, upload } = entity as CreatedFile;
+        return uploadViaPresignedUrl(file, upload, id);
+      }}
       uploaderProps={{
         dropzoneProps: {
-          maxSize: 100 * ONE_MB_BYTES,
+          maxSize: UPLOAD_RULES.FILE.maxSize,
           accept: {
             'application/pdf': [],
           },

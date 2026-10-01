@@ -11,7 +11,7 @@ export class VideoGetUrlMapUseCase {
     private readonly storageVideoService: StorageVideoService,
   ) {}
 
-  async execute(query: Partial<NestStorage.VideoQuery>, ip?: string): Promise<Map<string, string>> {
+  async execute(query: Partial<NestStorage.VideoQuery>): Promise<Map<string, string>> {
     const videos = await this.videoRepository.getMany(query);
     const urlMap = new Map<string, string>();
 
@@ -21,7 +21,7 @@ export class VideoGetUrlMapUseCase {
           return;
         }
 
-        const url = await this.storageVideoService.getPlayerUrl(video.providerId, ip);
+        const url = await this.storageVideoService.getPlayerUrl(video.providerId);
 
         if (url.isRight()) {
           urlMap.set(video.id, url.value);

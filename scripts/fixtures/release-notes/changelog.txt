@@ -1,0 +1,58 @@
+# Changelog
+
+A preamble that belongs to no entry and must never be printed, with a
+[link](docs/never-read.md).
+
+## [2.0.0] — 2026-01-02 — `feat/example`
+
+
+
+A paragraph wrapped over
+three lines, with a [relative link](docs/env.md) and an
+[absolute one](https://example.test/page).
+
+### Upgrade notes
+A line right under its heading, wrapped
+once.
+
+- A bullet wrapped
+  over two lines.
+- **Nested** bullets:
+  - the first, with a link whose [text is
+    wrapped](docs/adr/README.md#index) across lines;
+  - the second, with two links: [one](README.md) and [two](#anchor).
+* A star bullet.
++ A plus bullet.
+
+1. A numbered item
+   wrapped once.
+2. Another.
+
+> A quote wrapped
+> over two lines,
+and a third without its mark.
+>
+> Its second paragraph.
+> - A quoted item.
+
+| Column | Other               |
+| ------ | ------------------- |
+| a      | [b](CHANGELOG.md)   |
+
+
+```shell
+pnpm run   something \
+  --flag [not a link](docs/kept-as-is.md)
+
+still inside the fence
+```
+
+Mail [us](mailto:someone@example.test).
+
+
+## [1.0.0] — 2025-01-01
+
+The oldest entry, the last in the file, with a
+[link](docs/env.md).
+
+- One bullet.

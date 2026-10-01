@@ -1,4 +1,3 @@
-import { StorageObjectEventBus, StorageObjectParentUpdateEvent } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import {
@@ -10,12 +9,25 @@ import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { StorageObjectValidationService } from '../services/storage-object.validation.service';
 
+/**
+ * Nothing about a folder's path has to follow a move or a rename: `folderPath` is derived from the
+ * tree on read. Only `isPublic` is stored per row, and the repository writes a folder's new value
+ * over its subtree in the same transaction as the folder itself.
+ *
+ * An object moves only within its owner's tree — the new parent must be the owner's own live
+ * folder, whoever makes the call, an admin included. A move lands under a free name (` (n)` on a
+ * clash); a rename in place is refused with a 409 on a taken name. An object in a public folder
+ * cannot be made private (400) — a move takes the new folder's visibility instead.
+ *
+ * The whole read-check-write runs under the owner's tree lock. Without it, two opposite moves
+ * (A into B, B into A) each pass the descendant check before either commits, and together close a
+ * cycle. A move also reads its new parent's `isPublic` after any visibility change queued before it.
+ */
 @Injectable()
 export class StorageObjectUpdateOneUseCase {
   constructor(
     private readonly storageObjectRepository: StorageObjectRepository,
     private readonly storageObjectValidationService: StorageObjectValidationService,
-    private readonly eventBus: StorageObjectEventBus,
   ) {}
 
   private async transformUpdate(
@@ -26,31 +38,23 @@ export class StorageObjectUpdateOneUseCase {
       set: _.pick(updateData.set ?? {}, ['isPublic']),
     };
 
-    if (updateData.set?.name) {
-      const name = await this.storageObjectValidationService.validateObjectName(entity);
-
-      if (name.isLeft()) {
-        return left(name.value);
-      }
-
-      update.set.name = name.value;
-    }
-
     if (updateData.set?.parent) {
       if (entity.isFolder) {
         const childrenIds = await this.storageObjectRepository.getAllChildrenIds(entity.id);
 
-        if (childrenIds.has(updateData.set.parent)) {
+        if (childrenIds.isLeft()) {
+          return left(childrenIds.value);
+        }
+
+        if (childrenIds.value.has(updateData.set.parent)) {
           return left(new BadRequestException('Invalid parent'));
         }
       }
 
       const placeData = await this.storageObjectValidationService.validatePlacement(
         updateData.set.parent,
-        {
-          ..._.pick(entity, ['id', 'type']),
-          name: updateData.set.name ?? entity.name,
-        },
+        entity.userId,
+        entity.id,
       );
 
       if (placeData.isLeft()) {
@@ -58,8 +62,50 @@ export class StorageObjectUpdateOneUseCase {
       }
 
       update.set.parent = updateData.set.parent;
-      update.set.folderPath = placeData.value.folderPath;
       update.set.isPublic = placeData.value.isPublic;
+    } else if (update.set.isPublic === false) {
+      // In place, it stays in its folder: a public one keeps it public.
+      const visibility = await this.storageObjectValidationService.validateVisibility(
+        [entity],
+        false,
+      );
+
+      if (visibility.isLeft()) {
+        return left(visibility.value);
+      }
+    }
+
+    // An empty name or parent means "unchanged", like an absent one.
+    const name = updateData.set?.name || entity.name;
+    const parent = updateData.set?.parent || entity.parentId;
+    let resolvedName = name;
+
+    if (parent && parent !== entity.parentId) {
+      // A move lands under a free name, suffixed on a clash, as a batch move and an upload do.
+      resolvedName = await this.storageObjectValidationService.resolveFreeName({
+        id: entity.id,
+        userId: entity.userId,
+        name,
+        parent,
+        isFolder: entity.isFolder,
+      });
+    } else if (parent && name !== entity.name) {
+      // A rename in place applies the name it was given or fails. Nothing to check for a root
+      // folder, which has no folder to clash in.
+      const freeName = await this.storageObjectValidationService.validateNameIsFree({
+        id: entity.id,
+        userId: entity.userId,
+        name,
+        parent,
+      });
+
+      if (freeName.isLeft()) {
+        return left(freeName.value);
+      }
+    }
+
+    if (resolvedName !== entity.name) {
+      update.set.name = resolvedName;
     }
 
     return right(update);
@@ -69,42 +115,35 @@ export class StorageObjectUpdateOneUseCase {
     query: NestStorage.StorageObjectQuery,
     updateData: NestStorage.StorageObjectUpdate,
   ): Promise<Either<Error, NestStorage.StorageObject>> {
-    const storageObject = await this.storageObjectRepository.getOne(query);
+    // A deleted object is hidden and waits for the cleanup; it is not edited, moved back into a
+    // live folder included.
+    const liveQuery = { ...query, isDeleted: false };
 
-    if (storageObject.isLeft()) {
-      return storageObject;
+    // Read once before the lock only to learn whose tree to lock — an owner never changes, so the
+    // value cannot go stale. Everything else is read again under the lock.
+    const owner = await this.storageObjectRepository.getOne(liveQuery);
+
+    if (owner.isLeft()) {
+      return left(owner.value);
     }
 
-    const update = await this.transformUpdate(storageObject.value, updateData);
+    return this.storageObjectRepository.withTreeLock(owner.value.userId, async () => {
+      const storageObject = await this.storageObjectRepository.getOne(liveQuery);
 
-    if (update.isLeft()) {
-      return left(update.value);
-    }
-
-    const entity = await this.storageObjectRepository.updateById(
-      storageObject.value.id,
-      update.value,
-    );
-
-    if (entity.isRight() && entity.value.isFolder) {
-      const sideEffectUpdate: StorageObjectParentUpdateEvent['update'] = {};
-
-      const isPublicChanged = storageObject.value.isPublic !== entity.value.isPublic;
-      const isFolderPathChanged = storageObject.value.folderPath !== entity.value.folderPath;
-
-      if (isPublicChanged) {
-        sideEffectUpdate.isPublic = entity.value.isPublic;
+      if (storageObject.isLeft()) {
+        return left(storageObject.value);
       }
 
-      if (isFolderPathChanged) {
-        sideEffectUpdate.folderPath = entity.value.folderPath;
+      const update = await this.transformUpdate(storageObject.value, updateData);
+
+      if (update.isLeft()) {
+        return left(update.value);
       }
 
-      if (!_.isEmpty(sideEffectUpdate)) {
-        await this.eventBus.emitParentUpdate({ parent: entity.value.id, update: sideEffectUpdate });
-      }
-    }
-
-    return entity;
+      return this.storageObjectRepository.updateAndCascadePublic(
+        storageObject.value.id,
+        update.value,
+      );
+    });
   }
 }

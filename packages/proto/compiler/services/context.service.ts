@@ -5,15 +5,9 @@ import { PROTO_EXT_REG_EXP, TS_EXT_REG_EXP } from '@packages/compiler-utils';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as protobuf from 'protobufjs';
-import zod from 'zod';
 
 export class ContextService {
   private readonly protoContextByPath = new Map<string, ProtoContext>();
-
-  private readonly env = zod
-    .object({ GRPC_COMPILER_CONTEXT: zod.enum(['backend', 'frontend', 'all']).default('all') })
-    .parse(process.env);
-
   private readonly files = new Set<string>();
   private readonly entrypointExports = new Set<string>();
 
@@ -91,7 +85,6 @@ export class ContextService {
 
   getExecutionContext(): ExecutionContext {
     return {
-      compiler: this.env.GRPC_COMPILER_CONTEXT,
       files: Array.from(this.files),
       entrypointExports: Array.from(this.entrypointExports),
     };

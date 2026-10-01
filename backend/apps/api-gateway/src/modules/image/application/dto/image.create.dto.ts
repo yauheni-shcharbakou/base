@@ -19,7 +19,8 @@ export class ImageCreateDto implements NestStorage.ImageCreate {
   @IsPositive()
   height: number;
 
-  @StringField()
+  // May be empty: a decorative image has no alt text.
+  @StringField({ required: false })
   alt: string;
 }
 

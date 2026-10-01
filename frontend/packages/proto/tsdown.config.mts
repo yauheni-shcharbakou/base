@@ -1,11 +1,3 @@
-import { defineConfig } from 'tsdown';
-import pkg from '../../../package.json' with { type: 'json' };
+import nodePackageConfig from '@packages/configs/tsdown/package.config.mjs';
 
-export default defineConfig({
-  entry: 'src/index.ts',
-  format: ['esm', 'cjs'],
-  dts: true,
-  deps: {
-    neverBundle: Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }),
-  },
-});
+export default nodePackageConfig(import.meta.url, { format: ['esm', 'cjs'] });

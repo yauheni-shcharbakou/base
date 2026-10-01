@@ -1,14 +1,23 @@
 import { PgMapper } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
+import {
+  backingFileStatusFilter,
+  isPlacedFilter,
+} from '@common/infrastructure/pg/factories/pg.media.filters';
 
 /**
- * Thin named mapper for image rows. `ImageQuery` (`id`/`ids`/`file`/`userId`) is fully covered by the
- * base `PgMapper.transformQuery`, so there is no override — this exists for symmetry with
- * `PgFileMapper` / `PgVideoMapper` / `PgStorageObjectMapper`.
+ * `ImageQuery` (`id`/`ids`/`file`/`userId`) is fully covered by the base `PgMapper.transformQuery`,
+ * so there is no override. A list also filters on `isPlaced` and on the backing file's
+ * `uploadStatus`.
  */
 export class PgImageMapper extends PgMapper<
   PgImageEntity,
   NestStorage.Image,
   NestStorage.ImageQuery
-> {}
+> {
+  protected readonly computedFilters = {
+    isPlaced: isPlacedFilter<PgImageEntity>(),
+    uploadStatus: backingFileStatusFilter<PgImageEntity>(),
+  };
+}

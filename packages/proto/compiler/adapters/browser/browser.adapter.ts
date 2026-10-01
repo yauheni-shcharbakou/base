@@ -1,25 +1,24 @@
 import { BaseAdapter } from '@compiler/adapters/base.adapter';
-import { PROTO_SRC_ROOT, PROTOC_PATH, PROTOC_PLUGIN_PATH } from '@compiler/constants';
+import { PACKAGE_ROOT } from '@compiler/constants';
 import { OnFilePayload } from '@compiler/types';
-import { runCommand } from '@compiler/utils';
+import { getProtocPluginPath, runProtoc } from '@compiler/utils';
 
 export class BrowserAdapter extends BaseAdapter {
   async onFile(payload: OnFilePayload): Promise<void> {
-    const command = [
-      PROTOC_PATH,
-      `--plugin=${PROTOC_PLUGIN_PATH}`,
-      `--ts_proto_out=${this.targetRoot}`,
-      '--ts_proto_opt=useDate=true',
-      '--ts_proto_opt=snakeToCamel=false',
-      '--ts_proto_opt=unrecognizedEnum=false',
-      '--ts_proto_opt=stringEnums=true',
-      '--ts_proto_opt=useMapType=true',
-      '--ts_proto_opt=onlyTypes=true',
-      '--ts_proto_opt=outputServices=false',
-      `./${payload.relativePath}`,
-    ].join(' ');
+    await runProtoc(payload.relativePath, {
+      pluginPath: getProtocPluginPath(PACKAGE_ROOT),
+      outDir: this.targetRoot,
+      options: [
+        'useDate=true',
+        'snakeToCamel=false',
+        'unrecognizedEnum=false',
+        'stringEnums=true',
+        'useMapType=true',
+        'onlyTypes=true',
+        'outputServices=false',
+      ],
+    });
 
-    await runCommand(command, { cwd: PROTO_SRC_ROOT, encoding: 'utf-8' });
     await super.onFile(payload);
   }
 }

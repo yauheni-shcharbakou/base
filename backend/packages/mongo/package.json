@@ -11,6 +11,7 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
     "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
@@ -18,19 +19,18 @@
     "@backend/common": "workspace:*",
     "@backend/proto": "workspace:*",
     "mongodb": "7.2.0",
-    "@nestjs/common": "11.1.27",
-    "@nestjs/config": "4.0.4",
-    "@nestjs/core": "11.1.27",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
+    "@nestjs/core": "catalog:",
     "@nestjs/mongoose": "11.0.4",
     "@packages/common": "workspace:*",
-    "@sweet-monads/either": "3.3.1",
-    "lodash": "4.18.1",
+    "@sweet-monads/either": "catalog:",
+    "lodash": "catalog:",
     "mongoose": "9.6.2",
-    "nest-commander": "3.20.1",
-    "reflect-metadata": "0.2.2"
+    "reflect-metadata": "catalog:"
   },
   "devDependencies": {
     "@packages/configs": "workspace:*",
-    "@types/lodash": "4.17.23"
+    "@types/lodash": "catalog:"
   }
 }

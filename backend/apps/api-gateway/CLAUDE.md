@@ -4,7 +4,7 @@ Guidance for working inside `backend/apps/api-gateway`. The general hexagonal/us
 
 ## What this service is
 
-The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). `ThrottlerModule` rate-limits (100 / 60s). It owns **no database and no NATS** (no `@backend/nats` / `@backend/event-bus` dependency); it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
+The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). gRPC unary calls are rate-limited (see *Rate limiting* below); HTTP has no controllers, only Swagger UI, and is not limited. It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency) — its one Redis use is the rate-limit counters, through `@backend/cache`; it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
 
 ## Layers (two, by design)
 
@@ -19,22 +19,65 @@ No `domain/`/`infrastructure/` per module — there are no entities, repositorie
 
 Seven feature modules, each proxying to one downstream host:
 
-- **→ auth**: `auth` (public login / refresh), `user`, `temp-code`.
+- **→ auth**: `auth` (public login / refresh / logout), `user`, `temp-code`.
 - **→ storage**: `file`, `image`, `video`, `storage-object`.
 
-Each proxy service injects the downstream client via `@InjectGrpcService(Grpc<X>Transport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))` (from `@backend/grpc`). Request payloads are validated with `@ValidateGrpcPayload(Dto)`; the resolved caller id is read with the `@GrpcUserId()` param decorator.
+Each proxy service injects the downstream client via `@InjectGrpcService(Grpc<X>Transport.service)` and calls `firstValueFrom(client.method(req).pipe(GrpcRxPipe.rpcException))` (from `@backend/grpc`). Request payloads are validated with `@ValidateGrpcPayload(Dto)`; the resolved caller id is read with the `@GrpcUserId()` param decorator. **A handler that takes `@GrpcUserId()` binds its request with `@Payload()`** (`@nestjs/microservices`), an unused `Empty` included: Nest maps a handler's request, metadata and call only while none of its parameters is decorated, so next to a param decorator an unbound request arrives `undefined` and its `@ValidateGrpcPayload` never runs — silently. `common/interface/grpc/grpc.payload-binding.spec.ts` fails on any handler that decorates a parameter without it.
 
 ## Auth / access (`src/common/`)
 
 There is **no `grpc-access` module** — authorization is the global `CommonModule` (`@Global()`) exposing `AccessService`, plus per-controller decorators:
 
-- `AccessService` holds two `MemoryCache`s (`@backend/common`): **unary** (keyed by `access-token`, populated by calling `auth.me`) and **stream** (keyed by a single-use `stream-code` / temp-code).
-- Controller decorators (`common/interface/grpc/decorators/grpc.controller.decorator.ts`): `@PublicGrpcController()` (skips auth), `@DefaultGrpcController()` (authenticated — `GrpcAccessUnaryGuard` reads the `access-token` gRPC metadata and caches the user), `@AdminGrpcController()` (additionally requires `UserRole.ADMIN`).
-- **Stream methods** use `@GrpcStreamMethod()` → `GrpcAccessStreamGuard`, which validates a one-time `stream-code`. That code is cached by `AccessService.saveStreamCode` when an admin creates a temp-code (`TempCodeProxyService.createOne`), and is deactivated on first use.
+- `AccessService` exposes two checks over the same `access-token` metadata, deliberately implemented differently:
+  - `checkUnaryAccess` — **async**, calls `auth.me` over gRPC on every request, so a deleted user or a role change takes effect immediately. This service caches **nothing**: the response is cached inside `backend.auth`, which owns the writes and can evict precisely. Don't add a token-keyed cache here — the gateway has no way to invalidate it.
+
+    > **Why the cache sits in auth and not in this guard:** [docs/adr/0011-identity-cached-in-auth.md](../../../docs/adr/0011-identity-cached-in-auth.md)
+  - `checkStreamAccess` — **sync**, verifies the RS256 access token locally via `TokenService` → `JwtTokenServiceImpl` (`common/infrastructure/services`), reading `role` straight from the payload and rejecting anything whose `aud` is not `AuthTokenAudience.ACCESS` (enforced by the jwt `audience` option, so a refresh token cannot be replayed here). It must stay synchronous: an async guard on a client-stream gRPC method defers the handler and the incoming message stream stalls (`bufferUntilDrained` in `@nestjs/microservices` is best-effort). This is why the gateway holds the JWT **public** key (`JWT_ACCESS_PUBLIC_KEY_BASE64`) — it verifies but cannot issue tokens.
+- Controller decorators (`common/interface/grpc/decorators/grpc.controller.decorator.ts`): `@PublicGrpcController()` (skips auth), `@DefaultGrpcController()` (authenticated — `GrpcAccessUnaryGuard` reads the `access-token` gRPC metadata), `@AdminGrpcController()` (additionally requires `UserRole.ADMIN`).
+- **Stream methods** use `@GrpcStreamMethod()` → `GrpcAccessStreamGuard`, which reads the same `access-token` metadata and calls `checkStreamAccess`. Both guards put the resolved id into the `user-id` metadata for `@GrpcUserId()`.
+- The `temp-code` module is now a plain CRUD proxy — it no longer participates in stream authorization.
+
+## Rate limiting (`src/common/`)
+
+`ThrottlerModule` is registered in `CommonModule`, but nothing throttles globally: the stock
+`ThrottlerGuard` reads an HTTP request. **`GrpcThrottlerGuard`** (`common/interface/grpc/guards`)
+is its gRPC subclass, and the controller decorators apply it as `UseGuards(GrpcAccessUnaryGuard,
+GrpcThrottlerGuard)` — a controller built without them is not limited. Limits live in
+`common/interface/grpc/constants/grpc.throttle.constants.ts`:
+
+- **Authenticated** (`@DefaultGrpcController()` / `@AdminGrpcController()`): **per user**, keyed by
+  the `user-id` the access guard resolves, in two buckets — every call is counted by one of them.
+  Reads — the rpcs named in `READ_RPCS` (`getById`, `getList`, `getFolderContent`, `getUrlMap`,
+  `isExists`, `me`, …) — get 300 / 60s (`READ_THROTTLE`); everything else, 100 / 60s
+  (`DEFAULT_THROTTLE`). So a batch upload's creates and confirmations cannot stall the pages the
+  admin browses meanwhile, and the other way round. Each named throttler's `skipIf` picks the
+  bucket by handler name. The list is explicit rather than a `get*` rule: an rpc left out of it is
+  counted as a write, the stricter bucket — add a new read there. The throttler runs *after* the
+  access guard, which is why a call over the limit has still cost an `auth.me` round trip.
+- **Public** (`@PublicGrpcController()`, i.e. login / refresh / logout): 10 / 60s **per client address**, set
+  with `@Throttle` in the decorator over both buckets. A `user-id` a public caller sends is ignored. The address is the
+  `x-client-ip` metadata the admin's Next server sets from the one header its proxy overwrites
+  (`AuthService.getClientMetadata`, the admin's `CLIENT_IP_HEADER` — never a header the client
+  can write, [ADR-0035](../../../docs/adr/0035-client-address-from-one-trusted-header.md)); without it, the peer host (port dropped). The Next server is
+  the only gRPC client, so the peer alone is one bucket for every visitor. `x-client-ip` is trusted
+  because the gRPC port is published on the private network only — expose it and that stops holding.
+- The count is per caller and bucket across **all** handlers, not per handler (`generateKey` override: `<bucket>:<tracker>`). Stream
+  calls are not counted. An exceeded limit is `RESOURCE_EXHAUSTED`, with a `retry-after` trailer
+  (`RETRY_AFTER_METADATA_KEY`): whole seconds until that bucket's window resets, which the admin
+  waits out — its upload queue and every query.
+- **Counters live in Redis**: `CacheModule.forRoot({ namespace: 'api-gateway' })` in `app.module.ts`,
+  and `CacheThrottlerStorage` (`common/infrastructure/storages`) as the throttler's `storage`, wired
+  by `GRPC_THROTTLER_MODULE_OPTIONS` — keys `cache:api-gateway:throttle:<encoded key>`, a fixed
+  window per key. Replicas share one limit and a restart resets nothing. When Redis is unreachable
+  the gateway keeps serving and counts in-process instead, so the limit then holds per replica.
+  `blockDuration` other than `ttl` is not supported. Redis carries **only** these counters — the
+  "caches nothing" rule above still stands.
+
+  > **Why Redis, through `@backend/cache`, with an in-process fallback:** [docs/adr/0024-gateway-rate-limit-counters-in-redis.md](../../../docs/adr/0024-gateway-rate-limit-counters-in-redis.md)
 
 ## Config / commands
 
-`config.ts` is just `commonConfig()`. Env: `PORT`, `API_GATEWAY_GRPC_URL`, `AUTH_GRPC_URL`, `STORAGE_GRPC_URL` (the three `*_GRPC_URL` drive the `@backend/grpc` topology). No DB, no migrator; the `NATS_URL` still present in `.env.example` is vestigial (this service uses no event bus).
+`config.ts` is just `commonConfig()`; JWT verification has its own `common/infrastructure/configs/jwt.config.ts`, whose `JWT_ACCESS_PUBLIC_KEY_BASE64` is the only env this service owns — it verifies access tokens but cannot issue them. The three `*_GRPC_URL` come from `@backend/grpc`, `REDIS_URL` and the optional `CACHE_*` from `@backend/cache`. No DB, no migrations, no event-bus vars — this service publishes and consumes no domain events. Full list: [docs/env.md](../../../docs/env.md).
 
 ```bash
 pnpm start:dev        # dotenv → nest start --watch service

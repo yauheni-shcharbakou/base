@@ -2,7 +2,13 @@
   "extends": ["//"],
   "tasks": {
     "build": {
-      "inputs": ["src/**/*.ts", "package.json", "tsconfig*.json", "tsdown.config.mts"],
+      "inputs": [
+        "src/**/*.ts",
+        "!src/**/*.spec.ts",
+        "package.json",
+        "tsconfig*.json",
+        "tsdown.config.mts"
+      ],
       "outputs": ["dist/**"]
     }
   }

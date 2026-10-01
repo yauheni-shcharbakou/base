@@ -1,14 +1,23 @@
 import { PgMapper } from '@backend/pg';
 import { NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
+import {
+  isBackingFilter,
+  isPlacedFilter,
+} from '@common/infrastructure/pg/factories/pg.media.filters';
 import { ObjectQuery } from '@mikro-orm/core';
 
 export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestStorage.FileQuery> {
+  protected readonly computedFilters = {
+    isPlaced: isPlacedFilter<PgFileEntity>(),
+    isBacking: isBackingFilter<PgFileEntity>(),
+  };
+
   transformQuery({
     mimeTypes,
     userIds,
     uploadStatuses,
-    createdAfter,
+    createdBefore,
     ...rest
   }: Partial<NestStorage.FileQuery>): ObjectQuery<PgFileEntity> {
     const result = super.transformQuery(rest);
@@ -25,8 +34,8 @@ export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestS
       result.uploadStatus = { $in: uploadStatuses };
     }
 
-    if (createdAfter) {
-      result.createdAt = { $gte: createdAfter };
+    if (createdBefore) {
+      result.createdAt = { $lte: createdBefore };
     }
 
     return result;

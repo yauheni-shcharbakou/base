@@ -1,7 +1,6 @@
 'use client';
 
 import { AppCreate, ControlledTextField } from '@/common/components';
-import { ONE_GB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
 import { FieldErr } from '@/common/types';
 import { UserSelect } from '@/features/auth/components';
@@ -10,20 +9,20 @@ import {
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
-import { useSingleFileUpload } from '@/features/storage/hooks';
-import { videoActionProvider } from '@/features/storage/providers';
-import { getGenericVideTitle } from '@/features/video/helpers';
+import { storageMetaSchema, toDropzoneAccept, UPLOAD_RULES } from '@/features/storage/helpers';
+import { useResetParentOnOwnerChange, useSingleFileUpload } from '@/features/storage/hooks';
+import { videoActionProvider, type CreatedVideo } from '@/features/storage/providers';
+import { getGenericVideTitle, uploadViaTus } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import type { BrowserAuth } from '@packages/proto';
 import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
 const schema = {
   userId: zod.string(),
-  parent: zod.string().optional(),
+  ...storageMetaSchema,
   name: zod.string().optional(),
-  isPublic: zod.boolean(),
   title: zod.string(),
   description: zod.string().optional(),
   file: zod.file(),
@@ -36,6 +35,9 @@ export default function VideoCreate() {
 
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.VIDEO,
+    // Straight from the browser to Bunny — nothing passes through the Next server.
+    uploadFileAction: (file, entity, options) =>
+      uploadViaTus(file, (entity as CreatedVideo).upload, { onProgress: options?.onProgress }),
   });
 
   const {
@@ -50,6 +52,7 @@ export default function VideoCreate() {
 
   const parent = watch('parent');
   const userId = watch('userId');
+  useResetParentOnOwnerChange(userId, (id) => setValue('parent', id));
   const file = watch('file');
 
   const handleFileChange = (selectedFile?: File) => {
@@ -65,7 +68,7 @@ export default function VideoCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdVideo = await handleUpload<BrowserStorage.Video>(data.file, async () => {
+    const createdVideo = await handleUpload<CreatedVideo>(data.file, async () => {
       return videoActionProvider.createOne(
         data.userId,
         {
@@ -82,7 +85,9 @@ export default function VideoCreate() {
     });
 
     if (createdVideo) {
-      await onFinish(createdVideo as any);
+      // The TUS credentials are spent by now — they have no business in Refine's record.
+      const { upload, ...video } = createdVideo;
+      await onFinish(video as any);
     }
   };
 
@@ -135,12 +140,8 @@ export default function VideoCreate() {
             control={control}
             fieldName="file"
             dropzoneProps={{
-              maxSize: 2 * ONE_GB_BYTES,
-              accept: {
-                'video/mp4': [],
-                'video/quicktime': [],
-                'video/webm': [],
-              },
+              maxSize: UPLOAD_RULES.VIDEO.maxSize,
+              accept: toDropzoneAccept(UPLOAD_RULES.VIDEO.mimeTypes),
             }}
             fieldErr={errors?.file}
             selected={file}

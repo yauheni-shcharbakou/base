@@ -1,5 +1,6 @@
+import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
-import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
+import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { VideoRepository } from '@modules/video/domain/repositories/video.repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
@@ -8,7 +9,7 @@ import { Either } from '@sweet-monads/either';
 export class VideoDeleteOneUseCase {
   constructor(
     private readonly videoRepository: VideoRepository,
-    private readonly storageVideoService: StorageVideoService,
+    private readonly filePurgeService: FilePurgeService,
   ) {}
 
   async execute(
@@ -22,15 +23,22 @@ export class VideoDeleteOneUseCase {
       return video;
     }
 
-    const deletedVideo = await this.videoRepository.deleteById(video.value.id);
-    const isFileReady = video.value.file.uploadStatus === NestStorage.FileUploadStatus.READY;
-    const providerId = video.value.file.providerId;
+    const deletedVideo = await this.videoRepository.deleteWithFile(video.value.id);
+    // The Bunny guid lives on the video, not on its backing file row — `file.providerId` names an
+    // object in Bunny Storage (plain files and images) and stays unset for a video, so reading it
+    // here left every video behind at the provider.
+    //
+    // And no READY gate: `createVideo` runs before the row is saved, so the Stream object exists
+    // from creation rather than from the first byte. Waiting for READY orphaned the object of every
+    // video deleted mid-upload — permanently, because the cleanup cron reaches Bunny Stream only
+    // through `file.video.providerId`, and that row is what we just deleted.
+    const providerId = video.value.providerId;
 
-    if (deletedVideo.isLeft() || !isFileReady || !providerId) {
+    if (deletedVideo.isLeft() || !providerId) {
       return deletedVideo;
     }
 
-    await this.storageVideoService.deleteVideo(providerId);
+    await this.filePurgeService.purge([{ type: FilePurgeType.VIDEO, providerId }]);
     return video;
   }
 }

@@ -1,0 +1,347 @@
+name: 'Check'
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+  # A pull request reads caches saved by its own branch and by its base, never by another pull
+  # request. Running on main as well gives every new pull request main's turbo cache to start from.
+  push:
+    branches:
+      - 'main'
+
+concurrency:
+  group: 'check-${{ github.event.pull_request.number || github.ref }}'
+  # A newer push to a pull request supersedes the older run; a run on main finishes, so its cache
+  # is saved.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: 'read'
+
+# Every action is pinned to a commit, with the release it is in beside it: a tag can be moved to
+# other code, a commit cannot. Dependabot moves both (`.github/dependabot.yml`).
+jobs:
+  # A change to documentation alone builds and tests nothing, so `check` and its three servers stay
+  # down for it and `docs` runs the documentation's own checks instead. A job, not a `paths-ignore`
+  # on the triggers: a run that never starts reports no status, and a required check would wait for
+  # one forever, while a job skipped by its `if` counts as passed. Not a step either — the service
+  # containers start before the first step.
+  changes:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+    outputs:
+      code: '${{ steps.classify.outputs.code }}'
+      docs: '${{ steps.classify.outputs.docs }}'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The whole history, to diff against the base, but no file contents: the names of the
+          # changed paths are in the trees. Only the classifier is checked out.
+          fetch-depth: 0
+          filter: 'blob:none'
+          sparse-checkout: 'scripts'
+
+      # A pull request is classified whole, against its base, not by its last push: a docs commit
+      # on top of a failed code change must not turn the pull request green. A push to main is
+      # classified by what it added. What counts as code is in the script; a diff that cannot be
+      # computed is an empty list, which it reads as code.
+      - name: 'Classify the change'
+        id: 'classify'
+        env:
+          EVENT_NAME: '${{ github.event_name }}'
+          BASE_SHA: '${{ github.event.pull_request.base.sha || github.event.before }}'
+        run: |
+          files=''
+          if git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            if [ "$EVENT_NAME" = 'pull_request' ]; then
+              range="$BASE_SHA...HEAD"
+            else
+              range="$BASE_SHA..HEAD"
+            fi
+            files=$(git diff --name-only --no-renames "$range") || files=''
+          fi
+          printf '%s\n' "$files"
+          printf '%s\n' "$files" | bash scripts/classify-changes.sh | tee -a "$GITHUB_OUTPUT"
+
+  check:
+    needs: 'changes'
+    if: needs.changes.outputs.code == 'true'
+    # One job: turbo already runs the workspaces in parallel, and a matrix would repeat the install
+    # and the build in every leg.
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 30
+
+    # Every e2e suite skips itself when its server is unreachable, so each one needs its server
+    # here, or the run is green without having tested anything. Locally, `pnpm docker:e2e` starts
+    # the same set.
+    services:
+      postgres:
+        image: 'postgres:15-alpine'
+        env:
+          POSTGRES_USER: 'admin'
+          POSTGRES_PASSWORD: 'password123'
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U admin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: 'redis:8-alpine'
+        ports:
+          - '6379:6379'
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # `definePgConfig` validates it at load, although `migrate:check` never connects; the storage
+      # e2e suite migrates its own databases on this server.
+      DATABASE_URL: 'postgresql://admin:password123@localhost:5432'
+      TURBO_TELEMETRY_DISABLED: '1'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The snapshot guard diffs the pull request against its base.
+          fetch-depth: 0
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # `build` runs the three `@*/proto` compiles, which need protoc. Unpinned on purpose: the
+      # generated files record no tool versions.
+      - name: 'Install protoc'
+        run: 'sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler'
+
+      # Not a service container: JetStream needs the `-js` flag, and services take no command.
+      - name: 'Start NATS'
+        run: 'docker run -d --name nats -p 4222:4222 nats:2-alpine -js'
+
+      # Turbo's local cache, carried between runs: a task whose inputs did not change replays its
+      # logs and outputs. `test`, `test:e2e` and `lint` are `cache: false` and always run.
+      - name: 'Turbo cache'
+        uses: 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' # v6.1.0
+        with:
+          path: '.turbo/cache'
+          key: 'turbo-${{ runner.os }}-${{ github.sha }}'
+          restore-keys: 'turbo-${{ runner.os }}-'
+
+      - name: 'Install dependencies'
+        run: 'pnpm install --frozen-lockfile'
+
+      - name: 'Build'
+        run: 'pnpm build'
+
+      # A `globalDependencies` glob that reaches build output (`**/.env` once matched a copy under
+      # `.next/standalone/`) changes the global hash on every build, and every task misses the cache
+      # on the next run. Checked after the build, once that output exists.
+      - name: 'Global turbo inputs hold no build output'
+        run: |
+          pnpm turbo run build --dry=json | node -e '
+            let json = "";
+            process.stdin.on("data", (chunk) => (json += chunk)).on("end", () => {
+              const files = Object.keys(JSON.parse(json).globalCacheInputs.files);
+              const leaked = files.filter((file) => /(^|\/)(\.next|dist|node_modules)\//.test(file));
+              for (const file of leaked) console.log(`::error::${file} is a global turbo input.`);
+              process.exit(leaked.length ? 1 : 0);
+            });
+          '
+
+      - name: 'Typecheck'
+        run: 'pnpm typecheck'
+
+      - name: 'Lint'
+        run: 'pnpm lint'
+
+      # The build regenerates code and formats it, and lint runs with --fix: anything they changed
+      # is codegen, formatting or a lint fix the pull request did not commit.
+      - name: 'Committed code is up to date'
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            git diff
+            echo '::error::The build or lint changed tracked files. Run `pnpm build && pnpm lint` and commit the result.'
+            exit 1
+          fi
+
+      # Here as well as in `docs`: a renamed or removed package leaves its name behind in a
+      # CLAUDE.md that the change never touched.
+      - name: 'Docs layout holds'
+        run: 'pnpm check:docs'
+
+      # The specs of scripts/release-notes.sh, which writes the body of a published Release. Only
+      # here: its fixtures are not `*.md`, so no change to it is a documentation change.
+      - name: 'Repo scripts behave'
+        run: 'pnpm check:scripts'
+
+      - name: 'Env tables match their schemas'
+        run: 'pnpm check:env-docs'
+
+      - name: 'Entities match the migration snapshots'
+        run: 'pnpm migrate:check'
+
+      # Only `migration:create` may move a snapshot (see backend/CLAUDE.md). One changed without a
+      # migration beside it would make the next `migrate:create` drop whatever it lost.
+      - name: 'Every snapshot change comes with a migration'
+        # A pull request's diff against its base; on main the change was checked before it merged.
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: '${{ github.event.pull_request.base.sha }}'
+        run: |
+          changed() {
+            git diff --name-only --no-renames "$@"
+          }
+          failed=0
+          while IFS= read -r snapshot; do
+            [ -n "$snapshot" ] || continue
+            dir=$(dirname "$snapshot")
+            if [ -z "$(changed --diff-filter=A "$BASE_SHA...HEAD" -- "$dir/*.migration.ts")" ]; then
+              echo "::error file=$snapshot::The snapshot changed without a new migration in $dir. Generate one with \`pnpm migrate:create\`."
+              failed=1
+            fi
+          done < <(changed --diff-filter=AM "$BASE_SHA...HEAD" -- 'backend/apps/*/src/migrations/.snapshot-*.json')
+          exit "$failed"
+
+      - name: 'Unit tests'
+        run: 'pnpm test'
+
+      - name: 'E2E tests'
+        env:
+          # Every server runs beside the job, so a suite that finds none fails instead of skipping.
+          E2E_REQUIRE_SERVERS: '1'
+        run: 'pnpm test:e2e'
+
+      # Turbo never evicts, and each run restores the previous cache and adds to it. An entry is
+      # dropped a week after it was written; the next miss rebuilds it.
+      - name: 'Prune turbo cache'
+        if: always()
+        run: 'find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true'
+
+  # What `check` verifies of the documentation, and nothing else: no servers, no protoc, no build.
+  docs:
+    needs: 'changes'
+    if: needs.changes.outputs.code != 'true' && needs.changes.outputs.docs == 'true'
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      # Before the install: bash and grep are all it needs.
+      - name: 'Docs layout holds'
+        run: 'bash scripts/docs-invariants.sh'
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # The generator parses the config files as text, so it needs its own package and nothing
+      # built: no other workspace is installed.
+      - name: 'Install the env-docs generator'
+        run: 'pnpm install --frozen-lockfile --filter "@packages/env-docs..."'
+
+      - name: 'Env tables match their schemas'
+        run: 'pnpm check:env-docs'
+
+  # A release is one merge into main, and its version is the root package.json's: the commit that
+  # lands on main is tagged `v<version>` here and published as a GitHub Release whose body is that
+  # version's CHANGELOG.md entry — each once per version. A push that releases nothing left the
+  # version alone, finds both there already and does nothing, so this needs no trigger of its own
+  # and no "is this a release" flag.
+  release:
+    needs:
+      - 'changes'
+      - 'check'
+      - 'docs'
+    # One of `check` and `docs` is always skipped, and a job with a skipped need is skipped itself
+    # unless its `if` says otherwise. Neither may have failed: a tag does not go on a red main.
+    # `changes` is asked for by name, since its failure skips both of the others.
+    if: >-
+      !cancelled()
+      && github.event_name == 'push'
+      && needs.changes.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.check.result)
+      && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+    # The one job that writes: the workflow's token is read-only everywhere else.
+    permissions:
+      contents: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The version, its changelog entry, and the script that shapes the entry into notes.
+          sparse-checkout: |
+            /package.json
+            /CHANGELOG.md
+            /scripts/
+          sparse-checkout-cone-mode: false
+
+      # Read the way scripts/docs-invariants.sh reads it, which has already held it to the
+      # changelog's top entry.
+      - name: 'Read the version'
+        id: 'version'
+        run: |
+          version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
+          if [ -z "$version" ]; then
+            echo '::error::No version in the root package.json.'
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      # Asked of the remote, not of the clone: a shallow checkout fetches no tags.
+      - name: 'Tag the release'
+        env:
+          TAG: '${{ steps.version.outputs.tag }}'
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "$TAG exists already."
+            exit 0
+          fi
+          # Annotated, as v1.0.0 is: a plain `git describe` sees no other kind.
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            tag -a "$TAG" -m "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "::notice::Tagged $GITHUB_SHA as $TAG."
+
+      # Its own check rather than "the tag was just made": a run that tagged and then failed here
+      # publishes on its re-run. The notes link to the files as tagged, not as they are on main.
+      - name: 'Publish the release'
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+          TAG: '${{ steps.version.outputs.tag }}'
+          VERSION: '${{ steps.version.outputs.version }}'
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "The release $TAG exists already."
+            exit 0
+          fi
+          notes="$RUNNER_TEMP/release-notes.md"
+          bash scripts/release-notes.sh "$VERSION" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$TAG" > "$notes"
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$notes"
+          echo "::notice::Published the release $TAG."

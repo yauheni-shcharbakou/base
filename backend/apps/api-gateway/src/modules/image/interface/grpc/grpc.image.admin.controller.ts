@@ -29,12 +29,12 @@ export class GrpcImageAdminController implements GrpcImageAdminServiceController
   }
 
   @ValidateGrpcPayload(ImageCreateOneDto)
-  createOne(request: NestStorage.ImageCreateOne): Promise<NestStorage.Image> {
+  createOne(request: NestStorage.ImageCreateOne): Promise<NestStorage.ImageCreated> {
     return this.imageClient.createOne(request);
   }
 
   @ValidateGrpcPayload(ImageCreateManyDto)
-  createMany(request: NestStorage.ImageCreateMany): Promise<NestStorage.ImageArray> {
+  createMany(request: NestStorage.ImageCreateMany): Promise<NestStorage.ImageCreatedArray> {
     return this.imageClient.createMany(request);
   }
 

@@ -1,7 +1,9 @@
-import { ImageEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
+import {
+  FilePurgeService,
+  toFileEvents,
+} from '@modules/file/application/services/file.purge.service';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
-import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 
@@ -9,8 +11,7 @@ import { Either } from '@sweet-monads/either';
 export class ImageDeleteOneUseCase {
   constructor(
     private readonly imageRepository: ImageRepository,
-    private readonly storageFileService: StorageFileService,
-    private readonly eventBus: ImageEventBus,
+    private readonly filePurgeService: FilePurgeService,
   ) {}
 
   async execute(
@@ -24,21 +25,19 @@ export class ImageDeleteOneUseCase {
       return image;
     }
 
-    const deletedImage = await this.imageRepository.deleteById(image.value.id);
+    const deletedImage = await this.imageRepository.deleteWithFile(image.value.id);
 
     if (deletedImage.isLeft()) {
       return deletedImage;
     }
 
-    const hooks: Promise<any>[] = [this.eventBus.emitDelete(deletedImage.value)];
-    const isFileReady = image.value.file.uploadStatus === NestStorage.FileUploadStatus.READY;
+    // Not gated on READY — the bytes of a direct upload can land before it is completed.
     const providerId = image.value.file.providerId;
 
-    if (isFileReady && providerId) {
-      hooks.push(this.storageFileService.deleteFile(providerId));
+    if (providerId) {
+      await this.filePurgeService.purge(toFileEvents(providerId, image.value.previewProviderId));
     }
 
-    await Promise.allSettled(hooks);
     return image;
   }
 }

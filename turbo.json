@@ -2,7 +2,19 @@
   "$schema": "https://turbo.build/schema.json",
   "concurrency": "10",
   "envMode": "loose",
-  "globalDependencies": ["**/.env"],
+  // `packages/configs/**` is global because its presets are read from outside the packages that
+  // use them: a package `turbo.json` lists its own `tsdown.config.mts` in `inputs`, but that file
+  // is now a one-liner delegating to `@packages/configs/tsdown/package.config.mjs`, whose edits
+  // would otherwise never reach a build hash. The presets change rarely, so the extra
+  // invalidations are cheap.
+  //
+  // `.env` files are not global: an edit to one would invalidate every task in the repo, while only
+  // the tasks that load one at run time depend on it — each lists its package's own in `inputs`
+  // (`migrate:check` below, `frontend.admin#build`). Keep build output out of this list: a glob
+  // that reaches it (`**/.env` once matched the copy Next writes into `.next/standalone/`) changes
+  // the global hash on every build. turbo 2.10 cannot parse a negated (`!`) glob here, and CI fails
+  // when a `.next`, `dist` or `node_modules` path shows up among the global inputs.
+  "globalDependencies": ["packages/configs/**"],
   "tasks": {
     "dev": {
       "cache": false,
@@ -15,7 +27,58 @@
     "compile": {
       "dependsOn": ["^compile", "^build"]
     },
-    "prod": {},
+    // Runs the migrations and starts the server: a cached run that exited cleanly would replay its
+    // logs instead of doing either.
+    "prod": {
+      "cache": false
+    },
+    "test": {
+      // Not cached: the whole run takes seconds, so a replay saves nothing worth the
+      // question "did these tests actually run against this environment?".
+      "cache": false,
+      // Inert while `cache` is false, and kept ready for the day it is not. envMode is
+      // loose, so nothing enters the hash on its own, while the config modules validate env
+      // at import time and the config specs assert its defaults. NODE_ENV/PORT come from
+      // `NodeValidationSchema`, which every suite pulls in through @backend/common; the
+      // prefixes cover the two transport packages. Keep the list here rather than in a
+      // package turbo.json: a package-level task replaces this field instead of extending
+      // it, so a local `env` would silently drop the entries above.
+      "env": ["NODE_ENV", "PORT", "REDIS_*", "NATS_*", "CACHE_*"],
+      "dependsOn": ["^build", "compile"]
+    },
+    // Cacheable, unlike lint and format: it writes nothing and is a pure function of the sources
+    // turbo already hashes. Every workspace with a tsconfig declares it, over the whole tsconfig:
+    // no build covers that. tsdown's declaration emit builds through type errors, `tsx` strips
+    // types, and `nest build` reads `tsconfig.build.json`, which leaves the specs out.
+    //
+    // `compile` (the package's own) here and in both test tasks: they read the package's `src/`,
+    // and a codegen package's compile can be pulled into the same run by a dependent's `^build`.
+    // A proto compile starts by wiping its `src/`, so without the edge the two race.
+    "typecheck": {
+      "dependsOn": ["^build", "compile"]
+    },
+    "test:e2e": {
+      // Whether the suite runs or skips depends on a broker being reachable, which is not an
+      // input turbo can hash — a cached result would replay the wrong verdict.
+      "cache": false,
+      "dependsOn": ["^build", "compile"]
+    },
+    // Both run the MikroORM CLI over the service's `src/mikro-orm.config.ts`, which imports
+    // `@backend/pg` through its built `dist` — hence `^build`. `migrate` writes to a database, which
+    // turbo cannot hash; `migrate:check` never connects (it diffs the entities against the committed
+    // snapshot), so it is cached — on the sources plus the environment the CLI loads through
+    // `dotenv`: `definePgConfig` validates it, and NODE_ENV decides whether the snapshot is read
+    // from `src/migrations` or `dist/migrations`. `.env` is gitignored, so `$TURBO_DEFAULT$` alone
+    // would miss it.
+    "migrate": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "migrate:check": {
+      "inputs": ["$TURBO_DEFAULT$", ".env"],
+      "env": ["NODE_ENV"],
+      "dependsOn": ["^build"]
+    },
     "format": {
       "cache": false
     },

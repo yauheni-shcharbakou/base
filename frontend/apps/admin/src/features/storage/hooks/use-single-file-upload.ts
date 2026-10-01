@@ -1,15 +1,18 @@
 'use client';
 
-import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
+import { UploadFileAction } from '@/features/storage/types';
 import { BaseRecord, useNotification } from '@refinedev/core';
 import { useCallback, useState } from 'react';
 
 type Params = {
   resource: string;
+  // How the bytes leave the browser, with the credentials the created entity carries. See
+  // `UploadFileAction` for why it carries the `Action` suffix.
+  uploadFileAction: UploadFileAction;
 };
 
-export const useSingleFileUpload = ({ resource }: Params) => {
+export const useSingleFileUpload = ({ resource, uploadFileAction }: Params) => {
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -19,29 +22,15 @@ export const useSingleFileUpload = ({ resource }: Params) => {
     async <Record extends BaseRecord = BaseRecord>(
       file: File,
       createCallback: () => Promise<Record>,
-      field: keyof Record = 'id',
     ): Promise<Record | undefined> => {
       setIsUploading(() => true);
       setProgress(() => 0);
 
       try {
         const entity = await createCallback();
+        const onProgress = (percent: number) => setProgress(() => percent);
 
-        const formData = new FormData();
-        formData.append('file', file);
-
-        await internalHttpClient.post(`${resource}/${entity[field]}/upload`, formData, {
-          onUploadProgress: (progressEvent) => {
-            const total = progressEvent.total || file.size;
-            const current = progressEvent.loaded;
-            const percentCompleted = (current * 100) / total;
-
-            setProgress(() => percentCompleted);
-          },
-          timeout: 0,
-          maxBodyLength: Infinity,
-          maxContentLength: Infinity,
-        });
+        await uploadFileAction(file, entity, { onProgress });
 
         return entity;
       } catch (error) {
@@ -57,7 +46,7 @@ export const useSingleFileUpload = ({ resource }: Params) => {
         setIsUploading(() => false);
       }
     },
-    [resource, open],
+    [resource, uploadFileAction, open],
   );
 
   return {

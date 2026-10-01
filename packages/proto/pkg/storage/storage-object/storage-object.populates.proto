@@ -33,4 +33,41 @@ message StorageObjectPopulated {
     image.Image image = 15;
     video.Video video = 16;
   }
+
+  optional StorageObjectFolderStats folderStats = 17;
+}
+
+// An item of a folder listing: `StorageObjectPopulated` field for field (keep the two in step), plus
+// a preview. `previewUrl` is a signed, short-lived CDN URL — the image's small webp preview for a
+// READY image that has one, the Stream thumbnail for a READY video — and is absent for anything else,
+// an image still without a preview included: never the original. It is bound to no client address,
+// and nothing on the CDN resizes it.
+message StorageObjectFolderItem {
+  string id = 1;
+  google.protobuf.Timestamp createdAt = 2;
+  optional google.protobuf.Timestamp updatedAt = 3;
+
+  string name = 4;
+  bool isPublic = 5;
+  bool isFolder = 6;
+  StorageObjectType type = 7;
+
+  string userId = 8;
+  optional string fileId = 9;
+  optional string parentId = 10;
+  optional file.File file = 11;
+
+  oneof metadata {
+    string folderPath = 12;
+    string imageId = 13;
+    string videoId = 14;
+  }
+
+  oneof populatedMetadata {
+    image.Image image = 15;
+    video.Video video = 16;
+  }
+
+  optional StorageObjectFolderStats folderStats = 18;
+  optional string previewUrl = 17;
 }

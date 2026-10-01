@@ -25,11 +25,11 @@ export class ImageProxyService {
     return firstValueFrom(this.imageClient.getList(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  createOne(request: NestStorage.ImageCreateOne): Promise<NestStorage.Image> {
+  createOne(request: NestStorage.ImageCreateOne): Promise<NestStorage.ImageCreated> {
     return firstValueFrom(this.imageClient.createOne(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  createMany(request: NestStorage.ImageCreateMany): Promise<NestStorage.ImageArray> {
+  createMany(request: NestStorage.ImageCreateMany): Promise<NestStorage.ImageCreatedArray> {
     return firstValueFrom(this.imageClient.createMany(request).pipe(GrpcRxPipe.rpcException));
   }
 

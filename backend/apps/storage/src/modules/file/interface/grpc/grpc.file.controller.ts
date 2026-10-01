@@ -1,18 +1,37 @@
-import { GrpcController, GrpcRxPipe } from '@backend/grpc';
+import { GrpcController, GrpcExceptionMapper, GrpcRxPipe } from '@backend/grpc';
 import {
   GrpcFileServiceController,
   GrpcFileTransport,
   NestCommon,
   NestStorage,
 } from '@backend/proto';
+import {
+  FileCompleteManyUseCase,
+  FileCompletion,
+} from '@modules/file/application/use-cases/file.complete-many.use-case';
+import { FileCompleteUploadUseCase } from '@modules/file/application/use-cases/file.complete-upload.use-case';
 import { FileCreateManyUseCase } from '@modules/file/application/use-cases/file.create-many.use-case';
 import { FileCreateOneUseCase } from '@modules/file/application/use-cases/file.create-one.use-case';
 import { FileDeleteUseCase } from '@modules/file/application/use-cases/file.delete.use-case';
 import { FileGetDownloadMapUseCase } from '@modules/file/application/use-cases/file.get-download-map.use-case';
 import { FileGetUrlMapUseCase } from '@modules/file/application/use-cases/file.get-url-map.use-case';
 import { FileGetUseCase } from '@modules/file/application/use-cases/file.get.use-case';
-import { FileUploadOneUseCase } from '@modules/file/application/use-cases/file.upload-one.use-case';
-import { from, Observable } from 'rxjs';
+import { from, map, Observable } from 'rxjs';
+
+// A file that failed to complete answers with the status and message it would have failed with alone.
+const toCompleteResult = ({ id, result }: FileCompletion): NestStorage.FileCompleteResult => {
+  if (result.isRight()) {
+    return { id, file: result.value };
+  }
+
+  const exception = GrpcExceptionMapper.toRpcException(result.value);
+
+  return {
+    id,
+    code: GrpcExceptionMapper.getStatus(exception),
+    error: GrpcExceptionMapper.getMessage(exception),
+  };
+};
 
 @GrpcController()
 @GrpcFileTransport.ControllerMethods()
@@ -23,16 +42,17 @@ export class GrpcFileController implements GrpcFileServiceController {
     private readonly getUseCase: FileGetUseCase,
     private readonly greateOneUseCase: FileCreateOneUseCase,
     private readonly createManyUseCase: FileCreateManyUseCase,
-    private readonly uploadOneUseCase: FileUploadOneUseCase,
+    private readonly completeUploadUseCase: FileCompleteUploadUseCase,
+    private readonly completeManyUseCase: FileCompleteManyUseCase,
     private readonly deleteUseCase: FileDeleteUseCase,
   ) {}
 
-  getUrlMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
-    return from(this.getUrlMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
+  getUrlMap(request: NestStorage.GetUrlMap): Observable<NestCommon.StringMap> {
+    return from(this.getUrlMapUseCase.execute(request)).pipe(GrpcRxPipe.toMapEntries);
   }
 
-  getDownloadMap({ ip, ...query }: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
-    return from(this.getDownloadMapUseCase.execute(query, ip)).pipe(GrpcRxPipe.toMapEntries);
+  getDownloadMap(request: NestStorage.GetUrlMap): Observable<NestStorage.DownloadMap> {
+    return from(this.getDownloadMapUseCase.execute(request)).pipe(GrpcRxPipe.toMapEntries);
   }
 
   getById(request: NestCommon.IdField): Observable<NestStorage.File> {
@@ -43,19 +63,26 @@ export class GrpcFileController implements GrpcFileServiceController {
     return from(this.getUseCase.getList(request));
   }
 
-  createOne(request: NestStorage.FileCreateOne): Observable<NestStorage.File> {
+  createOne(request: NestStorage.FileCreateOne): Observable<NestStorage.FileCreated> {
     return from(this.greateOneUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 
-  createMany(request: NestStorage.FileCreateMany): Observable<NestStorage.FileArray> {
+  createMany(request: NestStorage.FileCreateMany): Observable<NestStorage.FileCreatedArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
     return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }
 
-  uploadOne(
-    request: Observable<NestStorage.UploadOne>,
-  ): Observable<NestStorage.FileUploadResponse> {
-    return this.uploadOneUseCase.execute(request).pipe(GrpcRxPipe.unwrapEither);
+  completeUpload(request: NestStorage.FileCompleteUpload): Observable<NestStorage.File> {
+    return from(this.completeUploadUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
+  }
+
+  completeMany(request: NestStorage.FileCompleteMany): Observable<NestStorage.FileCompleteResults> {
+    const stream$ = from(this.completeManyUseCase.execute(request));
+    return stream$.pipe(
+      GrpcRxPipe.unwrapEither,
+      map((completions) => completions.map(toCompleteResult)),
+      GrpcRxPipe.toArrayItems,
+    );
   }
 
   deleteOne(request: NestStorage.FileQuery): Observable<NestStorage.File> {

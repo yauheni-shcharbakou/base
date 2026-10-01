@@ -11,8 +11,8 @@ import "storage/image/image.proto";
 service ImageService {
   rpc getById (IdField) returns (image.ImagePopulated) {}
   rpc getList (GetList) returns (image.ImageList) {}
-  rpc createOne (image.ImageCreateOne) returns (image.Image) {}
-  rpc createMany (image.ImageCreateMany) returns (image.ImageArray) {}
+  rpc createOne (image.ImageCreateOne) returns (image.ImageCreated) {}
+  rpc createMany (image.ImageCreateMany) returns (image.ImageCreatedArray) {}
   rpc updateOne (image.ImageUpdateOne) returns (image.Image) {}
   rpc deleteOne (image.ImageQuery) returns (image.Image) {}
 }
@@ -20,15 +20,15 @@ service ImageService {
 service ImageAdminService {
   rpc getById (IdField) returns (image.ImagePopulated) {}
   rpc getList (GetList) returns (image.ImageList) {}
-  rpc createOne (image.ImageCreateOne) returns (image.Image) {}
-  rpc createMany (image.ImageCreateMany) returns (image.ImageArray) {}
+  rpc createOne (image.ImageCreateOne) returns (image.ImageCreated) {}
+  rpc createMany (image.ImageCreateMany) returns (image.ImageCreatedArray) {}
   rpc updateById (image.ImageUpdateById) returns (image.Image) {}
   rpc deleteById (IdField) returns (image.Image) {}
 }
 
 service ImageWebService {
-  rpc createOne (image.ImageCreateOneWeb) returns (image.Image) {}
-  rpc createMany (image.ImageCreateManyWeb) returns (image.ImageArray) {}
+  rpc createOne (image.ImageCreateOneWeb) returns (image.ImageCreated) {}
+  rpc createMany (image.ImageCreateManyWeb) returns (image.ImageCreatedArray) {}
   rpc updateById (image.ImageUpdateById) returns (image.Image) {}
   rpc deleteById (IdField) returns (image.Image) {}
 }

@@ -8,12 +8,11 @@ import {
 import { IdFieldDto } from '@common/application/dto/id-field.dto';
 import { GetUrlMapShortDto } from '@common/application/dto/storage/get-url-map.dto';
 import { DefaultGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
-import { GrpcStreamMethod } from '@common/interface/grpc/decorators/grpc.stream-method.decorator';
 import { GrpcUserId } from '@common/interface/grpc/decorators/grpc.user-id.decorator';
 import { FileCreateManyWebDto } from '@modules/file/application/dto/file.create-many.dto';
 import { FileCreateOneWebDto } from '@modules/file/application/dto/file.create.dto';
 import { FileProxyService } from '@modules/file/application/services/file.proxy.service';
-import { Observable } from 'rxjs';
+import { Payload } from '@nestjs/microservices';
 
 @DefaultGrpcController()
 @GrpcFileWebTransport.ControllerMethods()
@@ -22,46 +21,49 @@ export class GrpcFileWebController implements GrpcFileWebServiceController {
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getUrlMap(
-    { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() request: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestCommon.StringMap> {
-    return this.fileService.getUrlMap(query, ip, userId);
+    return this.fileService.getUrlMap(request, userId);
   }
 
   @ValidateGrpcPayload(GetUrlMapShortDto)
   getDownloadMap(
-    { ip, ...query }: NestStorage.GetUrlMapShort,
+    @Payload() request: NestStorage.GetUrlMapShort,
     @GrpcUserId() userId: string,
   ): Promise<NestStorage.DownloadMap> {
-    return this.fileService.getDownloadMap(query, ip, userId);
+    return this.fileService.getDownloadMap(request, userId);
   }
 
   @ValidateGrpcPayload(FileCreateOneWebDto)
   createOne(
-    { file, storage }: NestStorage.FileCreateOneWeb,
+    @Payload() { file, storage }: NestStorage.FileCreateOneWeb,
     @GrpcUserId() userId: string,
-  ): Promise<NestStorage.File> {
+  ): Promise<NestStorage.FileCreated> {
     return this.fileService.createOne({ userId, file, storage });
   }
 
   @ValidateGrpcPayload(FileCreateManyWebDto)
   createMany(
-    { items, storage }: NestStorage.FileCreateManyWeb,
+    @Payload() { items, storage }: NestStorage.FileCreateManyWeb,
     @GrpcUserId() userId: string,
-  ): Promise<NestStorage.FileArray> {
+  ): Promise<NestStorage.FileCreatedArray> {
     return this.fileService.createMany({ userId, items, storage });
   }
 
-  @GrpcStreamMethod()
-  uploadOne(
-    request$: Observable<NestStorage.UploadOneShort>,
+  @ValidateGrpcPayload(IdFieldDto)
+  completeUpload(
+    @Payload() { id }: NestCommon.IdField,
     @GrpcUserId() userId: string,
-  ): Observable<NestStorage.FileUploadResponse> {
-    return this.fileService.uploadOne(request$, userId);
+  ): Promise<NestStorage.File> {
+    return this.fileService.completeUpload(id, userId);
   }
 
   @ValidateGrpcPayload(IdFieldDto)
-  deleteById({ id }: NestCommon.IdField, @GrpcUserId() userId: string): Promise<NestStorage.File> {
+  deleteById(
+    @Payload() { id }: NestCommon.IdField,
+    @GrpcUserId() userId: string,
+  ): Promise<NestStorage.File> {
     return this.fileService.deleteOne({ id, userId });
   }
 }

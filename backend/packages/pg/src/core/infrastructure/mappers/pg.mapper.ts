@@ -24,6 +24,16 @@ export class PgMapper<
   protected readonly additionalFilterConverters: [NestCommon.LogicalOperator, FilterConverter][] =
     [];
 
+  /**
+   * Filter fields that are not a column of their own, keyed by the field a client sends. Each one
+   * turns the operator's output into the condition to merge into the query — a relation's
+   * existence, or a column of a related row. `undefined` drops the filter.
+   */
+  protected readonly computedFilters: Record<
+    string,
+    (generated: unknown) => ObjectQuery<Doc> | undefined
+  > = {};
+
   protected convertFieldName(fieldName: string): string {
     return (this.fieldNameConverter[fieldName] ?? fieldName).toString();
   }
@@ -31,7 +41,7 @@ export class PgMapper<
   protected parseLogicalFilter(filter: NestCommon.LogicalFilter): ParsedLogicalFilter {
     const result: ParsedLogicalFilter = _.pick(filter, ['field', 'operator']);
 
-    if (_.isNumber(filter.number) ?? _.isBoolean(filter.boolean)) {
+    if (_.isNumber(filter.number) || _.isBoolean(filter.boolean)) {
       result.value = filter.number ?? filter.boolean;
       return result;
     }
@@ -113,12 +123,36 @@ export class PgMapper<
 
           if (generated !== undefined) {
             acc.push(generated);
-            return acc;
           }
+
+          return acc;
         },
         [],
       ),
     };
+  }
+
+  /**
+   * The entity properties a list's filters and sorts name, as the query will use them — a
+   * `computedFilters` field names none of its own. The repository checks them against the entity
+   * before querying: MikroORM refuses an unknown one with a plain `Error`, indistinguishable from
+   * any other failure.
+   */
+  listFields({
+    logicalFilters,
+    conditionalFilters,
+    sorters,
+  }: DatabaseRepositoryGetList<Query>): string[] {
+    const filtered = _.map(
+      _.reject(logicalFilters ?? [], (filter) => filter.field in this.computedFilters),
+      (filter) => this.convertFieldName(filter.field),
+    );
+    const keyed = _.map(
+      _.filter(conditionalFilters ?? [], (filter) => !!filter.key),
+      (filter) => this.convertFieldName(filter.key),
+    );
+
+    return _.uniq([...filtered, ...keyed, ..._.map(sorters ?? [], 'field')]);
   }
 
   transformSorters(sorters: NestCommon.Sorter[] = []): PgSorting[] {
@@ -154,6 +188,18 @@ export class PgMapper<
       const generated = converter(parsedFilter);
 
       if (generated === undefined) {
+        return;
+      }
+
+      const computed = this.computedFilters[filter.field];
+
+      if (computed) {
+        const condition = computed(generated);
+
+        if (condition !== undefined) {
+          queryFilter = _.merge(queryFilter, condition);
+        }
+
         return;
       }
 

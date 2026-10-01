@@ -5,6 +5,10 @@ import { StorageObject } from '@modules/storage-object/domain/entities/storage-o
 import { StorageObjectQuery } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import _ from 'lodash';
 
+// LIKE reads `%` and `_` as wildcards and `\` as its escape character; a searched name means them
+// literally.
+const escapeLike = (value: string): string => value.replace(/[\\%_]/g, '\\$&');
+
 export class PgStorageObjectMapper extends PgMapper<
   PgStorageObjectEntity,
   StorageObject,
@@ -14,7 +18,10 @@ export class PgStorageObjectMapper extends PgMapper<
     isPublic,
     isFolder,
     isDeleted,
+    isRoot,
     nameStartsWith,
+    nameContains,
+    types,
     excludeIds,
     ...rest
   }: Partial<StorageObjectQuery>): ObjectQuery<PgStorageObjectEntity> {
@@ -32,8 +39,20 @@ export class PgStorageObjectMapper extends PgMapper<
       result.isDeleted = isDeleted;
     }
 
+    if (_.isBoolean(isRoot)) {
+      result.parent = isRoot ? null : { $ne: null };
+    }
+
     if (nameStartsWith) {
       result.name = { $like: `${nameStartsWith}%` };
+    }
+
+    if (nameContains) {
+      result.name = { $ilike: `%${escapeLike(nameContains)}%` };
+    }
+
+    if (types?.length) {
+      result.type = { $in: types };
     }
 
     if (excludeIds?.length) {

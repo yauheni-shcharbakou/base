@@ -1,33 +1,20 @@
-import { type NextRequest } from 'next/server';
+import zod from 'zod';
 
-export const getRequestIp = (req: NextRequest): string | undefined => {
-  const forwardedFor = req.headers.get('x-forwarded-for') || req.headers.get('X-Forwarded-For');
+const ipSchema = zod.union([zod.ipv4(), zod.ipv6()]);
 
-  if (forwardedFor) {
-    const clientIp = forwardedFor.split(',')[0]?.trim();
+/**
+ * The client's address, read from the one header the proxy in front of this server is known to
+ * overwrite — never from whatever address headers the request carries, which its sender writes.
+ * Of a list, the last entry: the one the nearest proxy added. Anything that is not an address is
+ * no address.
+ */
+export const getHeadersIp = (
+  headers: Pick<Headers, 'get'>,
+  headerName: string,
+): string | undefined => {
+  const clientIp = headers.get(headerName)?.split(',').pop()?.trim();
 
-    if (clientIp) {
-      return clientIp;
-    }
-  }
-
-  const realIp = req.headers.get('x-real-ip') || req.headers.get('X-Real-IP');
-
-  if (realIp) {
-    const clientIp = realIp.split(',')[0]?.trim();
-
-    if (clientIp) {
-      return clientIp;
-    }
-  }
-};
-
-export const getServerPublicIp = async () => {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return data.ip;
-  } catch (error) {
-    return null;
+  if (clientIp && ipSchema.safeParse(clientIp).success) {
+    return clientIp;
   }
 };

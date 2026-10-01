@@ -49,19 +49,19 @@ export class GrpcAccessStreamGuard implements CanActivate {
       ]) ?? _.values(NestAuth.UserRole);
 
     const metadata = rpc.getContext<Metadata>();
-    const streamCode = metadata?.get('stream-code')?.[0]?.toString();
+    const accessToken = metadata?.get('access-token')?.[0]?.toString();
 
-    if (!streamCode) {
-      throw new RpcException({ code: status.UNAUTHENTICATED, details: 'Stream code is missing' });
+    if (!accessToken) {
+      throw new RpcException({ code: status.UNAUTHENTICATED, details: 'Access token is missing' });
     }
 
-    const user = this.accessService.checkStreamAccess(streamCode, allowedRoles);
+    const payload = this.accessService.checkStreamAccess(accessToken, allowedRoles);
 
-    if (user.isLeft()) {
-      throw GrpcExceptionMapper.toRpcException(user.value);
+    if (payload.isLeft()) {
+      throw GrpcExceptionMapper.toRpcException(payload.value);
     }
 
-    metadata.set('user-id', user.value.id);
+    metadata.set('user-id', payload.value.id);
     return true;
   }
 }

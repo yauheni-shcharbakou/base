@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package storage.storage_object;
 
+import "common/crud.proto";
+import "common/messages.proto";
 import "storage/storage-object/storage-object.populates.proto";
 import "storage/storage-object/storage-object.proto";
 
@@ -53,6 +55,64 @@ message StorageObjectGetFoldersWeb {
   optional string excludeChildrenOf = 1;
 }
 
+// get folder content
+
+// What a folder listing sorts by, after folders, which always come first.
+enum StorageObjectSortField {
+  NAME = 0;
+  CREATED_AT = 1;
+  UPDATED_AT = 2;
+  TYPE = 3;
+}
+
+message StorageObjectSorter {
+  StorageObjectSortField field = 1;
+  Sort order = 2;
+}
+
+// Narrows a folder listing. The folder, its owner and "live objects only" are fixed by the server,
+// never by the caller: free-form list filters could override them.
+message StorageObjectFolderContentQuery {
+  repeated StorageObjectType types = 1;
+  optional bool isPublic = 2;
+  // A case-insensitive substring of the name.
+  optional string search = 3;
+}
+
+message StorageObjectGetFolderContent {
+  string parentId = 1;
+  string userId = 2;
+  optional StorageObjectFolderContentQuery query = 3;
+  repeated StorageObjectSorter sorters = 4;
+  optional Pagination pagination = 5;
+}
+
+message StorageObjectGetFolderContentWeb {
+  string parentId = 1;
+  optional StorageObjectFolderContentQuery query = 2;
+  repeated StorageObjectSorter sorters = 3;
+  optional Pagination pagination = 4;
+}
+
+message StorageObjectAncestor {
+  string id = 1;
+  string name = 2;
+}
+
+// A page of a folder's live objects: folders first, then `sorters` (the name when there are none),
+// the id last. `folder` carries its `folderPath`; `ancestors` run from the root (whose name is empty)
+// down to the folder's parent, none for the root itself. Items carry their file, image or video, but
+// no `folderPath`: a subfolder's is the folder's own followed by its name. A READY image or video,
+// or a file with a preview of its own, also carries a signed `previewUrl`. `folderTotal` is how many
+// of `total` are folders — the rest are leaves, all of them after the folders.
+message StorageObjectFolderContent {
+  StorageObject folder = 1;
+  repeated StorageObjectAncestor ancestors = 2;
+  repeated StorageObjectFolderItem items = 3;
+  int32 total = 4;
+  int32 folderTotal = 5;
+}
+
 // create
 
 message StorageObjectCreate {
@@ -98,4 +158,49 @@ message StorageObjectUpdateOne {
 message StorageObjectUpdateById {
   string id = 1;
   StorageObjectUpdate update = 2;
+}
+
+// many
+
+// Objects of one owner, deleted or moved together under one tree lock: all or none. With `userId`,
+// an object of another owner reads as missing.
+message StorageObjectDeleteMany {
+  repeated string ids = 1;
+  optional string userId = 2;
+}
+
+// A name taken in `parent` gets a ` (n)` suffix, as a move of one object does.
+message StorageObjectMoveMany {
+  repeated string ids = 1;
+  string parent = 2;
+  optional string userId = 3;
+}
+
+message StorageObjectMoveByIds {
+  repeated string ids = 1;
+  string parent = 2;
+}
+
+// Objects of one owner made public or private together under one tree lock: all or none. A folder
+// takes its whole subtree along. An object cannot be made private while its folder is public,
+// unless that folder is made private by the same call.
+message StorageObjectUpdatePublicMany {
+  repeated string ids = 1;
+  bool isPublic = 2;
+  optional string userId = 3;
+}
+
+message StorageObjectUpdatePublicByIds {
+  repeated string ids = 1;
+  bool isPublic = 2;
+}
+
+// A folder tree made under `parent` at once, under one tree lock: all or none. `paths` are
+// "/"-separated and relative to `parent` ("img", "img/2024"), each nested path's parent path listed
+// too. A top-level name taken in `parent` gets a ` (n)` suffix; the folders below it are new. Answered
+// in `paths` order.
+message StorageObjectCreateFolders {
+  string userId = 1;
+  string parent = 2;
+  repeated string paths = 3;
 }

@@ -1,0 +1,1 @@
+export const CACHE_CONNECTION = Symbol('CACHE_CONNECTION');

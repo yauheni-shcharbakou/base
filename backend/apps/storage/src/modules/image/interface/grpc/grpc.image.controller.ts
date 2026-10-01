@@ -37,11 +37,11 @@ export class GrpcImageController implements GrpcImageServiceController {
     );
   }
 
-  createOne(request: NestStorage.ImageCreateOne): Observable<NestStorage.Image> {
+  createOne(request: NestStorage.ImageCreateOne): Observable<NestStorage.ImageCreated> {
     return from(this.createOneUseCase.execute(request)).pipe(GrpcRxPipe.unwrapEither);
   }
 
-  createMany(request: NestStorage.ImageCreateMany): Observable<NestStorage.ImageArray> {
+  createMany(request: NestStorage.ImageCreateMany): Observable<NestStorage.ImageCreatedArray> {
     const stream$ = from(this.createManyUseCase.execute(request));
     return stream$.pipe(GrpcRxPipe.unwrapEither, GrpcRxPipe.toArrayItems);
   }

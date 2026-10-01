@@ -4,13 +4,10 @@ export enum Database {
   STORAGE = 'storage',
 }
 
-export enum CommonDatabaseEntity {
-  MIGRATION = 'migrations',
-}
-
 export enum AuthDatabaseEntity {
   USER = 'users',
   TEMP_CODE = 'temp-codes',
+  SESSION = 'sessions',
 }
 
 export enum StorageDatabaseEntity {

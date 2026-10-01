@@ -3,7 +3,7 @@
 import { AppShow, RecordView, RefButtonContainer, StringEntityField } from '@/common/components';
 import { useResourceShow } from '@/common/hooks';
 import { DownloadButton } from '@/features/storage/components';
-import { getFileSize, getFileUploadStatusColor } from '@/features/storage/helpers';
+import { formatFileSize, getFileUploadStatusColor } from '@/features/storage/helpers';
 import { ExpandMore, OpenInBrowserOutlined } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 import Button from '@mui/material/Button';
@@ -62,12 +62,12 @@ export default function FileShow() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />} aria-controls="info-content" id="info">
-          <Typography component="span">Image info</Typography>
+          <Typography component="span">File info</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <RecordView record={record}>
             <StringEntityField label="Original name" value={record?.originalName} />
-            <StringEntityField label="Size" value={getFileSize(record?.size)} />
+            <StringEntityField label="Size" value={formatFileSize(record?.size)} />
             <StringEntityField label="Mime type" value={record?.mimeType} />
             <StringEntityField label="Extension" value={record?.extension} />
             <StringEntityField

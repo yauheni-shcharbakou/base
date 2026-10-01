@@ -8,6 +8,7 @@
     "dev": "pnpm start:dev",
     "prod": "pnpm start:prod",
     "build": "nest build",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\" --config ../../../.prettierrc",
     "start": "nest start",
     "start:dev": "dotenv -- nest start --watch",
@@ -18,46 +19,51 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
+    "@backend/cache": "workspace:*",
     "@backend/common": "workspace:*",
     "@backend/grpc": "workspace:*",
     "@backend/proto": "workspace:*",
-    "@grpc/grpc-js": "1.14.4",
-    "@grpc/proto-loader": "0.8.1",
-    "@nestjs/common": "11.1.27",
-    "@nestjs/config": "4.0.4",
-    "@nestjs/core": "11.1.27",
-    "@nestjs/microservices": "11.1.27",
-    "@nestjs/platform-express": "11.1.27",
+    "@grpc/grpc-js": "catalog:",
+    "@grpc/proto-loader": "catalog:",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
+    "@nestjs/core": "catalog:",
+    "@nestjs/jwt": "catalog:",
+    "@nestjs/microservices": "catalog:",
+    "@nestjs/platform-express": "catalog:",
     "@nestjs/swagger": "11.4.5",
     "@nestjs/throttler": "6.5.0",
     "@packages/common": "workspace:*",
     "@packages/proto": "workspace:*",
-    "@sweet-monads/either": "3.3.1",
-    "class-transformer": "0.5.1",
-    "class-validator": "0.14.3",
-    "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "@sweet-monads/either": "catalog:",
+    "class-transformer": "catalog:",
+    "class-validator": "catalog:",
+    "lodash": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@nestjs/cli": "11.0.23",
-    "@nestjs/schematics": "11.1.0",
-    "@nestjs/testing": "11.1.27",
+    "@nestjs/cli": "catalog:",
+    "@nestjs/schematics": "catalog:",
+    "@nestjs/testing": "catalog:",
     "@packages/configs": "workspace:*",
-    "@types/express": "5.0.5",
-    "@types/jest": "30.0.0",
-    "@types/supertest": "6.0.3",
-    "jest": "30.3.0",
-    "source-map-support": "0.5.21",
-    "supertest": "7.2.2",
-    "ts-jest": "29.4.9",
-    "ts-loader": "9.5.7",
-    "ts-node": "10.9.2",
-    "tsconfig-paths": "4.2.0"
+    "@types/express": "catalog:",
+    "@types/jest": "catalog:",
+    "@types/lodash": "catalog:",
+    "@types/supertest": "catalog:",
+    "jest": "catalog:",
+    "source-map-support": "catalog:",
+    "supertest": "catalog:",
+    "ts-jest": "catalog:",
+    "ts-loader": "catalog:",
+    "ts-node": "catalog:",
+    "tsconfig-paths": "catalog:"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -67,8 +73,22 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^@modules/(.*)$": "<rootDir>/modules/$1",
+      "^@common/(.*)$": "<rootDir>/common/$1",
+      "^@/(.*)$": "<rootDir>/$1"
+    },
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "diagnostics": {
+            "ignoreCodes": [
+              151002
+            ]
+          }
+        }
+      ]
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

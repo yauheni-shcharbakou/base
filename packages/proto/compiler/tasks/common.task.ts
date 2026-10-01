@@ -5,6 +5,9 @@ export class CommonTask extends TransformTask {
   transform(): void | Promise<void> {
     this.sourceFile.getVariableDeclaration('protobufPackage')?.remove();
     this.sourceFile.getVariableDeclaration('GOOGLE_PROTOBUF_PACKAGE_NAME')?.remove();
+    // A file with no `package` statement (`common/*.proto`) gets `_PACKAGE_NAME = ''`: it names
+    // nothing, and every such file exporting it makes their barrel's `export *` ambiguous.
+    this.sourceFile.getVariableDeclaration('_PACKAGE_NAME')?.remove();
 
     this.sourceFile.forEachDescendant((node) => {
       if (

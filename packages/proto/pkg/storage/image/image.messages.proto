@@ -53,7 +53,8 @@ message ImageCreateOneWeb {
 message ImageCreateManyItem {
   ImageCreate image = 1;
   file.FileCreate file = 2;
-  string uploadId = 3;
+  reserved 3;
+  reserved "uploadId";
 }
 
 message ImageCreateMany {
@@ -65,6 +66,19 @@ message ImageCreateMany {
 message ImageCreateManyWeb {
   optional common.StorageManyMeta storage = 1;
   repeated ImageCreateManyItem items = 2;
+}
+
+// The image's bytes go to its file row: upload with these credentials, then complete through
+// `FileService.completeUpload` with the image's `fileId`.
+message ImageCreated {
+  Image image = 1;
+  file.FilePresignedUpload upload = 2;
+}
+
+// Answers a `ImageCreateMany` in request order: `items[i]` is what `ImageCreateMany.items[i]` created. The
+// batch is created whole or not at all, so the two always have the same length.
+message ImageCreatedArray {
+  repeated ImageCreated items = 1;
 }
 
 // update

@@ -4,10 +4,15 @@ package storage.file;
 
 import "google/protobuf/timestamp.proto";
 
+// UPLOADED sits between PENDING and READY: the bytes reached the provider but it has not finished
+// processing them yet. Only videos use it — Bunny's encode takes up to ~33 minutes, and without it
+// "still encoding" and "upload died" are the same state. Appended rather than inserted at 2: the
+// declaration order drives the generated member order and the value list in the CHECK constraint.
 enum FileUploadStatus {
   PENDING = 0;
   FAILED = 1;
   READY = 2;
+  UPLOADED = 3;
 }
 
 message File {
@@ -23,5 +28,10 @@ message File {
   optional string providerId = 9;
 
   string userId = 10;
-  string uploadId = 11;
+  reserved 11;
+  reserved "uploadId";
+  // The key of the object a grid shows for a plain file: the first page of a PDF, as a small webp
+  // made after upload. Unset until that is done, on any other file, and on one it cannot be made for
+  // (ADR-0032). An image's is `Image.previewProviderId`.
+  optional string previewProviderId = 12;
 }

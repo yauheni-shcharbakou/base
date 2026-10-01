@@ -1,3 +1,5 @@
+export * from './tus-upload';
+
 export const getVideoDuration = (duration: number) => {
   if (!duration) {
     return '00:00';

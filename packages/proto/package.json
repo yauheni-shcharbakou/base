@@ -7,23 +7,43 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./compiler": {
+      "types": "./dist/compiler.d.cts",
+      "default": "./dist/compiler.cjs"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "format": "prettier src --write --config ../../.prettierrc",
     "dev": "pnpm build --watch",
-    "build": "tsdown",
-    "compile": "tsx compiler/main.ts && pnpm format --log-level error",
+    "build": "pnpm format --log-level error && tsdown",
+    "compile": "tsx compiler/main.ts",
+    "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "devDependencies": {
-    "@grpc/grpc-js": "1.14.4",
     "@packages/compiler-utils": "workspace:*",
     "@packages/configs": "workspace:*",
-    "@types/pug": "2.0.10",
-    "protobufjs": "7.6.3",
-    "pug": "3.0.4",
-    "ts-morph": "28.0.0",
-    "ts-proto": "2.11.6",
-    "tsx": "4.22.4"
+    "@types/pug": "catalog:",
+    "change-case-all": "catalog:",
+    "prettier": "catalog:",
+    "protobufjs": "catalog:",
+    "pug": "catalog:",
+    "ts-morph": "catalog:",
+    "ts-proto": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

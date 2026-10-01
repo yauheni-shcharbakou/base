@@ -9,6 +9,9 @@ export type BunnyVideo = {
   description?: string;
   length: number;
   views: number;
+  // Bunny's `VideoModelStatus`, which is NOT the `Status` its webhook sends: "Finished" is 4 here
+  // and 3 there. See BunnyVideoStatus next to the sync use-case.
+  status: number;
   availableResolutions?: string;
 };
 

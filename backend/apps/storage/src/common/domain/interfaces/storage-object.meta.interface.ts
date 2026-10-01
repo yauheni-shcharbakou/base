@@ -1,14 +1,11 @@
 import { NestStorage } from '@backend/proto';
 
 /**
- * Validated placement for a leaf storage object (file/image/video). Carries the parent-derived
- * `folderPath`/`isPublic` produced by `StorageObjectValidationService`, which a plain
- * `NestStorage.StorageMeta` does not express. Consumed by `buildLeafStorageObject` and the
- * `saveAndPlace*` repository contracts.
+ * Validated placement for a leaf storage object (file/image/video): its name, parent and the
+ * `isPublic` produced by `StorageObjectValidationService`. Consumed by `buildLeafStorageObject` and
+ * the `saveAndPlace*` repository contracts.
  */
-export interface StorageObjectPlacementMeta extends Pick<
+export type StorageObjectPlacementMeta = Pick<
   NestStorage.StorageMeta,
   'name' | 'isPublic' | 'parent'
-> {
-  folderPath?: string | null;
-}
+>;

@@ -1,7 +1,8 @@
+import { resolveErrorMessage } from '@backend/common';
 import { GRPC_MICROSERVICE_OPTIONS } from '@backend/grpc';
 import { HttpExceptionFilter } from '@common/interface/http/filters/http.exception.filter';
 import { RpcExceptionFilter } from '@common/interface/rpc/filters/rpc.exception.filter';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
@@ -38,6 +39,13 @@ async function bootstrap() {
   await app.listen(port);
 }
 
-bootstrap()
-  .then()
-  .catch(() => {});
+// See `backend/apps/auth/src/main.ts`: an empty catch turns a failed bootstrap into a silent
+// exit with code 0.
+bootstrap().catch((error: unknown) => {
+  new Logger('Bootstrap').error(
+    resolveErrorMessage(error, 'Failed to start the application'),
+    error instanceof Error ? error.stack : undefined,
+  );
+
+  process.exit(1);
+});

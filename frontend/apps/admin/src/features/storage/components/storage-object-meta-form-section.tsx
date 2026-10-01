@@ -2,7 +2,7 @@
 
 import { ControlledBooleanField, ControlledTextField } from '@/common/components';
 import { FieldErr } from '@/common/types';
-import { FolderSelect } from '@/features/storage/components/folder-select';
+import { FolderPickerField } from '@/features/storage/components/folder-picker';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import { Control, FieldErrors } from 'react-hook-form';
 
@@ -39,8 +39,7 @@ export const StorageObjectMetaFormSection = <Values extends StorageMeta = Storag
       <CardHeader title="Storage" />
       <CardContent>
         {userId && (
-          <FolderSelect
-            label="Folder"
+          <FolderPickerField
             fieldName="parent"
             fieldErr={errors?.parent as FieldErr}
             control={control}
@@ -57,7 +56,14 @@ export const StorageObjectMetaFormSection = <Values extends StorageMeta = Storag
                 label="Name"
               />
             )}
-            <ControlledBooleanField control={control} fieldName="isPublic" label="Public" />
+            {/* Unregistered with its checkbox, so dropping the folder drops a visibility picked for
+                it. `name` stays: the create pages fill it from the picked file, not the folder. */}
+            <ControlledBooleanField
+              control={control}
+              fieldName="isPublic"
+              label="Public"
+              controllerProps={{ shouldUnregister: true }}
+            />
           </>
         )}
       </CardContent>

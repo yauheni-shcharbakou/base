@@ -12,7 +12,7 @@ export class CronFileScheduler {
     private readonly databaseRunnerService: DatabaseRunnerService,
   ) {}
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async cleanupFiles() {
     try {
       await this.databaseRunnerService.isolatedRun(async () => {

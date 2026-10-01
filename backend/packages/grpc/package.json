@@ -11,25 +11,47 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
     "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
     "@backend/common": "workspace:*",
     "@backend/proto": "workspace:*",
-    "@grpc/grpc-js": "1.14.4",
-    "@nestjs/common": "11.1.27",
-    "@nestjs/config": "4.0.4",
-    "@nestjs/microservices": "11.1.27",
+    "@grpc/grpc-js": "catalog:",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
+    "@nestjs/microservices": "catalog:",
     "@packages/common": "workspace:*",
-    "@sweet-monads/either": "3.3.1",
-    "lodash": "4.18.1",
-    "protobufjs": "7.6.3",
-    "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "@sweet-monads/either": "catalog:",
+    "change-case-all": "catalog:",
+    "lodash": "catalog:",
+    "protobufjs": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@packages/configs": "workspace:*",
-    "@types/lodash": "4.17.23"
+    "@types/jest": "catalog:",
+    "@types/lodash": "catalog:",
+    "jest": "catalog:",
+    "ts-jest": "catalog:"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   }
 }

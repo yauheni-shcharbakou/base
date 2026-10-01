@@ -9,13 +9,21 @@ import {
   UpdateOf,
 } from '@backend/common';
 import type { NestCommon } from '@backend/proto';
-import { FilterQuery, Populate, RequiredEntityData, wrap } from '@mikro-orm/core';
+import {
+  FilterQuery,
+  Populate,
+  RequiredEntityData,
+  UniqueConstraintViolationException,
+  wrap,
+} from '@mikro-orm/core';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Logger, NotFoundException } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import _ from 'lodash';
 import { PgEntity } from '../entities';
 import { PgMapper } from '../mappers';
+
+const logger = new Logger('PgRepository');
 
 export abstract class PgRepositoryImpl<
   Doc extends PgEntity<any>,
@@ -25,6 +33,12 @@ export abstract class PgRepositoryImpl<
   Update = UpdateOf<Entity>,
 > implements DatabaseRepository<Entity, Query, Create, Update> {
   protected readonly em: EntityManager;
+
+  /**
+   * What a client reads in this repository's errors ("Storage object not found"). A miss reaches
+   * the admin panel verbatim, so it names the resource, never the ORM class behind it.
+   */
+  protected abstract readonly resourceName: string;
 
   protected constructor(
     protected readonly repository: EntityRepository<Doc>,
@@ -55,6 +69,54 @@ export abstract class PgRepositoryImpl<
     return entity;
   }
 
+  /**
+   * Turns a driver-level unique violation into a `ConflictException`, the way a miss becomes a
+   * `NotFoundException`. Callers can then tell "this row already exists" from a real write failure
+   * — the difference matters for idempotent event handlers, which treat the former as success.
+   */
+  protected toRepositoryError(error: unknown): Error {
+    if (error instanceof UniqueConstraintViolationException) {
+      return new ConflictException(`${this.resourceName} already exists`);
+    }
+
+    return error as Error;
+  }
+
+  // A list's filters and sorts come from the caller, so a field the entity does not have is the
+  // caller's mistake, named back in the 400. MikroORM would refuse it too, but with a plain `Error`
+  // naming the ORM class.
+  protected findUnknownListFields(request: DatabaseRepositoryGetList<Query>): string[] {
+    const properties = this.em
+      .getMetadata()
+      .getByClassName(this.repository.getEntityName()).properties;
+    return this.mapper.listFields(request).filter((field) => !(field in properties));
+  }
+
+  // A failed read or bulk write is thrown, never answered with an empty page or a `false` that
+  // reads as "nothing matched". Logged here because the transport reports it only as an unknown
+  // error.
+  protected toFailure(action: string, error: unknown): Error {
+    logger.error(`Failed to ${action} ${this.resourceName}`, error);
+    return error as Error;
+  }
+
+  // A bulk write whose query came out of the mapper with no condition would reach every row. The
+  // gRPC loader turns a client's unset `repeated` field into `[]`, and the mapper drops it, so "no
+  // filter" is one request away — refused as the caller's mistake, never run.
+  protected transformBulkQuery(action: string, query: Partial<Query>): FilterQuery<Doc> {
+    const transformedQuery = this.mapper.transformQuery(query);
+
+    if (_.isEmpty(transformedQuery)) {
+      throw new BadRequestException(`${this.resourceName} ${action}: a filter is required`);
+    }
+
+    return transformedQuery;
+  }
+
+  protected notFound(): NotFoundException {
+    return new NotFoundException(`${this.resourceName} not found`);
+  }
+
   protected getPopulate<E extends NestCommon.Entity = Entity>(options: OptionsOf<E> = {}) {
     if (!options.populate) {
       return undefined;
@@ -67,34 +129,25 @@ export abstract class PgRepositoryImpl<
     return this.repository.count(this.mapper.transformQuery(query));
   }
 
+  // A real `select distinct` with no row limit: capping the rows read (not the values returned)
+  // silently drops values that only occur past the cap. `null` is left out, as in Mongo.
   async distinct<Field extends keyof Entity>(
     field: Field,
-    query?: Partial<Query>,
+    query: Partial<Query> = {},
   ): Promise<Set<Entity[Field]>> {
+    const property = field.toString();
+
     try {
-      const transformedQuery = this.mapper.transformQuery(query);
+      const rows: Record<string, Entity[Field]>[] = await this.repository
+        .createQueryBuilder()
+        .select(property as any, true)
+        .where(this.mapper.transformQuery(query) as any)
+        .execute('all');
 
-      const entities = await this.repository.find(transformedQuery, {
-        limit: 1_000,
-        fields: [field.toString() as any],
-      });
-
-      return _.reduce(
-        entities,
-        (acc: Set<Entity[Field]>, entity: Doc) => {
-          const wrappedEntity = wrap(entity).toJSON();
-          const value = wrappedEntity[field.toString()];
-
-          if (!_.isNil(value)) {
-            acc.add(value);
-          }
-
-          return acc;
-        },
-        new Set(),
-      );
-    } catch (e) {
-      return new Set();
+      return new Set(_.reject(_.map(rows, property), _.isNil));
+    } catch (error) {
+      // Never an empty set: that reads as "no values", and hides a broken query.
+      throw this.toFailure(`read distinct ${property} of`, error);
     }
   }
 
@@ -102,14 +155,15 @@ export abstract class PgRepositoryImpl<
     return this.deleteOne({ id } as Partial<Query>);
   }
 
-  async deleteMany(query?: Partial<Query>): Promise<boolean> {
+  async deleteMany(query: Partial<Query>): Promise<boolean> {
+    const transformedQuery = this.transformBulkQuery('delete', query);
+
+    let page = 1;
+    let hasNext = false;
+    let isMatched = false;
+    const limit = 100;
+
     try {
-      const transformedQuery = this.mapper.transformQuery(query);
-
-      let page = 1;
-      let hasNext = false;
-      const limit = 100;
-
       do {
         const [entities, total] = await this.repository.findAndCount(transformedQuery, {
           limit,
@@ -120,23 +174,24 @@ export abstract class PgRepositoryImpl<
           this.em.remove(entity);
         });
 
+        isMatched ||= total > 0;
         hasNext = page * limit < total;
         page += 1;
       } while (hasNext);
 
       await this.em.flush();
-      return true;
+      return isMatched;
     } catch (error) {
-      return false;
+      throw this.toFailure('delete', error);
     }
   }
 
-  async deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>> {
+  async deleteOne(query: Partial<Query> = {}): Promise<Either<NotFoundException, Entity>> {
     try {
       const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
       if (!entity) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       await this.em.remove(entity).flush();
@@ -157,6 +212,14 @@ export abstract class PgRepositoryImpl<
     request: DatabaseRepositoryGetList<Query>,
     options: OptionsOf<E> = {},
   ): Promise<DatabaseRepositoryGetListRes<E>> {
+    const unknownFields = this.findUnknownListFields(request);
+
+    if (unknownFields.length) {
+      throw new BadRequestException(
+        `${this.resourceName} list: unknown field ${unknownFields.join(', ')}`,
+      );
+    }
+
     try {
       const populate = this.getPopulate(options);
       const query = this.mapper.transformListQuery(request);
@@ -176,12 +239,13 @@ export abstract class PgRepositoryImpl<
         total,
       };
     } catch (error) {
-      return { items: [], total: 0 };
+      // Never an empty page: that reads as "nothing matches", and hides a broken filter.
+      throw this.toFailure('list', error);
     }
   }
 
   async getMany<E extends NestCommon.Entity = Entity>(
-    query?: Partial<Query>,
+    query: Partial<Query> = {},
     options: OptionsOf<E> = {},
   ): Promise<E[]> {
     const populate = this.getPopulate(options);
@@ -189,7 +253,7 @@ export abstract class PgRepositoryImpl<
 
     const entities = _.isEmpty(transformedQuery)
       ? await this.repository.findAll({ populate })
-      : await this.repository.find(this.mapper.transformQuery(query), { populate });
+      : await this.repository.find(transformedQuery, { populate });
 
     return this.mapper.stringifyMany(entities) as unknown as E[];
   }
@@ -202,7 +266,7 @@ export abstract class PgRepositoryImpl<
     const entity = await this.repository.findOne(this.mapper.transformQuery(query), { populate });
 
     if (!entity) {
-      return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+      return left(this.notFound());
     }
 
     return right(this.mapper.stringify(entity) as unknown as E);
@@ -228,7 +292,7 @@ export abstract class PgRepositoryImpl<
       await this.em.flush();
       return right(this.mapper.stringifyMany(entities));
     } catch (error) {
-      return left(error as Error);
+      return left(this.toRepositoryError(error));
     }
   }
 
@@ -238,7 +302,7 @@ export abstract class PgRepositoryImpl<
       await this.em.persist(entity).flush();
       return right(this.mapper.stringify(entity));
     } catch (error) {
-      return left(error as Error);
+      return left(this.toRepositoryError(error));
     }
   }
 
@@ -247,13 +311,14 @@ export abstract class PgRepositoryImpl<
   }
 
   async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {
+    const transformedQuery = this.transformBulkQuery('update', query);
+
+    let page = 1;
+    let hasNext = false;
+    let isMatched = false;
+    const limit = 100;
+
     try {
-      const transformedQuery = this.mapper.transformQuery(query);
-
-      let page = 1;
-      let hasNext = false;
-      const limit = 100;
-
       do {
         const [entities, total] = await this.repository.findAndCount(transformedQuery, {
           limit,
@@ -264,14 +329,15 @@ export abstract class PgRepositoryImpl<
           this.convertUpdate(entity, updateData);
         });
 
+        isMatched ||= total > 0;
         hasNext = page * limit < total;
         page += 1;
       } while (hasNext);
 
       await this.em.flush();
-      return true;
+      return isMatched;
     } catch (error) {
-      return false;
+      throw this.toFailure('update', error);
     }
   }
 
@@ -283,7 +349,7 @@ export abstract class PgRepositoryImpl<
       const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
       if (!entity) {
-        return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+        return left(this.notFound());
       }
 
       const updatedEntity = this.convertUpdate(entity, updateData);

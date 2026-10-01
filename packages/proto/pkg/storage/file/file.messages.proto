@@ -18,7 +18,7 @@ message FileQuery {
   optional string extension = 7;
   optional FileUploadStatus uploadStatus = 8;
   repeated FileUploadStatus uploadStatuses = 9;
-  optional google.protobuf.Timestamp createdAfter = 10;
+  optional google.protobuf.Timestamp createdBefore = 10;
 }
 
 // types
@@ -53,28 +53,66 @@ message FileCreateOneWeb {
 
 // create many
 
-message FileCreateManyItem {
-  FileCreate file = 1;
-  string uploadId = 2;
-}
-
+// `items` took a new number when it stopped wrapping each `FileCreate`: the old item message and
+// `FileCreate` are both length-delimited, so a peer on the other shape would misread every item
+// instead of seeing none.
 message FileCreateMany {
   optional common.StorageManyMeta storage = 1;
-  repeated FileCreateManyItem items = 2;
+  reserved 2;
   string userId = 3;
+  repeated FileCreate items = 4;
 }
 
 message FileCreateManyWeb {
   optional common.StorageManyMeta storage = 1;
-  repeated FileCreateManyItem items = 2;
+  reserved 2;
+  repeated FileCreate items = 4;
 }
 
 // upload
 
-message FileUploadResponse {
-  oneof payload {
-    File entity = 1;
-    bool canSendChunks = 2;
-    bool ack = 3;
-  }
+// Pre-signed credentials for a direct browser -> Bunny Storage PUT over its S3 API.
+// The browser sends the file as the body of a PUT to `url` with `Content-Type: contentType` (a
+// signed header, like the length), then calls `completeUpload` — Bunny Storage reports nothing
+// back on its own. `expires` is unix seconds.
+message FilePresignedUpload {
+  string url = 1;
+  string contentType = 2;
+  string expires = 3;
+}
+
+message FileCreated {
+  File file = 1;
+  FilePresignedUpload upload = 2;
+}
+
+// Answers a `FileCreateMany` in request order: `items[i]` is what `FileCreateMany.items[i]` created. The
+// batch is created whole or not at all, so the two always have the same length.
+message FileCreatedArray {
+  repeated FileCreated items = 1;
+}
+
+message FileCompleteUpload {
+  string id = 1;
+  optional string userId = 2;
+}
+
+// Files completed together. Each is completed on its own, as `completeUpload` would: one that has
+// not been uploaded yet does not keep the others from being completed.
+message FileCompleteMany {
+  repeated string ids = 1;
+  optional string userId = 2;
+}
+
+// What completing `id` came to: the completed file, or the gRPC status and message it failed with.
+message FileCompleteResult {
+  string id = 1;
+  optional File file = 2;
+  optional int32 code = 3;
+  optional string error = 4;
+}
+
+// Answers a `FileCompleteMany` in request order, one result per requested id.
+message FileCompleteResults {
+  repeated FileCompleteResult items = 1;
 }

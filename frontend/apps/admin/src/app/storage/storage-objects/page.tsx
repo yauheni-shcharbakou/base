@@ -1,7 +1,9 @@
 'use client';
 
-import { ResourceListPage } from '@/common/components';
+import { ResourceListPage, RowActionButton } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
+import { formatFileSize, getFolderContentPath } from '@/features/storage/helpers';
+import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity, Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
@@ -30,9 +32,27 @@ export default function StorageObjectList() {
         })
         .string('name', { valueGetter: (value) => value || 'Root Folder' })
         .enum('type', { maxWidth: 100 })
+        // A leaf's own file, a folder's whole subtree. Neither sorts nor filters: a folder's is not a
+        // column but a walk of its subtree, and a leaf's lives on another table.
+        .string('folderStats', {
+          headerName: 'Size',
+          maxWidth: 120,
+          sortable: false,
+          filterable: false,
+          valueGetter: (_value, row) =>
+            formatFileSize(row.isFolder ? row.folderStats?.totalSize : row.file?.size),
+        })
         .boolean('isPublic', { maxWidth: 100 })
         .date('createdAt')
-        .actions()
+        .actions({
+          width: 176,
+          prepend: (row) =>
+            row.isFolder && (
+              <RowActionButton title="Open folder" href={getFolderContentPath(row.id)}>
+                <FolderOpenOutlined fontSize="small" />
+              </RowActionButton>
+            ),
+        })
         .build(),
     [],
   );

@@ -5,11 +5,14 @@
   "license": "MIT",
   "version": "0.0.0",
   "scripts": {
-    "dev": "dotenv -- cross-env NODE_OPTIONS=--max_old_space_size=4096 refine dev",
-    "build": "refine build",
+    "dev": "node scripts/copy-pdfjs-assets.mjs && dotenv -- cross-env NODE_OPTIONS=--max_old_space_size=4096 refine dev",
+    "build": "node scripts/copy-pdfjs-assets.mjs && refine build",
+    "assets:pdfjs": "node scripts/copy-pdfjs-assets.mjs",
+    "typecheck": "tsc --noEmit",
     "start": "refine start",
-    "lint": "next lint",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "refine": "refine",
+    "test": "jest",
     "reset": "rm -rf .next .turbo node_modules",
     "reset:modules": "rm -rf node_modules"
   },
@@ -17,7 +20,7 @@
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@frontend/proto": "workspace:*",
-    "@grpc/grpc-js": "1.14.4",
+    "@grpc/grpc-js": "catalog:",
     "@hookform/resolvers": "5.2.2",
     "@mui/icons-material": "6.5.0",
     "@mui/lab": "6.0.1-beta.36",
@@ -31,23 +34,53 @@
     "@refinedev/mui": "7.0.1",
     "@refinedev/nextjs-router": "7.0.5",
     "@refinedev/react-hook-form": "5.0.4",
-    "@sweet-monads/either": "3.3.1",
-    "axios": "1.16.0",
-    "busboy": "1.6.0",
+    "@sweet-monads/either": "catalog:",
+    "@tanstack/react-query": "5.101.2",
+    "axios": "catalog:",
+    "change-case-all": "catalog:",
     "js-cookie": "3.0.8",
+    "lodash": "catalog:",
     "next": "15.5.18",
+    "pdfjs-dist": "catalog:",
+    "player.js": "0.1.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-dropzone": "15.0.0",
-    "react-hook-form": "7.57.0"
+    "react-hook-form": "7.57.0",
+    "react-pdf": "11.0.0",
+    "tus-js-client": "4.3.1",
+    "ulid": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@packages/configs": "workspace:*",
     "@refinedev/cli": "2.16.52",
-    "@types/busboy": "1.5.4",
+    "@types/jest": "catalog:",
     "@types/js-cookie": "3.0.6",
+    "@types/lodash": "catalog:",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.2",
-    "cross-env": "10.1.0"
+    "cross-env": "10.1.0",
+    "jest": "catalog:",
+    "ts-jest": "catalog:"
+  },
+  "jest": {
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
+    "transform": {
+      "^.+\\.ts$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "commonjs",
+            "target": "ES2021"
+          }
+        }
+      ]
+    },
+    "testEnvironment": "node"
   }
 }

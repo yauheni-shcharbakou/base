@@ -11,11 +11,13 @@
     "format": "prettier src --write --config ../../.prettierrc",
     "dev": "pnpm build --watch",
     "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
-    "@grpc/grpc-js": "1.14.3"
+    "@grpc/grpc-js": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@packages/configs": "workspace:*"

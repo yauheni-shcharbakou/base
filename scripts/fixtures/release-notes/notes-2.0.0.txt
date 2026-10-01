@@ -1,0 +1,32 @@
+A paragraph wrapped over three lines, with a [relative link](https://example.test/blob/v2.0.0/docs/env.md) and an [absolute one](https://example.test/page).
+
+### Upgrade notes
+A line right under its heading, wrapped once.
+
+- A bullet wrapped over two lines.
+- **Nested** bullets:
+  - the first, with a link whose [text is wrapped](https://example.test/blob/v2.0.0/docs/adr/README.md#index) across lines;
+  - the second, with two links: [one](https://example.test/blob/v2.0.0/README.md) and [two](#anchor).
+* A star bullet.
++ A plus bullet.
+
+1. A numbered item wrapped once.
+2. Another.
+
+> A quote wrapped over two lines, and a third without its mark.
+>
+> Its second paragraph.
+> - A quoted item.
+
+| Column | Other               |
+| ------ | ------------------- |
+| a      | [b](https://example.test/blob/v2.0.0/CHANGELOG.md)   |
+
+```shell
+pnpm run   something \
+  --flag [not a link](docs/kept-as-is.md)
+
+still inside the fence
+```
+
+Mail [us](mailto:someone@example.test).

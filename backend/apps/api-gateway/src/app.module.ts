@@ -1,3 +1,4 @@
+import { CacheModule } from '@backend/cache';
 import { GrpcModule } from '@backend/grpc';
 import { GrpcAuthTransport } from '@backend/proto';
 import { CommonModule } from '@common/common.module';
@@ -10,25 +11,18 @@ import { UserModule } from '@modules/user/user.module';
 import { VideoModule } from '@modules/video/video.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { config } from './config';
 
 // TODO: add anti-sql injection decorators
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          ttl: 60 * 1000,
-          limit: 100,
-        },
-      ],
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
     }),
+    // Holds only the rate-limit counters — this service caches no data (see its CLAUDE.md).
+    CacheModule.forRoot({ namespace: 'api-gateway' }),
     GrpcModule.forRoot({
       host: 'apiGateway',
       appClientStrategy: {

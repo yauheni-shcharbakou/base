@@ -17,6 +17,8 @@ export class PgUserRepositoryImpl
   extends PgRepositoryImpl<PgUserEntity, NestAuth.User, NestAuth.UserQuery, UserCreate, UserUpdate>
   implements UserRepository
 {
+  protected readonly resourceName = 'User';
+
   constructor(
     @InjectRepository(PgUserEntity) protected readonly repository: EntityRepository<PgUserEntity>,
   ) {
@@ -29,7 +31,7 @@ export class PgUserRepositoryImpl
     const entity = await this.repository.findOne(this.mapper.transformQuery(query));
 
     if (!entity) {
-      return left(new NotFoundException(`${this.repository.getEntityName()} not found`));
+      return left(this.notFound());
     }
 
     return right(entity);

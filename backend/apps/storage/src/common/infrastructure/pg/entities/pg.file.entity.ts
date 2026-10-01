@@ -37,8 +37,16 @@ export class PgFileEntity
   @Property({ nullable: true, index: true })
   providerId?: string;
 
-  @Property()
-  uploadId: string;
+  // Set once, by the document module's preview step: the first page of a PDF as a small webp beside
+  // the original (ADR-0032). An image's is on the image row, never here.
+  @Property({ nullable: true })
+  previewProviderId?: string;
+
+  // When the preview step gave up on a file a retry cannot help — undecodable, protected, too heavy,
+  // a missing object. The sweep skips such a row; clearing the column by hand queues it again.
+  // Hidden: the proto `File` has no such field.
+  @PgProp.Date({ nullable: true, hidden: true })
+  previewFailedAt?: Date;
 
   @OneToOne({
     entity: () => PgImageEntity,

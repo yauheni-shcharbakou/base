@@ -7,7 +7,7 @@ import { BaseRecord } from '@refinedev/core';
 import { DateField, DeleteButton, EditButton, ShowButton } from '@refinedev/mui';
 import { capitalCase } from 'change-case-all';
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 type RefParams<Entity extends BaseRecord> = Partial<GridColDef<Entity>> & {
   database: Database;
@@ -149,7 +149,16 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
     return this;
   }
 
-  actions(options: Partial<Pick<GridColDef<Entity>, 'width' | 'renderCell'>> = {}): this {
+  /**
+   * Edit, show and delete buttons. `prepend` puts a row's own buttons before them; widen the column
+   * to fit.
+   */
+  actions({
+    prepend,
+    ...options
+  }: Partial<Pick<GridColDef<Entity>, 'width' | 'renderCell'>> & {
+    prepend?: (row: Entity) => ReactNode;
+  } = {}): this {
     this.columns.push({
       field: 'actions',
       headerName: 'Actions',
@@ -162,6 +171,7 @@ export class GridColumnsBuilder<Entity extends BaseRecord> {
       renderCell: function render({ row }) {
         return (
           <>
+            {prepend?.(row)}
             <EditButton hideText recordItemId={row.id} />
             <ShowButton hideText recordItemId={row.id} />
             <DeleteButton hideText recordItemId={row.id} />

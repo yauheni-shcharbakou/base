@@ -11,27 +11,26 @@ import {
   StorageUploader,
   StorageUploaderProps,
 } from '@/features/storage/components';
-import { useMultipleFileUpload } from '@/features/storage/hooks';
-import { StorageUploadItem } from '@/features/storage/types';
+import { storageMetaSchema } from '@/features/storage/helpers';
+import { useMultipleFileUpload, useResetParentOnOwnerChange } from '@/features/storage/hooks';
+import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { Box, Stack, Typography } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
-import { BrowserAuth, type BrowserCommon } from '@packages/proto';
+import { BrowserAuth } from '@packages/proto';
 import { useGetIdentity, useInvalidate, useNavigation } from '@refinedev/core';
 import { useMemo } from 'react';
 import zod from 'zod';
 
 const schema = {
   userId: zod.string(),
-  parent: zod.string().optional(),
-  isPublic: zod.boolean().optional(),
+  ...storageMetaSchema,
   files: zod.array(zod.file()),
   batchSize: zod.number().min(1).max(100),
 };
 
 type Params = SchemaTypeOf<typeof schema>;
 
-type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
-  fileResource: string;
+type Props<Entity extends CreatedUploadEntity> = {
   resource: string;
   batchSize: number;
   uploaderProps?: Pick<StorageUploaderProps, 'dropzoneProps' | 'maxFiles' | 'allowedTypes'>;
@@ -40,12 +39,12 @@ type Props<Entity extends BrowserCommon.IdField & { uploadId: string }> = {
   // (`*ActionProvider.createMany`); both this component and its consumers are `'use client'`,
   // so passing it is safe.
   createManyAction: (uploadItemsBatch: StorageUploadItem[], form: Params) => Promise<Entity[]>;
-  fileRefField?: keyof Entity | string;
+  // Same `Action`-suffix reason as `createManyAction`: it is a client function, not a server one.
+  // Passed through to the hook — how each file's bytes go straight to the provider.
+  uploadFileAction: UploadFileAction;
 };
 
-export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId: string }>(
-  props: Props<Entity>,
-) => {
+export const UploadManyPage = <Entity extends CreatedUploadEntity>(props: Props<Entity>) => {
   const { data: user } = useGetIdentity<BrowserAuth.User>();
 
   const {
@@ -56,7 +55,10 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
     handleUpload,
     handleDelete,
     addFiles,
-  } = useMultipleFileUpload({ resource: props.fileResource });
+  } = useMultipleFileUpload({
+    resource: props.resource,
+    uploadFileAction: props.uploadFileAction,
+  });
 
   const batchSizeOptions = useMemo(() => {
     const options = [1, 5, 10, 20, 100];
@@ -90,11 +92,11 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
   const parent = watch('parent');
   const selectedFiles = watch('files');
   const userId = watch('userId');
+  useResetParentOnOwnerChange(userId, (id) => setValue('parent', id));
 
   const handleSave = async (data: Params) => {
     const isSuccess = await handleUpload<Entity>(
       async (batch) => props.createManyAction(batch, data),
-      props.fileRefField as keyof Entity,
       data.batchSize,
     );
 
@@ -123,8 +125,10 @@ export const UploadManyPage = <Entity extends BrowserCommon.IdField & { uploadId
             defaultValue={user?.id}
             required
             onOptionsLoaded={(options) => {
-              if (user?.id && (options ?? []).some((option) => option.value === user.id)) {
-                setValue('userId', user?.id);
+              const owner = user?.id;
+
+              if (owner && (options ?? []).some((option) => option.value === owner)) {
+                setValue('userId', owner);
               }
             }}
           />

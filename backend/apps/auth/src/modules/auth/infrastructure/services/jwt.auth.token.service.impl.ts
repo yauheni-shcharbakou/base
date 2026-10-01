@@ -1,5 +1,7 @@
 import { NestAuth } from '@backend/proto';
 import {
+  AuthRefreshTokenPayloadParsed,
+  AuthRefreshTokenSession,
   AuthTokenPayload,
   AuthTokenPayloadParsed,
 } from '@modules/auth/domain/interfaces/auth.interface';
@@ -22,10 +24,12 @@ export class JwtAuthTokenServiceImpl implements AuthTokenService {
     try {
       const options = this.configService.get('accessToken', { infer: true });
 
-      const payload = this.jwtService.verify<AuthTokenPayloadParsed>(
-        token,
-        _.pick(options, ['secret', 'issuer']),
-      );
+      // `audience` makes jwt reject a refresh token here — the signing key alone
+      // no longer separates the two kinds.
+      const payload = this.jwtService.verify<AuthTokenPayloadParsed>(token, {
+        ..._.pick(options, ['publicKey', 'issuer', 'audience']),
+        algorithms: [options.algorithm],
+      });
 
       if (!payload) {
         throw new Error();
@@ -37,16 +41,17 @@ export class JwtAuthTokenServiceImpl implements AuthTokenService {
     }
   }
 
-  parseRefreshTokenPayload(token: string): Either<Error, AuthTokenPayloadParsed> {
+  parseRefreshTokenPayload(token: string): Either<Error, AuthRefreshTokenPayloadParsed> {
     try {
       const options = this.configService.get('refreshToken', { infer: true });
 
-      const payload = this.jwtService.verify<AuthTokenPayloadParsed>(
+      const payload = this.jwtService.verify<AuthRefreshTokenPayloadParsed>(
         token,
-        _.pick(options, ['secret', 'issuer']),
+        _.pick(options, ['secret', 'issuer', 'audience']),
       );
 
-      if (!payload?.refresh) {
+      // Without both, no session to check it against: an older token is refused.
+      if (!payload?.sid || !payload.jti) {
         throw new Error();
       }
 
@@ -56,14 +61,29 @@ export class JwtAuthTokenServiceImpl implements AuthTokenService {
     }
   }
 
-  async generateTokens(payload: AuthTokenPayload): Promise<Either<Error, NestAuth.AuthTokens>> {
+  async generateTokens(
+    payload: AuthTokenPayload,
+    session: AuthRefreshTokenSession,
+  ): Promise<Either<Error, NestAuth.AuthTokens>> {
     try {
       const accessTokenOptions = this.configService.get('accessToken', { infer: true });
       const refreshTokenOptions = this.configService.get('refreshToken', { infer: true });
 
       const [accessToken, refreshToken] = await Promise.all([
-        this.jwtService.signAsync(payload, accessTokenOptions),
-        this.jwtService.signAsync({ ...payload, refresh: true }, refreshTokenOptions),
+        this.jwtService.signAsync(
+          payload,
+          _.pick(accessTokenOptions, [
+            'privateKey',
+            'algorithm',
+            'expiresIn',
+            'issuer',
+            'audience',
+          ]),
+        ),
+        this.jwtService.signAsync(
+          { ...payload, sid: session.sessionId },
+          { ...refreshTokenOptions, jwtid: session.tokenId },
+        ),
       ]);
 
       const accessTokenPayload = this.parseAccessTokenPayload(accessToken);

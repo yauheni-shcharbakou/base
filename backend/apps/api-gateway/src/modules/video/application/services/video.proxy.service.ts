@@ -6,7 +6,7 @@ import {
   NestStorage,
 } from '@backend/proto';
 import { Injectable } from '@nestjs/common';
-import { firstValueFrom, map, Observable, tap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { VideoMapper } from '../mappers/video.mapper';
 
 @Injectable()
@@ -17,19 +17,15 @@ export class VideoProxyService {
     private readonly videoMapper: VideoMapper,
   ) {}
 
-  getUrlMap(query: NestCommon.Query, ip?: string, userId?: string): Promise<NestCommon.StringMap> {
+  getUrlMap(query: NestCommon.Query, userId?: string): Promise<NestCommon.StringMap> {
     return firstValueFrom(
-      this.videoClient.getUrlMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
+      this.videoClient.getUrlMap({ ...query, userId }).pipe(GrpcRxPipe.rpcException),
     );
   }
 
-  getDownloadMap(
-    query: NestCommon.Query,
-    ip?: string,
-    userId?: string,
-  ): Promise<NestStorage.DownloadMap> {
+  getDownloadMap(query: NestCommon.Query, userId?: string): Promise<NestStorage.DownloadMap> {
     return firstValueFrom(
-      this.videoClient.getDownloadMap({ ...query, userId, ip }).pipe(GrpcRxPipe.rpcException),
+      this.videoClient.getDownloadMap({ ...query, userId }).pipe(GrpcRxPipe.rpcException),
     );
   }
 
@@ -42,38 +38,12 @@ export class VideoProxyService {
     return firstValueFrom(this.videoClient.getList(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  createOne(request: NestStorage.VideoCreateOne): Promise<NestStorage.Video> {
+  createOne(request: NestStorage.VideoCreateOne): Promise<NestStorage.VideoCreated> {
     return firstValueFrom(this.videoClient.createOne(request).pipe(GrpcRxPipe.rpcException));
   }
 
-  createMany(request: NestStorage.VideoCreateMany): Promise<NestStorage.VideoArray> {
+  createMany(request: NestStorage.VideoCreateMany): Promise<NestStorage.VideoCreatedArray> {
     return firstValueFrom(this.videoClient.createMany(request).pipe(GrpcRxPipe.rpcException));
-  }
-
-  uploadOne(
-    request$: Observable<NestStorage.UploadOneShort>,
-    userId?: string,
-  ): Observable<NestStorage.VideoUploadResponse> {
-    const sanitizedRequest$ = request$.pipe(
-      map((message: NestStorage.UploadOne) => {
-        if (message.filter && userId) {
-          message.filter.userId = userId;
-        }
-
-        return message;
-      }),
-      tap({
-        next: (message) => {
-          if (message.chunk) {
-            setTimeout(() => {
-              delete message.chunk;
-            }, 0);
-          }
-        },
-      }),
-    );
-
-    return this.videoClient.uploadOne(sanitizedRequest$);
   }
 
   updateOne(

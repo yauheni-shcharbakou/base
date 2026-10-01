@@ -4,7 +4,6 @@ FROM node:22-alpine AS base
 ENV CI=true
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
-ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
@@ -20,10 +19,6 @@ COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune backend.api-gateway --docker
 
 FROM base AS builder
-RUN apk add --no-cache protobuf protobuf-dev
-ENV PATH="/usr/bin:${PATH}"
-ENV PROTO_PATH=protoc
-ENV GRPC_COMPILER_CONTEXT=backend
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,id=s/ac0367f3-129a-48c7-b4f7-428cc3349f23-/pnpm/store,target=/pnpm/store \
     pnpm install \

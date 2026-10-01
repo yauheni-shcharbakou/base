@@ -1,0 +1,25 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "src/**/*.ts",
+        "!src/**/*.spec.ts",
+        "!src/**/*.e2e-spec.ts",
+        "package.json",
+        "tsconfig*.json",
+        "tsdown.config.mts"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "compile": {
+      // Declared explicitly rather than left to the default (every file in the package):
+      // src/generated/** is this task's output, and as an input it would make the task
+      // invalidate itself on its own result. Strategy edits arrive instead through the hash
+      // of @backend/event-bus#compile, which the root `compile.dependsOn: ["^compile"]` puts
+      // upstream of this task.
+      "inputs": ["compiler/**", "package.json", "tsconfig*.json"],
+      "outputs": ["src/generated/**"]
+    }
+  }
+}

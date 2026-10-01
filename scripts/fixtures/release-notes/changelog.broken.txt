@@ -1,0 +1,15 @@
+# Changelog
+
+## [3.2.0] — an entry with nothing in it
+
+## [3.1.0] — a code fence that never closes
+
+Text with a [good link](README.md).
+
+```shell
+never closed, and a [link](docs/in-a-fence.md) nobody follows
+
+## [3.0.0] — links to files that do not exist
+
+A [missing file](docs/no-such-file.md), a [good one](docs/env.md#services), an
+[external](https://example.test/x) and a [second missing](no/such/dir/ "with a title").

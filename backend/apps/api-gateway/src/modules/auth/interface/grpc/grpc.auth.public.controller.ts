@@ -2,6 +2,7 @@ import { ValidateGrpcPayload } from '@backend/grpc';
 import { GrpcAuthPublicServiceController, GrpcAuthPublicTransport, NestAuth } from '@backend/proto';
 import { PublicGrpcController } from '@common/interface/grpc/decorators/grpc.controller.decorator';
 import { AuthLoginDto } from '@modules/auth/application/dto/auth.login.dto';
+import { AuthLogoutDto } from '@modules/auth/application/dto/auth.logout.dto';
 import { AuthRefreshDto } from '@modules/auth/application/dto/auth.refresh.dto';
 import { AuthProxyService } from '@modules/auth/application/services/auth.proxy.service';
 
@@ -18,5 +19,11 @@ export class GrpcAuthPublicController implements GrpcAuthPublicServiceController
   @ValidateGrpcPayload(AuthRefreshDto)
   refreshToken(request: NestAuth.AuthRefresh): Promise<NestAuth.AuthData> {
     return this.authService.refreshToken(request);
+  }
+
+  // Public, like refresh: the refresh token is the credential, and the access token may be gone.
+  @ValidateGrpcPayload(AuthLogoutDto)
+  logout(request: NestAuth.AuthLogout): Promise<void> {
+    return this.authService.logout(request);
   }
 }

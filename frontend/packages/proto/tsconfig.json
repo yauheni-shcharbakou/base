@@ -1,8 +1,11 @@
 {
   "extends": "@packages/configs/tsconfig/package/base.tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
+    "paths": {
+      "@compiler/*": ["./compiler/*"],
+    },
   },
-  "include": ["src"],
+  "include": ["src", "compiler"],
   "exclude": ["node_modules", "dist"],
 }

@@ -1,0 +1,55 @@
+- const pattern = `Redis${data.service.patternName}`
+- const controller = `Redis${data.service.controllerName}`
+- const transport = `Redis${data.service.transportName}`
+|
+|const #{pattern} = {
+|
+each method in data.service.methods
+    |   #{method.constantName}: {
+    |       pattern: '#{method.eventId}',
+    |   },
+    |
+|};
+|
+|export const #{transport} = {
+|   ...#{pattern},
+|   /**
+|    * Binds the service's own events. The patterns stay bare event ids here —
+|    * `@RedisController({ consumer })` rewrites them into `<eventId>@<consumerId>`
+|    * queue names, so it must be applied above this decorator.
+|    */
+|   ControllerMethods: (): ClassDecorator => {
+|       const methodsDecorator = function(constructor: Function) {
+|
+each method in data.service.methods
+    |           EventPattern('#{method.eventId}')(
+    |               constructor.prototype['#{method.handlerName}'],
+    |               '#{method.handlerName}',
+    |               Reflect.getOwnPropertyDescriptor(constructor.prototype, '#{method.handlerName}')
+    |           );
+    |
+|       };
+|       return applyDecorators(methodsDecorator);
+|   },
+|   EventBus: #{data.service.eventBusName},
+|} as const;
+|
+|export interface #{controller} {
+|
+each method in data.service.methods
+    |   #{method.handlerName}(
+    |       event: #{method.type},
+    |       context?: RedisJobContext,
+    |   ): void | Promise<void> | Observable<void>;
+    |
+|}
+|
+each method in data.service.methods
+    |
+    |export interface Redis#{method.externalInterfaceName} {
+    |   #{method.externalHandlerName}(
+    |       event: #{method.type},
+    |       context?: RedisJobContext,
+    |   ): void | Promise<void> | Observable<void>;
+    |}
+    |

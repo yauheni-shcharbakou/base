@@ -5,7 +5,6 @@ ENV CI=true
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
@@ -21,10 +20,6 @@ COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune frontend.admin --docker
 
 FROM base AS builder
-RUN apk add --no-cache protobuf protobuf-dev
-ENV PATH="/usr/bin:${PATH}"
-ENV PROTO_PATH=protoc
-ENV GRPC_COMPILER_CONTEXT=frontend
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,id=s/54c53b98-cdee-43f5-a168-473e9d2d690d-/pnpm/store,target=/pnpm/store \
     pnpm install \

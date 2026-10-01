@@ -14,6 +14,8 @@ export class PgTempCodeRepositoryImpl
   extends PgRepositoryImpl<PgTempCodeEntity, NestAuth.TempCode, TempCodeQuery, TempCodeCreate>
   implements TempCodeRepository
 {
+  protected readonly resourceName = 'Temp code';
+
   constructor(
     @InjectRepository(PgTempCodeEntity)
     protected readonly repository: EntityRepository<PgTempCodeEntity>,

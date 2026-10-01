@@ -1,40 +1,18 @@
-import { AdapterFactory } from '@compiler/adapters/base.adapter';
-import { Nats } from '@compiler/adapters/nats';
-import { ContextService, EventBusService, ParseStrategyService } from '@compiler/services';
-import { Project } from 'ts-morph';
-import {
-  EVENT_BUS_IMPORT_SPECIFIER,
-  EVENT_BUS_OUTPUT_PATH,
-  STRATEGY_FILE_PATH,
-  STRATEGY_ROOT,
-} from './constants';
+import { EVENT_BUS_OUTPUT_PATH } from '@compiler/constants';
+import { PortsEmitter } from '@compiler/emitters/ports.emitter';
+import { parseStrategy } from '@compiler/strategy';
 
-const compile = async (adapterFactories: AdapterFactory[]) => {
+/**
+ * Emits this package's own half of the codegen: the abstract `<Service>EventBus` classes and
+ * the `EventBusHost` enum. The transports are emitted by the adapter packages, each in its
+ * own turbo task against its own `src/generated/`.
+ */
+const compile = async () => {
   try {
-    const project = new Project({
-      compilerOptions: {
-        experimentalDecorators: true,
-        emitDecoratorMetadata: true,
-      },
-    });
+    const { project, context, services } = parseStrategy();
 
-    const contextService = new ContextService(
-      project,
-      STRATEGY_ROOT,
-      STRATEGY_FILE_PATH,
-      EVENT_BUS_IMPORT_SPECIFIER,
-    );
-
-    const parseStrategyService = new ParseStrategyService(contextService);
-    const services = parseStrategyService.getServices();
-
-    const eventBusService = new EventBusService(project, contextService, EVENT_BUS_OUTPUT_PATH);
-    await eventBusService.compile(services);
-
-    for (const adapterFactory of adapterFactories) {
-      const adapter = adapterFactory(contextService, services);
-      await adapter.run();
-    }
+    const portsEmitter = new PortsEmitter(project, context, EVENT_BUS_OUTPUT_PATH);
+    await portsEmitter.compile(services);
   } catch (error) {
     if (error instanceof Error) {
       console.error(error.message, error.stack);
@@ -46,6 +24,6 @@ const compile = async (adapterFactories: AdapterFactory[]) => {
   }
 };
 
-compile([Nats])
+compile()
   .then()
   .catch(() => process.exit(1));

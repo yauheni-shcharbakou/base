@@ -1,5 +1,5 @@
-import { NatsModule, NatsVideoTransport } from '@backend/nats';
 import { PgModule } from '@backend/pg';
+import { RedisModule, RedisVideoTransport } from '@backend/event-bus-redis';
 import { PgVideoEntity } from '@common/infrastructure/pg/entities/pg.video.entity';
 import { FileModule } from '@modules/file/file.module';
 import { StorageObjectModule } from '@modules/storage-object/storage-object.module';
@@ -11,18 +11,19 @@ import { VideoDeleteOneUseCase } from './application/use-cases/video.delete-one.
 import { VideoGetDownloadMapUseCase } from './application/use-cases/video.get-download-map.use-case';
 import { VideoGetUrlMapUseCase } from './application/use-cases/video.get-url-map.use-case';
 import { VideoGetUseCase } from './application/use-cases/video.get.use-case';
+import { VideoHandleProviderStatusUseCase } from './application/use-cases/video.handle-provider-status.use-case';
 import { VideoSyncWithProviderUseCase } from './application/use-cases/video.sync-with-provider.use-case';
 import { VideoUpdateUseCase } from './application/use-cases/video.update.use-case';
-import { VideoUploadOneUseCase } from './application/use-cases/video.upload-one.use-case';
 import { VideoRepository } from './domain/repositories/video.repository';
 import { PgVideoRepositoryImpl } from './infrastructure/pg/repositories/pg.video.repository.impl';
 import { CronVideoScheduler } from './interface/cron/cron.video.scheduler';
 import { GrpcVideoController } from './interface/grpc/grpc.video.controller';
+import { HttpBunnyStreamWebhookController } from './interface/http/http.bunny-stream-webhook.controller';
 
 @Module({
   imports: [
     PgModule.forFeature(PgVideoEntity),
-    NatsModule.forFeature({ EventBus: NatsVideoTransport.EventBus }),
+    RedisModule.forFeature({ EventBus: RedisVideoTransport.EventBus }),
     StorageModule,
     FileModule,
     StorageObjectModule,
@@ -39,10 +40,10 @@ import { GrpcVideoController } from './interface/grpc/grpc.video.controller';
     VideoUpdateUseCase,
     VideoCreateOneUseCase,
     VideoCreateManyUseCase,
-    VideoUploadOneUseCase,
+    VideoHandleProviderStatusUseCase,
     VideoSyncWithProviderUseCase,
     CronVideoScheduler,
   ],
-  controllers: [GrpcVideoController],
+  controllers: [GrpcVideoController, HttpBunnyStreamWebhookController],
 })
 export class VideoModule {}

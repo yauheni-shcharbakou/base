@@ -20,6 +20,7 @@ export abstract class DatabaseRepository<
   abstract isExistsById(id: string): Promise<boolean>;
   abstract isExists(query?: Partial<Query>): Promise<boolean>;
   abstract count(query?: Partial<Query>): Promise<number>;
+  /** Every distinct non-null value over all matching rows; a failure is thrown, never an empty set. */
   abstract distinct<Field extends keyof Entity>(
     field: Field,
     query?: Partial<Query>,
@@ -47,10 +48,15 @@ export abstract class DatabaseRepository<
     query: Partial<Query>,
     updateData: Update,
   ): Promise<Either<NotFoundException, Entity>>;
+  /**
+   * `false` when nothing matched; a failure is thrown, never reported as `false`. A query that
+   * constrains nothing is refused with a `BadRequestException` rather than written to every row.
+   */
   abstract updateMany(query: Partial<Query>, updateData: Update): Promise<boolean>;
   abstract deleteById(id: string): Promise<Either<NotFoundException, Entity>>;
   abstract deleteOne(query?: Partial<Query>): Promise<Either<NotFoundException, Entity>>;
-  abstract deleteMany(query?: Partial<Query>): Promise<boolean>;
+  /** As `updateMany`: `false` when nothing matched, and a query that constrains nothing refused. */
+  abstract deleteMany(query: Partial<Query>): Promise<boolean>;
 
   abstract bulkUpdate(updates: BulkUpdate<Entity>[]): Promise<Either<Error, boolean>>;
 }

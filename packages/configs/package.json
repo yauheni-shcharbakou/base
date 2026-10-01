@@ -16,9 +16,12 @@
     "@typescript-eslint/parser": "8.54.0",
     "eslint-config-next": "16.1.0",
     "eslint-config-prettier": "10.1.8",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-import-x": "4.17.1",
     "eslint-plugin-prettier": "5.5.4",
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "16.5.0",
+    "tsdown": "catalog:",
     "typescript-eslint": "8.50.0"
   }
 }

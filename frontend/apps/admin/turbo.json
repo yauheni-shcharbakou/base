@@ -2,16 +2,23 @@
   "extends": ["//"],
   "tasks": {
     "build": {
+      // `.env*`: `next build` loads them, and `config.service.ts` validates that environment while
+      // the pages are collected. The example file is documentation, not configuration.
       "inputs": [
+        ".env*",
+        "!.env.example",
         "src/**",
         "public/**",
+        // Copied out of `pdfjs-dist` by the build itself (`assets:pdfjs`): an output, not an input.
+        "!public/pdfjs/**",
         ".eslintrc.json",
         "Dockerfile",
         "next.config.mjs",
         "package.json",
         "tsconfig*.json"
       ],
-      "outputs": [".next/**"]
+      // `public/pdfjs/` too: a cache hit that restored `.next/**` alone would ship without it.
+      "outputs": [".next/**", "public/pdfjs/**"]
     }
   }
 }

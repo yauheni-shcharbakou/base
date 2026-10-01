@@ -1,0 +1,14 @@
+version: 2
+
+updates:
+  # The workflows pin every action to a commit, which never moves by itself: without this an
+  # action's fixes stop arriving. One pull request a month for all of them. The npm side is left
+  # out on purpose — versions are bumped by hand, in the pnpm catalog.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    groups:
+      actions:
+        patterns:
+          - '*'

@@ -18,6 +18,12 @@ message AuthRefresh {
   string refreshToken = 1;
 }
 
+// Ends the session the refresh token belongs to. Keyed by the refresh token, not the access one:
+// the access token may have expired already, and the refresh token is what outlives it.
+message AuthLogout {
+  string refreshToken = 1;
+}
+
 message AuthToken {
   string value = 1;
   google.protobuf.Timestamp expiredAt = 2;

@@ -9,10 +9,7 @@ export type ProtoContext = {
   protoPath?: string;
 };
 
-export type CompilerContext = 'backend' | 'frontend' | 'all';
-
 export type ExecutionContext = {
-  compiler: CompilerContext;
   files: string[];
   entrypointExports: string[];
 };

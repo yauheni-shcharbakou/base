@@ -1,0 +1,51 @@
+{
+  "name": "@backend/cache",
+  "private": true,
+  "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "scripts": {
+    "format": "prettier src --write --config ../../../.prettierrc",
+    "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+    "dev": "pnpm build --watch",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "reset": "rm -rf .turbo dist node_modules",
+    "reset:modules": "rm -rf node_modules"
+  },
+  "dependencies": {
+    "@backend/common": "workspace:*",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
+    "@packages/common": "workspace:*",
+    "ioredis": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@nestjs/core": "catalog:",
+    "@nestjs/testing": "catalog:",
+    "@packages/configs": "workspace:*",
+    "@types/jest": "catalog:",
+    "jest": "catalog:",
+    "ts-jest": "catalog:"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}

@@ -1,13 +1,10 @@
 import { NestStorage } from '@backend/proto';
 import { FileMapper } from '@modules/file/application/mappers/file.mapper';
-import {
-  ImageRepository,
-  ImageSaveAndPlace,
-} from '@modules/image/domain/repositories/image.repository';
-import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
+import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
+import { StorageObjectPlacementService } from '@modules/storage-object/application/services/storage-object.placement.service';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { Injectable } from '@nestjs/common';
-import { Either, left } from '@sweet-monads/either';
+import { Either, left, right } from '@sweet-monads/either';
 
 @Injectable()
 export class ImageCreateOneUseCase {
@@ -15,10 +12,12 @@ export class ImageCreateOneUseCase {
     private readonly imageRepository: ImageRepository,
     private readonly storageFileService: StorageFileService,
     private readonly fileMapper: FileMapper,
-    private readonly storageObjectValidationService: StorageObjectValidationService,
+    private readonly storageObjectPlacementService: StorageObjectPlacementService,
   ) {}
 
-  async execute(createData: NestStorage.ImageCreateOne): Promise<Either<Error, NestStorage.Image>> {
+  async execute(
+    createData: NestStorage.ImageCreateOne,
+  ): Promise<Either<Error, NestStorage.ImageCreated>> {
     const providerId = await this.storageFileService.createFile({
       ...createData.file,
       userId: createData.userId,
@@ -28,32 +27,44 @@ export class ImageCreateOneUseCase {
       return left(providerId.value);
     }
 
-    const saveData: ImageSaveAndPlace = {
-      image: {
-        ...createData.image,
-        userId: createData.userId,
-        uploadId: providerId.value,
-      },
-      file: this.fileMapper.toCreateData({
-        ...createData.file,
-        providerId: providerId.value,
-      }),
+    const imageData = {
+      ...createData.image,
+      userId: createData.userId,
     };
+    const fileData = this.fileMapper.toCreateData({
+      ...createData.file,
+      providerId: providerId.value,
+    });
 
-    if (createData.storage) {
-      const validationResult = await this.storageObjectValidationService.validateCreateData({
-        ...createData.storage,
-        type: NestStorage.StorageObjectType.IMAGE,
-        userId: createData.userId,
-      });
+    const image = await this.storageObjectPlacementService.placeLeaves(
+      createData.storage
+        ? {
+            userId: createData.userId,
+            parent: createData.storage.parent,
+            isPublic: createData.storage.isPublic,
+            type: NestStorage.StorageObjectType.IMAGE,
+            names: [createData.storage.name],
+          }
+        : undefined,
+      (leaves) =>
+        this.imageRepository.saveAndPlaceOne({
+          image: imageData,
+          file: fileData,
+          storageObject: leaves?.[0],
+        }),
+    );
 
-      if (validationResult.isLeft()) {
-        return left(validationResult.value);
-      }
-
-      saveData.storageObject = validationResult.value;
+    if (image.isLeft()) {
+      return left(image.value);
     }
 
-    return this.imageRepository.saveAndPlaceOne(saveData);
+    // The bytes go straight to Bunny; the caller completes the upload by the image's `fileId`.
+    const upload = await this.storageFileService.getUploadUrl(providerId.value, createData.file);
+
+    if (upload.isLeft()) {
+      return left(upload.value);
+    }
+
+    return right({ image: image.value, upload: upload.value });
   }
 }

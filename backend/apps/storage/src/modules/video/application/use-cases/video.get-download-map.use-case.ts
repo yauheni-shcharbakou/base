@@ -12,8 +12,7 @@ export class VideoGetDownloadMapUseCase {
   ) {}
 
   async execute(
-    query: Partial<NestStorage.FileQuery>,
-    ip?: string,
+    query: Partial<NestStorage.VideoQuery>,
   ): Promise<Map<string, NestStorage.DownloadData>> {
     const videos = await this.videoRepository.getMany<NestStorage.VideoPopulated>(query, {
       populate: ['file'],
@@ -27,7 +26,7 @@ export class VideoGetDownloadMapUseCase {
           return;
         }
 
-        const url = await this.storageVideoService.getDownloadUrl(video.providerId, ip);
+        const url = await this.storageVideoService.getDownloadUrl(video.providerId);
 
         if (url.isRight()) {
           urlMap.set(video.id, {

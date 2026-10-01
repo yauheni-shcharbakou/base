@@ -3,7 +3,10 @@ import zod from 'zod';
 
 export const NodeValidationSchema = {
   PORT: zod.coerce.number().optional(),
-  NODE_ENV: zod.enum(['development', 'production']).optional(),
+  // `test` is what jest sets. Without it any spec that transitively imports a config module
+  // dies at import time on `Env validation failed`. Consumers only ever compare this against
+  // `development` / `production`, so the extra member changes no behaviour.
+  NODE_ENV: zod.enum(['development', 'production', 'test']).optional(),
 } as const;
 
 export const DatabaseValidationSchema = {

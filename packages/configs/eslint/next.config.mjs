@@ -1,17 +1,25 @@
 import nextPlugin from '@next/eslint-plugin-next';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import eslintPrettierConfig from 'eslint-config-prettier';
+import importX from 'eslint-plugin-import-x';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 const prettierConfig = JSON.parse(
   readFileSync(resolve(import.meta.dirname, '..', '..', '..', '.prettierrc'), 'utf-8'),
 );
 
-export default function nextConfig() {
+/**
+ * @param {string} url the consumer's `import.meta.url`, used to locate its tsconfig.
+ */
+export default function nextConfig(url) {
+  const appDir = dirname(fileURLToPath(url));
+
   return [
     {
       files: ['**/*.ts', '**/*.tsx'],
@@ -52,6 +60,33 @@ export default function nextConfig() {
       rules: {
         'react-hooks/rules-of-hooks': 'error',
         'react-hooks/exhaustive-deps': 'warn',
+      },
+    },
+    {
+      // Same contract as the nest preset: a package declares what it imports. The admin app
+      // is where this matters most — it used to reach for `zod`, `lodash`, `ulid` and
+      // `change-case-all` through the root manifest, and nothing here reported it.
+      files: ['**/*.ts', '**/*.tsx'],
+      plugins: { 'import-x': importX },
+      settings: {
+        // Required, not an optimisation: `@/…` is a tsconfig path alias, and an unresolved
+        // one is indistinguishable from an undeclared external package.
+        'import-x/resolver-next': [
+          createTypeScriptImportResolver({
+            project: resolve(appDir, 'tsconfig.json'),
+            alwaysTryTypes: true,
+          }),
+        ],
+      },
+      rules: {
+        'import-x/no-extraneous-dependencies': [
+          'error',
+          {
+            devDependencies: ['**/*.spec.ts', '**/*.spec.tsx', '**/*.test.ts', '**/*.test.tsx'],
+            optionalDependencies: false,
+            peerDependencies: false,
+          },
+        ],
       },
     },
     eslintPrettierConfig,

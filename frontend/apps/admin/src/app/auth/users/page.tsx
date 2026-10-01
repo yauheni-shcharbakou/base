@@ -2,6 +2,7 @@
 
 import { ResourceListPage } from '@/common/components';
 import { GridColumnsBuilder } from '@/common/utils';
+import { UserStorageButton } from '@/features/storage/components';
 import { type GridColDef } from '@mui/x-data-grid';
 import { AuthDatabaseEntity } from '@packages/common';
 import type { BrowserAuth } from '@packages/proto';
@@ -14,7 +15,10 @@ export default function UserList() {
         .string('email')
         .enum('role')
         .date('createdAt')
-        .actions()
+        .actions({
+          width: 176,
+          prepend: (row) => <UserStorageButton userId={row.id} />,
+        })
         .build(),
     [],
   );

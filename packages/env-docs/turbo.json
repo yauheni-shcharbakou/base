@@ -1,0 +1,12 @@
+{
+  "extends": ["//"],
+  "tasks": {
+    // The only task in the repo that writes outside its own package: its output is the marked
+    // regions of CLAUDE.md files across every workspace. Turbo cannot declare those as `outputs`
+    // (ADR-0002), so there is nothing to restore from a cache hit — and a hit would leave stale
+    // tables on disk while reporting success. The run takes about a second.
+    "compile": {
+      "cache": false
+    }
+  }
+}

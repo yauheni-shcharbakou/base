@@ -1,0 +1,26 @@
+|
+|/**
+| * Streams owned by each host. `NatsModule.forRoot({ host })` feeds the host's entry to the
+| * stream provisioner, which declares them at bootstrap — including for a host that only
+| * emits and has no subscriber controller of its own loaded.
+| */
+|export const NATS_HOST_STREAMS: Record<string, readonly NatsStreamData[]> = {
+|
+each host in data.hosts
+    |   '#{host.name}': [
+    |
+    each stream in host.streams
+        |       {
+        |           name: '#{stream.name}',
+        |           subjects: [
+        |
+        each subject in stream.subjects
+            |               '#{subject}',
+            |
+        |           ],
+        |       },
+        |
+    |   ],
+    |
+|};
+|

@@ -19,5 +19,6 @@ message VideoPopulated {
   string userId = 9;
   string fileId = 10;
   file.File file = 11;
-  string uploadId = 12;
+  reserved 12;
+  reserved "uploadId";
 }

@@ -1,18 +1,28 @@
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
 import { getImageDimensions } from '@/features/image/helpers';
 import { createImage, createManyImages } from '@/features/storage/actions';
 import { StorageData, StorageUploadItem } from '@/features/storage/types';
 import type { BrowserStorage } from '@packages/proto';
+
+/**
+ * A created image with the pre-signed PUT for its file's bytes, flattened like `CreatedVideo`.
+ * The upload is completed by `fileId`, not by the image's own id.
+ */
+export type CreatedImage = BrowserStorage.Image & {
+  upload: BrowserStorage.FilePresignedUpload;
+};
+
+const flatten = ({ image, upload }: BrowserStorage.ImageCreated): CreatedImage => ({
+  ...image!,
+  upload: upload!,
+});
 
 type ImageItem = Pick<StorageUploadItem, 'file'> & {
   alt: string;
 };
 
 export class ImageActionProvider {
-  async createOne(
-    userId: string,
-    item: ImageItem,
-    storage?: StorageData,
-  ): Promise<BrowserStorage.Image> {
+  async createOne(userId: string, item: ImageItem, storage?: StorageData): Promise<CreatedImage> {
     const dimensions = await getImageDimensions(item.file);
 
     const data: BrowserStorage.ImageCreateOne = {
@@ -36,20 +46,14 @@ export class ImageActionProvider {
       };
     }
 
-    const response = await createImage(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return response.entity;
+    return flatten(unwrapActionResult(await createImage(data)));
   }
 
   async createMany(
     userId: string,
     items: StorageUploadItem[],
     storage?: Omit<StorageData, 'name'>,
-  ): Promise<BrowserStorage.Image[]> {
+  ): Promise<CreatedImage[]> {
     const data: BrowserStorage.ImageCreateMany = {
       items: await Promise.all(
         items.map(async (item) => {
@@ -65,7 +69,6 @@ export class ImageActionProvider {
               ...dimensions,
               alt: item.file.name,
             },
-            uploadId: item.uploadId,
           };
         }),
       ),
@@ -79,12 +82,6 @@ export class ImageActionProvider {
       };
     }
 
-    const response = await createManyImages(data);
-
-    if ('error' in response) {
-      throw new Error(response.error);
-    }
-
-    return response.data;
+    return unwrapActionResult(await createManyImages(data)).map(flatten);
   }
 }

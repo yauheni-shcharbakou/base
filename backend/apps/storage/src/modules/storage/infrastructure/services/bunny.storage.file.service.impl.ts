@@ -1,48 +1,43 @@
 import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  S3ServiceException,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { NestStorage } from '@backend/proto';
+import {
   StorageFileCreateData,
   StorageFileService,
+  StorageFileUploadData,
 } from '@modules/storage/domain/services/storage.file.service';
 import { Inject, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Either, left, right } from '@sweet-monads/either';
-import { AxiosError, AxiosInstance } from 'axios';
-import https from 'https';
 import moment from 'moment';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
-import { PassThrough } from 'node:stream';
+import { Readable } from 'node:stream';
 import { BunnyStorageConfig } from '../configs/bunny.storage.config';
-import { FILE_HTTP_CLIENT } from '../constants/http.tokens';
+import { FILE_S3_CLIENT } from '../constants/client.tokens';
+import { signBunnyCdnUrl } from '../utils/bunny.cdn-token';
 
 @Injectable()
 export class BunnyStorageFileServiceImpl implements StorageFileService {
   private readonly logger = new Logger(BunnyStorageFileServiceImpl.name);
   private readonly storageConfig: BunnyStorageConfig['bunny']['storage'];
-  private readonly isDev: boolean;
 
   constructor(
     private readonly configService: ConfigService<BunnyStorageConfig>,
-    @Inject(FILE_HTTP_CLIENT) private readonly httpClient: AxiosInstance,
+    @Inject(FILE_S3_CLIENT) private readonly s3Client: S3Client,
   ) {
-    this.httpClient.interceptors.response.use(undefined, (axiosError: AxiosError) => {
-      this.logger.error(
-        'Bunny storage API error: ',
-        JSON.stringify(
-          {
-            url: axiosError.config?.url,
-            method: axiosError.config?.method,
-            response: axiosError.response?.data,
-          },
-          null,
-          2,
-        ),
-      );
-
-      throw axiosError;
-    });
-
     this.storageConfig = this.configService.getOrThrow('bunny.storage', { infer: true });
-    this.isDev = this.configService.getOrThrow('isDevelopment', { infer: true });
+  }
+
+  get uploadWindowMinutes(): number {
+    return this.storageConfig.s3.uploadExpiresInMinutes;
   }
 
   createFile(data: StorageFileCreateData): Either<InternalServerErrorException, string> {
@@ -51,83 +46,124 @@ export class BunnyStorageFileServiceImpl implements StorageFileService {
     return right(filePath);
   }
 
+  // Beside the original, under the same uuid, so a listing of the owner's directory shows the pair.
+  createPreviewKey(providerId: string): string {
+    const extension = extname(providerId);
+    return `${extension ? providerId.slice(0, -extension.length) : providerId}.preview.webp`;
+  }
+
   async deleteFile(providerId: string): Promise<Either<InternalServerErrorException, boolean>> {
     try {
-      await this.httpClient.delete(providerId);
+      await this.s3Client.send(
+        new DeleteObjectCommand({ Bucket: this.storageConfig.s3.bucket, Key: providerId }),
+      );
       return right(true);
     } catch (err) {
+      this.logger.error(`Bunny storage delete failed for ${providerId}`, err?.stack);
       return left(new InternalServerErrorException("Can't delete file from bunny storage"));
     }
   }
 
-  uploadFile(providerId: string, fileSize: number, upload$: PassThrough): Promise<boolean> {
-    const { apiUrl, apiKey } = this.storageConfig;
-    const url = new URL(`${apiUrl}/${providerId}`);
+  async getUploadUrl(
+    providerId: string,
+    data: StorageFileUploadData,
+  ): Promise<Either<InternalServerErrorException, NestStorage.FilePresignedUpload>> {
+    const { bucket, uploadExpiresInMinutes } = this.storageConfig.s3;
+    const expiresIn = uploadExpiresInMinutes * 60;
 
-    return new Promise<boolean>((resolve) => {
-      const req = https.request(
-        {
-          hostname: url.hostname,
-          path: url.pathname,
-          method: 'PUT',
-          headers: {
-            AccessKey: apiKey,
-            'Content-Type': 'application/octet-stream',
-            'Content-Length': fileSize.toString(),
-          },
-        },
-        (res) => {
-          res.on('data', () => {});
-          res.on('end', () => resolve(res.statusCode >= 200 && res.statusCode < 300));
-        },
+    try {
+      // Content-Type and Content-Length are signed headers: the browser must send exactly this
+      // type, and a body of any other length fails the signature. `completeUpload` still checks
+      // the stored size, since that is the one guarantee not left to the provider.
+      const url = await getSignedUrl(
+        this.s3Client,
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: providerId,
+          ContentType: data.mimeType,
+          ContentLength: data.size,
+        }),
+        { expiresIn },
       );
 
-      req.on('error', (err) => {
-        this.logger.error('Upload error', err.message, err.stack);
-        resolve(false);
+      return right({
+        url,
+        contentType: data.mimeType,
+        expires: moment().add(expiresIn, 'seconds').unix().toString(),
       });
-
-      upload$.on('error', (err) => {
-        if (!req.destroyed) {
-          req.destroy(err);
-        }
-      });
-
-      upload$.pipe(req);
-    });
+    } catch (err) {
+      this.logger.error(`Bunny storage presign failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't sign a bunny storage upload"));
+    }
   }
 
-  getFileSignedUrl(providerId: string, ip?: string): Either<Error, string> {
+  async getObjectSize(
+    providerId: string,
+  ): Promise<Either<InternalServerErrorException, number | null>> {
     try {
-      const path = `/${providerId}`;
-      const { url: cdnUrl, privateKey, expiresInMinutes } = this.storageConfig.cdn;
+      const head = await this.s3Client.send(
+        new HeadObjectCommand({ Bucket: this.storageConfig.s3.bucket, Key: providerId }),
+      );
 
-      const expires = moment().add(expiresInMinutes, 'minutes').unix();
-
-      let hashableBase = privateKey + path + expires;
-
-      if (!this.isDev) {
-        if (!ip) {
-          throw new Error('Unsupported IP address');
-        }
-
-        hashableBase += ip;
+      return right(head.ContentLength ?? null);
+    } catch (err) {
+      if (err instanceof S3ServiceException && err.$metadata.httpStatusCode === 404) {
+        return right(null);
       }
 
-      const md5String = createHash('md5').update(hashableBase).digest('binary');
+      this.logger.error(`Bunny storage head failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't read a file from bunny storage"));
+    }
+  }
 
-      const token = Buffer.from(md5String, 'binary')
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
+  async getObjectStream(
+    providerId: string,
+  ): Promise<Either<InternalServerErrorException, Readable | null>> {
+    try {
+      const object = await this.s3Client.send(
+        new GetObjectCommand({ Bucket: this.storageConfig.s3.bucket, Key: providerId }),
+      );
 
-      const url = new URL(cdnUrl + path);
+      // In Node the SDK's body is an `IncomingMessage`, a `Readable` under a wider type.
+      return right((object.Body as Readable | undefined) ?? null);
+    } catch (err) {
+      if (err instanceof S3ServiceException && err.$metadata.httpStatusCode === 404) {
+        return right(null);
+      }
 
-      url.searchParams.set('token', token);
-      url.searchParams.set('expires', expires.toString());
+      this.logger.error(`Bunny storage get failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't read a file from bunny storage"));
+    }
+  }
 
-      return right(url.toString());
+  async putObject(
+    providerId: string,
+    body: Buffer,
+    contentType: string,
+  ): Promise<Either<InternalServerErrorException, true>> {
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.storageConfig.s3.bucket,
+          Key: providerId,
+          Body: body,
+          ContentType: contentType,
+        }),
+      );
+      return right(true);
+    } catch (err) {
+      this.logger.error(`Bunny storage put failed for ${providerId}`, err?.stack);
+      return left(new InternalServerErrorException("Can't write a file to bunny storage"));
+    }
+  }
+
+  getFileSignedUrl(providerId: string): Either<Error, string> {
+    try {
+      const { url, privateKey, expiresInMinutes } = this.storageConfig.cdn;
+
+      return right(
+        signBunnyCdnUrl({ baseUrl: url, path: `/${providerId}`, privateKey, expiresInMinutes }),
+      );
     } catch (error) {
       return left(error);
     }

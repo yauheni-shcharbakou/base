@@ -10,16 +10,22 @@
   "scripts": {
     "format": "prettier src --write --config ../../../.prettierrc",
     "dev": "pnpm build --watch",
+    "compile": "tsx compiler/main.ts",
     "build": "pnpm format --log-level error && tsdown",
+    "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.12.0",
-    "@grpc/grpc-js": "1.14.4",
+    "@grpc/grpc-js": "catalog:",
     "@packages/proto": "workspace:*"
   },
   "devDependencies": {
-    "@packages/configs": "workspace:*"
+    "@packages/configs": "workspace:*",
+    "change-case-all": "catalog:",
+    "ts-morph": "catalog:",
+    "ts-proto": "catalog:",
+    "tsx": "catalog:"
   }
 }

@@ -1,18 +1,17 @@
 import { ContextService } from '@compiler/services';
 import { TransformTaskClass } from '@compiler/tasks';
-import { CompilerContext, OnFilePayload, OnFolderPayload, ProtoContext } from '@compiler/types';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { OnFilePayload, OnFolderPayload, ProtoContext } from '@compiler/types';
+import { mkdir, rm } from 'node:fs/promises';
 import { Project, SourceFile, type ImportSpecifierStructure, type OptionalKind } from 'ts-morph';
 import { join } from 'node:path';
 import { dotCase, pascalCase } from 'change-case-all';
-import { TemplateService } from '@packages/compiler-utils';
+import { FormatService, TemplateService } from '@packages/compiler-utils';
 
 export type AdapterParams = {
   name: string;
   targetRoot: string;
   templatePath?: string;
   transformTasks?: TransformTaskClass[];
-  restrictedContexts?: CompilerContext[];
 };
 
 export type AdapterClass = Function & {
@@ -22,7 +21,6 @@ export type AdapterClass = Function & {
     targetRoot: string,
     templatePath?: string,
     transformTasks?: TransformTaskClass[],
-    restrictedContexts?: CompilerContext[],
   ): BaseAdapter;
 };
 
@@ -32,6 +30,7 @@ export abstract class BaseAdapter {
   protected readonly project: Project;
   protected readonly entryExportsMap = new Map<string, Map<string, ImportSpecifierStructure>>();
   protected readonly templateService: TemplateService;
+  protected readonly formatService = new FormatService();
 
   protected constructor(
     protected readonly contextService: ContextService,
@@ -39,7 +38,6 @@ export abstract class BaseAdapter {
     public readonly targetRoot: string,
     protected readonly templatePath?: string,
     protected readonly transformTasks: TransformTaskClass[] = [],
-    protected readonly restrictedContexts: CompilerContext[] = [],
   ) {
     this.project = this.getProject();
     this.templateService = new TemplateService(this.templatePath);
@@ -108,13 +106,8 @@ export abstract class BaseAdapter {
         params.targetRoot,
         params.templatePath,
         params.transformTasks,
-        params.restrictedContexts,
       );
     };
-  }
-
-  canRun(): boolean {
-    return !this.restrictedContexts.includes(this.contextService.getExecutionContext().compiler);
   }
 
   async onInit(): Promise<void> {
@@ -141,7 +134,7 @@ export abstract class BaseAdapter {
     const filePath = join(folderPath, 'index.ts');
 
     await mkdir(folderPath, { recursive: true });
-    await writeFile(filePath, content, { encoding: 'utf-8' });
+    await this.formatService.writeFile(filePath, content);
   }
 
   async beforeCompilation() {
@@ -166,14 +159,14 @@ export abstract class BaseAdapter {
     sourceFile.organizeImports({}, { preferTypeOnlyAutoImports: true });
 
     await this.addSideEffects(sourceFile);
-    await sourceFile.save();
+    await this.formatService.saveSourceFile(sourceFile);
 
     console.info(`[grpc.${this.name}] File ${relativePath} compiled`);
   }
 
   async onFinish(): Promise<void> {
     const content = this.getEntrypointContent().join('\n');
-    await writeFile(join(this.targetRoot, 'index.ts'), content, { encoding: 'utf-8' });
+    await this.formatService.writeFile(join(this.targetRoot, 'index.ts'), content);
     console.info(`[grpc.${this.name}] Finished`);
   }
 }

@@ -11,16 +11,17 @@
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "dev": "pnpm build --watch",
     "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
   "dependencies": {
     "@backend/proto": "workspace:*",
-    "@nestjs/common": "11.1.21",
-    "@nestjs/config": "4.0.4",
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "catalog:",
     "@packages/common": "workspace:*",
-    "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:"
   },
   "devDependencies": {
     "@packages/configs": "workspace:*"

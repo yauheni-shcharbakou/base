@@ -1,7 +1,6 @@
 'use client';
 
 import { AppCreate } from '@/common/components';
-import { ONE_MB_BYTES } from '@/common/constants';
 import { useValidatedForm } from '@/common/hooks';
 import { FieldErr } from '@/common/types';
 import { UserSelect } from '@/features/auth/components';
@@ -10,19 +9,19 @@ import {
   StorageObjectMetaFormSection,
   StorageUploader,
 } from '@/features/storage/components';
-import { useSingleFileUpload } from '@/features/storage/hooks';
-import { fileActionProvider } from '@/features/storage/providers';
+import { useResetParentOnOwnerChange, useSingleFileUpload } from '@/features/storage/hooks';
+import { storageMetaSchema, UPLOAD_RULES, uploadViaPresignedUrl } from '@/features/storage/helpers';
+import { CreatedFile, fileActionProvider } from '@/features/storage/providers';
 import { Box, Stack } from '@mui/material';
 import { SchemaTypeOf, StorageDatabaseEntity } from '@packages/common';
-import type { BrowserAuth, BrowserStorage } from '@packages/proto';
+import type { BrowserAuth } from '@packages/proto';
 import { useGetIdentity } from '@refinedev/core';
 import zod from 'zod';
 
 const schema = {
   userId: zod.string(),
-  parent: zod.string().optional(),
+  ...storageMetaSchema,
   name: zod.string().optional(),
-  isPublic: zod.boolean(),
   file: zod.file(),
 };
 
@@ -33,6 +32,11 @@ export default function FileCreate() {
 
   const { isUploading, progress, handleUpload } = useSingleFileUpload({
     resource: StorageDatabaseEntity.FILE,
+    // Straight from the browser to Bunny Storage, then confirmed — nothing passes through Next.
+    uploadFileAction: (file, entity, options) => {
+      const { id, upload } = entity as CreatedFile;
+      return uploadViaPresignedUrl(file, upload, id, options);
+    },
   });
 
   const {
@@ -47,6 +51,7 @@ export default function FileCreate() {
 
   const parent = watch('parent');
   const userId = watch('userId');
+  useResetParentOnOwnerChange(userId, (id) => setValue('parent', id));
   const file = watch('file');
 
   const handleFileChange = (selectedFile?: File) => {
@@ -56,7 +61,7 @@ export default function FileCreate() {
   };
 
   const handleSave = async (data: Params) => {
-    const createdFile = await handleUpload<BrowserStorage.File>(data.file, async () => {
+    const createdFile = await handleUpload<CreatedFile>(data.file, async () => {
       return fileActionProvider.createOne(data.userId, data.file, {
         parent: data.parent,
         name: data.name,
@@ -65,7 +70,9 @@ export default function FileCreate() {
     });
 
     if (createdFile) {
-      await onFinish(createdFile as any);
+      // The signed URL is spent by now — it has no business in Refine's record.
+      const { upload, ...entity } = createdFile;
+      await onFinish(entity as any);
     }
   };
 
@@ -99,7 +106,7 @@ export default function FileCreate() {
             control={control}
             fieldName="file"
             dropzoneProps={{
-              maxSize: 100 * ONE_MB_BYTES,
+              maxSize: UPLOAD_RULES.FILE.maxSize,
               accept: {
                 'application/pdf': [],
               },

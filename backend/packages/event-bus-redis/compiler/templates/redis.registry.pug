@@ -1,0 +1,17 @@
+|
+|/**
+| * Events owned by each host. `RedisModule.forRoot({ host })` feeds the host's entry to the
+| * mediator, which runs one fan-out worker per event queue listed here.
+| */
+|export const REDIS_HOST_EVENTS: Record<string, readonly string[]> = {
+|
+each host in data.hosts
+    |   '#{host.name}': [
+    |
+    each eventId in host.eventIds
+        |       '#{eventId}',
+        |
+    |   ],
+    |
+|};
+|

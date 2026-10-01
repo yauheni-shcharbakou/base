@@ -20,10 +20,6 @@ message VideoQuery {
 
 // types
 
-message VideoArray {
-  repeated Video items = 1;
-}
-
 message VideoList {
   repeated VideoPopulated items = 1;
   int32 total = 2;
@@ -54,7 +50,8 @@ message VideoCreateOneWeb {
 message VideoCreateManyItem {
   VideoCreate video = 1;
   file.FileCreate file = 2;
-  string uploadId = 3;
+  reserved 3;
+  reserved "uploadId";
 }
 
 message VideoCreateMany {
@@ -70,12 +67,28 @@ message VideoCreateManyWeb {
 
 // upload
 
-message VideoUploadResponse {
-  oneof payload {
-    Video entity = 1;
-    bool canSendChunks = 2;
-    bool ack = 3;
-  }
+// Pre-signed credentials for a direct browser -> Bunny Stream TUS upload.
+// `expires` and `signature` are carried as strings because Bunny rejects the upload
+// unless the AuthorizationExpire header matches the value that was signed byte-for-byte.
+message VideoTusUpload {
+  string endpoint = 1;
+  string libraryId = 2;
+  string videoId = 3;
+  string signature = 4;
+  string expires = 5;
+  string filetype = 6;
+  string title = 7;
+}
+
+message VideoCreated {
+  Video video = 1;
+  VideoTusUpload upload = 2;
+}
+
+// Answers a `VideoCreateMany` in request order: `items[i]` is what `VideoCreateMany.items[i]` created. The
+// batch is created whole or not at all, so the two always have the same length.
+message VideoCreatedArray {
+  repeated VideoCreated items = 1;
 }
 
 // update

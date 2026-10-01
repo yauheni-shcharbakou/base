@@ -16,7 +16,11 @@ message ImagePopulated {
 
   string userId = 7;
   string fileId = 8;
-  string uploadId = 9;
+  reserved 9;
+  reserved "uploadId";
 
   file.File file = 10;
+
+  // As on `Image`, same tag.
+  optional string previewProviderId = 11;
 }

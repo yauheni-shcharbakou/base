@@ -1,24 +1,30 @@
 'use client';
 
-import { internalHttpClient } from '@/common/clients';
 import { getErrorMessage } from '@/common/helpers';
-import { StorageUploadItem } from '@/features/storage/types';
+import { deleteOne } from '@/features/grpc/actions';
+import { unwrapActionResult } from '@/features/grpc/helpers/unwrap-action-result';
+import {
+  attachCreatedEntities,
+  pairCreatedEntities,
+  planUploadBatch,
+} from '@/features/storage/helpers/upload-batch';
+import { CreatedUploadEntity, StorageUploadItem, UploadFileAction } from '@/features/storage/types';
 import { useNotification } from '@refinedev/core';
 import { useCallback, useState } from 'react';
 import { monotonicFactory } from 'ulid';
-import type { BrowserCommon } from '@packages/proto';
 
 type Params = {
+  // The resource the create call makes (file, image or video) — what an abandoned item deletes.
   resource: string;
+  // Same as in `useSingleFileUpload`: how each file's bytes leave the browser.
+  uploadFileAction: UploadFileAction;
 };
-
-type Entity = BrowserCommon.IdField & { uploadId: string };
 
 type StorageUploadMap = {
   [id: string]: StorageUploadItem;
 };
 
-export const useMultipleFileUpload = ({ resource }: Params) => {
+export const useMultipleFileUpload = ({ resource, uploadFileAction }: Params) => {
   const [uploadMap, setUploadMap] = useState<StorageUploadMap>({});
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedCount, setUploadedCount] = useState(0);
@@ -27,28 +33,55 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
 
   const { open } = useNotification();
 
-  const addFiles = useCallback((files: File[] = []) => {
-    if (!files.length) {
-      setUploadMap(() => ({}));
-      setUploadedCount(() => 0);
-      setItemsCount(() => 0);
-      return;
-    }
+  /**
+   * Deletes the rows already created for items the user dropped, so they do not sit PENDING until
+   * the storage cleanup cron. Best effort and in the background: a row that survives is still the
+   * cron's, so a failure is reported and nothing more.
+   */
+  const discardEntities = useCallback(
+    async (items: StorageUploadItem[]) => {
+      const entities = items.flatMap(({ entity }) => (entity ? [entity] : []));
 
-    setUploadMap((prev) => {
-      return files.reduce(
-        (acc: StorageUploadMap, file) => {
-          const uploadId = monotonicFactory()();
-          acc[uploadId] = { file, uploadId };
-          return acc;
-        },
-        { ...prev },
+      const results = await Promise.allSettled(
+        entities.map(async (entity) =>
+          unwrapActionResult(await deleteOne({ resource, id: entity.id })),
+        ),
       );
-    });
 
-    setUploadedCount(() => 0);
-    setItemsCount(() => files.length);
-  }, []);
+      const failed = results.filter((result) => result.status === 'rejected');
+
+      if (failed.length) {
+        open?.({
+          type: 'error',
+          message: `Could not delete ${failed.length} abandoned ${resource} record(s)`,
+          description: getErrorMessage(failed[0].reason),
+          key: `${resource}-discard-error-${Date.now()}`,
+        });
+      }
+    },
+    [open, resource],
+  );
+
+  // A new selection replaces the old one rather than adding to it: the form field holds only what
+  // was just picked, so the map has to as well, or files no longer shown would still be uploaded.
+  const addFiles = useCallback(
+    (files: File[] = []) => {
+      discardEntities(Object.values(uploadMap));
+
+      setUploadMap(() => {
+        return files.reduce((acc: StorageUploadMap, file) => {
+          const key = monotonicFactory()();
+          acc[key] = { file, key };
+          return acc;
+        }, {});
+      });
+
+      setFailedItems(() => []);
+      setUploadedCount(() => 0);
+      setItemsCount(() => files.length);
+    },
+    [discardEntities, uploadMap],
+  );
 
   const handleFinish = (id: string) => {
     setUploadMap((prev) => {
@@ -60,134 +93,105 @@ export const useMultipleFileUpload = ({ resource }: Params) => {
     setUploadedCount((prev) => prev + 1);
   };
 
-  const handleError = (uploadId: string) => {
-    setFailedItems((prev) => [...prev, uploadMap[uploadId]]);
+  // Takes the item itself: `uploadMap` in this closure is the snapshot from before the upload
+  // started, so it knows nothing about the entities created since.
+  const handleError = (item: StorageUploadItem) => {
+    setFailedItems((prev) => [...prev, item]);
   };
 
-  const handleDelete = useCallback((uploadId: string) => {
-    setUploadMap((prev) => {
-      const newMap = { ...prev };
-      delete newMap[uploadId];
-      return newMap;
+  const handleDelete = useCallback(
+    (key: string) => {
+      const item = uploadMap[key];
+
+      if (item) {
+        discardEntities([item]);
+      }
+
+      setUploadMap((prev) => {
+        const newMap = { ...prev };
+        delete newMap[key];
+        return newMap;
+      });
+
+      setFailedItems((prev) => prev.filter((e) => e.key !== key));
+    },
+    [discardEntities, uploadMap],
+  );
+
+  const notifyError = (message: string, error: unknown) => {
+    open?.({
+      type: 'error',
+      message,
+      description: getErrorMessage(error),
+      key: `${resource}-upload-error-${Date.now()}`,
     });
+  };
 
-    setFailedItems((prev) => prev.filter((e) => e.uploadId !== uploadId));
-  }, []);
-
-  const handleUpload = async <Record extends Entity = Entity>(
+  /**
+   * Creates and uploads every item still in the map, batch by batch. A finished item leaves the
+   * map; a failed one stays, so calling this again retries only the failures.
+   *
+   * A retried item reuses the entity of its earlier attempt — creating it again would leave the
+   * first row an orphan — unless that entity's upload credentials have expired. Then it is created
+   * afresh, and the stale row is left to the storage cleanup cron (ADR-0014, ADR-0015).
+   */
+  const handleUpload = async <Record extends CreatedUploadEntity = CreatedUploadEntity>(
     createCallback: (items: StorageUploadItem[]) => Promise<Record[]>,
-    field: keyof Record = 'id',
     batchSize = 10,
   ): Promise<boolean> => {
     setIsUploading(() => true);
     let isSuccess = true;
 
+    const ids = Object.keys(uploadMap);
+
+    setUploadedCount(() => 0);
+    setItemsCount(() => ids.length);
+    setFailedItems(() => []);
+
     try {
-      const ids = Object.keys(uploadMap);
-
-      setUploadedCount(() => 0);
-      setItemsCount(() => ids.length);
-      setFailedItems(() => []);
-
       for (let i = 0; i < ids.length; i += batchSize) {
-        const startIndex = i;
-        const endIndex = i + batchSize;
+        const batch = ids.slice(i, i + batchSize).map((key) => uploadMap[key]);
 
-        const batchIds = ids.slice(startIndex, endIndex);
+        const { toCreate, reused: entityByKey } = planUploadBatch(batch);
 
-        const parsedData = batchIds.reduce(
-          (
-            acc: { batch: StorageUploadItem[]; createItems: StorageUploadItem[] },
-            uploadId: string,
-          ) => {
-            const uploadItem = uploadMap[uploadId];
+        if (toCreate.length) {
+          try {
+            const created = pairCreatedEntities(toCreate, await createCallback(toCreate));
 
-            acc.batch.push(uploadItem);
-
-            if (!uploadItem.entityId) {
-              acc.createItems.push(uploadItem);
-            }
-
-            return acc;
-          },
-          { batch: [], createItems: [] },
-        );
-
-        const entityIdByUploadId = new Map<string, string>();
-
-        if (parsedData.createItems.length) {
-          const entities = await createCallback(parsedData.batch);
-
-          setUploadMap((prev) => {
-            const newValues = entities.reduce(
-              (acc: StorageUploadMap, entity) => {
-                acc[entity.uploadId] = {
-                  ...prev[entity.uploadId],
-                  entityId: entity[field]?.toString(),
-                };
-
-                return acc;
-              },
-              { ...prev },
-            );
-
-            return {
-              ...prev,
-              ...newValues,
-            };
-          });
-
-          entities.forEach((entity) => {
-            entityIdByUploadId.set(entity.uploadId, entity[field]!.toString());
-          });
+            created.forEach((entity, key) => entityByKey.set(key, entity));
+            setUploadMap((prev) => attachCreatedEntities(prev, created));
+          } catch (error) {
+            // The items stay in the map without an entity, so the next attempt creates them. The
+            // rest of the batch and the batches after it still go ahead.
+            notifyError('Upload error', error);
+            isSuccess = false;
+          }
         }
 
-        for (const uploadItem of parsedData.batch) {
-          const file = uploadItem.file;
-          const entityId = uploadItem.entityId ?? entityIdByUploadId.get(uploadItem.uploadId);
+        for (const uploadItem of batch) {
+          const entity = entityByKey.get(uploadItem.key);
 
-          if (!entityId) {
-            throw new Error(`File ${file.name} not found`);
+          if (!entity) {
+            handleError(uploadItem);
+            isSuccess = false;
+            continue;
           }
 
-          const formData = new FormData();
-          formData.append('file', file);
-
           try {
-            await internalHttpClient.post(`${resource}/${entityId}/upload`, formData, {
-              timeout: 0,
-              maxBodyLength: Infinity,
-              maxContentLength: Infinity,
-            });
-
-            handleFinish(uploadItem.uploadId);
+            await uploadFileAction(uploadItem.file, entity);
+            handleFinish(uploadItem.key);
           } catch (err) {
-            open?.({
-              type: 'error',
-              message: `Upload error: ${uploadItem.file.name}`,
-              description: getErrorMessage(err),
-              key: `${resource}-upload-error-${Date.now()}`,
-            });
-
-            handleError(uploadItem.uploadId);
+            notifyError(`Upload error: ${uploadItem.file.name}`, err);
+            handleError({ ...uploadItem, entity });
             isSuccess = false;
           }
         }
       }
-
+    } finally {
       setIsUploading(() => false);
-      return isSuccess;
-    } catch (error) {
-      open?.({
-        type: 'error',
-        message: 'Upload error',
-        description: getErrorMessage(error),
-        key: `${resource}-upload-error-${Date.now()}`,
-      });
-
-      setIsUploading(() => false);
-      return false;
     }
+
+    return isSuccess;
   };
 
   return {

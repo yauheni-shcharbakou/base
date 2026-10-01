@@ -4,7 +4,6 @@ FROM node:22-alpine AS base
 ENV CI=true
 ENV NODE_ENV=production
 ENV TURBO_TELEMETRY_DISABLED=1
-ENV MALLOC_ARENA_MAX=2
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
@@ -20,10 +19,6 @@ COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune backend.auth --docker
 
 FROM base AS builder
-RUN apk add --no-cache protobuf protobuf-dev
-ENV PATH="/usr/bin:${PATH}"
-ENV PROTO_PATH=protoc
-ENV GRPC_COMPILER_CONTEXT=backend
 COPY --from=prepare /app/out/json/ .
 RUN --mount=type=cache,id=s/0e139870-5149-4907-9454-d4228002c737-/pnpm/store,target=/pnpm/store \
     pnpm install \
@@ -50,4 +45,9 @@ USER nestjs
 COPY --from=builder --chown=nestjs:nodejs /app ./
 EXPOSE $PORT
 WORKDIR /app/backend/apps/auth
-CMD ["sh", "-c", "node dist/migrator/main.js -- pg-migration && node dist/main.js"]
+# The image holds no TypeScript loader (devDependencies are pruned), so the CLI is told not to look
+# for one: it reads the compiled config either way, and the lookup only prints a warning.
+ENV MIKRO_ORM_CLI_PREFER_TS=false
+# Migrations first, and a failed one keeps the service down. `exec` hands PID 1 to node, so the
+# SIGTERM of a redeploy reaches the app's shutdown hooks instead of stopping at `sh`.
+CMD ["sh", "-c", "node_modules/.bin/mikro-orm migration:up --config dist/mikro-orm.config.js && exec node dist/main.js"]
