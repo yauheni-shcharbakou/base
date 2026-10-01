@@ -1335,6 +1335,29 @@ describe('storage-object tree against Postgres', () => {
         assert.deepEqual(swept, []);
       });
 
+      // The sweep's cursor: a batch starts past the last id of the one before, whatever became of
+      // those images — one that still has no preview does not come back in the same sweep.
+      withDb('goes on past the id it is given, oldest first', async () => {
+        const first = await placeImage('first.png');
+        const second = await placeImage('second.png');
+        const third = await placeImage('third.png');
+        const readyBefore = new Date(Date.now() + 60_000);
+
+        const batch = await read(() => imageRepository.getManyWithoutPreview(readyBefore, 2));
+        assert.deepEqual(
+          batch.map((image) => image.id),
+          [first.id, second.id],
+        );
+
+        const rest = await read(() =>
+          imageRepository.getManyWithoutPreview(readyBefore, 2, second.id),
+        );
+        assert.deepEqual(
+          rest.map((image) => image.id),
+          [third.id],
+        );
+      });
+
       withDb('keeps the first key recorded, and records nothing on a deleted image', async () => {
         const image = await placeImage('race.png');
 
@@ -1379,6 +1402,27 @@ describe('storage-object tree against Postgres', () => {
         await placePdf('fresh.pdf');
 
         assert.deepEqual(await withoutPreview(new Date(Date.now() - 60_000)), []);
+      });
+
+      withDb('goes on past the id it is given, oldest first', async () => {
+        const first = await placePdf('first.pdf');
+        const second = await placePdf('second.pdf');
+        const third = await placePdf('third.pdf');
+        const readyBefore = new Date(Date.now() + 60_000);
+
+        const batch = await read(() => fileRepository.getManyWithoutPreview(PDF, readyBefore, 2));
+        assert.deepEqual(
+          batch.map((file) => file.id),
+          [first.id, second.id],
+        );
+
+        const rest = await read(() =>
+          fileRepository.getManyWithoutPreview(PDF, readyBefore, 2, second.id),
+        );
+        assert.deepEqual(
+          rest.map((file) => file.id),
+          [third.id],
+        );
       });
 
       withDb('keeps the first key recorded, and never shows the failure', async () => {

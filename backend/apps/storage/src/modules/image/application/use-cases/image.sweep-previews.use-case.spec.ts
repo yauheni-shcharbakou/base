@@ -7,8 +7,10 @@ import { left, right } from '@sweet-monads/either';
 import { ImageSweepPreviewsUseCase } from './image.sweep-previews.use-case';
 
 const NOW = new Date('2026-01-01T12:00:00Z');
-const LIMIT = 7;
+const LIMIT = 2;
 const GRACE_MINUTES = 25;
+
+const image = (n: number) => ({ id: `image-${n}`, fileId: `file-${n}` });
 
 describe('ImageSweepPreviewsUseCase', () => {
   let repository: { getManyWithoutPreview: jest.Mock };
@@ -44,18 +46,39 @@ describe('ImageSweepPreviewsUseCase', () => {
     expect(repository.getManyWithoutPreview).toHaveBeenCalledWith(
       new Date(NOW.getTime() - GRACE_MINUTES * 60_000),
       LIMIT,
+      undefined,
     );
   });
 
-  it('goes on to the next image when one gets no preview', async () => {
-    repository.getManyWithoutPreview.mockResolvedValue([
-      { id: 'image-1', fileId: 'file-1' },
-      { id: 'image-2', fileId: 'file-2' },
-    ]);
+  it('reads past the id it is given', async () => {
+    await useCase.execute('image-7');
+
+    expect(repository.getManyWithoutPreview).toHaveBeenCalledWith(
+      expect.any(Date),
+      LIMIT,
+      'image-7',
+    );
+  });
+
+  it('answers the last id of a full batch, to go on from', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([image(1), image(2)]);
+
+    expect(await useCase.execute()).toBe('image-2');
+  });
+
+  it('answers nothing once the backlog ended in the batch', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([image(1)]);
+    expect(await useCase.execute()).toBeUndefined();
+
+    repository.getManyWithoutPreview.mockResolvedValue([]);
+    expect(await useCase.execute()).toBeUndefined();
+  });
+
+  it('goes on to the next image when one gets no preview, and past both', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([image(1), image(2)]);
     makePreviewUseCase.execute.mockResolvedValueOnce(left(new Error('provider down')));
 
-    await useCase.execute();
-
+    expect(await useCase.execute()).toBe('image-2');
     expect(makePreviewUseCase.execute.mock.calls).toEqual([
       [{ fileId: 'file-1' }],
       [{ fileId: 'file-2' }],

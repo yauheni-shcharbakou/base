@@ -31,11 +31,13 @@ export abstract class ImageRepository extends DatabaseRepository<
   abstract deleteWithFile(id: string): Promise<Either<NotFoundException, NestStorage.Image>>;
   /**
    * READY images the preview step has neither finished nor given up on, whose file turned READY
-   * before `readyBefore`, oldest first, with their file. Throws on a failed read.
+   * before `readyBefore`, oldest first, with their file — past `afterId` when one is given, which
+   * is how a sweep goes on from its last batch. Throws on a failed read.
    */
   abstract getManyWithoutPreview(
     readyBefore: Date,
     limit: number,
+    afterId?: string,
   ): Promise<NestStorage.ImagePopulated[]>;
   /**
    * Records the preview key, unless one is already set. `false` when no row took it: the image is

@@ -137,10 +137,12 @@ export class PgImageRepositoryImpl
   async getManyWithoutPreview(
     readyBefore: Date,
     limit: number,
+    afterId?: string,
   ): Promise<NestStorage.ImagePopulated[]> {
     try {
       const images = await this.repository.find(
         {
+          ...(afterId && { id: { $gt: afterId } }),
           previewProviderId: null,
           previewFailedAt: null,
           file: {

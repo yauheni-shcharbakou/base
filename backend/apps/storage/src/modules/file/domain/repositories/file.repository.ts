@@ -39,12 +39,14 @@ export abstract class FileRepository extends DatabaseRepository<
   abstract getOwnerIds(): Promise<string[]>;
   /**
    * READY plain files of these types, READY since before `readyBefore`, with neither a preview nor
-   * a failure recorded — what the document sweep takes on, oldest first.
+   * a failure recorded — what the document sweep takes on, oldest first, past `afterId` when one
+   * is given: how a sweep goes on from its last batch.
    */
   abstract getManyWithoutPreview(
     mimeTypes: string[],
     readyBefore: Date,
     limit: number,
+    afterId?: string,
   ): Promise<NestStorage.File[]>;
   /** Records the file's preview key, unless one is set already: true when this call set it. */
   abstract setPreview(id: string, previewProviderId: string): Promise<Either<Error, boolean>>;

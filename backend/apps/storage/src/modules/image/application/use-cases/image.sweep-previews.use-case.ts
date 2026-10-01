@@ -8,11 +8,14 @@ import moment from 'moment';
 /**
  * Makes the previews the READY event did not: a lost emit, a handler that ran out of retries, and
  * every image uploaded before previews existed. Sequential, so at most one original is in memory.
+ *
+ * One call is one batch. The scheduler calls again with the id this one answered, for as long as
+ * its budget lasts (ADR-0037).
  */
 @Injectable()
 export class ImageSweepPreviewsUseCase {
   private readonly logger = new Logger(ImageSweepPreviewsUseCase.name);
-  /** Images one sweep takes on — `STORAGE_IMAGE_PREVIEW_SWEEP_LIMIT`. */
+  /** Images one batch takes on — `STORAGE_IMAGE_PREVIEW_SWEEP_LIMIT`. */
   private readonly limit: number;
   /**
    * An image READY for this long without a preview was missed by the READY event — the emit is
@@ -31,10 +34,16 @@ export class ImageSweepPreviewsUseCase {
     this.graceMinutes = sweep.graceMinutes;
   }
 
-  async execute(): Promise<void> {
+  /**
+   * Answers the id to go on from, or nothing once the backlog ended in this batch. The next batch
+   * starts past it whatever became of these images, so one that keeps failing holds nothing back —
+   * the next sweep starts over and comes to it again.
+   */
+  async execute(afterId?: string): Promise<string | undefined> {
     const images = await this.imageRepository.getManyWithoutPreview(
       moment().subtract(this.graceMinutes, 'minutes').toDate(),
       this.limit,
+      afterId,
     );
 
     for (const image of images) {
@@ -44,5 +53,7 @@ export class ImageSweepPreviewsUseCase {
         this.logger.warn(`Image ${image.id}: no preview this sweep: ${result.value.message}`);
       }
     }
+
+    return images.length === this.limit ? images[images.length - 1].id : undefined;
   }
 }

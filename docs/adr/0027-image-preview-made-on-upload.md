@@ -1,6 +1,6 @@
 # 0027 — An image's grid preview is a webp made on upload, and a grid never shows the original
 
-**Status:** Accepted (2026-09-29); how the original is read superseded by 0034 (2026-10-01)
+**Status:** Accepted (2026-09-29); how the original is read superseded by 0034 (2026-10-01), how much one sweep takes on by 0037 (2026-10-02)
 **Applies to:** `backend.storage`, `@backend/event-bus`, `@packages/proto`
 
 ## Context

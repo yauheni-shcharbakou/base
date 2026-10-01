@@ -10,7 +10,7 @@ import { left, right } from '@sweet-monads/either';
 import { DocumentSweepPreviewsUseCase } from './document.sweep-previews.use-case';
 
 const NOW = new Date('2026-01-01T12:00:00Z');
-const LIMIT = 7;
+const LIMIT = 2;
 const GRACE_MINUTES = 25;
 
 describe('DocumentSweepPreviewsUseCase', () => {
@@ -48,15 +48,40 @@ describe('DocumentSweepPreviewsUseCase', () => {
       PREVIEWABLE_DOCUMENT_TYPES,
       new Date(NOW.getTime() - GRACE_MINUTES * 60_000),
       LIMIT,
+      undefined,
     );
   });
 
-  it('goes on to the next document when one gets no preview', async () => {
+  it('reads past the id it is given', async () => {
+    await useCase.execute('file-7');
+
+    expect(repository.getManyWithoutPreview).toHaveBeenCalledWith(
+      PREVIEWABLE_DOCUMENT_TYPES,
+      expect.any(Date),
+      LIMIT,
+      'file-7',
+    );
+  });
+
+  it('answers the last id of a full batch, to go on from', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([{ id: 'file-1' }, { id: 'file-2' }]);
+
+    expect(await useCase.execute()).toBe('file-2');
+  });
+
+  it('answers nothing once the backlog ended in the batch', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([{ id: 'file-1' }]);
+    expect(await useCase.execute()).toBeUndefined();
+
+    repository.getManyWithoutPreview.mockResolvedValue([]);
+    expect(await useCase.execute()).toBeUndefined();
+  });
+
+  it('goes on to the next document when one gets no preview, and past both', async () => {
     repository.getManyWithoutPreview.mockResolvedValue([{ id: 'file-1' }, { id: 'file-2' }]);
     makePreviewUseCase.execute.mockResolvedValueOnce(left(new Error('provider down')));
 
-    await useCase.execute();
-
+    expect(await useCase.execute()).toBe('file-2');
     expect(makePreviewUseCase.execute.mock.calls).toEqual([
       [{ fileId: 'file-1' }],
       [{ fileId: 'file-2' }],

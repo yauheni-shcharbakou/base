@@ -144,10 +144,12 @@ export class PgFileRepositoryImpl
     mimeTypes: string[],
     readyBefore: Date,
     limit: number,
+    afterId?: string,
   ): Promise<NestStorage.File[]> {
     try {
       const files = await this.repository.find(
         {
+          ...(afterId && { id: { $gt: afterId } }),
           mimeType: { $in: mimeTypes },
           uploadStatus: NestStorage.FileUploadStatus.READY,
           updatedAt: { $lt: readyBefore },
