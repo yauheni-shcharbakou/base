@@ -51,6 +51,10 @@ Rejected alternatives:
 
 ## Decision
 
+Both sweeps are one code: `PreviewSweepUseCase` and `PreviewSweepScheduler` under `src/common`,
+which the image and the document classes named below extend with their rows, their make-preview use
+case and their settings.
+
 - **A use-case call is one batch.** `ImageSweepPreviewsUseCase.execute(afterId?)` and
   `DocumentSweepPreviewsUseCase.execute(afterId?)` read up to `*_PREVIEW_SWEEP_LIMIT` rows past
   `afterId`, make their previews one after another, and answer the last row's id when the batch was
