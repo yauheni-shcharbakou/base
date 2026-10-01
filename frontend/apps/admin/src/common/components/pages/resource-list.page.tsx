@@ -78,8 +78,9 @@ export const ResourceListPage: FC<ResourceListProps> = ({ columns, headerButtons
     params.set('sortOrder', initialSorter.order);
 
     // The transition stays pending until this navigation has landed (see the note at the top).
+    // `replace`, not `push`: the URL without the parameters is no page of its own to go back to.
     startUrlSync(() => {
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     });
     // Intentionally run once on mount — do not add deps (see the note at the top).
     // eslint-disable-next-line react-hooks/exhaustive-deps
