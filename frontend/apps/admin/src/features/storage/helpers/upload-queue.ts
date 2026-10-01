@@ -21,6 +21,8 @@ export type QueuedUpload = {
   // The uploaded folder it came in, made for the upload: the top of its tree, under the name it
   // was made with. The upload box shows the folder as one row. None for a file dropped alone.
   group?: { id: string; name: string };
+  // The folder item it takes the place of: a failed upload, deleted to be sent again.
+  replaces?: string;
   status: QueuedUploadStatus;
   // 0–100, while `uploading`.
   progress: number;
@@ -136,6 +138,60 @@ export const pickUploadWork = (items: QueuedUpload[], now = Date.now()): UploadW
     .map(({ key }) => key);
 
   return { type: 'create', keys };
+};
+
+/**
+ * The file row an upload's record sits on, which is what confirms it and what a folder item names
+ * it by: a file's own id, an image's or a video's backing file's. None before the record is made.
+ */
+export const getUploadFileId = ({
+  kind,
+  entity,
+}: Pick<QueuedUpload, 'kind' | 'entity'>): string | undefined =>
+  kind === BrowserStorage.StorageObjectType.FILE ? entity?.id : entity?.fileId;
+
+/** The failed upload of this file row the queue still holds, with the bytes to send again. */
+export const findFailedUpload = (items: QueuedUpload[], fileId: string): QueuedUpload | undefined =>
+  items.find((item) => item.status === 'failed' && getUploadFileId(item) === fileId);
+
+/**
+ * The upload this tab's queue holds for a folder item: the one taking its place, else the one its
+ * file row came from. None for an item uploaded from another tab, or on another day.
+ */
+export const findUploadOf = (
+  items: QueuedUpload[],
+  { id, fileId }: { id: string; fileId?: string },
+): QueuedUpload | undefined =>
+  items.find((item) => item.replaces === id) ??
+  (fileId ? items.find((item) => getUploadFileId(item) === fileId) : undefined);
+
+// No `percent` while it cannot be told: the bar runs without one.
+export type UploadProgress = { label: string; percent?: number };
+
+/**
+ * What an item not yet openable says of its upload while this tab is at it — in place of the
+ * status of its row, which stays PENDING all along. None once the upload rests, done or failed —
+ * unless it is taking the item's place: then the listing has yet to bring what replaces it.
+ */
+export const getUploadProgress = (
+  upload: Pick<QueuedUpload, 'status' | 'progress' | 'replaces'> | undefined,
+  itemId: string,
+): UploadProgress | undefined => {
+  switch (upload?.status) {
+    case 'queued':
+    case 'creating':
+      return { label: 'Waiting to upload…' };
+    case 'uploading':
+      return { label: `Uploading… ${upload.progress}%`, percent: upload.progress };
+    case 'uploaded':
+    case 'completing':
+      return { label: 'Finishing…' };
+    case 'done':
+    case 'failed':
+      return upload.replaces === itemId ? { label: 'Finishing…' } : undefined;
+    default:
+      return undefined;
+  }
 };
 
 export type UploadSummary = {

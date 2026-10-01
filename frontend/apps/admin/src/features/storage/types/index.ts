@@ -24,8 +24,10 @@ export type StorageData = Partial<
  * What the multi-upload hook needs from a created record: when the credentials it came with stop
  * working. `expires` is unix seconds for both the Bunny Stream TUS signature and the pre-signed
  * Bunny Storage PUT. Which selected file it answers is its position in the create-many result.
+ * `fileId` is the backing file of an image or a video; a plain file is its own.
  */
 export type CreatedUploadEntity = BrowserCommon.IdField & {
+  fileId?: string;
   upload: { expires: string };
 };
 

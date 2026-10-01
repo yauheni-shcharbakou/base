@@ -1,6 +1,10 @@
 import { BrowserStorage } from '@packages/proto';
 import {
+  findFailedUpload,
+  findUploadOf,
   getCompleteDeadline,
+  getUploadFileId,
+  getUploadProgress,
   getUploadRowStatus,
   groupUploads,
   getRateLimitPause,
@@ -94,6 +98,91 @@ describe('pickUploadWork', () => {
 
   it('has nothing to do without a queued item', () => {
     expect(pickUploadWork([itemOf('a', { status: 'failed' })], NOW)).toBeUndefined();
+  });
+});
+
+describe('getUploadFileId', () => {
+  it("is a file's own id, and an image's or a video's backing file's", () => {
+    const entity = { ...fresh, id: 'record', fileId: 'backing' };
+
+    expect(getUploadFileId(itemOf('a', { entity }))).toBe('record');
+    expect(getUploadFileId(itemOf('b', { kind: VIDEO, entity }))).toBe('backing');
+  });
+
+  it('is none before the record is made', () => {
+    expect(getUploadFileId(itemOf('a'))).toBeUndefined();
+  });
+});
+
+describe('findFailedUpload', () => {
+  const entity = { ...fresh, id: 'file-1' };
+
+  it('finds the failed upload of a file row', () => {
+    const items = [
+      itemOf('a', { status: 'failed', entity: { ...fresh, id: 'file-0' } }),
+      itemOf('b', { status: 'failed', entity }),
+    ];
+
+    expect(findFailedUpload(items, 'file-1')?.key).toBe('b');
+  });
+
+  it('passes over an upload still on its way, or done', () => {
+    const items = [
+      itemOf('a', { status: 'uploading', entity }),
+      itemOf('b', { status: 'done', entity }),
+    ];
+
+    expect(findFailedUpload(items, 'file-1')).toBeUndefined();
+  });
+});
+
+describe('findUploadOf', () => {
+  const own = itemOf('own', { status: 'uploading', entity: { ...fresh, id: 'file-1' } });
+  const replacing = itemOf('replacing', { replaces: 'item-1' });
+
+  it("finds the upload an item's file row came from, whatever it is at", () => {
+    expect(findUploadOf([own], { id: 'item-9', fileId: 'file-1' })?.key).toBe('own');
+    expect(findUploadOf([own], { id: 'item-9', fileId: 'file-2' })).toBeUndefined();
+    expect(findUploadOf([own], { id: 'item-9' })).toBeUndefined();
+  });
+
+  it("puts the upload taking the item's place first", () => {
+    expect(findUploadOf([own, replacing], { id: 'item-1', fileId: 'file-1' })?.key).toBe(
+      'replacing',
+    );
+  });
+});
+
+describe('getUploadProgress', () => {
+  const progressOf = (patch: Partial<QueuedUpload>, itemId = 'item-1') =>
+    getUploadProgress(itemOf('a', patch), itemId);
+
+  it('tells how far the bytes are', () => {
+    expect(progressOf({ status: 'uploading', progress: 42 })).toEqual({
+      label: 'Uploading… 42%',
+      percent: 42,
+    });
+  });
+
+  it('has no percent before the bytes go, or once they are in', () => {
+    expect(progressOf({ status: 'queued' })).toEqual({ label: 'Waiting to upload…' });
+    expect(progressOf({ status: 'creating' })).toEqual({ label: 'Waiting to upload…' });
+    expect(progressOf({ status: 'uploaded' })).toEqual({ label: 'Finishing…' });
+    expect(progressOf({ status: 'completing' })).toEqual({ label: 'Finishing…' });
+  });
+
+  it('says nothing once the upload rests, or without one', () => {
+    expect(progressOf({ status: 'done' })).toBeUndefined();
+    expect(progressOf({ status: 'failed' })).toBeUndefined();
+    expect(getUploadProgress(undefined, 'item-1')).toBeUndefined();
+  });
+
+  it('keeps the replaced item waiting for the listing once its replacement rests', () => {
+    const finishing = { label: 'Finishing…' };
+
+    expect(progressOf({ status: 'done', replaces: 'item-1' })).toEqual(finishing);
+    expect(progressOf({ status: 'failed', replaces: 'item-1' })).toEqual(finishing);
+    expect(progressOf({ status: 'done', replaces: 'item-1' }, 'item-2')).toBeUndefined();
   });
 });
 

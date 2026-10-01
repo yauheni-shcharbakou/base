@@ -252,7 +252,7 @@ const FolderUploadRow: FC<{ row: FolderRow }> = ({ row }) => {
  * Drive's upload box, in the corner of every page: the queue of files dropped on the folder
  * browser, each with its progress — an uploaded folder as one row for all its files, unfolded on a
  * click — and a retry for what failed. It refreshes the folder listings and the media lists as
- * uploads finish, and asks before the page is left mid-upload.
+ * uploads finish or fail, and asks before the page is left mid-upload.
  */
 export const StorageUploadPanel: FC = () => {
   const items = useStorageUploads();
@@ -261,11 +261,14 @@ export const StorageUploadPanel: FC = () => {
   const rows = groupUploads(items);
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
-  const doneCount = useRef(0);
+  const settledCount = useRef(0);
+  // A failed upload shows in its folder too: its record was made, and the item there says what the
+  // upload is at and offers to send it again.
+  const settled = summary.done + summary.failed;
 
   useEffect(() => {
-    const hasMore = summary.done > doneCount.current;
-    doneCount.current = summary.done;
+    const hasMore = settled > settledCount.current;
+    settledCount.current = settled;
 
     if (!hasMore) {
       return;
@@ -279,7 +282,7 @@ export const StorageUploadPanel: FC = () => {
     }, REFRESH_DELAY_MS);
 
     return () => clearTimeout(timeout);
-  }, [summary.done, queryClient, invalidate]);
+  }, [settled, queryClient, invalidate]);
 
   useEffect(() => {
     if (!summary.active) {

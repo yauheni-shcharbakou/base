@@ -6,18 +6,28 @@ import {
   getFolderItemOpenUrl,
   getFolderItemUnavailableReason,
   getStorageItemKind,
+  getUploadProgress,
   PdfControls,
   shouldAutoloadPdf,
   STORAGE_ITEM_KIND_LABELS,
   StorageItemKind,
 } from '@/features/storage/helpers';
+import { useUploadOf } from '@/features/storage/hooks';
 import { BunnyPlayer, BunnyPlayerControls } from '@/features/video/components';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
 import ReplayRounded from '@mui/icons-material/ReplayRounded';
-import { Box, Button, Chip, CircularProgress, Stack, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  LinearProgress,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { BrowserStorage } from '@packages/proto';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -71,7 +81,8 @@ const PDF_FAILURE_LABELS: Record<PdfFailure, string> = {
  * The large picture of a gallery or its viewer: an image's preview at once, then its original once
  * the selection rests; a video's poster that turns into the player on a click — or by itself, in
  * the viewer; a PDF's pages once the selection rests; a big icon for the rest — with what its upload
- * is at, for an item that cannot be opened yet, and "Upload again" and "Delete" once it has failed.
+ * is at, for an item that cannot be opened yet — its progress, while this tab is sending it — and
+ * "Upload again" and "Delete" once it has failed.
  * Keyed by item, so nothing of one item's state leaks into the next.
  */
 export const GalleryStage: FC<Props> = ({
@@ -88,6 +99,7 @@ export const GalleryStage: FC<Props> = ({
 }) => {
   const kind = getStorageItemKind(item);
   const openUrl = getFolderItemOpenUrl(item);
+  const upload = useUploadOf(item);
   const [originalSrc, setOriginalSrc] = useState<string>();
   const [isOriginalShown, setOriginalShown] = useState(false);
   const [isPreviewFailed, setPreviewFailed] = useState(false);
@@ -132,7 +144,15 @@ export const GalleryStage: FC<Props> = ({
   const hasPreview = !!item.previewUrl && !isPreviewFailed;
   const unavailableReason = getFolderItemUnavailableReason(item);
   const uploadStatus = item.file?.uploadStatus;
-  const isUploadFailed = uploadStatus === BrowserStorage.FileUploadStatus.FAILED;
+  // What this tab's own upload of the item is at, while it is on its way — the item's, or the one
+  // taking its place: the row itself says PENDING, or FAILED, all along.
+  const progress = unavailableReason ? getUploadProgress(upload, item.id) : undefined;
+  // FAILED by the backend's word, or by this tab's: its own upload of the item died, though the row
+  // still says PENDING until its upload window closes.
+  const isUploadFailed =
+    !progress &&
+    (uploadStatus === BrowserStorage.FileUploadStatus.FAILED ||
+      (!!unavailableReason && upload?.status === 'failed'));
   const mutedColor = isViewer ? 'grey.400' : 'text.secondary';
 
   const handlePreviewError = () => {
@@ -275,7 +295,20 @@ export const GalleryStage: FC<Props> = ({
           Show preview
         </Button>
       )}
-      {unavailableReason && (
+      {progress && (
+        <Stack alignItems="center" gap={0.75} sx={{ mt: 1, width: 240, maxWidth: '100%' }}>
+          <LinearProgress
+            variant={progress.percent === undefined ? 'indeterminate' : 'determinate'}
+            value={progress.percent}
+            aria-label="Upload progress"
+            sx={{ alignSelf: 'stretch', borderRadius: 1 }}
+          />
+          <Typography variant="body2" color={mutedColor} textAlign="center" role="status">
+            {progress.label}
+          </Typography>
+        </Stack>
+      )}
+      {unavailableReason && !progress && (
         // No bytes to show or open yet: what the upload is at, in place of an Open that leads nowhere.
         <Stack alignItems="center" gap={0.5} sx={{ mt: 1 }}>
           <Chip

@@ -20,6 +20,7 @@ export * from './shortcut-key';
 export * from './shortcut-label';
 export * from './storage-meta.schema';
 export * from './upload-queue';
+export * from './upload-replace';
 export * from './upload-rules';
 export * from './upload-tree';
 export * from './visibility-lock';

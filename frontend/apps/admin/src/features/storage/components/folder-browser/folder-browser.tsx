@@ -78,6 +78,9 @@ type Props = {
 const { STORAGE } = Database;
 const { STORAGE_OBJECT } = StorageDatabaseEntity;
 
+// One array for every render without a listing: an effect that depends on the items must not rerun.
+const NO_ITEMS: Item[] = [];
+
 const DIRECTION_BY_KEY: Partial<Record<string, Direction>> = {
   ArrowUp: 'up',
   ArrowDown: 'down',
@@ -155,13 +158,36 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   const rootLabel = useRootFolderLabel(content?.folder.userId);
   const shownFolder = content && { id: folderId, name: content.folder.name || rootLabel };
   const fileDrop = useFileDrop({ userId: content?.folder.userId, folder: shownFolder });
-  // A failed upload's way out, from the stage that tells of it: a new file in its place.
+
+  const selectItem = useCallback((id: string) => setParams({ focus: id }, 'replace'), [setParams]);
+
+  // Over the grid and the list the viewer keeps its own item, off the selection: stepping through
+  // files must neither select them nor move the keyboard's item under it, until it is left.
+  const [viewerId, setViewerId] = useState<string>();
+
+  // A failed upload's way out, from the stage that tells of it: a new file in its place. The page
+  // every view shows is its `items` — the listing's, with the item being replaced held on it until
+  // the new one is listed, which is then shown where the old one was.
   const reupload = useUploadAgain({
-    onUpload: (files) => shownFolder && fileDrop.uploadFiles(files, shownFolder),
+    userId: content?.folder.userId,
+    folder: shownFolder,
+    items: content?.items ?? NO_ITEMS,
+    scope: [
+      folderId,
+      params.page,
+      params.pageSize,
+      params.sortBy,
+      params.sortOrder,
+      params.search ?? '',
+      params.types.join(','),
+    ].join('|'),
+    currentId: isGallery ? params.focus : viewerId,
+    onShow: isGallery ? selectItem : setViewerId,
   });
+  const { items } = reupload;
 
   const selection = useFolderSelection({
-    items: content?.items,
+    items: content ? items : undefined,
     // A new folder or filter starts a new selection, and so does the gallery, which has its own.
     // Another page, order, or Drive's other view keeps it.
     resetKey: [folderId, isGallery, params.search ?? '', params.types.join(',')].join('|'),
@@ -254,24 +280,18 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     }
   });
 
-  const selectItem = useCallback((id: string) => setParams({ focus: id }, 'replace'), [setParams]);
-
   const changePage = useCallback(
     (page: number) => setParams({ page, focus: undefined }, 'replace'),
     [setParams],
   );
 
-  // Over the grid and the list the viewer keeps its own item, off the selection: stepping through
-  // files must neither select them nor move the keyboard's item under it, until it is left.
-  const [viewerId, setViewerId] = useState<string>();
-
   const viewer = useFolderViewer({
-    items: content?.items ?? [],
+    items,
     isPlaceholderData,
     page: params.page,
     pageCount,
     pageSize: params.pageSize,
-    total: content?.total ?? 0,
+    total: (content?.total ?? 0) + reupload.heldCount,
     folderTotal: content?.folderTotal ?? 0,
     currentId: isGallery ? params.focus : viewerId,
     onCurrentChange: isGallery ? selectItem : setViewerId,
@@ -395,7 +415,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     if (direction) {
       // ⌘↑ is up to the parent; ⌘↓ opens, as in Finder.
       if (isModified) {
-        const focused = content.items.find(({ id }) => id === selection.focusedId);
+        const focused = items.find(({ id }) => id === selection.focusedId);
 
         if (direction === 'down' && focused) {
           event.preventDefault();
@@ -427,7 +447,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             ? selectedItems[0]
             : selectedItems.length
               ? undefined
-              : content.items.find(({ id }) => id === selection.focusedId);
+              : items.find(({ id }) => id === selection.focusedId);
 
         if (target) {
           event.preventDefault();
@@ -459,7 +479,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         }
 
         const id = itemElement?.getAttribute(ITEM_ID_ATTRIBUTE) ?? selection.focusedId;
-        const item = content.items.find((candidate) => candidate.id === id);
+        const item = items.find((candidate) => candidate.id === id);
 
         if (item) {
           event.preventDefault();
@@ -607,7 +627,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         {...(isGallery ? {} : marquee.handlers)}
         sx={{ position: 'relative', minHeight: 240 }}
       >
-        {content ? renderView(content.items) : <LoadingGrid />}
+        {content ? renderView(items) : <LoadingGrid />}
         {marquee.box && (
           <Box
             aria-hidden

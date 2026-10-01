@@ -7,8 +7,10 @@ import { completeFileUploads } from '@/features/storage/actions';
 import { putToPresignedUrl } from '@/features/storage/helpers/presigned-upload';
 import { hasUsableCredentials, pairCreatedEntities } from '@/features/storage/helpers/upload-batch';
 import {
+  findUploadOf,
   getCompleteDeadline,
   getRateLimitPause,
+  getUploadFileId,
   pickUploadWork,
   QueuedUpload,
   UPLOAD_CONCURRENCY,
@@ -31,10 +33,10 @@ import { useSyncExternalStore } from 'react';
 import { monotonicFactory } from 'ulid';
 
 /**
- * A file to upload, the kind it goes as, the folder of the owner it goes into, and the uploaded
- * folder it came in, if any.
+ * A file to upload, the kind it goes as, the folder of the owner it goes into, the uploaded
+ * folder it came in, if any, and the failed item it takes the place of, if any.
  */
-export type UploadRequest = Pick<QueuedUpload, 'file' | 'kind' | 'folder' | 'group'>;
+export type UploadRequest = Pick<QueuedUpload, 'file' | 'kind' | 'folder' | 'group' | 'replaces'>;
 
 const { FILE, IMAGE, VIDEO } = BrowserStorage.StorageObjectType;
 
@@ -70,11 +72,6 @@ const sendBytes = (item: QueuedUpload, onProgress: (percent: number) => void): P
   }
 };
 
-// The file row of an upload's record, which confirms it: a file's own id, an image's or a video's
-// backing file's.
-const getFileId = ({ kind, entity }: QueuedUpload): string =>
-  kind === FILE ? (entity as CreatedFile).id : (entity as CreatedImage | CreatedVideo).fileId;
-
 /**
  * Drive's upload queue: files dropped on the folder browser, created and uploaded in the order they
  * came, a few transfers at a time, while the admin moves on to other pages. Every step that calls
@@ -98,20 +95,24 @@ class StorageUploadQueue {
 
   getSnapshot = () => this.items;
 
-  enqueue(files: UploadRequest[], userId: string) {
-    const added = files.map<QueuedUpload>(({ file, kind, folder, group }) => ({
+  /** Adds the files to the queue, and answers their keys in it, in order. */
+  enqueue(files: UploadRequest[], userId: string): string[] {
+    const added = files.map<QueuedUpload>(({ file, kind, folder, group, replaces }) => ({
       key: this.nextKey(),
       file,
       kind,
       userId,
       folder,
       group,
+      replaces,
       status: 'queued',
       progress: 0,
     }));
 
     this.set([...this.items, ...added]);
     this.pump();
+
+    return added.map(({ key }) => key);
   }
 
   /**
@@ -166,7 +167,7 @@ class StorageUploadQueue {
    */
   dismissFailedOf(fileId: string) {
     const keys = this.items
-      .filter((item) => item.status === 'failed' && item.entity && getFileId(item) === fileId)
+      .filter((item) => item.status === 'failed' && getUploadFileId(item) === fileId)
       .map(({ key }) => key);
 
     if (keys.length) {
@@ -268,7 +269,9 @@ class StorageUploadQueue {
     const items = this.items.filter(({ key }) => keys.includes(key));
 
     try {
-      const results = unwrapActionResult(await completeFileUploads(items.map(getFileId)));
+      const results = unwrapActionResult(
+        await completeFileUploads(items.map((item) => getUploadFileId(item) as string)),
+      );
 
       this.patch(keys, (item) => {
         const result = results[items.indexOf(item)];
@@ -328,3 +331,10 @@ export const useStorageUploads = () =>
     storageUploadQueue.getSnapshot,
     () => NO_UPLOADS,
   );
+
+/**
+ * The upload this tab's queue holds for a folder item (`findUploadOf`), redrawn as it moves: what
+ * the item's stage reads its progress from, and whether its bytes can be sent again unpicked.
+ */
+export const useUploadOf = (item: { id: string; fileId?: string }): QueuedUpload | undefined =>
+  findUploadOf(useStorageUploads(), item);
