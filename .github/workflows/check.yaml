@@ -257,3 +257,56 @@ jobs:
 
       - name: 'Env tables match their schemas'
         run: 'pnpm check:env-docs'
+
+  # A release is one merge into main, and its version is the root package.json's: the commit that
+  # lands on main is tagged `v<version>` here, once per version. A push that releases nothing left
+  # the version alone, finds its tag there already and does nothing — so this needs no trigger of
+  # its own and no "is this a release" flag.
+  tag:
+    needs:
+      - 'changes'
+      - 'check'
+      - 'docs'
+    # One of `check` and `docs` is always skipped, and a job with a skipped need is skipped itself
+    # unless its `if` says otherwise. Neither may have failed: a tag does not go on a red main.
+    # `changes` is asked for by name, since its failure skips both of the others.
+    if: >-
+      !cancelled()
+      && github.event_name == 'push'
+      && needs.changes.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.check.result)
+      && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+    # The one job that writes: the workflow's token is read-only everywhere else.
+    permissions:
+      contents: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          sparse-checkout: 'package.json'
+          sparse-checkout-cone-mode: false
+
+      # The version is read the way scripts/docs-invariants.sh reads it, which has already held it
+      # to the changelog's top entry. Asked of the remote, not of the clone: a shallow checkout
+      # fetches no tags.
+      - name: 'Tag the release'
+        run: |
+          version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
+          if [ -z "$version" ]; then
+            echo '::error::No version in the root package.json.'
+            exit 1
+          fi
+          tag="v$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "$tag exists already — nothing to release."
+            exit 0
+          fi
+          # Annotated, as v1.0.0 is: a plain `git describe` sees no other kind.
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            tag -a "$tag" -m "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+          echo "::notice::Tagged $GITHUB_SHA as $tag."

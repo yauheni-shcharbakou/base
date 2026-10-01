@@ -100,5 +100,7 @@ project needs, grouped by area. That is why there is no release tool in this rep
 
 ## What this skill does not do
 
-It does not commit, push or tag — those wait for an explicit request. After the merge, the tag goes
-on the merge commit: `git tag vX.Y.Z <merge commit>`, then `git push origin vX.Y.Z`.
+It does not commit or push — those wait for an explicit request. And it never tags: once the merge
+lands on `main` and the run is green, the `tag` job of `.github/workflows/check.yaml` tags that
+commit `vX.Y.Z` from the root version, unless the tag exists. A tag made by hand beforehand would
+only make that job a no-op on the wrong commit.

@@ -114,7 +114,10 @@ Dependabot moves once a month.
 the top entry of `CHANGELOG.md` move together and `README.md` is read against the branch — the
 `/release` skill (`.claude/skills/release/`) does all three, and `check:docs` fails while the version
 and the entry disagree. Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
-curated from the ADRs and the contract diffs, not generated from commits.
+curated from the ADRs and the contract diffs, not generated from commits. **Nobody tags by hand:**
+on a green push to `main` the workflow's `tag` job tags that commit `v<version>` unless the tag
+exists — so a merge that left the version alone releases nothing, and a version bumped without a
+merge is not a release.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single
