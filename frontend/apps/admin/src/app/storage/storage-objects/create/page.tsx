@@ -11,7 +11,7 @@ import { UserSelect } from '@/features/auth/components';
 import { SelectOption } from '@/common/components';
 import { FolderPickerField, MediaSelect } from '@/features/storage/components';
 import { isLeafType, MEDIA_BY_TYPE } from '@/features/storage/helpers';
-import { usePresetPlacement, useStorageObjectForm } from '@/features/storage/hooks';
+import { useResetParentOnOwnerChange, useStorageObjectForm } from '@/features/storage/hooks';
 import { Box } from '@mui/material';
 import { SchemaTypeOf } from '@packages/common';
 import { BrowserAuth, BrowserStorage } from '@packages/proto';
@@ -51,7 +51,7 @@ export default function StorageObjectCreate() {
 
   const [mediaOptions, setMediaOptions] = useState<SelectOption[]>([]);
 
-  const { presetUserId } = usePresetPlacement(userId, (id) => setValue('parent', id));
+  useResetParentOnOwnerChange(userId, (id) => setValue('parent', id));
 
   // Another owner or another type lists other media: a pick from the old list no longer applies.
   useEffect(() => {
@@ -99,7 +99,7 @@ export default function StorageObjectCreate() {
               fieldName="userId"
               fieldErr={errors?.userId as FieldErr}
               control={control}
-              defaultValue={presetUserId ?? user?.id}
+              defaultValue={user?.id}
               required
             />
             <FolderPickerField

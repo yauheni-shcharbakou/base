@@ -49,6 +49,7 @@ import type { BrowserStorage } from '@packages/proto';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { FC, useCallback, useRef, useState } from 'react';
+import { CreateFolderDialog } from './create-folder-dialog';
 import { DeleteStorageItemDialog } from './delete-storage-item-dialog';
 import { FolderBreadcrumbs } from './folder-breadcrumbs';
 import { FolderGalleryView } from './folder-gallery-view';
@@ -118,7 +119,7 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
  * Drive, and the selection — up to 100 items — moves, deletes or turns public or private together:
  * from its bar, an item's "⋮", a drag onto a folder or a breadcrumb, or the keyboard. An item's "⋮"
  * renames it. Files dropped from the desktop upload into the folder, or
- * into the subfolder or breadcrumb they land on.
+ * into the subfolder or breadcrumb they land on; "New" makes a folder in it, or picks what to upload.
  */
 export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPreferences }) => {
   const router = useRouter();
@@ -146,6 +147,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   const [pendingDelete, setPendingDelete] = useState<Item[]>();
   const [pendingMove, setPendingMove] = useState<Item[]>();
   const [pendingRename, setPendingRename] = useState<Item>();
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const isGallery = params.view === FolderView.GALLERY;
   const rootLabel = useRootFolderLabel(content?.folder.userId);
@@ -220,6 +222,28 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     if ((isUp || isBack) && !viewer.isOpen && !event.defaultPrevented && !isTyping(event.target)) {
       event.preventDefault();
       openParent();
+    }
+  });
+
+  // Drive's Shift+F, in every view: a new folder here. By the key's place, not its letter — on
+  // another layout the same key types another one.
+  useWindowKeyDown((event) => {
+    const isNewFolder =
+      event.code === 'KeyF' && event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey;
+
+    if (
+      isNewFolder &&
+      content &&
+      !viewer.isOpen &&
+      !pendingDelete &&
+      !pendingMove &&
+      !pendingRename &&
+      !isCreatingFolder &&
+      !event.defaultPrevented &&
+      !isTyping(event.target)
+    ) {
+      event.preventDefault();
+      setIsCreatingFolder(true);
     }
   });
 
@@ -350,6 +374,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       pendingDelete ||
       pendingMove ||
       pendingRename ||
+      isCreatingFolder ||
       event.defaultPrevented ||
       isTyping(event.target)
     ) {
@@ -542,8 +567,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
           <Stack direction="row" gap={1}>
             {content && shownFolder && (
               <FolderNewMenu
-                folderId={folderId}
-                userId={content.folder.userId}
+                onCreateFolder={() => setIsCreatingFolder(true)}
                 onUpload={(files) => fileDrop.uploadFiles(files, shownFolder)}
                 onUploadFolder={(files) => fileDrop.uploadDirectory(files, shownFolder)}
               />
@@ -698,13 +722,21 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         </Paper>
       )}
       {content && (
-        <MoveStorageItemsDialog
-          items={pendingMove}
-          folder={content.folder}
-          isMoving={moving.isPending}
-          onCancel={() => setPendingMove(undefined)}
-          onConfirm={move}
-        />
+        <>
+          <MoveStorageItemsDialog
+            items={pendingMove}
+            folder={content.folder}
+            isMoving={moving.isPending}
+            onCancel={() => setPendingMove(undefined)}
+            onConfirm={move}
+          />
+          <CreateFolderDialog
+            open={isCreatingFolder}
+            userId={content.folder.userId}
+            parent={folderId}
+            onClose={() => setIsCreatingFolder(false)}
+          />
+        </>
       )}
     </Card>
   );

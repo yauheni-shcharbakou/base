@@ -11,5 +11,5 @@ export * from './use-set-storage-objects-public';
 export * from './use-root-folder-label';
 export * from './use-user-folders';
 export * from './use-create-folder';
-export * from './use-preset-placement';
+export * from './use-reset-parent-on-owner-change';
 export * from './use-storage-uploads';

@@ -10,7 +10,7 @@ import {
   StorageUploader,
 } from '@/features/storage/components';
 import { storageMetaSchema, toDropzoneAccept, UPLOAD_RULES } from '@/features/storage/helpers';
-import { usePresetPlacement, useSingleFileUpload } from '@/features/storage/hooks';
+import { useResetParentOnOwnerChange, useSingleFileUpload } from '@/features/storage/hooks';
 import { videoActionProvider, type CreatedVideo } from '@/features/storage/providers';
 import { getGenericVideTitle, uploadViaTus } from '@/features/video/helpers';
 import { Box, Card, CardContent, CardHeader, Stack } from '@mui/material';
@@ -52,7 +52,7 @@ export default function VideoCreate() {
 
   const parent = watch('parent');
   const userId = watch('userId');
-  const { presetUserId } = usePresetPlacement(userId, (id) => setValue('parent', id));
+  useResetParentOnOwnerChange(userId, (id) => setValue('parent', id));
   const file = watch('file');
 
   const handleFileChange = (selectedFile?: File) => {
@@ -106,7 +106,7 @@ export default function VideoCreate() {
             fieldName="userId"
             fieldErr={errors?.userId as FieldErr}
             control={control}
-            defaultValue={presetUserId ?? user?.id}
+            defaultValue={user?.id}
             required
           />
 
