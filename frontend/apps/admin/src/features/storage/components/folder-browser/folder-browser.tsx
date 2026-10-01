@@ -10,6 +10,7 @@ import {
   formatFolderStats,
   getChildOnPath,
   getFolderItemTarget,
+  getShortcutKey,
   MAX_SELECTION,
 } from '@/features/storage/helpers';
 import {
@@ -225,11 +226,14 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     }
   });
 
-  // Drive's Shift+F, in every view: a new folder here. By the key's place, not its letter — on
-  // another layout the same key types another one.
+  // Drive's Shift+F, in every view: a new folder here.
   useWindowKeyDown((event) => {
     const isNewFolder =
-      event.code === 'KeyF' && event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey;
+      getShortcutKey(event) === 'f' &&
+      event.shiftKey &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey;
 
     if (
       isNewFolder &&
@@ -405,9 +409,9 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       return;
     }
 
-    switch (event.key) {
+    // A letter by its key, whatever the layout types (`getShortcutKey`).
+    switch (getShortcutKey(event)) {
       case 'a':
-      case 'A':
         if (isModified && !event.altKey) {
           event.preventDefault();
           selection.selectAll();

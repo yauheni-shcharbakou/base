@@ -3,6 +3,7 @@ import {
   getFolderItemOpenUrl,
   getNeighbourId,
   getOverallPosition,
+  getShortcutKey,
   getStorageItemKind,
   PdfControls,
   pickArrival,
@@ -304,28 +305,27 @@ export const useFolderViewer = ({
       return false;
     }
 
-    switch (event.key) {
+    // A letter by its key, whatever the layout types (`getShortcutKey`).
+    const key = getShortcutKey(event);
+
+    switch (key) {
       case 'ArrowDown':
       case 'ArrowUp':
-        pdf?.scrollBy(event.key === 'ArrowDown' ? 1 : -1, 'line');
+        pdf?.scrollBy(key === 'ArrowDown' ? 1 : -1, 'line');
         return !!pdf;
       case 'PageDown':
       case 'PageUp':
-        pdf?.scrollBy(event.key === 'PageDown' ? 1 : -1, 'page');
+        pdf?.scrollBy(key === 'PageDown' ? 1 : -1, 'page');
         return !!pdf;
       case 'k':
-      case 'K':
         player?.togglePlay();
         return !!player;
       case 'm':
-      case 'M':
         player?.toggleMute();
         return !!player;
       case 'j':
-      case 'J':
       case 'l':
-      case 'L':
-        player?.seekBy(event.key.toLowerCase() === 'l' ? SEEK_STEP_SECONDS : -SEEK_STEP_SECONDS);
+        player?.seekBy(key === 'l' ? SEEK_STEP_SECONDS : -SEEK_STEP_SECONDS);
         return !!player;
       default:
         return false;
@@ -344,7 +344,7 @@ export const useFolderViewer = ({
 
     const isModified = event.metaKey || event.ctrlKey;
 
-    switch (event.key) {
+    switch (getShortcutKey(event)) {
       case 'ArrowRight':
       case 'ArrowLeft':
         if (isModified) {
@@ -377,7 +377,6 @@ export const useFolderViewer = ({
         exit();
         break;
       case 'i':
-      case 'I':
         if (isModified) {
           return;
         }

@@ -1,6 +1,6 @@
 'use client';
 
-import { getNeighbourId } from '@/features/storage/helpers';
+import { getNeighbourId, getShortcutKey } from '@/features/storage/helpers';
 import { Box, CircularProgress, Stack } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC, useEffect, useRef } from 'react';
@@ -118,7 +118,7 @@ export const FolderGalleryView: FC<Props> = ({
 
     const isModified = event.metaKey || event.ctrlKey;
 
-    switch (event.key) {
+    switch (getShortcutKey(event)) {
       case 'ArrowRight':
       case 'ArrowLeft':
         if (isModified) {
@@ -151,7 +151,6 @@ export const FolderGalleryView: FC<Props> = ({
         viewer.open(selected.id);
         break;
       case 'i':
-      case 'I':
         if (isModified) {
           return;
         }

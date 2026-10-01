@@ -16,6 +16,7 @@ export * from './moved-items';
 export * from './name-conflict';
 export * from './pdf-view';
 export * from './presigned-upload';
+export * from './shortcut-key';
 export * from './storage-meta.schema';
 export * from './upload-queue';
 export * from './upload-rules';
