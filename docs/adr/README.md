@@ -53,7 +53,7 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0024](0024-gateway-rate-limit-counters-in-redis.md) | The gateway's rate-limit counters live in Redis, behind `@backend/cache` | Accepted | `backend.api-gateway`, `@backend/cache` |
 | [0025](0025-read-urls-bound-to-no-client-address.md) | Signed read URLs are bound to no client address | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin`, `@packages/proto` |
 | [0026](0026-folder-listing-carries-signed-previews.md) | A folder listing's items carry a signed preview URL | Accepted | `backend.storage`, `@packages/proto`, `frontend.admin` |
-| [0027](0027-image-preview-made-on-upload.md) | An image's grid preview is a webp made on upload, and a grid never shows the original | Accepted; how the original is read superseded by 0034 | `backend.storage`, `@backend/event-bus`, `@packages/proto` |
+| [0027](0027-image-preview-made-on-upload.md) | An image's grid preview is a webp made on upload, and a grid never shows the original | Accepted; how the original is read superseded by 0034, how much one sweep takes on by 0037 | `backend.storage`, `@backend/event-bus`, `@packages/proto` |
 | [0028](0028-refresh-sessions-in-postgres.md) | A refresh token is valid only while its session row exists, and keeps its `jti` across refreshes | Accepted; `jti` part superseded by 0029 | `backend.auth`, `backend.api-gateway`, `frontend.admin`, `@packages/proto`, `@packages/common` |
 | [0029](0029-refresh-token-rotation.md) | Every refresh replaces the refresh token, and a token spent twice ends its session | Accepted | `backend.auth`, `frontend.admin` |
 | [0030](0030-a-move-suffixes-a-taken-name.md) | A move lands under a suffixed name, only a typed name is refused, and batch tree writes are one call | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin`, `@packages/proto` |
@@ -63,3 +63,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0034](0034-image-original-spooled-to-a-temp-file.md) | An image's original is spooled to a temp file for its preview, never held in a JS buffer | Accepted | `backend.storage` |
 | [0035](0035-client-address-from-one-trusted-header.md) | The client address is read from one header the proxy overwrites | Accepted | `frontend.admin`, `backend.api-gateway` |
 | [0036](0036-a-session-ends-with-a-document-load.md) | A session ends with a document load, not a soft navigation | Accepted | `frontend.admin` |
+| [0037](0037-preview-sweep-drains-within-a-time-budget.md) | A preview sweep takes batch after batch within a time budget, from a cursor | Accepted | `backend.storage` |

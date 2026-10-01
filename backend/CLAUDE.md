@@ -78,6 +78,11 @@ pnpm migrate:check            # exit non-zero while the entities and the snapsho
 pnpm orm <command>            # any CLI command: migration:list / :pending / :down, debug
 ```
 
+**Write the `--name` label in `snake_case`** — `pnpm migrate:create --name preview_attempts`. MikroORM
+appends it to the class name as it is (`Migration20261001231531_preview_attempts`), so a `.` or a `-`
+generates a class that does not compile; the file name is dot-cased from it either way
+(`20261001231531.preview.attempts.migration.ts`).
+
 `migrate:check` catches a forgotten `migrate:create` and never connects to the database, so CI runs
 it without one and turbo caches it; `pnpm migrate` / `pnpm migrate:check` at the root
 run them in every service.

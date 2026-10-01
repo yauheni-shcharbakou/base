@@ -28,6 +28,10 @@ export const DOCUMENT_PREVIEW_MAX_BYTES = 50 * 1024 * 1024;
  * `left` only for what a retry can fix (the provider, the database, the renderer itself). A document
  * no retry can help is marked failed and answered `right`, so neither the bus nor the sweep comes
  * back to it.
+ *
+ * A `right` tells whether the provider answered on the way — the original read, or found missing.
+ * A document too heavy to draw never asks it, and the sweep's breaker must not take one for a sign
+ * that the provider is up.
  */
 @Injectable()
 export class DocumentMakePreviewUseCase {
@@ -40,12 +44,12 @@ export class DocumentMakePreviewUseCase {
     private readonly filePurgeService: FilePurgeService,
   ) {}
 
-  async execute({ fileId }: { fileId: string }): Promise<Either<Error, void>> {
+  async execute({ fileId }: { fileId: string }): Promise<Either<Error, boolean>> {
     const found = await this.fileRepository.getById(fileId);
 
     // Deleted since — nothing to make.
     if (found.isLeft()) {
-      return right(undefined);
+      return right(false);
     }
 
     const file = found.value;
@@ -56,11 +60,11 @@ export class DocumentMakePreviewUseCase {
       file.uploadStatus !== NestStorage.FileUploadStatus.READY ||
       !file.providerId
     ) {
-      return right(undefined);
+      return right(false);
     }
 
     if (file.size > DOCUMENT_PREVIEW_MAX_BYTES) {
-      return this.fail(file.id, `a document of ${file.size} bytes, too heavy to draw`);
+      return this.fail(file.id, `a document of ${file.size} bytes, too heavy to draw`, false);
     }
 
     const stream = await this.storageFileService.getObjectStream(file.providerId);
@@ -70,7 +74,7 @@ export class DocumentMakePreviewUseCase {
     }
 
     if (!stream.value) {
-      return this.fail(file.id, `the original ${file.providerId} is missing`);
+      return this.fail(file.id, `the original ${file.providerId} is missing`, true);
     }
 
     let original: Buffer;
@@ -86,7 +90,7 @@ export class DocumentMakePreviewUseCase {
 
     if (preview.isLeft()) {
       return preview.value instanceof DocumentPreviewUndecodableError
-        ? this.fail(file.id, preview.value.message)
+        ? this.fail(file.id, preview.value.message, true)
         : left(preview.value);
     }
 
@@ -104,7 +108,7 @@ export class DocumentMakePreviewUseCase {
     return this.record(file.id, key);
   }
 
-  private async record(id: string, previewProviderId: string): Promise<Either<Error, void>> {
+  private async record(id: string, previewProviderId: string): Promise<Either<Error, boolean>> {
     const isSet = await this.fileRepository.setPreview(id, previewProviderId);
 
     if (isSet.isLeft()) {
@@ -119,14 +123,18 @@ export class DocumentMakePreviewUseCase {
       ]);
     }
 
-    return right(undefined);
+    return right(true);
   }
 
-  private async fail(id: string, reason: string): Promise<Either<Error, void>> {
+  private async fail(
+    id: string,
+    reason: string,
+    isProviderAnswer: boolean,
+  ): Promise<Either<Error, boolean>> {
     this.logger.warn(`File ${id} gets no preview: ${reason}`);
 
     const isMarked = await this.fileRepository.markPreviewFailed(id);
 
-    return isMarked.isLeft() ? left(isMarked.value) : right(undefined);
+    return isMarked.isLeft() ? left(isMarked.value) : right(isProviderAnswer);
   }
 }

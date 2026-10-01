@@ -54,4 +54,10 @@ export class PgImageEntity extends PgEntity implements NestStorage.Image {
   // proto `Image` has no such field.
   @PgProp.Date({ nullable: true, hidden: true })
   previewFailedAt?: Date;
+
+  // Sweeps that came back from this image with a failure a retry might fix. At the sweep's
+  // `maxAttempts` the row is given up on like the ones above (ADR-0037); a row marked failed with
+  // fewer is one a retry cannot help. Hidden, like the mark.
+  @Property({ default: 0, hidden: true })
+  previewAttempts?: number;
 }

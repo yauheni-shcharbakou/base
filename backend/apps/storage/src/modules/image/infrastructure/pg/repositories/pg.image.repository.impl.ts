@@ -13,6 +13,7 @@ import {
   ImageSaveAndPlace,
 } from '@modules/image/domain/repositories/image.repository';
 import { NotFoundException } from '@nestjs/common';
+import { StorageDatabaseEntity } from '@packages/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { PgImageMapper } from '../mappers/pg.image.mapper';
 
@@ -137,10 +138,12 @@ export class PgImageRepositoryImpl
   async getManyWithoutPreview(
     readyBefore: Date,
     limit: number,
+    afterId?: string,
   ): Promise<NestStorage.ImagePopulated[]> {
     try {
       const images = await this.repository.find(
         {
+          ...(afterId && { id: { $gt: afterId } }),
           previewProviderId: null,
           previewFailedAt: null,
           file: {
@@ -165,6 +168,29 @@ export class PgImageRepositoryImpl
 
   async markPreviewFailed(id: string): Promise<Either<Error, boolean>> {
     return this.updateWithoutPreview(id, { previewFailedAt: new Date() });
+  }
+
+  // The count and the mark it may bring are one statement, so two sweeps counting the same image
+  // cannot both read the old count. `set` reads the row as it was, hence the `+ 1` in the `case`.
+  async countPreviewAttempt(id: string, maxAttempts: number): Promise<Either<Error, boolean>> {
+    const sql = `
+      UPDATE "${StorageDatabaseEntity.IMAGE}"
+      SET preview_attempts = preview_attempts + 1,
+          preview_failed_at = CASE WHEN preview_attempts + 1 >= ? THEN now() END
+      WHERE id = ? AND preview_provider_id IS NULL AND preview_failed_at IS NULL
+      RETURNING preview_failed_at
+    `;
+
+    try {
+      const [row] = await this.em.execute<{ preview_failed_at: Date | null }[]>(sql, [
+        maxAttempts,
+        id,
+      ]);
+
+      return right(!!row?.preview_failed_at);
+    } catch (error) {
+      return left(error as Error);
+    }
   }
 
   private async updateWithoutPreview(

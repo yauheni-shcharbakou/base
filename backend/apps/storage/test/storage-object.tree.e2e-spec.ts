@@ -1335,6 +1335,29 @@ describe('storage-object tree against Postgres', () => {
         assert.deepEqual(swept, []);
       });
 
+      // The sweep's cursor: a batch starts past the last id of the one before, whatever became of
+      // those images — one that still has no preview does not come back in the same sweep.
+      withDb('goes on past the id it is given, oldest first', async () => {
+        const first = await placeImage('first.png');
+        const second = await placeImage('second.png');
+        const third = await placeImage('third.png');
+        const readyBefore = new Date(Date.now() + 60_000);
+
+        const batch = await read(() => imageRepository.getManyWithoutPreview(readyBefore, 2));
+        assert.deepEqual(
+          batch.map((image) => image.id),
+          [first.id, second.id],
+        );
+
+        const rest = await read(() =>
+          imageRepository.getManyWithoutPreview(readyBefore, 2, second.id),
+        );
+        assert.deepEqual(
+          rest.map((image) => image.id),
+          [third.id],
+        );
+      });
+
       withDb('keeps the first key recorded, and records nothing on a deleted image', async () => {
         const image = await placeImage('race.png');
 
@@ -1348,6 +1371,28 @@ describe('storage-object tree against Postgres', () => {
 
         (await imageRepository.deleteWithFile(image.id)).unwrap();
         assert.equal((await imageRepository.setPreview(image.id, 'late')).unwrap(), false);
+      });
+
+      // What the sweep counts against an image it came back from without a preview: the image
+      // stays in the sweep until the count makes the cap, and the mark then takes it out.
+      withDb('counts the sweeps an image failed, and gives up on it at the cap', async () => {
+        const stuck = await placeImage('stuck.png');
+        const other = await placeImage('other.png');
+
+        assert.equal((await imageRepository.countPreviewAttempt(stuck.id, 3)).unwrap(), false);
+        assert.equal((await imageRepository.countPreviewAttempt(stuck.id, 3)).unwrap(), false);
+        assert.deepEqual(await withoutPreview(), [stuck.id, other.id].sort());
+
+        assert.equal((await imageRepository.countPreviewAttempt(stuck.id, 3)).unwrap(), true);
+        assert.deepEqual(await withoutPreview(), [other.id]);
+
+        // Nothing is counted on an image given up on, nor on one that has its preview.
+        assert.equal((await imageRepository.countPreviewAttempt(stuck.id, 3)).unwrap(), false);
+        (await imageRepository.setPreview(other.id, 'other.preview.webp')).unwrap();
+        assert.equal((await imageRepository.countPreviewAttempt(other.id, 1)).unwrap(), false);
+
+        const [stored] = await read(() => imageRepository.getMany({ ids: [stuck.id] }));
+        assert.equal('previewAttempts' in stored, false);
       });
     });
 
@@ -1381,6 +1426,27 @@ describe('storage-object tree against Postgres', () => {
         assert.deepEqual(await withoutPreview(new Date(Date.now() - 60_000)), []);
       });
 
+      withDb('goes on past the id it is given, oldest first', async () => {
+        const first = await placePdf('first.pdf');
+        const second = await placePdf('second.pdf');
+        const third = await placePdf('third.pdf');
+        const readyBefore = new Date(Date.now() + 60_000);
+
+        const batch = await read(() => fileRepository.getManyWithoutPreview(PDF, readyBefore, 2));
+        assert.deepEqual(
+          batch.map((file) => file.id),
+          [first.id, second.id],
+        );
+
+        const rest = await read(() =>
+          fileRepository.getManyWithoutPreview(PDF, readyBefore, 2, second.id),
+        );
+        assert.deepEqual(
+          rest.map((file) => file.id),
+          [third.id],
+        );
+      });
+
       withDb('keeps the first key recorded, and never shows the failure', async () => {
         const file = await placePdf('race.pdf');
 
@@ -1391,6 +1457,30 @@ describe('storage-object tree against Postgres', () => {
         const [stored] = await read(() => fileRepository.getMany({ ids: [file.id] }));
         assert.equal(stored.previewProviderId, 'first');
         assert.equal('previewFailedAt' in stored, false);
+      });
+
+      withDb('counts the sweeps a PDF failed, and gives up on it at the cap', async () => {
+        const stuck = await placePdf('stuck.pdf');
+        const other = await placePdf('other.pdf');
+        const updatedAt = async () =>
+          (await read(() => fileRepository.getMany({ ids: [stuck.id] })))[0].updatedAt;
+        const before = await updatedAt();
+
+        assert.equal((await fileRepository.countPreviewAttempt(stuck.id, 2)).unwrap(), false);
+        assert.deepEqual(await withoutPreview(), [stuck.id, other.id].sort());
+        // The sweep's grace is measured from `updated_at`: a count must not start it over.
+        assert.deepEqual(await updatedAt(), before);
+
+        assert.equal((await fileRepository.countPreviewAttempt(stuck.id, 2)).unwrap(), true);
+        assert.deepEqual(await withoutPreview(), [other.id]);
+
+        // Nothing is counted on a file given up on, nor on one that has its preview.
+        assert.equal((await fileRepository.countPreviewAttempt(stuck.id, 2)).unwrap(), false);
+        (await fileRepository.setPreview(other.id, 'other.preview.webp')).unwrap();
+        assert.equal((await fileRepository.countPreviewAttempt(other.id, 1)).unwrap(), false);
+
+        const [stored] = await read(() => fileRepository.getMany({ ids: [stuck.id] }));
+        assert.equal('previewAttempts' in stored, false);
       });
     });
 

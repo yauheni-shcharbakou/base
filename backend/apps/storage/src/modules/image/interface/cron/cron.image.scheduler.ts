@@ -1,25 +1,28 @@
 import { DatabaseRunnerService } from '@backend/common';
+import { Config } from '@/config';
+import { PreviewSweepScheduler } from '@common/interface/cron/preview.sweep.scheduler';
 import { ImageSweepPreviewsUseCase } from '@modules/image/application/use-cases/image.sweep-previews.use-case';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
-export class CronImageScheduler {
-  private readonly logger = new Logger(CronImageScheduler.name);
-
+export class CronImageScheduler extends PreviewSweepScheduler {
   constructor(
-    private readonly sweepPreviewsUseCase: ImageSweepPreviewsUseCase,
-    private readonly databaseRunnerService: DatabaseRunnerService,
-  ) {}
+    sweepPreviewsUseCase: ImageSweepPreviewsUseCase,
+    databaseRunnerService: DatabaseRunnerService,
+    configService: ConfigService<Config>,
+  ) {
+    super(
+      'Image',
+      configService.getOrThrow('imagePreviewSweep', { infer: true }).budgetMinutes,
+      sweepPreviewsUseCase,
+      databaseRunnerService,
+    );
+  }
 
   @Cron(CronExpression.EVERY_10_MINUTES)
-  async sweepPreviews() {
-    try {
-      await this.databaseRunnerService.isolatedRun(async () => {
-        await this.sweepPreviewsUseCase.execute();
-      });
-    } catch (error) {
-      this.logger.error('Image preview sweep error:', error.message, error.stack);
-    }
+  sweepPreviews() {
+    return this.sweep();
   }
 }

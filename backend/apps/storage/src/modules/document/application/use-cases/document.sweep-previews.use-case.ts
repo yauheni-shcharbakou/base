@@ -1,46 +1,44 @@
+import { NestStorage } from '@backend/proto';
+import { Config } from '@/config';
+import { PreviewSweepUseCase } from '@common/application/use-cases/preview.sweep.use-case';
 import {
   DocumentMakePreviewUseCase,
   PREVIEWABLE_DOCUMENT_TYPES,
 } from '@modules/document/application/use-cases/document.make-preview.use-case';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
-import { Injectable, Logger } from '@nestjs/common';
-import moment from 'moment';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Either } from '@sweet-monads/either';
 
-/** Documents one sweep takes on — each is a download of up to 50 MB and a render, one at a time. */
-const SWEEP_LIMIT = 20;
-
-/**
- * A document READY for this long without a preview was missed by the READY event — the emit is
- * logged, never retried — so the sweep does not race a handler that is still at work.
- */
-const GRACE_MINUTES = 10;
-
-/**
- * Makes the previews the READY event did not: a lost emit, a handler that ran out of retries, and
- * every PDF uploaded before previews existed. Sequential, so at most one document is in memory.
- */
+/** The preview sweep over PDFs, tuned by `STORAGE_DOCUMENT_PREVIEW_SWEEP_*`. */
 @Injectable()
-export class DocumentSweepPreviewsUseCase {
-  private readonly logger = new Logger(DocumentSweepPreviewsUseCase.name);
-
+export class DocumentSweepPreviewsUseCase extends PreviewSweepUseCase<NestStorage.File> {
   constructor(
     private readonly fileRepository: FileRepository,
     private readonly makePreviewUseCase: DocumentMakePreviewUseCase,
-  ) {}
+    configService: ConfigService<Config>,
+  ) {
+    super('Document', configService.getOrThrow('documentPreviewSweep', { infer: true }));
+  }
 
-  async execute(): Promise<void> {
-    const files = await this.fileRepository.getManyWithoutPreview(
+  protected getRows(
+    readyBefore: Date,
+    limit: number,
+    afterId?: string,
+  ): Promise<NestStorage.File[]> {
+    return this.fileRepository.getManyWithoutPreview(
       PREVIEWABLE_DOCUMENT_TYPES,
-      moment().subtract(GRACE_MINUTES, 'minutes').toDate(),
-      SWEEP_LIMIT,
+      readyBefore,
+      limit,
+      afterId,
     );
+  }
 
-    for (const file of files) {
-      const result = await this.makePreviewUseCase.execute({ fileId: file.id });
+  protected makePreview(file: NestStorage.File): Promise<Either<Error, boolean>> {
+    return this.makePreviewUseCase.execute({ fileId: file.id });
+  }
 
-      if (result.isLeft()) {
-        this.logger.warn(`File ${file.id}: no preview this sweep: ${result.value.message}`);
-      }
-    }
+  protected countPreviewAttempt(id: string, maxAttempts: number): Promise<Either<Error, boolean>> {
+    return this.fileRepository.countPreviewAttempt(id, maxAttempts);
   }
 }
