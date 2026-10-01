@@ -69,7 +69,7 @@ export default function VideoShow() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />} aria-controls="info-content" id="info">
-          <Typography component="span">Image info</Typography>
+          <Typography component="span">Video info</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <RecordView record={record}>

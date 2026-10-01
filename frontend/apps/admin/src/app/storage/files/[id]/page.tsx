@@ -62,7 +62,7 @@ export default function FileShow() {
 
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />} aria-controls="info-content" id="info">
-          <Typography component="span">Image info</Typography>
+          <Typography component="span">File info</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <RecordView record={record}>
