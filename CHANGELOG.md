@@ -166,8 +166,8 @@ A 1.0.0 deployment does not start on this release unchanged. Every variable is t
 - Database specs on `node:test` against a migrated Postgres
   ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
 - A `/release` skill for this file, the root version and the README; a `check:docs` invariant
-  that the version and the top entry here agree; and a `tag` job that tags the commit landing on
-  `main` with `v<version>`, once per version.
+  that the version and the top entry here agree; and a `release` job that tags the commit landing
+  on `main` with `v<version>` and publishes a GitHub Release from the entry, once per version.
 
 ### Changed
 

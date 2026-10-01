@@ -279,7 +279,8 @@ pnpm check:env-docs # docs/env.md still matches the zod schemas
 
 CI (`.github/workflows/check.yaml`) runs all of the above, the build and the tests on every pull
 request into `main`. A release is a merge into `main` that raises the root `version`: the same
-workflow then tags the merged commit `v<version>`.
+workflow then tags the merged commit `v<version>` and publishes a GitHub Release from that version's
+`CHANGELOG.md` entry.
 
 ##### Commands for run in docker
 

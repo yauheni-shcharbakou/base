@@ -96,11 +96,20 @@ project needs, grouped by area. That is why there is no release tool in this rep
    ```bash
    pnpm check:docs
    pnpm check:env-docs
+   bash scripts/release-notes.sh X.Y.Z   # the entry as the GitHub Release will show it
    ```
+
+   Read the last one through: it joins wrapped lines, so a line that was meant to start a list item
+   or a heading but lacks its marker shows up glued to the line above.
 
 ## What this skill does not do
 
-It does not commit or push — those wait for an explicit request. And it never tags: once the merge
-lands on `main` and the run is green, the `tag` job of `.github/workflows/check.yaml` tags that
-commit `vX.Y.Z` from the root version, unless the tag exists. A tag made by hand beforehand would
-only make that job a no-op on the wrong commit.
+It does not commit or push — those wait for an explicit request. And it never tags or publishes:
+once the merge lands on `main` and the run is green, the `release` job of
+`.github/workflows/check.yaml` tags that commit `vX.Y.Z` from the root version and publishes a
+GitHub Release, each unless it exists. A tag made by hand beforehand would only leave it on the
+wrong commit.
+
+The Release's body is the entry, through `scripts/release-notes.sh` — so the entry is the release
+notes, and a correction after the merge is a correction of the published Release too (edit it on
+GitHub; the job does not overwrite one that exists).

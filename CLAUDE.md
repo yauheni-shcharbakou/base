@@ -115,9 +115,11 @@ the top entry of `CHANGELOG.md` move together and `README.md` is read against th
 `/release` skill (`.claude/skills/release/`) does all three, and `check:docs` fails while the version
 and the entry disagree. Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
 curated from the ADRs and the contract diffs, not generated from commits. **Nobody tags by hand:**
-on a green push to `main` the workflow's `tag` job tags that commit `v<version>` unless the tag
-exists — so a merge that left the version alone releases nothing, and a version bumped without a
-merge is not a release.
+on a green push to `main` the workflow's `release` job tags that commit `v<version>` and publishes
+a GitHub Release, each unless it exists — so a merge that left the version alone releases nothing,
+and a version bumped without a merge is not a release. The Release's body is the entry itself, as
+`scripts/release-notes.sh <version>` prints it (wrapped lines joined, relative links pinned to the
+tag): what the entry says is what the Release says, so write it for that reader.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single

@@ -259,10 +259,11 @@ jobs:
         run: 'pnpm check:env-docs'
 
   # A release is one merge into main, and its version is the root package.json's: the commit that
-  # lands on main is tagged `v<version>` here, once per version. A push that releases nothing left
-  # the version alone, finds its tag there already and does nothing — so this needs no trigger of
-  # its own and no "is this a release" flag.
-  tag:
+  # lands on main is tagged `v<version>` here and published as a GitHub Release whose body is that
+  # version's CHANGELOG.md entry — each once per version. A push that releases nothing left the
+  # version alone, finds both there already and does nothing, so this needs no trigger of its own
+  # and no "is this a release" flag.
+  release:
     needs:
       - 'changes'
       - 'check'
@@ -286,27 +287,56 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
         with:
-          sparse-checkout: 'package.json'
+          # The version, its changelog entry, and the script that shapes the entry into notes.
+          sparse-checkout: |
+            /package.json
+            /CHANGELOG.md
+            /scripts/
           sparse-checkout-cone-mode: false
 
-      # The version is read the way scripts/docs-invariants.sh reads it, which has already held it
-      # to the changelog's top entry. Asked of the remote, not of the clone: a shallow checkout
-      # fetches no tags.
-      - name: 'Tag the release'
+      # Read the way scripts/docs-invariants.sh reads it, which has already held it to the
+      # changelog's top entry.
+      - name: 'Read the version'
+        id: 'version'
         run: |
           version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
           if [ -z "$version" ]; then
             echo '::error::No version in the root package.json.'
             exit 1
           fi
-          tag="v$version"
-          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
-            echo "$tag exists already — nothing to release."
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      # Asked of the remote, not of the clone: a shallow checkout fetches no tags.
+      - name: 'Tag the release'
+        env:
+          TAG: '${{ steps.version.outputs.tag }}'
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "$TAG exists already."
             exit 0
           fi
           # Annotated, as v1.0.0 is: a plain `git describe` sees no other kind.
           git -c user.name='github-actions[bot]' \
             -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            tag -a "$tag" -m "$tag" "$GITHUB_SHA"
-          git push origin "refs/tags/$tag"
-          echo "::notice::Tagged $GITHUB_SHA as $tag."
+            tag -a "$TAG" -m "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "::notice::Tagged $GITHUB_SHA as $TAG."
+
+      # Its own check rather than "the tag was just made": a run that tagged and then failed here
+      # publishes on its re-run. The notes link to the files as tagged, not as they are on main.
+      - name: 'Publish the release'
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+          TAG: '${{ steps.version.outputs.tag }}'
+          VERSION: '${{ steps.version.outputs.version }}'
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "The release $TAG exists already."
+            exit 0
+          fi
+          notes="$RUNNER_TEMP/release-notes.md"
+          bash scripts/release-notes.sh "$VERSION" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$TAG" > "$notes"
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$notes"
+          echo "::notice::Published the release $TAG."
