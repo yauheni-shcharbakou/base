@@ -8,7 +8,7 @@ import { left, right } from '@sweet-monads/either';
 import { UserPurgeDeletedUseCase } from './user.purge-deleted.use-case';
 
 describe('UserPurgeDeletedUseCase', () => {
-  let directory: { count: jest.Mock; getExistingIds: jest.Mock };
+  let directory: { getExistingIds: jest.Mock };
   let fileRepository: { getOwnerIds: jest.Mock };
   let storageObjectRepository: { getLiveOwnerIds: jest.Mock };
   let deleteRootFolder: { execute: jest.Mock };
@@ -19,10 +19,7 @@ describe('UserPurgeDeletedUseCase', () => {
     jest.spyOn(Logger.prototype, 'log').mockImplementation();
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
 
-    directory = {
-      count: jest.fn().mockResolvedValue(right(2)),
-      getExistingIds: jest.fn().mockResolvedValue(right(new Set(['alive']))),
-    };
+    directory = { getExistingIds: jest.fn().mockResolvedValue(right(new Set(['alive']))) };
     fileRepository = { getOwnerIds: jest.fn().mockResolvedValue(['alive', 'gone']) };
     storageObjectRepository = { getLiveOwnerIds: jest.fn().mockResolvedValue(['alive', 'stale']) };
     deleteRootFolder = { execute: jest.fn().mockResolvedValue(right(undefined)) };
@@ -63,14 +60,42 @@ describe('UserPurgeDeletedUseCase', () => {
     expect(deleteRootFolder.execute).not.toHaveBeenCalled();
   });
 
-  it('refuses to purge when auth reports no users at all', async () => {
-    directory.count.mockResolvedValue(right(0));
+  // An auth pointed at the wrong database still holds a user — the admin it seeds on start — but
+  // under an id no owner here has.
+  it('refuses to purge when auth knows none of the owners', async () => {
+    directory.getExistingIds.mockResolvedValue(right(new Set()));
 
     const result = await useCase.execute();
 
     expect(result.isLeft()).toBe(true);
-    expect(directory.getExistingIds).not.toHaveBeenCalled();
     expect(deleteRootFolder.execute).not.toHaveBeenCalled();
+    expect(deleteMedia.execute).not.toHaveBeenCalled();
+  });
+
+  it('does nothing, and does not ask auth, when no owner holds data', async () => {
+    fileRepository.getOwnerIds.mockResolvedValue([]);
+    storageObjectRepository.getLiveOwnerIds.mockResolvedValue([]);
+
+    const result = await useCase.execute();
+
+    expect(result.isRight() && result.value).toBe(0);
+    expect(directory.getExistingIds).not.toHaveBeenCalled();
+  });
+
+  it('purges nothing when a later batch cannot be asked', async () => {
+    const owners = Array.from({ length: 501 }, (_, i) => `u${i}`);
+    const error = new Error('auth is down');
+    fileRepository.getOwnerIds.mockResolvedValue(owners);
+    storageObjectRepository.getLiveOwnerIds.mockResolvedValue([]);
+    directory.getExistingIds
+      .mockResolvedValueOnce(right(new Set(owners.slice(1, 500))))
+      .mockResolvedValueOnce(left(error));
+
+    const result = await useCase.execute();
+
+    expect(result.isLeft() && result.value).toBe(error);
+    expect(deleteRootFolder.execute).not.toHaveBeenCalled();
+    expect(deleteMedia.execute).not.toHaveBeenCalled();
   });
 
   it('purges nothing when auth cannot be asked', async () => {

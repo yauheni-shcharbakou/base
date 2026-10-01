@@ -15,23 +15,6 @@ export class GrpcUserDirectoryServiceImpl extends UserDirectoryService {
     super();
   }
 
-  async count(): Promise<Either<Error, number>> {
-    try {
-      const page = await firstValueFrom(
-        this.userServiceClient.getList({
-          logicalFilters: [],
-          conditionalFilters: [],
-          sorters: [],
-          pagination: { page: 1, limit: 1 },
-        }),
-      );
-
-      return right(page.total);
-    } catch (error) {
-      return left(error);
-    }
-  }
-
   // Never called with no ids: an empty `ids` filter matches every user.
   async getExistingIds(ids: string[]): Promise<Either<Error, Set<string>>> {
     if (!ids.length) {
