@@ -4,16 +4,9 @@ import AddRounded from '@mui/icons-material/AddRounded';
 import CloudUploadOutlined from '@mui/icons-material/CloudUploadOutlined';
 import CreateNewFolderOutlined from '@mui/icons-material/CreateNewFolderOutlined';
 import DriveFolderUploadOutlined from '@mui/icons-material/DriveFolderUploadOutlined';
-import {
-  Button,
-  Divider,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-} from '@mui/material';
+import { Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem } from '@mui/material';
 import React, { ChangeEvent, FC, ReactNode, RefObject, useRef, useState } from 'react';
+import { MenuShortcut } from './menu-shortcut';
 
 type Props = {
   // Drive's "New folder": the caller asks for its name, and owns its shortcut (Shift+F).
@@ -97,9 +90,7 @@ export const FolderNewMenu: FC<Props> = ({ onCreateFolder, onUpload, onUploadFol
             <CreateNewFolderOutlined fontSize="small" />
           </ListItemIcon>
           <ListItemText>Folder</ListItemText>
-          <Typography variant="body2" sx={{ ml: 3, color: 'text.secondary' }}>
-            ⇧F
-          </Typography>
+          <MenuShortcut name="newFolder" />
         </MenuItem>
         <Divider />
         {renderPicker('File upload', <CloudUploadOutlined fontSize="small" />, inputRef)}

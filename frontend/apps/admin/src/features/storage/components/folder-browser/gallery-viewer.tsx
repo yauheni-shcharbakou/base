@@ -4,7 +4,7 @@ import { getStorageItemKind, PdfControls, StorageItemKind } from '@/features/sto
 import { BunnyPlayerControls } from '@/features/video/components';
 import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
-import { Box, CircularProgress, Dialog, IconButton, Stack } from '@mui/material';
+import { Box, CircularProgress, Dialog, IconButton, Stack, Tooltip } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC, MouseEvent, RefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { GalleryBar } from './gallery-bar';
@@ -48,40 +48,43 @@ const StepButton: FC<{
   isHidden: boolean;
   onClick: () => void;
 }> = ({ side, disabled, isHidden, onClick }) => (
-  <IconButton
-    aria-label={side === 'left' ? 'Previous' : 'Next'}
-    disabled={disabled}
-    onClick={(event: MouseEvent) => {
-      event.stopPropagation();
-      onClick();
-    }}
-    // A click must not leave the focus here, where Space would press the button again instead of
-    // leaving the viewer.
-    tabIndex={-1}
-    onMouseDown={(event) => event.preventDefault()}
-    sx={{
-      position: 'absolute',
-      top: '50%',
-      [side]: 16,
-      zIndex: 3,
-      transform: 'translateY(-50%)',
-      width: 56,
-      height: 56,
-      color: 'common.white',
-      bgcolor: 'rgba(0, 0, 0, 0.45)',
-      '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.7)' },
-      '&.Mui-disabled': { color: 'rgba(255, 255, 255, 0.3)', bgcolor: 'rgba(0, 0, 0, 0.2)' },
-      opacity: isHidden ? 0 : 1,
-      pointerEvents: isHidden ? 'none' : 'auto',
-      transition: 'opacity 200ms',
-    }}
-  >
-    {side === 'left' ? (
-      <ChevronLeftRounded sx={{ fontSize: 40 }} />
-    ) : (
-      <ChevronRightRounded sx={{ fontSize: 40 }} />
-    )}
-  </IconButton>
+  // No title on a disabled button: it fires no events, and the tooltip warns about one.
+  <Tooltip title={disabled ? '' : side === 'left' ? 'Previous (←)' : 'Next (→)'}>
+    <IconButton
+      aria-label={side === 'left' ? 'Previous' : 'Next'}
+      disabled={disabled}
+      onClick={(event: MouseEvent) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      // A click must not leave the focus here, where Space would press the button again instead of
+      // leaving the viewer.
+      tabIndex={-1}
+      onMouseDown={(event) => event.preventDefault()}
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        [side]: 16,
+        zIndex: 3,
+        transform: 'translateY(-50%)',
+        width: 56,
+        height: 56,
+        color: 'common.white',
+        bgcolor: 'rgba(0, 0, 0, 0.45)',
+        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.7)' },
+        '&.Mui-disabled': { color: 'rgba(255, 255, 255, 0.3)', bgcolor: 'rgba(0, 0, 0, 0.2)' },
+        opacity: isHidden ? 0 : 1,
+        pointerEvents: isHidden ? 'none' : 'auto',
+        transition: 'opacity 200ms',
+      }}
+    >
+      {side === 'left' ? (
+        <ChevronLeftRounded sx={{ fontSize: 40 }} />
+      ) : (
+        <ChevronRightRounded sx={{ fontSize: 40 }} />
+      )}
+    </IconButton>
+  </Tooltip>
 );
 
 /**

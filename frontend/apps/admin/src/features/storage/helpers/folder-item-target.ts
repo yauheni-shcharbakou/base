@@ -10,17 +10,27 @@ type TargetSource = Pick<
 };
 
 /**
- * Where a click on a folder item leads: into a folder; to the file itself in a new tab, through the
- * same `open` / `player` route handlers as a show page's Open button; or, for media with no bytes
- * to show yet, to its show page, which tells why.
+ * Where opening a folder item leads: into a folder; to the file itself in a new tab, through the
+ * same `open` / `player` route handlers as a show page's Open button; or nowhere, for media with no
+ * bytes to show yet — the viewer says why (`getFolderItemUnavailableReason`).
  */
 export type FolderItemTarget =
-  | { kind: 'folder'; href: string }
-  | { kind: 'external'; href: string }
-  | { kind: 'details'; href: string };
+  { kind: 'folder'; href: string } | { kind: 'external'; href: string } | { kind: 'unavailable' };
 
-const isReady = (item: TargetSource) =>
-  item.file?.uploadStatus === BrowserStorage.FileUploadStatus.READY;
+const { READY, PENDING, UPLOADED, FAILED } = BrowserStorage.FileUploadStatus;
+
+const isReady = (item: TargetSource) => item.file?.uploadStatus === READY;
+
+const NO_FILE_REASON = 'No file to open';
+
+// A Record, so a status added later has to say what it means here.
+const REASON_BY_STATUS: Record<BrowserStorage.FileUploadStatus, string> = {
+  [PENDING]: 'Upload not finished',
+  [UPLOADED]: 'Uploaded — still being processed',
+  [FAILED]: 'Upload failed',
+  // READY with nothing to open: the row names no file or video.
+  [READY]: NO_FILE_REASON,
+};
 
 /** The `open` / `player` route of a READY item; nothing before its upload is done. */
 export const getFolderItemOpenUrl = (item: TargetSource): string | undefined => {
@@ -60,14 +70,21 @@ export const getFolderItemTarget = (item: TargetSource): FolderItemTarget => {
 
   const openUrl = getFolderItemOpenUrl(item);
 
-  if (openUrl) {
-    return { kind: 'external', href: openUrl };
+  return openUrl ? { kind: 'external', href: openUrl } : { kind: 'unavailable' };
+};
+
+/**
+ * Why an item cannot be opened, in words for the viewer: what its upload is at. Nothing for a
+ * folder, or for an item that opens.
+ */
+export const getFolderItemUnavailableReason = (item: TargetSource): string | undefined => {
+  if (getFolderItemTarget(item).kind !== 'unavailable') {
+    return;
   }
 
-  return {
-    kind: 'details',
-    href: pathProvider.getShowPath(Database.STORAGE, StorageDatabaseEntity.STORAGE_OBJECT, item.id),
-  };
+  const status = item.file?.uploadStatus;
+
+  return status ? REASON_BY_STATUS[status] : NO_FILE_REASON;
 };
 
 /**

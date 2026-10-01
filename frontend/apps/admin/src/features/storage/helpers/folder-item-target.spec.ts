@@ -4,10 +4,11 @@ import {
   getFolderItemDownloadUrl,
   getFolderItemOpenUrl,
   getFolderItemTarget,
+  getFolderItemUnavailableReason,
 } from './folder-item-target';
 
 const { FILE, IMAGE, VIDEO, FOLDER } = BrowserStorage.StorageObjectType;
-const { READY, PENDING, UPLOADED } = BrowserStorage.FileUploadStatus;
+const { READY, PENDING, UPLOADED, FAILED } = BrowserStorage.FileUploadStatus;
 
 describe('getFolderItemTarget', () => {
   it('goes into a folder', () => {
@@ -42,9 +43,9 @@ describe('getFolderItemTarget', () => {
     ).toEqual({ kind: 'external', href: '/api/videos/video1/player' });
   });
 
-  // No URL exists before the upload is done: the show page says what state it is in.
-  it('shows the details of media that is not READY', () => {
-    const target = { kind: 'details', href: '/storage/storage-objects/o1' };
+  // No URL exists before the upload is done: the viewer says what state it is in.
+  it('leads nowhere for media that is not READY', () => {
+    const target = { kind: 'unavailable' };
 
     expect(
       getFolderItemTarget({ id: 'o1', type: FILE, fileId: 'f', file: { uploadStatus: PENDING } }),
@@ -58,6 +59,36 @@ describe('getFolderItemTarget', () => {
       }),
     ).toEqual(target);
     expect(getFolderItemTarget({ id: 'o1', type: FILE })).toEqual(target);
+  });
+});
+
+describe('getFolderItemUnavailableReason', () => {
+  it('says what the upload is at', () => {
+    const reasonOf = (uploadStatus: BrowserStorage.FileUploadStatus) =>
+      getFolderItemUnavailableReason({ id: 'o', type: FILE, fileId: 'f', file: { uploadStatus } });
+
+    expect(reasonOf(PENDING)).toBe('Upload not finished');
+    expect(reasonOf(UPLOADED)).toBe('Uploaded — still being processed');
+    expect(reasonOf(FAILED)).toBe('Upload failed');
+  });
+
+  it('says there is no file when the row names none', () => {
+    expect(getFolderItemUnavailableReason({ id: 'o', type: FILE })).toBe('No file to open');
+    expect(
+      getFolderItemUnavailableReason({ id: 'o', type: VIDEO, file: { uploadStatus: READY } }),
+    ).toBe('No file to open');
+  });
+
+  it('has nothing to say of a folder or of an item that opens', () => {
+    expect(getFolderItemUnavailableReason({ id: 'f', type: FOLDER })).toBeUndefined();
+    expect(
+      getFolderItemUnavailableReason({
+        id: 'o',
+        type: IMAGE,
+        fileId: 'f',
+        file: { uploadStatus: READY },
+      }),
+    ).toBeUndefined();
   });
 });
 

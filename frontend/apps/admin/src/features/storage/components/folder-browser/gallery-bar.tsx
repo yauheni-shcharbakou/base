@@ -2,6 +2,7 @@
 
 import {
   formatFileSize,
+  getFolderItemUnavailableReason,
   getStorageItemKind,
   STORAGE_ITEM_KIND_LABELS,
 } from '@/features/storage/helpers';
@@ -13,6 +14,7 @@ import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import { IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import React, { FC } from 'react';
+import { GalleryShortcuts } from './gallery-shortcuts';
 import { StorageItemMenu } from './storage-item-menu';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
@@ -58,6 +60,8 @@ export const GalleryBar: FC<Props> = ({
   getFolderHref,
 }) => {
   const kind = getStorageItemKind(item);
+  // Before its upload is done an item opens nowhere: Open rests, and says what the upload is at.
+  const unavailableReason = getFolderItemUnavailableReason(item);
 
   return (
     <Stack
@@ -109,10 +113,20 @@ export const GalleryBar: FC<Props> = ({
             <InfoOutlined />
           </IconButton>
         </Tooltip>
-        <Tooltip title={item.isFolder ? 'Open' : 'Open in new tab'}>
-          <IconButton aria-label="Open" onClick={() => onOpen(item)} sx={white}>
-            {item.isFolder ? <FolderOpenOutlined /> : <OpenInNewOutlined />}
-          </IconButton>
+        <Tooltip
+          title={unavailableReason ?? (item.isFolder ? 'Open (Enter)' : 'Open in new tab (Enter)')}
+        >
+          {/* A disabled button fires no events: the span keeps the tooltip. */}
+          <span>
+            <IconButton
+              aria-label="Open"
+              disabled={!!unavailableReason}
+              onClick={() => onOpen(item)}
+              sx={{ ...white, '&.Mui-disabled': { color: 'rgba(255, 255, 255, 0.3)' } }}
+            >
+              {item.isFolder ? <FolderOpenOutlined /> : <OpenInNewOutlined />}
+            </IconButton>
+          </span>
         </Tooltip>
         <StorageItemMenu
           item={item}
@@ -122,6 +136,14 @@ export const GalleryBar: FC<Props> = ({
           onPublicChange={onPublicChange}
           isPublicLocked={isPublicLocked}
           buttonProps={{ size: 'medium', sx: white }}
+        />
+        <GalleryShortcuts
+          kind={kind}
+          isViewer={isViewer}
+          canOpen={!unavailableReason}
+          canRename={!!onRename}
+          canDelete={!!onDelete}
+          buttonProps={{ sx: white }}
         />
         <Tooltip title={isViewer ? 'Exit full screen (Space)' : 'Full screen (Space)'}>
           <IconButton

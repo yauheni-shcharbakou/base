@@ -57,7 +57,7 @@ type Options = {
   onExit?: (item?: Item) => void;
 };
 
-const SEEK_STEP_SECONDS = 10;
+export const SEEK_STEP_SECONDS = 10;
 // A player's own full screen may sit on the viewer's, and each exit leaves one.
 const MAX_FULLSCREEN_DEPTH = 2;
 // A request some browsers never settle — embedded ones — must not keep the viewer from opening.

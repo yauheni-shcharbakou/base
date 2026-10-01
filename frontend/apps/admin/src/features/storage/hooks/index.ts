@@ -12,4 +12,5 @@ export * from './use-root-folder-label';
 export * from './use-user-folders';
 export * from './use-create-folder';
 export * from './use-reset-parent-on-owner-change';
+export * from './use-shortcut-label';
 export * from './use-storage-uploads';

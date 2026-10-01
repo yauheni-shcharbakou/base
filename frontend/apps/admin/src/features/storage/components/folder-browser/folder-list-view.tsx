@@ -8,6 +8,7 @@ import {
   getStorageItemKind,
   STORAGE_ITEM_KIND_LABELS,
 } from '@/features/storage/helpers';
+import { useShortcutLabel } from '@/features/storage/hooks';
 import PublicOutlined from '@mui/icons-material/PublicOutlined';
 import {
   Box,
@@ -20,6 +21,7 @@ import {
   TableHead,
   TableRow,
   TableSortLabel,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { BrowserCommon, BrowserStorage } from '@packages/proto';
@@ -72,6 +74,7 @@ export const FolderListView: FC<Props> = ({
   onToggleAll,
 }) => {
   const focusedRow = useRef<HTMLTableRowElement>(null);
+  const shortcut = useShortcutLabel();
   const { selectedIds, focusedId, dropTargetId, menu } = behavior;
   const selectedCount = items.filter(({ id }) => selectedIds.has(id)).length;
 
@@ -106,13 +109,15 @@ export const FolderListView: FC<Props> = ({
         <TableHead>
           <TableRow>
             <TableCell padding="checkbox">
-              <Checkbox
-                size="small"
-                checked={!!items.length && selectedCount === items.length}
-                indeterminate={!!selectedCount && selectedCount < items.length}
-                onChange={onToggleAll}
-                inputProps={{ 'aria-label': 'Select all on this page' }}
-              />
+              <Tooltip title={`Select all on this page (${shortcut('selectAll')})`}>
+                <Checkbox
+                  size="small"
+                  checked={!!items.length && selectedCount === items.length}
+                  indeterminate={!!selectedCount && selectedCount < items.length}
+                  onChange={onToggleAll}
+                  inputProps={{ 'aria-label': 'Select all on this page' }}
+                />
+              </Tooltip>
             </TableCell>
             <TableCell sx={{ width: '100%' }}>{sortLabel(NAME, 'Name')}</TableCell>
             <TableCell>{sortLabel(TYPE, 'Type')}</TableCell>

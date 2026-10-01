@@ -1,6 +1,5 @@
 'use client';
 
-import { pathProvider } from '@/common/providers';
 import {
   getFolderContentPath,
   getFolderItemDownloadUrl,
@@ -11,7 +10,6 @@ import DownloadOutlined from '@mui/icons-material/DownloadOutlined';
 import DriveFileMoveOutlined from '@mui/icons-material/DriveFileMoveOutlined';
 import DriveFileRenameOutlineOutlined from '@mui/icons-material/DriveFileRenameOutlineOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MoreVertOutlined from '@mui/icons-material/MoreVertOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import PublicOutlined from '@mui/icons-material/PublicOutlined';
@@ -25,10 +23,10 @@ import {
   MenuItem,
   Switch,
 } from '@mui/material';
-import { Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
 import NextLink from 'next/link';
 import React, { FC, MouseEvent, useState } from 'react';
+import { MenuShortcut } from './menu-shortcut';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
 
@@ -54,13 +52,10 @@ type Props = {
   buttonProps?: IconButtonProps;
 };
 
-const { STORAGE } = Database;
-const { STORAGE_OBJECT } = StorageDatabaseEntity;
-
 /**
- * An item's "⋮": what a click does not — its details, a rename, its visibility, a download, a move,
- * a delete. Move, Delete and the Public switch act on the whole selection when the item is part of
- * it, as in Drive; Rename takes one item only.
+ * An item's "⋮": what a click does not — a rename, its visibility, a download, a move, a delete,
+ * each with its key where it has one. Move, Delete and the Public switch act on the whole selection
+ * when the item is part of it, as in Drive; Rename takes one item only.
  */
 export const StorageItemMenu: FC<Props> = ({
   item,
@@ -105,6 +100,7 @@ export const StorageItemMenu: FC<Props> = ({
               <FolderOpenOutlined fontSize="small" />
             </ListItemIcon>
             <ListItemText>Open</ListItemText>
+            <MenuShortcut name="open" />
           </MenuItem>
         )}
         {openUrl && (
@@ -115,16 +111,6 @@ export const StorageItemMenu: FC<Props> = ({
             <ListItemText>Open in new tab</ListItemText>
           </MenuItem>
         )}
-        <MenuItem
-          component={NextLink}
-          href={pathProvider.getShowPath(STORAGE, STORAGE_OBJECT, item.id)}
-          onClick={close}
-        >
-          <ListItemIcon>
-            <InfoOutlined fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Details</ListItemText>
-        </MenuItem>
         {onRename && actionCount === 1 && (
           <MenuItem
             onClick={() => {
@@ -136,6 +122,7 @@ export const StorageItemMenu: FC<Props> = ({
               <DriveFileRenameOutlineOutlined fontSize="small" />
             </ListItemIcon>
             <ListItemText>Rename</ListItemText>
+            <MenuShortcut name="rename" />
           </MenuItem>
         )}
         {onPublicChange && (
@@ -201,6 +188,7 @@ export const StorageItemMenu: FC<Props> = ({
               <DeleteOutlined fontSize="small" />
             </ListItemIcon>
             <ListItemText>Delete{many}</ListItemText>
+            <MenuShortcut name="delete" />
           </MenuItem>
         )}
       </Menu>

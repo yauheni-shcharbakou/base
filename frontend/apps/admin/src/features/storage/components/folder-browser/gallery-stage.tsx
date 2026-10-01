@@ -2,7 +2,9 @@
 
 import {
   formatFileSize,
+  getFileUploadStatusColor,
   getFolderItemOpenUrl,
+  getFolderItemUnavailableReason,
   getStorageItemKind,
   PdfControls,
   shouldAutoloadPdf,
@@ -13,7 +15,7 @@ import { BunnyPlayer, BunnyPlayerControls } from '@/features/video/components';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
-import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Stack, Typography } from '@mui/material';
 import type { BrowserStorage } from '@packages/proto';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -63,8 +65,9 @@ const PDF_FAILURE_LABELS: Record<PdfFailure, string> = {
 /**
  * The large picture of a gallery or its viewer: an image's preview at once, then its original once
  * the selection rests; a video's poster that turns into the player on a click — or by itself, in
- * the viewer; a PDF's pages once the selection rests; a big icon for the rest. Keyed by item, so nothing of one item's state leaks into the
- * next.
+ * the viewer; a PDF's pages once the selection rests; a big icon for the rest — with what its upload
+ * is at, for an item that cannot be opened yet. Keyed by item, so nothing of one item's state leaks
+ * into the next.
  */
 export const GalleryStage: FC<Props> = ({
   item,
@@ -120,6 +123,8 @@ export const GalleryStage: FC<Props> = ({
   }, [isViewer, isPlayable]);
 
   const hasPreview = !!item.previewUrl && !isPreviewFailed;
+  const unavailableReason = getFolderItemUnavailableReason(item);
+  const uploadStatus = item.file?.uploadStatus;
   const mutedColor = isViewer ? 'grey.400' : 'text.secondary';
 
   const handlePreviewError = () => {
@@ -262,7 +267,20 @@ export const GalleryStage: FC<Props> = ({
           Show preview
         </Button>
       )}
-      {isViewer && onOpen && (
+      {unavailableReason && (
+        // No bytes to show or open yet: what the upload is at, in place of an Open that leads nowhere.
+        <Stack alignItems="center" gap={0.5} sx={{ mt: 1 }}>
+          <Chip
+            size="small"
+            label={uploadStatus ?? 'NO FILE'}
+            color={getFileUploadStatusColor(uploadStatus) ?? 'default'}
+          />
+          <Typography variant="body2" color={mutedColor} textAlign="center">
+            {unavailableReason}
+          </Typography>
+        </Stack>
+      )}
+      {isViewer && onOpen && !unavailableReason && (
         <Button
           variant="contained"
           startIcon={item.isFolder ? <FolderOpenOutlined /> : <OpenInNewOutlined />}

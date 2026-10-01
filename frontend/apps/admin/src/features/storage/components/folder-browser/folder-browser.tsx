@@ -26,7 +26,6 @@ import {
 } from '@/features/storage/hooks';
 import CloudUploadOutlined from '@mui/icons-material/CloudUploadOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import SearchOffRounded from '@mui/icons-material/SearchOffRounded';
 import {
   Alert,
@@ -116,7 +115,7 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
  * A folder of a user's storage, browsed the way Google Drive does — grid or list — or the way
  * Finder's gallery does. A folder opens in place; anything else in the full-screen viewer, which
  * steps through the folder's files — through all its items, from the gallery — and opens one in a
- * new tab once its upload is done, and its details otherwise. In the grid and the list a click selects, as in
+ * new tab once its upload is done, and says what the upload is at before that. In the grid and the list a click selects, as in
  * Drive, and the selection — up to 100 items — moves, deletes or turns public or private together:
  * from its bar, an item's "⋮", a drag onto a folder or a breadcrumb, or the keyboard. An item's "⋮"
  * renames it. Files dropped from the desktop upload into the folder, or
@@ -180,8 +179,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     onClear: selection.clear,
   });
 
-  // The item itself: a folder in place, the rest in a new tab — or its details, before its upload is
-  // done. What the viewer's and the gallery's Open buttons do.
+  // The item itself: a folder in place, the rest in a new tab — and nothing before its upload is
+  // done, when the viewer says why instead. What the viewer's and the gallery's Open buttons do.
   const openExternal = useCallback(
     (item: Item) => {
       const target = getFolderItemTarget(item);
@@ -192,8 +191,6 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         router.push(getFolderHref(item.id));
       } else if (target.kind === 'external') {
         window.open(target.href, '_blank', 'noopener');
-      } else {
-        router.push(target.href);
       }
     },
     [router, getFolderHref, markItem],
@@ -568,23 +565,14 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
           )
         }
         action={
-          <Stack direction="row" gap={1}>
-            {content && shownFolder && (
-              <FolderNewMenu
-                onCreateFolder={() => setIsCreatingFolder(true)}
-                onUpload={(files) => fileDrop.uploadFiles(files, shownFolder)}
-                onUploadFolder={(files) => fileDrop.uploadDirectory(files, shownFolder)}
-              />
-            )}
-            <Button
-              size="small"
-              startIcon={<InfoOutlined />}
-              component={NextLink}
-              href={pathProvider.getShowPath(STORAGE, STORAGE_OBJECT, folderId)}
-            >
-              Details
-            </Button>
-          </Stack>
+          content &&
+          shownFolder && (
+            <FolderNewMenu
+              onCreateFolder={() => setIsCreatingFolder(true)}
+              onUpload={(files) => fileDrop.uploadFiles(files, shownFolder)}
+              onUploadFolder={(files) => fileDrop.uploadDirectory(files, shownFolder)}
+            />
+          )
         }
       />
       {/* The selection bar lies over the toolbar, which keeps its place: the items below never
