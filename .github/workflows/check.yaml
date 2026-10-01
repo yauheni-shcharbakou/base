@@ -183,6 +183,11 @@ jobs:
       - name: 'Docs layout holds'
         run: 'pnpm check:docs'
 
+      # The specs of scripts/release-notes.sh, which writes the body of a published Release. Only
+      # here: its fixtures are not `*.md`, so no change to it is a documentation change.
+      - name: 'Repo scripts behave'
+        run: 'pnpm check:scripts'
+
       - name: 'Env tables match their schemas'
         run: 'pnpm check:env-docs'
 

@@ -8,7 +8,8 @@ description: Prepare a branch for its merge into main — write the CHANGELOG.md
 A release is **one merge into `main`**. Three files move together before it: `CHANGELOG.md` gets an
 entry, the root `package.json` gets the version that entry is headed with, and `README.md` is read
 against what the branch changed. `pnpm check:docs` fails while the version and the top entry
-disagree, so neither can land without the other.
+disagree, so neither can land without the other — and while the entry would publish badly: it is
+empty, a code fence in it never closes, or a relative link in it names a file that does not exist.
 
 The changelog is **curated, not generated**. A branch here runs to hundreds of commits whose
 subjects describe steps, not outcomes; an entry says what a reader upgrading or returning to the
@@ -99,8 +100,10 @@ project needs, grouped by area. That is why there is no release tool in this rep
    bash scripts/release-notes.sh X.Y.Z   # the entry as the GitHub Release will show it
    ```
 
-   Read the last one through: it joins wrapped lines, so a line that was meant to start a list item
-   or a heading but lacks its marker shows up glued to the line above.
+   `check:docs` has already run that script with `--check`, so a dead link or an unclosed fence is
+   reported there. What no check can see is left to the last command — read it through: it joins
+   wrapped lines, so a line that was meant to start a list item or a heading but lacks its marker
+   shows up glued to the line above.
 
 ## What this skill does not do
 

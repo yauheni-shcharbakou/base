@@ -11,6 +11,7 @@
     "compile:env-docs": "turbo run compile --filter=@packages/env-docs",
     "check:env-docs": "pnpm --filter=@packages/env-docs run check",
     "check:docs": "bash scripts/docs-invariants.sh",
+    "check:scripts": "bash scripts/release-notes.test.sh",
     "dev": "turbo run dev --filter=\"backend.*\" --filter=\"frontend.*\"",
     "dev:backend": "turbo run dev --filter=\"backend.*\"",
     "dev:backend.api-gateway": "turbo run dev --filter=backend.api-gateway",

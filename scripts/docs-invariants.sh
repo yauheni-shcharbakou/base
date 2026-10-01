@@ -8,6 +8,8 @@
 #   2. every ADR file appears in the docs/adr/README.md index
 #   3. every @backend/* | @packages/* | @frontend/* name in a CLAUDE.md is a real workspace
 #   4. the top entry of CHANGELOG.md is for the version in the root package.json
+#   5. that entry can be published as it stands: it is not empty, its code fences close, and
+#      every relative link in it names a file that exists
 #
 # Deliberately NOT checked: duplicated wording. That needs a bespoke marker list
 # which goes stale faster than the docs do — dedup is an audit, not an invariant.
@@ -17,8 +19,8 @@
 # CI runs it on a code change as well as on a docs one — a renamed package breaks 3 without a
 # single .md changing.
 #
-# Prints one line per violation and exits 1 when there is any. Needs bash and grep alone: no
-# jq, no node_modules.
+# Prints one line per violation and exits 1 when there is any. Needs bash, grep and awk alone:
+# no jq, no node_modules.
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 
 grep_docs() {
@@ -72,8 +74,16 @@ done < <(grep_docs '@(backend|packages|frontend)/[a-z][a-z0-9-]*/?')
 if [ -f CHANGELOG.md ] && [ -f package.json ]; then
   version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
   entry=$(grep -m1 -oE '^## \[[^]]+\]' CHANGELOG.md | grep -oE '[0-9][^]]*')
-  [ "$version" = "$entry" ] ||
+  if [ "$version" != "$entry" ]; then
     report "CHANGELOG.md's top entry is [${entry:-none}], package.json's version is ${version:-none}"
+  else
+    # 5. The entry becomes the body of a GitHub Release once it lands on main, where nothing can
+    #    be fixed before it is read. Asked of the script that shapes it; only of this entry — an
+    #    older one was published as it was, and its links may have moved since.
+    while IFS= read -r problem; do
+      [ -n "$problem" ] && report "$problem"
+    done < <(bash scripts/release-notes.sh --check "$version" 2>&1)
+  fi
 fi
 
 if [ "$failed" -ne 0 ]; then

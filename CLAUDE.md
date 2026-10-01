@@ -67,7 +67,8 @@ pnpm migrate                  # apply pending migrations in every DB-backed serv
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
-pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version
+pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published
+pnpm check:scripts            # the specs of scripts/release-notes.sh, against its fixtures
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
 pnpm docker:db                # postgres + redis only, detached, no tunnel (docker:db:stop to stop)
@@ -99,7 +100,7 @@ Creating a migration (and any other MikroORM CLI command) runs inside a service 
 
 **CI.** `.github/workflows/check.yaml` runs on every pull request into `main` and every push to it (which seeds the turbo cache new pull requests start from): `build`, `typecheck`
 and `lint`, then fails if they left the tree dirty (stale codegen, unformatted code, unapplied lint
-fixes), then `check:docs`, `check:env-docs`, `migrate:check`, a guard against a migration snapshot
+fixes), then `check:docs`, `check:scripts`, `check:env-docs`, `migrate:check`, a guard against a migration snapshot
 changed without a new migration next to it, `test` and `test:e2e`. Postgres, Redis and NATS run
 beside the job and `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Turbo's local
 cache (`.turbo/cache`) is carried between runs, pruned of entries older than a week.
@@ -113,13 +114,16 @@ Dependabot moves once a month.
 **Releases.** A release is one merge into `main`. Before it, the root `package.json` `version` and
 the top entry of `CHANGELOG.md` move together and `README.md` is read against the branch — the
 `/release` skill (`.claude/skills/release/`) does all three, and `check:docs` fails while the version
-and the entry disagree. Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
+and the entry disagree, or while the entry would publish badly (empty, an unclosed code fence, a
+relative link to a file that is not there). Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
 curated from the ADRs and the contract diffs, not generated from commits. **Nobody tags by hand:**
 on a green push to `main` the workflow's `release` job tags that commit `v<version>` and publishes
 a GitHub Release, each unless it exists — so a merge that left the version alone releases nothing,
 and a version bumped without a merge is not a release. The Release's body is the entry itself, as
 `scripts/release-notes.sh <version>` prints it (wrapped lines joined, relative links pinned to the
-tag): what the entry says is what the Release says, so write it for that reader.
+tag): what the entry says is what the Release says, so write it for that reader. The script's
+specs are `scripts/release-notes.test.sh` — a change to how lines are joined starts with a fixture
+in `scripts/fixtures/release-notes/`, which are `.txt` so that a change to one still counts as code.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single

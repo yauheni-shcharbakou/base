@@ -273,7 +273,8 @@ pnpm e2e # start the e2e servers, run every e2e suite with no skip allowed, stop
 ```shell
 pnpm typecheck # tsc --noEmit in every workspace
 pnpm lint # eslint --fix
-pnpm check:docs # docs layout: links, ADR index, workspace names, changelog version
+pnpm check:docs # docs layout: links, ADR index, workspace names, the changelog entry of the root version
+pnpm check:scripts # specs of the repo-level scripts
 pnpm check:env-docs # docs/env.md still matches the zod schemas
 ```
 
