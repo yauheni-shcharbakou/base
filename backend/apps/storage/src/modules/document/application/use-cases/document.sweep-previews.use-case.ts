@@ -25,6 +25,8 @@ export class DocumentSweepPreviewsUseCase {
    * logged, never retried — so the sweep does not race a handler that is still at work.
    */
   private readonly graceMinutes: number;
+  /** Sweeps a document may fail before it is given up on; 0 never gives up. */
+  private readonly maxAttempts: number;
 
   constructor(
     private readonly fileRepository: FileRepository,
@@ -35,6 +37,7 @@ export class DocumentSweepPreviewsUseCase {
 
     this.limit = sweep.limit;
     this.graceMinutes = sweep.graceMinutes;
+    this.maxAttempts = sweep.maxAttempts;
   }
 
   /**
@@ -55,9 +58,32 @@ export class DocumentSweepPreviewsUseCase {
 
       if (result.isLeft()) {
         this.logger.warn(`File ${file.id}: no preview this sweep: ${result.value.message}`);
+        await this.countAttempt(file.id);
       }
     }
 
     return files.length === this.limit ? files[files.length - 1].id : undefined;
+  }
+
+  // A `left` is a failure a retry might fix, but the sweep cannot tell one that never will — a
+  // document whose stream breaks every time — and would download it again every sweep, for good.
+  // Counted here and not in the use case it calls: the event handler's retries are BullMQ's.
+  private async countAttempt(id: string): Promise<void> {
+    if (!this.maxAttempts) {
+      return;
+    }
+
+    const gaveUp = await this.fileRepository.countPreviewAttempt(id, this.maxAttempts);
+
+    if (gaveUp.isLeft()) {
+      this.logger.error(`File ${id}: failed to count the attempt`, gaveUp.value);
+      return;
+    }
+
+    if (gaveUp.value) {
+      this.logger.warn(
+        `File ${id}: given up on after ${this.maxAttempts} sweeps without a preview`,
+      );
+    }
   }
 }

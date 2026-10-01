@@ -12,27 +12,39 @@ import { DocumentSweepPreviewsUseCase } from './document.sweep-previews.use-case
 const NOW = new Date('2026-01-01T12:00:00Z');
 const LIMIT = 2;
 const GRACE_MINUTES = 25;
+const MAX_ATTEMPTS = 3;
 
 describe('DocumentSweepPreviewsUseCase', () => {
-  let repository: { getManyWithoutPreview: jest.Mock };
+  let repository: { getManyWithoutPreview: jest.Mock; countPreviewAttempt: jest.Mock };
   let makePreviewUseCase: { execute: jest.Mock };
   let configService: { getOrThrow: jest.Mock };
   let useCase: DocumentSweepPreviewsUseCase;
 
-  beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(NOW);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-
-    repository = { getManyWithoutPreview: jest.fn().mockResolvedValue([]) };
-    makePreviewUseCase = { execute: jest.fn().mockResolvedValue(right(undefined)) };
+  const create = (maxAttempts = MAX_ATTEMPTS) => {
     configService = {
-      getOrThrow: jest.fn().mockReturnValue({ limit: LIMIT, graceMinutes: GRACE_MINUTES }),
+      getOrThrow: jest
+        .fn()
+        .mockReturnValue({ limit: LIMIT, graceMinutes: GRACE_MINUTES, maxAttempts }),
     };
-    useCase = new DocumentSweepPreviewsUseCase(
+
+    return new DocumentSweepPreviewsUseCase(
       repository as unknown as FileRepository,
       makePreviewUseCase as unknown as DocumentMakePreviewUseCase,
       configService as unknown as ConfigService<Config>,
     );
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(NOW);
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+
+    repository = {
+      getManyWithoutPreview: jest.fn().mockResolvedValue([]),
+      countPreviewAttempt: jest.fn().mockResolvedValue(right(false)),
+    };
+    makePreviewUseCase = { execute: jest.fn().mockResolvedValue(right(undefined)) };
+    useCase = create();
   });
 
   afterEach(() => {
@@ -86,5 +98,33 @@ describe('DocumentSweepPreviewsUseCase', () => {
       [{ fileId: 'file-1' }],
       [{ fileId: 'file-2' }],
     ]);
+  });
+
+  it('counts an attempt against the document that got no preview, and against no other', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([{ id: 'file-1' }, { id: 'file-2' }]);
+    makePreviewUseCase.execute.mockResolvedValueOnce(left(new Error('provider down')));
+
+    await useCase.execute();
+
+    expect(repository.countPreviewAttempt.mock.calls).toEqual([['file-1', MAX_ATTEMPTS]]);
+  });
+
+  it('counts nothing when it never gives up', async () => {
+    useCase = create(0);
+    repository.getManyWithoutPreview.mockResolvedValue([{ id: 'file-1' }]);
+    makePreviewUseCase.execute.mockResolvedValue(left(new Error('provider down')));
+
+    await useCase.execute();
+
+    expect(repository.countPreviewAttempt).not.toHaveBeenCalled();
+  });
+
+  it('goes on with the batch when an attempt cannot be counted', async () => {
+    repository.getManyWithoutPreview.mockResolvedValue([{ id: 'file-1' }, { id: 'file-2' }]);
+    makePreviewUseCase.execute.mockResolvedValue(left(new Error('provider down')));
+    repository.countPreviewAttempt.mockResolvedValueOnce(left(new Error('db down')));
+
+    expect(await useCase.execute()).toBe('file-2');
+    expect(repository.countPreviewAttempt).toHaveBeenCalledTimes(2);
   });
 });

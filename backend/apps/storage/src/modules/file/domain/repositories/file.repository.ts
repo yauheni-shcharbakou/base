@@ -52,4 +52,10 @@ export abstract class FileRepository extends DatabaseRepository<
   abstract setPreview(id: string, previewProviderId: string): Promise<Either<Error, boolean>>;
   /** Marks the file as one no retry can make a preview for, unless it has one. */
   abstract markPreviewFailed(id: string): Promise<Either<Error, boolean>>;
+  /**
+   * Counts a sweep that came back from the file without a preview, and marks it failed once that
+   * makes `maxAttempts` — in one statement, and only over neither a preview nor a mark. `true` when
+   * this call gave up on it.
+   */
+  abstract countPreviewAttempt(id: string, maxAttempts: number): Promise<Either<Error, boolean>>;
 }

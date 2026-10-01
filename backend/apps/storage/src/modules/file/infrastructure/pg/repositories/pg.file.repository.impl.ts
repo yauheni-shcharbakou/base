@@ -175,6 +175,31 @@ export class PgFileRepositoryImpl
     return this.updateWithoutPreview(id, { previewFailedAt: new Date() });
   }
 
+  // The count and the mark it may bring are one statement, so two sweeps counting the same file
+  // cannot both read the old count. `set` reads the row as it was, hence the `+ 1` in the `case`.
+  // `updated_at` stays: the sweep's grace is measured from it, and a counted row would wait it out
+  // again before every attempt.
+  async countPreviewAttempt(id: string, maxAttempts: number): Promise<Either<Error, boolean>> {
+    const sql = `
+      UPDATE "${StorageDatabaseEntity.FILE}"
+      SET preview_attempts = preview_attempts + 1,
+          preview_failed_at = CASE WHEN preview_attempts + 1 >= ? THEN now() END
+      WHERE id = ? AND preview_provider_id IS NULL AND preview_failed_at IS NULL
+      RETURNING preview_failed_at
+    `;
+
+    try {
+      const [row] = await this.em.execute<{ preview_failed_at: Date | null }[]>(sql, [
+        maxAttempts,
+        id,
+      ]);
+
+      return right(!!row?.preview_failed_at);
+    } catch (error) {
+      return left(error as Error);
+    }
+  }
+
   private async updateWithoutPreview(
     id: string,
     set: Partial<Pick<PgFileEntity, 'previewProviderId' | 'previewFailedAt'>>,

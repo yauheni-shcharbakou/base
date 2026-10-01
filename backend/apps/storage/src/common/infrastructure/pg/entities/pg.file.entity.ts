@@ -48,6 +48,12 @@ export class PgFileEntity
   @PgProp.Date({ nullable: true, hidden: true })
   previewFailedAt?: Date;
 
+  // Sweeps that came back from this file with a failure a retry might fix. At the sweep's
+  // `maxAttempts` the row is given up on like the ones above (ADR-0037); a row marked failed with
+  // fewer is one a retry cannot help. Hidden, like the mark.
+  @Property({ default: 0, hidden: true })
+  previewAttempts?: number;
+
   @OneToOne({
     entity: () => PgImageEntity,
     mappedBy: 'file',

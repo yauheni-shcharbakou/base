@@ -17,11 +17,15 @@ const env = validateEnv({
   // How long a sweep goes on taking further batches while the backlog lasts, out of the 10 minutes
   // between two of them. 0 is one batch a sweep.
   STORAGE_IMAGE_PREVIEW_SWEEP_BUDGET_MINUTES: zod.coerce.number().int().nonnegative().default(8),
+  // Sweeps that may come back from one image without a preview before it is marked failed — a
+  // sweep tries an image once, so 12 is two hours at the least. 0 never gives up.
+  STORAGE_IMAGE_PREVIEW_SWEEP_MAX_ATTEMPTS: zod.coerce.number().int().nonnegative().default(12),
 
-  // The same three for PDF previews — each document is a download of up to 50 MB and a render.
+  // The same four for PDF previews — each document is a download of up to 50 MB and a render.
   STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT: zod.coerce.number().int().positive().default(20),
   STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES: zod.coerce.number().int().nonnegative().default(10),
   STORAGE_DOCUMENT_PREVIEW_SWEEP_BUDGET_MINUTES: zod.coerce.number().int().nonnegative().default(8),
+  STORAGE_DOCUMENT_PREVIEW_SWEEP_MAX_ATTEMPTS: zod.coerce.number().int().nonnegative().default(12),
 });
 
 export const config = () => {
@@ -32,11 +36,13 @@ export const config = () => {
       limit: env.STORAGE_IMAGE_PREVIEW_SWEEP_LIMIT,
       graceMinutes: env.STORAGE_IMAGE_PREVIEW_SWEEP_GRACE_MINUTES,
       budgetMinutes: env.STORAGE_IMAGE_PREVIEW_SWEEP_BUDGET_MINUTES,
+      maxAttempts: env.STORAGE_IMAGE_PREVIEW_SWEEP_MAX_ATTEMPTS,
     },
     documentPreviewSweep: {
       limit: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT,
       graceMinutes: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES,
       budgetMinutes: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_BUDGET_MINUTES,
+      maxAttempts: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_MAX_ATTEMPTS,
     },
   } as const;
 };
