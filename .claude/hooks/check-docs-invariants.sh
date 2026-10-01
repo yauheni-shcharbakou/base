@@ -4,12 +4,15 @@
 # Runs the two documentation checks CI runs, at the moment of the edit that breaks one.
 #
 # On a documentation edit:
-#   1–3. the invariants of the docs layout — dangling docs/ links, an ADR missing from the
-#        index, a workspace name that does not exist. They live in scripts/docs-invariants.sh,
-#        the one copy CI runs too (`pnpm check:docs`); what each one is and why is there.
+#   1–4. the invariants of the docs layout — dangling docs/ links, an ADR missing from the
+#        index, a workspace name that does not exist, a changelog whose top entry is not the
+#        root version. They live in scripts/docs-invariants.sh, the one copy CI runs too
+#        (`pnpm check:docs`); what each one is and why is there. An edit to CHANGELOG.md or to
+#        the root version does not trigger them here: between the two the last one is
+#        legitimately broken.
 #
 # On an edit to a zod env schema, a manifest, or a document carrying an env table:
-#   4. the generated env tables still match the schemas (@packages/env-docs --check),
+#   5. the generated env tables still match the schemas (@packages/env-docs --check),
 #      which also rejects a `zod.number()` that forgot `zod.coerce` and a config file
 #      no marker documents. A manifest counts because the service/package map in
 #      docs/env.md is read off the workspace dependencies.
@@ -38,7 +41,7 @@ cd "$root" || exit 0
 
 problems=""
 
-# 1–3. The layout invariants, one line per violation. Its closing hint goes to stderr and is
+# 1–4. The layout invariants, one line per violation. Its closing hint goes to stderr and is
 #      dropped: this hook ends with its own.
 if [ "$is_doc" = true ] && [ -f scripts/docs-invariants.sh ]; then
   if ! doc_report=$(GITHUB_ACTIONS='' bash scripts/docs-invariants.sh 2>/dev/null); then
@@ -48,7 +51,7 @@ if [ "$is_doc" = true ] && [ -f scripts/docs-invariants.sh ]; then
   fi
 fi
 
-# 4. Generated env tables still match the schemas they are projected from. Runs the
+# 5. Generated env tables still match the schemas they are projected from. Runs the
 #    generator's own --check rather than reimplementing it (~0.5 s).
 if [ "$is_schema" = true ]; then
   tsx="packages/env-docs/node_modules/.bin/tsx"

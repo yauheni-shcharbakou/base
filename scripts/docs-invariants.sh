@@ -7,6 +7,7 @@
 #   1. every docs/ page linked from a CLAUDE.md exists (ADRs, the generated env page)
 #   2. every ADR file appears in the docs/adr/README.md index
 #   3. every @backend/* | @packages/* | @frontend/* name in a CLAUDE.md is a real workspace
+#   4. the top entry of CHANGELOG.md is for the version in the root package.json
 #
 # Deliberately NOT checked: duplicated wording. That needs a bespoke marker list
 # which goes stale faster than the docs do — dedup is an audit, not an invariant.
@@ -65,8 +66,18 @@ while IFS= read -r name; do
   fi
 done < <(grep_docs '@(backend|packages|frontend)/[a-z][a-z0-9-]*/?')
 
+# 4. The version and its changelog entry move together: a bump without an entry, or an entry
+#    without a bump, is half a release. Only that the two agree — not that the version grew since
+#    main, which would fail every pull request that releases nothing (Dependabot's).
+if [ -f CHANGELOG.md ] && [ -f package.json ]; then
+  version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
+  entry=$(grep -m1 -oE '^## \[[^]]+\]' CHANGELOG.md | grep -oE '[0-9][^]]*')
+  [ "$version" = "$entry" ] ||
+    report "CHANGELOG.md's top entry is [${entry:-none}], package.json's version is ${version:-none}"
+fi
+
 if [ "$failed" -ne 0 ]; then
-  echo 'Fix the reference or add the missing ADR/index row. See docs/adr/README.md.' >&2
+  echo 'Fix the reference, add the missing ADR/index row, or bring the version and the changelog together. See docs/adr/README.md and the /release skill.' >&2
 fi
 
 exit "$failed"

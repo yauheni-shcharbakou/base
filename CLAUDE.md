@@ -67,7 +67,7 @@ pnpm migrate                  # apply pending migrations in every DB-backed serv
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
-pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist
+pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
 pnpm docker:db                # postgres + redis only, detached, no tunnel (docker:db:stop to stop)
@@ -109,6 +109,12 @@ cache (`.turbo/cache`) is carried between runs, pruned of entries older than a w
 top of a code change still runs everything. The list of what is not code is
 `scripts/classify-changes.sh`; a path it does not name is code. Actions are pinned to commits, which
 Dependabot moves once a month.
+
+**Releases.** A release is one merge into `main`. Before it, the root `package.json` `version` and
+the top entry of `CHANGELOG.md` move together and `README.md` is read against the branch — the
+`/release` skill (`.claude/skills/release/`) does all three, and `check:docs` fails while the version
+and the entry disagree. Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
+curated from the ADRs and the contract diffs, not generated from commits.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single
