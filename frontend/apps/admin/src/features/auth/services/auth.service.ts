@@ -74,10 +74,12 @@ export class AuthService {
   }
 
   // The gateway rate-limits a call without a user by this address; every call it gets comes
-  // from this server, so without it all visitors would share one limit.
+  // from this server, so without it all visitors would share one limit. Read from the one header
+  // the proxy in front overwrites: an address the client could write would be a new limit for
+  // every attempt.
   private getClientMetadata(requestHeaders: HeadersReader) {
     const meta = new Metadata();
-    const clientIp = getHeadersIp(requestHeaders);
+    const clientIp = getHeadersIp(requestHeaders, this.configService.getClientIpHeader());
 
     if (clientIp) {
       meta.set('x-client-ip', clientIp);

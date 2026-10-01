@@ -309,6 +309,7 @@ domain events.
 | Variable           | Type   | Default           |
 | ------------------ | ------ | ----------------- |
 | `BACKEND_GRPC_URL` | string | `0.0.0.0:8000`    |
+| `CLIENT_IP_HEADER` | string | `x-real-ip`       |
 | `DEFAULT_EMAIL`    | email  | `admin@gmail.com` |
 | `DEFAULT_PASSWORD` | string | `string123`       |
 
@@ -320,3 +321,9 @@ Read by `ConfigService` on the **Next server**, never in the browser — none of
 `NEXT_PUBLIC_*`, and `BACKEND_GRPC_URL` must not become one: `@grpc/grpc-js` is a Node client and
 the gRPC call runs in a server action. `DEFAULT_EMAIL` / `DEFAULT_PASSWORD` prefill the login form
 and are read only while `NODE_ENV` is `development`.
+
+`CLIENT_IP_HEADER` names the header the proxy in front of the admin **overwrites** with the
+connecting address — `x-real-ip` on Railway, `cf-connecting-ip` behind Cloudflare. The gateway
+limits sign-in attempts per that address, so a header the proxy passes through as the client sent
+it lets a caller pick a new address, and a new limit, for every attempt
+([ADR-0035](adr/0035-client-address-from-one-trusted-header.md)).

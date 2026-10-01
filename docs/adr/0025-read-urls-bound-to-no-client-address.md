@@ -72,4 +72,5 @@ Rejected alternatives:
   call per download and the 404 that followed whenever ipify failed.
 - **URLs can be signed where no client address is known,** such as inside a listing response.
 - **The gateway still reads the client address, for another purpose:** login and refresh are
-  throttled by it (`x-client-ip`, set from `getHeadersIp`). That is unrelated to signing.
+  throttled by it (`x-client-ip`, set from `getHeadersIp`). That is unrelated to signing; which
+  header it is read from is [ADR-0035](0035-client-address-from-one-trusted-header.md).

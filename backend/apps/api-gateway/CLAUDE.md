@@ -56,8 +56,9 @@ GrpcThrottlerGuard)` — a controller built without them is not limited. Limits 
   access guard, which is why a call over the limit has still cost an `auth.me` round trip.
 - **Public** (`@PublicGrpcController()`, i.e. login / refresh / logout): 10 / 60s **per client address**, set
   with `@Throttle` in the decorator over both buckets. A `user-id` a public caller sends is ignored. The address is the
-  `x-client-ip` metadata the admin's Next server sets from `x-forwarded-for` / `x-real-ip`
-  (`AuthService.getClientMetadata`); without it, the peer host (port dropped). The Next server is
+  `x-client-ip` metadata the admin's Next server sets from the one header its proxy overwrites
+  (`AuthService.getClientMetadata`, the admin's `CLIENT_IP_HEADER` — never a header the client
+  can write, [ADR-0035](../../../docs/adr/0035-client-address-from-one-trusted-header.md)); without it, the peer host (port dropped). The Next server is
   the only gRPC client, so the peer alone is one bucket for every visitor. `x-client-ip` is trusted
   because the gRPC port is published on the private network only — expose it and that stops holding.
 - The count is per caller and bucket across **all** handlers, not per handler (`generateKey` override: `<bucket>:<tracker>`). Stream
