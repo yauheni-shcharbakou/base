@@ -67,6 +67,7 @@ pnpm migrate                  # apply pending migrations in every DB-backed serv
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
+pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
 pnpm docker:db                # postgres + redis only, detached, no tunnel (docker:db:stop to stop)
@@ -98,10 +99,16 @@ Creating a migration (and any other MikroORM CLI command) runs inside a service 
 
 **CI.** `.github/workflows/check.yaml` runs on every pull request into `main` and every push to it (which seeds the turbo cache new pull requests start from): `build`, `typecheck`
 and `lint`, then fails if they left the tree dirty (stale codegen, unformatted code, unapplied lint
-fixes), then `check:env-docs`, `migrate:check`, a guard against a migration snapshot changed
-without a new migration next to it, `test` and `test:e2e`. Postgres, Redis and NATS run beside the
-job and `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Turbo's local cache
-(`.turbo/cache`) is carried between runs, pruned of entries older than a week.
+fixes), then `check:docs`, `check:env-docs`, `migrate:check`, a guard against a migration snapshot
+changed without a new migration next to it, `test` and `test:e2e`. Postgres, Redis and NATS run
+beside the job and `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Turbo's local
+cache (`.turbo/cache`) is carried between runs, pruned of entries older than a week.
+**A change to documentation alone skips all of that**: when every changed path is a `*.md` or under
+`.claude/`, the `check` job and its servers never start, and a `docs` job runs `check:docs` and
+`check:env-docs` by themselves. A pull request is judged whole, against its base — a docs commit on
+top of a code change still runs everything. The list of what is not code is
+`scripts/classify-changes.sh`; a path it does not name is code. Actions are pinned to commits, which
+Dependabot moves once a month.
 
 **Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single

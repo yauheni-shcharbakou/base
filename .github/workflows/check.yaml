@@ -19,8 +19,56 @@ concurrency:
 permissions:
   contents: 'read'
 
+# Every action is pinned to a commit, with the release it is in beside it: a tag can be moved to
+# other code, a commit cannot. Dependabot moves both (`.github/dependabot.yml`).
 jobs:
+  # A change to documentation alone builds and tests nothing, so `check` and its three servers stay
+  # down for it and `docs` runs the documentation's own checks instead. A job, not a `paths-ignore`
+  # on the triggers: a run that never starts reports no status, and a required check would wait for
+  # one forever, while a job skipped by its `if` counts as passed. Not a step either — the service
+  # containers start before the first step.
+  changes:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+    outputs:
+      code: '${{ steps.classify.outputs.code }}'
+      docs: '${{ steps.classify.outputs.docs }}'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The whole history, to diff against the base, but no file contents: the names of the
+          # changed paths are in the trees. Only the classifier is checked out.
+          fetch-depth: 0
+          filter: 'blob:none'
+          sparse-checkout: 'scripts'
+
+      # A pull request is classified whole, against its base, not by its last push: a docs commit
+      # on top of a failed code change must not turn the pull request green. A push to main is
+      # classified by what it added. What counts as code is in the script; a diff that cannot be
+      # computed is an empty list, which it reads as code.
+      - name: 'Classify the change'
+        id: 'classify'
+        env:
+          EVENT_NAME: '${{ github.event_name }}'
+          BASE_SHA: '${{ github.event.pull_request.base.sha || github.event.before }}'
+        run: |
+          files=''
+          if git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            if [ "$EVENT_NAME" = 'pull_request' ]; then
+              range="$BASE_SHA...HEAD"
+            else
+              range="$BASE_SHA..HEAD"
+            fi
+            files=$(git diff --name-only --no-renames "$range") || files=''
+          fi
+          printf '%s\n' "$files"
+          printf '%s\n' "$files" | bash scripts/classify-changes.sh | tee -a "$GITHUB_OUTPUT"
+
   check:
+    needs: 'changes'
+    if: needs.changes.outputs.code == 'true'
     # One job: turbo already runs the workspaces in parallel, and a matrix would repeat the install
     # and the build in every leg.
     runs-on: 'ubuntu-latest'
@@ -60,16 +108,16 @@ jobs:
 
     steps:
       - name: 'Checkout'
-        uses: 'actions/checkout@v7'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
         with:
           # The snapshot guard diffs the pull request against its base.
           fetch-depth: 0
 
       - name: 'Setup pnpm'
-        uses: 'pnpm/action-setup@v6'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
 
       - name: 'Setup node.js'
-        uses: 'actions/setup-node@v7'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
         with:
           node-version: 22
           cache: 'pnpm'
@@ -86,7 +134,7 @@ jobs:
       # Turbo's local cache, carried between runs: a task whose inputs did not change replays its
       # logs and outputs. `test`, `test:e2e` and `lint` are `cache: false` and always run.
       - name: 'Turbo cache'
-        uses: 'actions/cache@v6'
+        uses: 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' # v6.1.0
         with:
           path: '.turbo/cache'
           key: 'turbo-${{ runner.os }}-${{ github.sha }}'
@@ -130,6 +178,11 @@ jobs:
             exit 1
           fi
 
+      # Here as well as in `docs`: a renamed or removed package leaves its name behind in a
+      # CLAUDE.md that the change never touched.
+      - name: 'Docs layout holds'
+        run: 'pnpm check:docs'
+
       - name: 'Env tables match their schemas'
         run: 'pnpm check:env-docs'
 
@@ -172,3 +225,35 @@ jobs:
       - name: 'Prune turbo cache'
         if: always()
         run: 'find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true'
+
+  # What `check` verifies of the documentation, and nothing else: no servers, no protoc, no build.
+  docs:
+    needs: 'changes'
+    if: needs.changes.outputs.code != 'true' && needs.changes.outputs.docs == 'true'
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      # Before the install: bash and grep are all it needs.
+      - name: 'Docs layout holds'
+        run: 'bash scripts/docs-invariants.sh'
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # The generator parses the config files as text, so it needs its own package and nothing
+      # built: no other workspace is installed.
+      - name: 'Install the env-docs generator'
+        run: 'pnpm install --frozen-lockfile --filter "@packages/env-docs..."'
+
+      - name: 'Env tables match their schemas'
+        run: 'pnpm check:env-docs'
