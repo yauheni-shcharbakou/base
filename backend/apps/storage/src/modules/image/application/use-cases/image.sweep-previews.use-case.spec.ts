@@ -19,11 +19,14 @@ describe('ImageSweepPreviewsUseCase', () => {
   let configService: { getOrThrow: jest.Mock };
   let useCase: ImageSweepPreviewsUseCase;
 
-  const create = (maxAttempts = MAX_ATTEMPTS) => {
+  const create = (maxAttempts = MAX_ATTEMPTS, breakerThreshold = 0) => {
     configService = {
-      getOrThrow: jest
-        .fn()
-        .mockReturnValue({ limit: LIMIT, graceMinutes: GRACE_MINUTES, maxAttempts }),
+      getOrThrow: jest.fn().mockReturnValue({
+        limit: LIMIT,
+        graceMinutes: GRACE_MINUTES,
+        maxAttempts,
+        breakerThreshold,
+      }),
     };
 
     return new ImageSweepPreviewsUseCase(
@@ -42,7 +45,8 @@ describe('ImageSweepPreviewsUseCase', () => {
       getManyWithoutPreview: jest.fn().mockResolvedValue([]),
       countPreviewAttempt: jest.fn().mockResolvedValue(right(false)),
     };
-    makePreviewUseCase = { execute: jest.fn().mockResolvedValue(right(undefined)) };
+    // `right(true)`: a preview made of an original the provider gave.
+    makePreviewUseCase = { execute: jest.fn().mockResolvedValue(right(true)) };
     useCase = create();
   });
 
@@ -123,5 +127,73 @@ describe('ImageSweepPreviewsUseCase', () => {
 
     expect(await useCase.execute()).toBe('image-2');
     expect(repository.countPreviewAttempt).toHaveBeenCalledTimes(2);
+  });
+
+  describe('the breaker', () => {
+    const DOWN = left(new Error('provider down'));
+
+    beforeEach(() => {
+      useCase = create(MAX_ATTEMPTS, 2);
+      repository.getManyWithoutPreview.mockResolvedValue([image(1), image(2), image(3)]);
+    });
+
+    it('stops the sweep at so many images in a row without a preview, and counts none', async () => {
+      repository.getManyWithoutPreview.mockResolvedValue([image(1), image(2)]);
+      makePreviewUseCase.execute.mockResolvedValue(DOWN);
+
+      expect(await useCase.execute()).toBeUndefined();
+      expect(repository.countPreviewAttempt).not.toHaveBeenCalled();
+    });
+
+    it('leaves the rest of the batch alone once it stopped', async () => {
+      makePreviewUseCase.execute.mockResolvedValue(DOWN);
+
+      await useCase.execute();
+
+      expect(makePreviewUseCase.execute).toHaveBeenCalledTimes(2);
+    });
+
+    it('counts the images that failed before one the provider answered for', async () => {
+      makePreviewUseCase.execute
+        .mockResolvedValueOnce(DOWN)
+        .mockResolvedValueOnce(right(true))
+        .mockResolvedValueOnce(DOWN);
+
+      await useCase.execute();
+
+      expect(makePreviewUseCase.execute).toHaveBeenCalledTimes(3);
+      expect(repository.countPreviewAttempt.mock.calls).toEqual([
+        ['image-1', MAX_ATTEMPTS],
+        ['image-3', MAX_ATTEMPTS],
+      ]);
+    });
+
+    it('keeps the run going over an image that never asked the provider', async () => {
+      makePreviewUseCase.execute
+        .mockResolvedValueOnce(DOWN)
+        .mockResolvedValueOnce(right(false))
+        .mockResolvedValueOnce(DOWN);
+
+      expect(await useCase.execute()).toBeUndefined();
+      expect(repository.countPreviewAttempt).not.toHaveBeenCalled();
+    });
+
+    it('never stops at a threshold of 0', async () => {
+      useCase = create(MAX_ATTEMPTS, 0);
+      makePreviewUseCase.execute.mockResolvedValue(DOWN);
+
+      await useCase.execute();
+
+      expect(makePreviewUseCase.execute).toHaveBeenCalledTimes(3);
+      expect(repository.countPreviewAttempt).toHaveBeenCalledTimes(3);
+    });
+
+    it('warns of a threshold no batch is long enough for', () => {
+      const warn = jest.spyOn(Logger.prototype, 'warn');
+
+      create(MAX_ATTEMPTS, LIMIT + 1);
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('never stops a sweep'));
+    });
   });
 });

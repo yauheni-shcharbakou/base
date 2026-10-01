@@ -240,31 +240,33 @@ holds the role, and never touches one that exists.
 
 <!-- env-table:start src=backend/apps/storage/src/config.ts,backend/apps/storage/src/modules/storage/infrastructure/configs/bunny.storage.config.ts -->
 
-| Variable                                        | Type                                                          | Default      | Source                    |
-| ----------------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
-| `STORAGE_PENDING_FILE_TTL_HOURS`                | number                                                        | `24`         | `config.ts`               |
-| `STORAGE_IMAGE_PREVIEW_SWEEP_LIMIT`             | integer > 0                                                   | `20`         | `config.ts`               |
-| `STORAGE_IMAGE_PREVIEW_SWEEP_GRACE_MINUTES`     | integer ≥ 0                                                   | `10`         | `config.ts`               |
-| `STORAGE_IMAGE_PREVIEW_SWEEP_BUDGET_MINUTES`    | integer ≥ 0                                                   | `8`          | `config.ts`               |
-| `STORAGE_IMAGE_PREVIEW_SWEEP_MAX_ATTEMPTS`      | integer ≥ 0                                                   | `12`         | `config.ts`               |
-| `STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT`          | integer > 0                                                   | `20`         | `config.ts`               |
-| `STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES`  | integer ≥ 0                                                   | `10`         | `config.ts`               |
-| `STORAGE_DOCUMENT_PREVIEW_SWEEP_BUDGET_MINUTES` | integer ≥ 0                                                   | `8`          | `config.ts`               |
-| `STORAGE_DOCUMENT_PREVIEW_SWEEP_MAX_ATTEMPTS`   | integer ≥ 0                                                   | `12`         | `config.ts`               |
-| `BUNNY_STORAGE_ZONE`                            | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_API_KEY`                         | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_S3_REGION`                       | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES`       | number ≥ 1, ≤ 10_080                                          | `60`         | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_ZONE`                        | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_PRIVATE_KEY`                 | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`          | number ≥ 1                                                    | `10`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_API_KEY`                          | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_READ_ONLY_API_KEY`                | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_LIBRARY_ID`                       | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_ZONE`                         | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_PRIVATE_KEY`                  | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`           | number ≥ 1                                                    | `60`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`           | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
+| Variable                                           | Type                                                          | Default      | Source                    |
+| -------------------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
+| `STORAGE_PENDING_FILE_TTL_HOURS`                   | number                                                        | `24`         | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_LIMIT`                | integer > 0                                                   | `20`         | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_GRACE_MINUTES`        | integer ≥ 0                                                   | `10`         | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_BUDGET_MINUTES`       | integer ≥ 0                                                   | `8`          | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_MAX_ATTEMPTS`         | integer ≥ 0                                                   | `12`         | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_BREAKER_THRESHOLD`    | integer ≥ 0                                                   | `10`         | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT`             | integer > 0                                                   | `20`         | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES`     | integer ≥ 0                                                   | `10`         | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_BUDGET_MINUTES`    | integer ≥ 0                                                   | `8`          | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_MAX_ATTEMPTS`      | integer ≥ 0                                                   | `12`         | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_BREAKER_THRESHOLD` | integer ≥ 0                                                   | `10`         | `config.ts`               |
+| `BUNNY_STORAGE_ZONE`                               | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_API_KEY`                            | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_S3_REGION`                          | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES`          | number ≥ 1, ≤ 10_080                                          | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_ZONE`                           | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_PRIVATE_KEY`                    | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`             | number ≥ 1                                                    | `10`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_API_KEY`                             | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_READ_ONLY_API_KEY`                   | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_LIBRARY_ID`                          | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_ZONE`                            | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_PRIVATE_KEY`                     | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`              | number ≥ 1                                                    | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`              | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
 
 <!-- env-table:end -->
 
@@ -289,7 +291,7 @@ signature; Bunny refuses anything under an hour, and a resumed upload is re-sign
 extended. `STORAGE_PENDING_FILE_TTL_HOURS` must outlast that window plus Bunny's encoding queue —
 a video only leaves `PENDING` once the webhook arrives, so a short TTL deletes uploads in flight.
 
-The eight `STORAGE_*_PREVIEW_SWEEP_*` variables tune the two preview sweeps, images and PDFs apart:
+The ten `STORAGE_*_PREVIEW_SWEEP_*` variables tune the two preview sweeps, images and PDFs apart:
 an image is a download of up to 100 MB spooled to the temp directory, a PDF up to 50 MB held in
 memory and a render. A sweep starts every 10 minutes and takes its items one after another, a batch
 of `*_SWEEP_LIMIT` at a time, for as long as there is a backlog and `*_SWEEP_BUDGET_MINUTES` lasts
@@ -305,11 +307,16 @@ leaves the `storage.file.ready` handler its retries: at the default `REDIS_JOB_A
 the preview is recorded only over none — it renders twice what a retry was about to render.
 `*_SWEEP_MAX_ATTEMPTS` is how many sweeps may come back from one item without a preview before it
 is marked failed and left alone; 0 never gives up. A sweep tries an item once, so the default of 12
-is two hours at the least. It cannot tell a broken item from a provider that is down: **an outage
-longer than the cap gives up on everything in the backlog**, so raise it or set it to 0 before a
-long backfill. What it gave up on is put back with
+is two hours at the least. What it gave up on is put back with
 `update images set preview_failed_at = null, preview_attempts = 0 where preview_attempts >= 12`
 (and `files` for PDFs) — an item no retry can help was marked with fewer attempts.
+`*_SWEEP_BREAKER_THRESHOLD` is what keeps an outage out of that count: so many items in a row
+without a preview are the provider down, not the items, so the sweep stops there and counts none of
+them; 0 never stops. A run is counted within a batch, so **keep the threshold at or under
+`*_SWEEP_LIMIT`** — over it the breaker never opens, and the service says so in a warning when it
+starts. With fewer items in the backlog than the threshold an outage is still counted against
+them. Should the sweep stop at every tick while the provider is up, the items it stops at are the
+broken ones: set the threshold to 0 until the cap has given up on them.
 
 Unlike the other services, `PORT` here is a real HTTP listener: it serves the single route
 `POST /webhooks/bunny/stream` and nothing else. Keep it clear of `STORAGE_GRPC_URL`'s port: in

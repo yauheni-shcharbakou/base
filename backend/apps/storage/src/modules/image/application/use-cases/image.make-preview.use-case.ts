@@ -24,6 +24,10 @@ const GIF = 'image/gif';
  *
  * `left` only for what a retry can fix (the provider, the database). An image no retry can help is
  * marked failed and answered `right`, so neither the bus nor the sweep comes back to it.
+ *
+ * A `right` tells whether the provider answered on the way — the original read, or found missing.
+ * A light original or an SVG never asks it, and the sweep's breaker must not take one for a sign
+ * that the provider is up.
  */
 @Injectable()
 export class ImageMakePreviewUseCase {
@@ -36,7 +40,7 @@ export class ImageMakePreviewUseCase {
     private readonly filePurgeService: FilePurgeService,
   ) {}
 
-  async execute({ fileId }: { fileId: string }): Promise<Either<Error, void>> {
+  async execute({ fileId }: { fileId: string }): Promise<Either<Error, boolean>> {
     const image = await this.imageRepository.getOne<NestStorage.ImagePopulated>(
       { file: fileId },
       { populate: ['file'] },
@@ -44,7 +48,7 @@ export class ImageMakePreviewUseCase {
 
     // A plain file, or an image deleted since — nothing to make.
     if (image.isLeft()) {
-      return right(undefined);
+      return right(false);
     }
 
     const { id, file, previewProviderId } = image.value;
@@ -54,14 +58,14 @@ export class ImageMakePreviewUseCase {
       file.uploadStatus !== NestStorage.FileUploadStatus.READY ||
       !file.providerId
     ) {
-      return right(undefined);
+      return right(false);
     }
 
     if (file.mimeType === SVG) {
       // A vector scales in the browser; one heavy enough to hurt a grid is not worth rasterizing.
       return file.size <= LIGHT_ORIGINAL_MAX_BYTES
         ? this.record(id, file.providerId, false)
-        : this.fail(id, 'an SVG too heavy to show as it is');
+        : this.fail(id, 'an SVG too heavy to show as it is', false);
     }
 
     if (this.isLightOriginal(image.value)) {
@@ -75,14 +79,14 @@ export class ImageMakePreviewUseCase {
     }
 
     if (!stream.value) {
-      return this.fail(id, `the original ${file.providerId} is missing`);
+      return this.fail(id, `the original ${file.providerId} is missing`, true);
     }
 
     const preview = await this.imagePreviewService.render(stream.value);
 
     if (preview.isLeft()) {
       return preview.value instanceof ImagePreviewUndecodableError
-        ? this.fail(id, preview.value.message)
+        ? this.fail(id, preview.value.message, true)
         : left(preview.value);
     }
 
@@ -114,7 +118,7 @@ export class ImageMakePreviewUseCase {
     id: string,
     previewProviderId: string,
     isOwnObject: boolean,
-  ): Promise<Either<Error, void>> {
+  ): Promise<Either<Error, boolean>> {
     const isSet = await this.imageRepository.setPreview(id, previewProviderId);
 
     if (isSet.isLeft()) {
@@ -129,14 +133,19 @@ export class ImageMakePreviewUseCase {
       ]);
     }
 
-    return right(undefined);
+    // An object of its own was rendered from the original the provider gave.
+    return right(isOwnObject);
   }
 
-  private async fail(id: string, reason: string): Promise<Either<Error, void>> {
+  private async fail(
+    id: string,
+    reason: string,
+    isProviderAnswer: boolean,
+  ): Promise<Either<Error, boolean>> {
     this.logger.warn(`Image ${id} gets no preview: ${reason}`);
 
     const isMarked = await this.imageRepository.markPreviewFailed(id);
 
-    return isMarked.isLeft() ? left(isMarked.value) : right(undefined);
+    return isMarked.isLeft() ? left(isMarked.value) : right(isProviderAnswer);
   }
 }

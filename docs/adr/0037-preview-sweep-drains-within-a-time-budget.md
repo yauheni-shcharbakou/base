@@ -37,8 +37,17 @@ Rejected alternatives:
   stream breaks every time is downloaded again every sweep, up to 100 MB of it, for good.
 - **Counting the attempts in `ImageMakePreviewUseCase`** — the event handler runs it too, and
   BullMQ's ten retries of one event would spend a cap meant for hours within minutes.
-- **Telling an outage from a stuck row**, by not counting a batch in which everything failed — a
-  stuck row alone in the backlog is such a batch, and it is the case the cap is for.
+- **Counting every failure, outage or not.** The count cannot tell a provider that is down from a
+  row that is broken, and during a backfill every row fails once per sweep: an outage longer than
+  the cap would give up on the whole backlog.
+- **Telling the outage by a batch in which everything failed** — a stuck row alone in the backlog
+  is such a batch, and it is the case the cap is for. Ten in a row is not something one row makes.
+- **Any `right` ending a run of failures.** A light original or an SVG is recorded without a word
+  to the provider, so a backlog that mixes them with heavier images would never fail ten in a row
+  while the provider is down.
+- **A run carried from one batch into the next.** The failures a batch ends with would be held back
+  uncounted, and the scheduler would have to count them when the budget ends the sweep there — a
+  second call in each scheduler, for a few rows counted once more or once less.
 
 ## Decision
 
@@ -62,6 +71,15 @@ Rejected alternatives:
   `files.preview_attempts` through `countPreviewAttempt`: one `UPDATE` that adds one and, at the
   cap, sets `preview_failed_at` — only over neither a preview nor a mark, like every other write of
   these columns. It leaves `updated_at` alone, which a file's grace is measured from.
+- **Ten failures in a row stop the sweep, and are not counted.** A `left` is held back rather than
+  counted at once. `*_PREVIEW_SWEEP_BREAKER_THRESHOLD` of them in a row within a batch — 10 by
+  default, 0 for never — are read as the provider or the database being down: the use case counts
+  none of them and answers nothing, which ends the sweep. A row the provider answered for ends the
+  run, and those held back are counted then; whatever a batch ends with is counted at its end.
+- **Only the provider's answer ends a run.** `ImageMakePreviewUseCase` and
+  `DocumentMakePreviewUseCase` answer `right(true)` when the original was read or found missing,
+  `right(false)` when nothing was asked of the provider — a light original, an SVG, a document too
+  heavy to draw, a row with nothing to make. The sweep leaves the run as it is over a `false`.
 
 ## Consequences
 
@@ -76,13 +94,24 @@ Rejected alternatives:
   anything up.
 - **A row that keeps failing costs one attempt per sweep**, delays nothing behind it, and stops
   after the cap: two hours at the least by default, since sweeps are 10 minutes apart or more.
-- **An outage longer than the cap gives up on the whole backlog.** The count cannot tell a provider
-  that is down from a row that is broken, and during a backfill every row fails once per sweep. In
-  the steady state the backlog is a few rows; raise the cap, or set it to 0, before a long
-  backfill. The rows are told apart afterwards: one the cap gave up on has `preview_attempts` at
-  the cap or over, one a retry cannot help has fewer. Both columns are cleared to queue them again:
+- **An outage costs a sweep ten requests and a row nothing** — while the backlog holds ten rows
+  that ask the provider. The next sweep starts with the same ten, so a backlog waits an outage out
+  where it stood.
+- **A backlog shorter than the threshold is still counted through an outage**, and one longer than
+  the cap gives up on those few rows. They are told apart afterwards: a row the cap gave up on has
+  `preview_attempts` at the cap or over, one a retry cannot help has fewer. Both columns are
+  cleared to queue them again:
   `update images set preview_failed_at = null, preview_attempts = 0 where preview_attempts >= 12`,
   and the same for `files`.
+- **Ten rows that fail every time, next to each other in the backlog, stop every sweep where they
+  are.** They are never counted, so the cap never reaches them, and nothing past them is taken —
+  the head held back again, by the breaker this time. A `left` is the provider, the database or a
+  stream that breaks, so it takes ten originals that break on every read; the log says at each tick
+  that the sweep stopped. Set the threshold to 0 until the cap has given up on them.
+- **The breaker needs a batch as long as its threshold.** A run does not carry into the next batch,
+  so a threshold over `*_PREVIEW_SWEEP_LIMIT` never stops a sweep — the use case warns of it when
+  the service starts — and the failures one batch ends with are counted even when the next opens
+  with ten more.
 - **The count is never reset by the service.** It is the sum of a row's failed sweeps, not a run of
   them, and a row that gets its preview keeps the number it had.
 - **Rows the sweep has passed are not seen again until the next one** — an image that turns READY

@@ -20,12 +20,25 @@ const env = validateEnv({
   // Sweeps that may come back from one image without a preview before it is marked failed — a
   // sweep tries an image once, so 12 is two hours at the least. 0 never gives up.
   STORAGE_IMAGE_PREVIEW_SWEEP_MAX_ATTEMPTS: zod.coerce.number().int().nonnegative().default(12),
+  // Images in a row one batch may fail before the sweep stops and counts none of them — that many
+  // at once is the provider down, not the images. A run is within a batch, so a threshold over the
+  // limit never stops anything. 0 never stops.
+  STORAGE_IMAGE_PREVIEW_SWEEP_BREAKER_THRESHOLD: zod.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(10),
 
-  // The same four for PDF previews — each document is a download of up to 50 MB and a render.
+  // The same five for PDF previews — each document is a download of up to 50 MB and a render.
   STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT: zod.coerce.number().int().positive().default(20),
   STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES: zod.coerce.number().int().nonnegative().default(10),
   STORAGE_DOCUMENT_PREVIEW_SWEEP_BUDGET_MINUTES: zod.coerce.number().int().nonnegative().default(8),
   STORAGE_DOCUMENT_PREVIEW_SWEEP_MAX_ATTEMPTS: zod.coerce.number().int().nonnegative().default(12),
+  STORAGE_DOCUMENT_PREVIEW_SWEEP_BREAKER_THRESHOLD: zod.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(10),
 });
 
 export const config = () => {
@@ -37,12 +50,14 @@ export const config = () => {
       graceMinutes: env.STORAGE_IMAGE_PREVIEW_SWEEP_GRACE_MINUTES,
       budgetMinutes: env.STORAGE_IMAGE_PREVIEW_SWEEP_BUDGET_MINUTES,
       maxAttempts: env.STORAGE_IMAGE_PREVIEW_SWEEP_MAX_ATTEMPTS,
+      breakerThreshold: env.STORAGE_IMAGE_PREVIEW_SWEEP_BREAKER_THRESHOLD,
     },
     documentPreviewSweep: {
       limit: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT,
       graceMinutes: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES,
       budgetMinutes: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_BUDGET_MINUTES,
       maxAttempts: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_MAX_ATTEMPTS,
+      breakerThreshold: env.STORAGE_DOCUMENT_PREVIEW_SWEEP_BREAKER_THRESHOLD,
     },
   } as const;
 };

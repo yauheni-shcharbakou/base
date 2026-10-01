@@ -77,7 +77,8 @@ describe('ImageMakePreviewUseCase', () => {
   it('renders the original, stores the webp beside it and records its key', async () => {
     const result = await run();
 
-    expect(result.isRight()).toBe(true);
+    // `true`: the provider answered on the way, which the sweep's breaker goes by.
+    expect(result.value).toBe(true);
     expect(fileService.getObjectStream).toHaveBeenCalledWith('dev/u/a.jpg');
     // The stream itself: the original never becomes a buffer on this side (ADR-0034).
     expect(previewService.render).toHaveBeenCalledWith(expect.any(Readable));
@@ -94,8 +95,9 @@ describe('ImageMakePreviewUseCase', () => {
       right(image({ width: 512, height: 300 }, { mimeType: 'image/png', size: 1000 })),
     );
 
-    await run();
+    const result = await run();
 
+    expect(result.value).toBe(false);
     expect(fileService.getObjectStream).not.toHaveBeenCalled();
     expect(repository.setPreview).toHaveBeenCalledWith('image-1', 'dev/u/a.jpg');
   });
@@ -113,13 +115,13 @@ describe('ImageMakePreviewUseCase', () => {
 
   it('shows a light SVG as it is and gives up on a heavy one', async () => {
     repository.getOne.mockResolvedValue(right(image({}, { mimeType: 'image/svg+xml', size: 10 })));
-    await run();
+    expect((await run()).value).toBe(false);
     expect(repository.setPreview).toHaveBeenCalledWith('image-1', 'dev/u/a.jpg');
 
     repository.getOne.mockResolvedValue(
       right(image({}, { mimeType: 'image/svg+xml', size: LIGHT_ORIGINAL_MAX_BYTES + 1 })),
     );
-    await run();
+    expect((await run()).value).toBe(false);
     expect(repository.markPreviewFailed).toHaveBeenCalledWith('image-1');
     expect(fileService.getObjectStream).not.toHaveBeenCalled();
   });
@@ -135,7 +137,8 @@ describe('ImageMakePreviewUseCase', () => {
 
     const result = await run();
 
-    expect(result.isRight()).toBe(true);
+    // The provider answered either way: with the bytes, or that there are none.
+    expect(result.value).toBe(true);
     expect(repository.markPreviewFailed).toHaveBeenCalledWith('image-1');
     expect(repository.setPreview).not.toHaveBeenCalled();
   });
@@ -198,7 +201,7 @@ describe('ImageMakePreviewUseCase', () => {
 
     const result = await run();
 
-    expect(result.isRight()).toBe(true);
+    expect(result.value).toBe(false);
     expect(fileService.getObjectStream).not.toHaveBeenCalled();
     expect(repository.setPreview).not.toHaveBeenCalled();
     expect(repository.markPreviewFailed).not.toHaveBeenCalled();

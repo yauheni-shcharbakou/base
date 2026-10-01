@@ -74,7 +74,8 @@ describe('DocumentMakePreviewUseCase', () => {
   it('draws the first page, stores the webp beside the PDF and records its key', async () => {
     const result = await run();
 
-    expect(result.isRight()).toBe(true);
+    // `true`: the provider answered on the way, which the sweep's breaker goes by.
+    expect(result.value).toBe(true);
     expect(fileService.getObjectStream).toHaveBeenCalledWith('dev/u/a.pdf');
     expect(previewService.render).toHaveBeenCalledWith(BYTES);
     expect(fileService.putObject).toHaveBeenCalledWith(
@@ -85,27 +86,33 @@ describe('DocumentMakePreviewUseCase', () => {
     expect(repository.setPreview).toHaveBeenCalledWith('file-1', 'dev/u/a.preview.webp');
   });
 
+  // The last column: whether the provider answered on the way — one too heavy is never asked for.
   it.each([
     [
       'undecodable',
       () =>
         previewService.render.mockResolvedValue(left(new DocumentPreviewUndecodableError('bad'))),
+      true,
     ],
-    ['missing', () => fileService.getObjectStream.mockResolvedValue(right(null))],
+    ['missing', () => fileService.getObjectStream.mockResolvedValue(right(null)), true],
     [
       'too heavy to draw',
       () =>
         repository.getById.mockResolvedValue(right(file({ size: DOCUMENT_PREVIEW_MAX_BYTES + 1 }))),
+      false,
     ],
-  ])('marks the preview failed when the document is %s, and answers right', async (_, arrange) => {
-    arrange();
+  ])(
+    'marks the preview failed when the document is %s, and answers right',
+    async (_, arrange, isProviderAnswer) => {
+      arrange();
 
-    const result = await run();
+      const result = await run();
 
-    expect(result.isRight()).toBe(true);
-    expect(repository.markPreviewFailed).toHaveBeenCalledWith('file-1');
-    expect(repository.setPreview).not.toHaveBeenCalled();
-  });
+      expect(result.value).toBe(isProviderAnswer);
+      expect(repository.markPreviewFailed).toHaveBeenCalledWith('file-1');
+      expect(repository.setPreview).not.toHaveBeenCalled();
+    },
+  );
 
   it('never downloads a document too heavy to draw', async () => {
     repository.getById.mockResolvedValue(right(file({ size: DOCUMENT_PREVIEW_MAX_BYTES + 1 })));
@@ -186,7 +193,7 @@ describe('DocumentMakePreviewUseCase', () => {
 
     const result = await run();
 
-    expect(result.isRight()).toBe(true);
+    expect(result.value).toBe(false);
     expect(fileService.getObjectStream).not.toHaveBeenCalled();
     expect(repository.setPreview).not.toHaveBeenCalled();
     expect(repository.markPreviewFailed).not.toHaveBeenCalled();
