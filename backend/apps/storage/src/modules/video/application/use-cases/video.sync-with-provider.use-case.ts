@@ -69,10 +69,12 @@ export class VideoSyncWithProviderUseCase {
   }
 
   /**
-   * The webhook is the primary path out of UPLOADED; this is the backstop. Bunny's callback is
-   * answered 200 even when our own handling fails, and the signature covers the body alone, so a
-   * dropped or mis-delivered status would otherwise park a row in UPLOADED forever — the cleanup
-   * cron deliberately does not sweep that status.
+   * The webhook is the primary path to READY; this is the backstop. Bunny's callback is answered
+   * 200 even when our own handling fails, and the signature covers the body alone, so a dropped or
+   * mis-delivered status would otherwise park a row in UPLOADED forever — the cleanup cron
+   * deliberately does not sweep that status — or leave an encoded video PENDING, then FAILED, for
+   * that cron to delete. The provider's word is final either way: whatever the row says, a video
+   * Bunny has encoded is READY.
    */
   private async reconcileStalledUploads(items: StorageVideo[]): Promise<void> {
     // An empty page must return early: `getMany` with no filter falls through to `findAll`, which
@@ -88,28 +90,38 @@ export class VideoSyncWithProviderUseCase {
       { populate: ['file'] },
     );
 
-    // Only rows still waiting. Without this filter the cron would re-emit `uploadFinish` for every
-    // encoded video in the library, every hour.
+    // Only rows short of READY. Without this filter the cron would re-emit `uploadFinish` for
+    // every encoded video in the library, every hour.
     const stalled = _.filter(
       videos,
-      (video) => video.file?.uploadStatus === NestStorage.FileUploadStatus.UPLOADED,
+      (video) => !!video.file && video.file.uploadStatus !== NestStorage.FileUploadStatus.READY,
     );
 
     for (const video of stalled) {
       const status = statusByProviderId.get(video.providerId);
+      const { uploadStatus } = video.file;
 
       if (status === BunnyVideoStatus.FINISHED) {
         await this.eventBus.emitUploadFinish(video);
-        this.logger.log(`Video ${video.id} reconciled to encoded, provider status ${status}`);
+        this.logger.log(
+          `Video ${video.id} reconciled from ${uploadStatus} to encoded, provider status ${status}`,
+        );
         continue;
       }
 
-      if (status === BunnyVideoStatus.ERROR || status === BunnyVideoStatus.UPLOAD_FAILED) {
+      // A row already FAILED stays out: the provider keeps reporting its error until the cleanup
+      // cron deletes the video, and each pass would emit the same event again.
+      if (
+        (status === BunnyVideoStatus.ERROR || status === BunnyVideoStatus.UPLOAD_FAILED) &&
+        uploadStatus !== NestStorage.FileUploadStatus.FAILED
+      ) {
         await this.eventBus.emitUploadFail(video);
-        this.logger.warn(`Video ${video.id} reconciled to failed, provider status ${status}`);
+        this.logger.warn(
+          `Video ${video.id} reconciled from ${uploadStatus} to failed, provider status ${status}`,
+        );
       }
 
-      // Anything else means the encode is still running — leave the row alone.
+      // Anything else means the upload or the encode is still running — leave the row alone.
     }
   }
 }
