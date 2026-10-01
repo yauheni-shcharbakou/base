@@ -2,6 +2,10 @@ import {
   IMAGE_PREVIEW_MAX_SIDE,
   ImagePreviewUndecodableError,
 } from '@modules/image/domain/services/image.preview.service';
+import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import sharp from 'sharp';
 import { SharpImagePreviewServiceImpl } from './sharp.image.preview.service.impl';
 
@@ -14,9 +18,31 @@ const png = (width: number, height: number) =>
 
 describe('SharpImagePreviewServiceImpl', () => {
   const service = new SharpImagePreviewServiceImpl();
+  const systemTmpDir = process.env.TMPDIR;
+  let tmpDir: string;
+
+  // A directory of its own, so what a render leaves behind can be counted.
+  beforeAll(async () => {
+    tmpDir = await mkdtemp(join(tmpdir(), 'image-preview-spec-'));
+    process.env.TMPDIR = tmpDir;
+  });
+
+  afterAll(async () => {
+    if (systemTmpDir === undefined) {
+      delete process.env.TMPDIR;
+    } else {
+      process.env.TMPDIR = systemTmpDir;
+    }
+
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  afterEach(async () => {
+    expect(await readdir(tmpDir)).toEqual([]);
+  });
 
   const rendered = async (original: Buffer) => {
-    const result = await service.render(original);
+    const result = await service.render(Readable.from([original]));
 
     if (result.isLeft()) {
       throw result.value;
@@ -73,9 +99,31 @@ describe('SharpImagePreviewServiceImpl', () => {
   });
 
   it('refuses bytes that are no image as undecodable', async () => {
-    const result = await service.render(Buffer.from('definitely not an image'));
+    const result = await service.render(Readable.from([Buffer.from('definitely not an image')]));
 
     expect(result.isLeft()).toBe(true);
     expect(result.value).toBeInstanceOf(ImagePreviewUndecodableError);
+  });
+
+  it('answers a broken stream with a plain error, which a retry may fix', async () => {
+    const original = await png(100, 40);
+    let isSent = false;
+    const broken = new Readable({
+      read() {
+        if (isSent) {
+          this.destroy(new Error('socket hang up'));
+          return;
+        }
+
+        isSent = true;
+        this.push(original.subarray(0, 20));
+      },
+    });
+
+    const result = await service.render(broken);
+
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).not.toBeInstanceOf(ImagePreviewUndecodableError);
+    expect((result.value as Error).message).toBe('socket hang up');
   });
 });

@@ -57,7 +57,6 @@ describe('ImageMakePreviewUseCase', () => {
       isExistsById: jest.fn().mockResolvedValue(true),
     };
     fileService = {
-      // A fresh stream per call: one is consumed by the read.
       getObjectStream: jest
         .fn()
         .mockImplementation(() => Promise.resolve(right(Readable.from([BYTES])))),
@@ -80,7 +79,8 @@ describe('ImageMakePreviewUseCase', () => {
 
     expect(result.isRight()).toBe(true);
     expect(fileService.getObjectStream).toHaveBeenCalledWith('dev/u/a.jpg');
-    expect(previewService.render).toHaveBeenCalledWith(BYTES);
+    // The stream itself: the original never becomes a buffer on this side (ADR-0034).
+    expect(previewService.render).toHaveBeenCalledWith(expect.any(Readable));
     expect(fileService.putObject).toHaveBeenCalledWith(
       'dev/u/a.preview.webp',
       PREVIEW.body,
@@ -149,18 +149,10 @@ describe('ImageMakePreviewUseCase', () => {
       'the write',
       () => fileService.putObject.mockResolvedValue(left(new InternalServerErrorException())),
     ],
+    // What the renderer answers when the original's stream breaks under it.
     [
       'the stream',
-      () =>
-        fileService.getObjectStream.mockResolvedValue(
-          right(
-            new Readable({
-              read() {
-                this.destroy(new Error('socket hang up'));
-              },
-            }),
-          ),
-        ),
+      () => previewService.render.mockResolvedValue(left(new Error('socket hang up'))),
     ],
   ])('answers left when %s fails, so it is retried', async (_, arrange) => {
     arrange();

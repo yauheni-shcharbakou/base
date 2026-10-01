@@ -1,7 +1,6 @@
 import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
-import { readToBuffer } from '@common/application/helpers/read-to-buffer';
 import { ImageRepository } from '@modules/image/domain/repositories/image.repository';
 import {
   IMAGE_PREVIEW_MAX_SIDE,
@@ -79,16 +78,7 @@ export class ImageMakePreviewUseCase {
       return this.fail(id, `the original ${file.providerId} is missing`);
     }
 
-    let original: Buffer;
-
-    try {
-      original = await readToBuffer(stream.value, file.size);
-    } catch (error) {
-      stream.value.destroy();
-      return left(error as Error);
-    }
-
-    const preview = await this.imagePreviewService.render(original);
+    const preview = await this.imagePreviewService.render(stream.value);
 
     if (preview.isLeft()) {
       return preview.value instanceof ImagePreviewUndecodableError
