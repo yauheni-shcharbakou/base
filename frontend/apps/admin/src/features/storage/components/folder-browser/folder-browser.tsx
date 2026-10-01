@@ -620,6 +620,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             onOpenExternal={openExternal}
             onUploadAgain={reupload.uploadAgain}
             onDelete={(item) => askDelete([item])}
+            onMove={(item) => askMove([item])}
             onRename={askRename}
             onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
             onContextMenu={openItemMenu}
@@ -780,8 +781,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
           anchorPosition={openMenuPosition}
           onClose={closeContextMenu}
           getFolderHref={behavior.menu.getFolderHref}
-          // The gallery moves nothing, as its bar's "⋮" does not.
-          onMove={isGallery ? undefined : behavior.menu.onMove}
+          onMove={behavior.menu.onMove}
           onDelete={behavior.menu.onDelete}
           onRename={behavior.menu.onRename}
           onUploadAgain={behavior.menu.onUploadAgain}
@@ -806,6 +806,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onOpen={openExternal}
         onUploadAgain={reupload.uploadAgain}
         onDelete={(item) => askDelete([item])}
+        onMove={(item) => askMove([item])}
         onRename={askRename}
         onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
         isPublicLocked={isPublicLocked}

@@ -69,7 +69,8 @@ type Props = {
  * With none picked, the answer is the folder shown. A search looks through every folder of the
  * owner by name, and a new folder can be made in the one shown — it comes out picked. The keys are
  * Finder's: ↑ / ↓ pick, → opens, ← goes up with the folder left picked, Enter confirms; ↓ leaves the
- * search for the list.
+ * search for the list. Its paper keeps the page's shortcuts off its keys (`data-keeps-keys`): a key
+ * it has no use for — ← in the root, Space, Delete — is not the folder browser's behind it.
  */
 export const FolderPickerDialog: FC<Props> = ({
   open,
@@ -354,6 +355,7 @@ export const FolderPickerDialog: FC<Props> = ({
       aria-labelledby="folder-picker-title"
       onKeyDown={onDialogKeyDown}
       slotProps={{
+        paper: { 'data-keeps-keys': '' } as object,
         transition: {
           // The dialog takes the focus as it opens; the search is where typing should go.
           onEntered: () => searchRef.current?.focus(),

@@ -29,6 +29,7 @@ type Props = {
   // The stage's way out of a failed upload.
   onUploadAgain?: (item: Item) => void;
   onDelete?: (item: Item) => void;
+  onMove?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
   // A right click on an item of the strip: its menu, by the pointer.
@@ -63,6 +64,7 @@ export const FolderGalleryView: FC<Props> = ({
   onOpenExternal,
   onUploadAgain,
   onDelete,
+  onMove,
   onRename,
   onPublicChange,
   onContextMenu,
@@ -231,6 +233,7 @@ export const FolderGalleryView: FC<Props> = ({
             onOpen={onOpenExternal}
             onUploadAgain={onUploadAgain}
             onDelete={onDelete}
+            onMove={onMove}
             onRename={onRename}
             onPublicChange={onPublicChange}
             isPublicLocked={isPublicLocked}

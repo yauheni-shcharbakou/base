@@ -31,6 +31,7 @@ type Props = {
   onOpen: (item: Item) => void;
   onUploadAgain?: (item: Item) => void;
   onDelete?: (item: Item) => void;
+  onMove?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
   // The folder shown is public: nothing in it goes private.
@@ -111,6 +112,7 @@ export const GalleryViewer: FC<Props> = ({
   onOpen,
   onUploadAgain,
   onDelete,
+  onMove,
   onRename,
   onPublicChange,
   isPublicLocked,
@@ -192,6 +194,7 @@ export const GalleryViewer: FC<Props> = ({
             onOpen={onOpen}
             onUploadAgain={onUploadAgain}
             onDelete={onDelete}
+            onMove={onMove}
             onRename={onRename}
             onPublicChange={onPublicChange}
             isPublicLocked={isPublicLocked}

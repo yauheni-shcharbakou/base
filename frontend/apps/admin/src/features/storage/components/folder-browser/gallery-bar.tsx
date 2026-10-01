@@ -33,6 +33,7 @@ type Props = {
   // A failed upload's way out, in the "⋮" as on the stage.
   onUploadAgain?: (item: Item) => void;
   onDelete?: (item: Item) => void;
+  onMove?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
   // The folder shown is public: nothing in it goes private.
@@ -58,6 +59,7 @@ export const GalleryBar: FC<Props> = ({
   onOpen,
   onUploadAgain,
   onDelete,
+  onMove,
   onRename,
   onPublicChange,
   isPublicLocked,
@@ -136,6 +138,7 @@ export const GalleryBar: FC<Props> = ({
           item={item}
           getFolderHref={getFolderHref}
           onDelete={onDelete}
+          onMove={onMove}
           onRename={onRename}
           onUploadAgain={onUploadAgain}
           onPublicChange={onPublicChange}
