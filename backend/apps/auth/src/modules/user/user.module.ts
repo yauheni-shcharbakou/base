@@ -1,6 +1,7 @@
 import { CacheService } from '@backend/cache';
 import { PgModule } from '@backend/pg';
 import { RedisModule, RedisUserTransport } from '@backend/event-bus-redis';
+import { AuthSessionModule } from '@modules/auth/auth-session.module';
 import { CryptoModule } from '@modules/crypto/crypto.module';
 import { Module } from '@nestjs/common';
 import { UserCreateOneUseCase } from './application/use-cases/user.create-one.use-case';
@@ -20,6 +21,7 @@ import { LifecycleUserSeeder } from './interface/lifecycle/lifecycle.user.seeder
     PgModule.forFeature(PgUserEntity),
     RedisModule.forFeature({ EventBus: RedisUserTransport.EventBus }),
     CryptoModule,
+    AuthSessionModule,
   ],
   providers: [
     {

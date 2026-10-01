@@ -42,4 +42,12 @@ export class PgAuthSessionRepositoryImpl
       throw this.toFailure('rotate', error);
     }
   }
+
+  async deleteByUser(userId: string): Promise<number> {
+    try {
+      return await this.repository.nativeDelete({ user: userId });
+    } catch (error) {
+      throw this.toFailure('delete', error);
+    }
+  }
 }

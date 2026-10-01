@@ -31,4 +31,10 @@ export abstract class AuthSessionRepository extends DatabaseRepository<
     currentTokenId: string,
     next: AuthSessionRotation,
   ): Promise<boolean>;
+
+  /**
+   * Ends every session of the user, as one statement, and answers how many there were. A refresh
+   * already past its read loses `rotateToken` to it. A failure is thrown.
+   */
+  abstract deleteByUser(userId: string): Promise<number>;
 }
