@@ -70,9 +70,10 @@ const sendBytes = (item: QueuedUpload, onProgress: (percent: number) => void): P
   }
 };
 
-// What confirms an upload: a file's own id, an image's backing file's.
+// The file row of an upload's record, which confirms it: a file's own id, an image's or a video's
+// backing file's.
 const getFileId = ({ kind, entity }: QueuedUpload): string =>
-  kind === IMAGE ? (entity as CreatedImage).fileId : (entity as CreatedFile).id;
+  kind === FILE ? (entity as CreatedFile).id : (entity as CreatedImage | CreatedVideo).fileId;
 
 /**
  * Drive's upload queue: files dropped on the folder browser, created and uploaded in the order they
@@ -157,6 +158,20 @@ class StorageUploadQueue {
     });
 
     this.set(this.items.filter((item) => !dismissed.includes(item)));
+  }
+
+  /**
+   * Forgets the failed items whose record sits on this file row: the folder browser has replaced
+   * that upload with a new one, and a retry here would send its bytes to a record already deleted.
+   */
+  dismissFailedOf(fileId: string) {
+    const keys = this.items
+      .filter((item) => item.status === 'failed' && item.entity && getFileId(item) === fileId)
+      .map(({ key }) => key);
+
+    if (keys.length) {
+      this.dismiss(keys);
+    }
   }
 
   private set(items: QueuedUpload[]) {

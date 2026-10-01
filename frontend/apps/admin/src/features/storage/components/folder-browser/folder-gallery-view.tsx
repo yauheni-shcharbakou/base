@@ -25,6 +25,8 @@ type Props = {
   onOpen: (item: Item) => void;
   // The bar's Open: the item itself, in a new tab.
   onOpenExternal: (item: Item) => void;
+  // The stage's way out of a failed upload.
+  onUploadAgain?: (item: Item) => void;
   onDelete?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
@@ -55,6 +57,7 @@ export const FolderGalleryView: FC<Props> = ({
   onSelect,
   onOpen,
   onOpenExternal,
+  onUploadAgain,
   onDelete,
   onRename,
   onPublicChange,
@@ -198,6 +201,8 @@ export const FolderGalleryView: FC<Props> = ({
               item={selected}
               onFullscreen={(seconds) => viewer.continueIn({ id: selected.id, seconds })}
               onOpen={onOpenExternal}
+              onUploadAgain={onUploadAgain}
+              onDelete={onDelete}
               onPreviewError={onPreviewError}
               playerControls={viewer.playerControls}
               pdfControls={viewer.pdfControls}

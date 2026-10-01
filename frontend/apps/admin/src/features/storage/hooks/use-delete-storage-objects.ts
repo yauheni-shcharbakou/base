@@ -19,9 +19,10 @@ const describeItems = (items: Item[]) =>
  * Deletes folder items — each folder with everything under it — in one gateway call, all or none: a
  * selection holds no more than it takes (`MAX_SELECTION`). The service only marks the subtrees deleted, with no restore, so the caller
  * confirms first. Every cached listing goes stale: the items' folder lost them, and a deleted
- * folder's own pages are gone.
+ * folder's own pages are gone. `isQuiet` keeps a success to itself, for a delete that is a step of
+ * something else — a failure is still told.
  */
-export const useDeleteStorageObjects = () => {
+export const useDeleteStorageObjects = ({ isQuiet = false }: { isQuiet?: boolean } = {}) => {
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
   const notify = useReplacingNotification();
@@ -39,11 +40,13 @@ export const useDeleteStorageObjects = () => {
   return useMutation({
     mutationFn: (items: Item[]) => folderActionProvider.deleteMany(items.map(({ id }) => id)),
     onSuccess: (_, items) => {
-      notify({
-        type: 'success',
-        message: `${describeItems(items)} deleted`,
-        key: 'storage-object-delete',
-      });
+      if (!isQuiet) {
+        notify({
+          type: 'success',
+          message: `${describeItems(items)} deleted`,
+          key: 'storage-object-delete',
+        });
+      }
 
       refresh(items);
     },

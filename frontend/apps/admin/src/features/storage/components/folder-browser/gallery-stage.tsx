@@ -12,11 +12,13 @@ import {
   StorageItemKind,
 } from '@/features/storage/helpers';
 import { BunnyPlayer, BunnyPlayerControls } from '@/features/video/components';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
 import OpenInNewOutlined from '@mui/icons-material/OpenInNewOutlined';
 import PlayArrowRounded from '@mui/icons-material/PlayArrowRounded';
+import ReplayRounded from '@mui/icons-material/ReplayRounded';
 import { Box, Button, Chip, CircularProgress, Stack, Typography } from '@mui/material';
-import type { BrowserStorage } from '@packages/proto';
+import { BrowserStorage } from '@packages/proto';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import React, { FC, RefObject, useEffect, useState } from 'react';
@@ -42,6 +44,9 @@ type Props = {
   // in the viewer, it leaves.
   onFullscreen?: (seconds: number) => void;
   onOpen?: (item: Item) => void;
+  // What an item whose upload failed is offered in place of Open.
+  onUploadAgain?: (item: Item) => void;
+  onDelete?: (item: Item) => void;
   onPreviewError?: () => void;
   // Where a playing video's controls go, for the gallery's keys.
   playerControls?: RefObject<BunnyPlayerControls | null>;
@@ -66,8 +71,8 @@ const PDF_FAILURE_LABELS: Record<PdfFailure, string> = {
  * The large picture of a gallery or its viewer: an image's preview at once, then its original once
  * the selection rests; a video's poster that turns into the player on a click — or by itself, in
  * the viewer; a PDF's pages once the selection rests; a big icon for the rest — with what its upload
- * is at, for an item that cannot be opened yet. Keyed by item, so nothing of one item's state leaks
- * into the next.
+ * is at, for an item that cannot be opened yet, and "Upload again" and "Delete" once it has failed.
+ * Keyed by item, so nothing of one item's state leaks into the next.
  */
 export const GalleryStage: FC<Props> = ({
   item,
@@ -75,6 +80,8 @@ export const GalleryStage: FC<Props> = ({
   startTime,
   onFullscreen,
   onOpen,
+  onUploadAgain,
+  onDelete,
   onPreviewError,
   playerControls,
   pdfControls,
@@ -125,6 +132,7 @@ export const GalleryStage: FC<Props> = ({
   const hasPreview = !!item.previewUrl && !isPreviewFailed;
   const unavailableReason = getFolderItemUnavailableReason(item);
   const uploadStatus = item.file?.uploadStatus;
+  const isUploadFailed = uploadStatus === BrowserStorage.FileUploadStatus.FAILED;
   const mutedColor = isViewer ? 'grey.400' : 'text.secondary';
 
   const handlePreviewError = () => {
@@ -278,6 +286,37 @@ export const GalleryStage: FC<Props> = ({
           <Typography variant="body2" color={mutedColor} textAlign="center">
             {unavailableReason}
           </Typography>
+        </Stack>
+      )}
+      {isUploadFailed && (onUploadAgain || onDelete) && (
+        // A failed upload is a dead end: the two ways out of it, where the failure is told.
+        <Stack
+          direction="row"
+          flexWrap="wrap"
+          justifyContent="center"
+          gap={1}
+          sx={{ mt: 1 }}
+          onDoubleClick={(event) => event.stopPropagation()}
+        >
+          {onUploadAgain && (
+            <Button
+              variant="contained"
+              startIcon={<ReplayRounded />}
+              onClick={() => onUploadAgain(item)}
+            >
+              Upload again
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="outlined"
+              color="inherit"
+              startIcon={<DeleteOutlined />}
+              onClick={() => onDelete(item)}
+            >
+              Delete
+            </Button>
+          )}
         </Stack>
       )}
       {isViewer && onOpen && !unavailableReason && (

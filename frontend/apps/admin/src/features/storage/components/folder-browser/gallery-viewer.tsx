@@ -28,6 +28,7 @@ type Props = {
   onExit: () => void;
   onToggleInfo: () => void;
   onOpen: (item: Item) => void;
+  onUploadAgain?: (item: Item) => void;
   onDelete?: (item: Item) => void;
   onRename?: (item: Item) => void;
   onPublicChange?: (item: Item, isPublic: boolean) => void;
@@ -106,6 +107,7 @@ export const GalleryViewer: FC<Props> = ({
   onExit,
   onToggleInfo,
   onOpen,
+  onUploadAgain,
   onDelete,
   onRename,
   onPublicChange,
@@ -156,6 +158,8 @@ export const GalleryViewer: FC<Props> = ({
             // The player's own full-screen button toggles, as it does inline: here it leaves.
             onFullscreen={onExit}
             onOpen={onOpen}
+            onUploadAgain={onUploadAgain}
+            onDelete={onDelete}
             onPreviewError={onPreviewError}
             playerControls={playerControls}
             pdfControls={pdfControls}

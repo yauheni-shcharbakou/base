@@ -64,6 +64,7 @@ import { RenameStorageItemDialog } from './rename-storage-item-dialog';
 import { useFileDrop } from './use-file-drop';
 import { DropFolder, FolderItemBehavior, useFolderItemBehavior } from './use-folder-item-behavior';
 import { useFolderViewer } from './use-folder-viewer';
+import { useUploadAgain } from './use-upload-again';
 import { isControl, isTyping, useWindowKeyDown } from './use-window-key-down';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
@@ -115,7 +116,8 @@ const EmptyFolder: FC<{ onClearFilters?: () => void }> = ({ onClearFilters }) =>
  * A folder of a user's storage, browsed the way Google Drive does — grid or list — or the way
  * Finder's gallery does. A folder opens in place; anything else in the full-screen viewer, which
  * steps through the folder's files — through all its items, from the gallery — and opens one in a
- * new tab once its upload is done, and says what the upload is at before that. In the grid and the list a click selects, as in
+ * new tab once its upload is done, and says what the upload is at before that — a failed one is
+ * uploaded again or deleted there. In the grid and the list a click selects, as in
  * Drive, and the selection — up to 100 items — moves, deletes or turns public or private together:
  * from its bar, an item's "⋮", a drag onto a folder or a breadcrumb, or the keyboard. An item's "⋮"
  * renames it. Files dropped from the desktop upload into the folder, or
@@ -153,6 +155,10 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   const rootLabel = useRootFolderLabel(content?.folder.userId);
   const shownFolder = content && { id: folderId, name: content.folder.name || rootLabel };
   const fileDrop = useFileDrop({ userId: content?.folder.userId, folder: shownFolder });
+  // A failed upload's way out, from the stage that tells of it: a new file in its place.
+  const reupload = useUploadAgain({
+    onUpload: (files) => shownFolder && fileDrop.uploadFiles(files, shownFolder),
+  });
 
   const selection = useFolderSelection({
     items: content?.items,
@@ -500,6 +506,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             onSelect={selectItem}
             onOpen={openItem}
             onOpenExternal={openExternal}
+            onUploadAgain={reupload.uploadAgain}
             onDelete={(item) => setPendingDelete([item])}
             onRename={setPendingRename}
             onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
@@ -654,6 +661,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onExit={viewer.exit}
         onToggleInfo={() => setGalleryInfo(!preferences.galleryInfo)}
         onOpen={openExternal}
+        onUploadAgain={reupload.uploadAgain}
         onDelete={(item) => setPendingDelete([item])}
         onRename={setPendingRename}
         onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
@@ -663,6 +671,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         playerControls={viewer.playerControls}
         pdfControls={viewer.pdfControls}
       />
+      <input {...reupload.inputProps} />
       {fileDropTarget && (
         // Drive's drop area: the folder outlined.
         <Box
