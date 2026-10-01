@@ -240,23 +240,27 @@ holds the role, and never touches one that exists.
 
 <!-- env-table:start src=backend/apps/storage/src/config.ts,backend/apps/storage/src/modules/storage/infrastructure/configs/bunny.storage.config.ts -->
 
-| Variable                                  | Type                                                          | Default      | Source                    |
-| ----------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
-| `STORAGE_PENDING_FILE_TTL_HOURS`          | number                                                        | `24`         | `config.ts`               |
-| `BUNNY_STORAGE_ZONE`                      | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_API_KEY`                   | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_S3_REGION`                 | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES` | number ≥ 1, ≤ 10_080                                          | `60`         | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_ZONE`                  | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_PRIVATE_KEY`           | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`    | number ≥ 1                                                    | `10`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_API_KEY`                    | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_READ_ONLY_API_KEY`          | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_LIBRARY_ID`                 | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_ZONE`                   | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_PRIVATE_KEY`            | string                                                        | **required** | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`     | number ≥ 1                                                    | `60`         | `bunny.storage.config.ts` |
-| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`     | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
+| Variable                                       | Type                                                          | Default      | Source                    |
+| ---------------------------------------------- | ------------------------------------------------------------- | ------------ | ------------------------- |
+| `STORAGE_PENDING_FILE_TTL_HOURS`               | number                                                        | `24`         | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_LIMIT`            | integer > 0                                                   | `20`         | `config.ts`               |
+| `STORAGE_IMAGE_PREVIEW_SWEEP_GRACE_MINUTES`    | integer ≥ 0                                                   | `10`         | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_LIMIT`         | integer > 0                                                   | `20`         | `config.ts`               |
+| `STORAGE_DOCUMENT_PREVIEW_SWEEP_GRACE_MINUTES` | integer ≥ 0                                                   | `10`         | `config.ts`               |
+| `BUNNY_STORAGE_ZONE`                           | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_API_KEY`                        | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_S3_REGION`                      | `de` \| `ny` \| `uk` \| `se` \| `sg` \| `la` \| `jh` \| `syd` | `de`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_UPLOAD_EXPIRES_IN_MINUTES`      | number ≥ 1, ≤ 10_080                                          | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_ZONE`                       | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_PRIVATE_KEY`                | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STORAGE_CDN_EXPIRES_IN_MINUTES`         | number ≥ 1                                                    | `10`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_API_KEY`                         | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_READ_ONLY_API_KEY`               | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_LIBRARY_ID`                      | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_ZONE`                        | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_PRIVATE_KEY`                 | string                                                        | **required** | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_CDN_EXPIRES_IN_MINUTES`          | number ≥ 1                                                    | `60`         | `bunny.storage.config.ts` |
+| `BUNNY_STREAM_TUS_EXPIRES_IN_MINUTES`          | number ≥ 60                                                   | `120`        | `bunny.storage.config.ts` |
 
 <!-- env-table:end -->
 
@@ -280,6 +284,17 @@ Bunny signs the status webhook with — the service rejects an unsigned or mis-s
 signature; Bunny refuses anything under an hour, and a resumed upload is re-signed rather than
 extended. `STORAGE_PENDING_FILE_TTL_HOURS` must outlast that window plus Bunny's encoding queue —
 a video only leaves `PENDING` once the webhook arrives, so a short TTL deletes uploads in flight.
+
+The four `STORAGE_*_PREVIEW_SWEEP_*` variables tune the two preview sweeps, images and PDFs apart:
+an image is a download of up to 100 MB spooled to the temp directory, a PDF up to 50 MB held in
+memory and a render. A sweep runs every 10 minutes and takes its items one after another, so
+`*_SWEEP_LIMIT` is the pace of a backfill — six times it an hour — and is meant to be raised for
+one and lowered again. A sweep that outlasts the 10 minutes makes the next tick skip rather than
+start beside it, but only within one process: every replica sweeps on its own.
+`*_SWEEP_GRACE_MINUTES` is how long an item must have been READY before the sweep takes it, which
+leaves the `storage.file.ready` handler its retries: at the default `REDIS_JOB_ATTEMPTS` and
+`REDIS_JOB_BACKOFF_DELAY` the ladder ends after about 8.5 minutes. A shorter grace loses nothing —
+the preview is recorded only over none — it renders twice what a retry was about to render.
 
 Unlike the other services, `PORT` here is a real HTTP listener: it serves the single route
 `POST /webhooks/bunny/stream` and nothing else. Keep it clear of `STORAGE_GRPC_URL`'s port: in
