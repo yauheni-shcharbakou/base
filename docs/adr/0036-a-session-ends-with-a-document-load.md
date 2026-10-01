@@ -62,6 +62,10 @@ Rejected alternatives:
   in.
 - **Signing in is still a soft navigation**, onto a page whose cache is empty because the sign-out
   before it — or the tab's own load — emptied it.
-- **The key that follows the URL is still there.** A list is fetched twice on opening, once per
-  URL: the mount effect writes the page and sort into it. That is a waste, not a fault, and is
-  left for its own change.
+- **The key no longer follows the URL.** The list page now keeps its own `sortBy` / `sortOrder`
+  out of `meta`, so a URL change alone asks for nothing — on the way to `/login` included. That
+  was never a second fetch on opening: the request under the first key was lost in Next's router
+  queue, and the key's change was what loaded the list, so the page also waits for its mount
+  navigation before asking (the note at the top of `resource-list.page.tsx`). What it did cost was
+  a second fetch on every sort. The decision stands without it: a soft navigation would still
+  carry one session's cache and mounted queries into the next.

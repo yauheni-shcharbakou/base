@@ -6,13 +6,20 @@
  * and reverted.
  *
  * The manual URL sync + `isMounted` gate below is deliberate and load-bearing:
- *  - `enabled: () => isMounted` + rendering a placeholder until mount keeps the
+ *  - `enabled` behind `isMounted` + rendering a placeholder until mount keeps the
  *    DataGrid from mounting during SSR / first render.
  *  - Without it Refine does NOT fire the initial `getList` (the page hangs on an
  *    infinite loading state) and React throws:
  *    "Can't perform a React state update on a component that hasn't mounted yet."
  *
  * Keep this approach. The empty-deps mount effect is intentional.
+ *
+ * The gate also waits for the mount effect's navigation to land (`isSyncingUrl`), and that is
+ * load-bearing too. Next's router queue loses a server action sent right after a navigation
+ * that interrupted another one: the navigation discards the action in flight — here the auth
+ * provider's, on a soft navigation — and what is queued next hangs off the discarded one and
+ * never runs. A `getList` sent from the mount render is that action, and its query loads
+ * forever. Once the navigation has landed the queue is free.
  */
 
 import { AppBreadcrumb } from '@/common/components';
@@ -28,7 +35,7 @@ import {
 import { CrudSort, HttpError } from '@refinedev/core';
 import { List, ListProps, useDataGrid } from '@refinedev/mui';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useTransition } from 'react';
 
 type ResourceListProps = {
   resource: string;
@@ -36,8 +43,16 @@ type ResourceListProps = {
   headerButtons?: ListProps['headerButtons'];
 };
 
+// Refine merges every URL parameter it does not know into a list's `meta`, and `meta` into its
+// query key (`useMeta`). `sortBy` / `sortOrder` are this page's own, so the key would change a
+// second time when the URL caught up with a new sort — already in the key as `sorters` — and
+// the list would be fetched twice. An explicit `meta` wins over the URL's, and a key's hash
+// leaves an `undefined` out, so this keeps both parameters out of the key.
+const URL_SORT_META = { sortBy: undefined, sortOrder: undefined };
+
 export const ResourceListPage: FC<ResourceListProps> = ({ columns, headerButtons, resource }) => {
   const [isMounted, setIsMounted] = useState(false);
+  const [isSyncingUrl, startUrlSync] = useTransition();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -62,16 +77,22 @@ export const ResourceListPage: FC<ResourceListProps> = ({ columns, headerButtons
     params.set('sortBy', initialSorter.field);
     params.set('sortOrder', initialSorter.order);
 
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    // The transition stays pending until this navigation has landed (see the note at the top).
+    startUrlSync(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    });
     // Intentionally run once on mount — do not add deps (see the note at the top).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isReady = isMounted && !isSyncingUrl;
+
   const { dataGridProps } = useDataGrid({
     syncWithLocation: false,
     resource,
+    meta: URL_SORT_META,
     queryOptions: {
-      enabled: () => isMounted,
+      enabled: () => isReady,
       retry: retryUpTo<HttpError>(3),
       retryDelay: getQueryRetryDelay,
     },
@@ -130,7 +151,7 @@ export const ResourceListPage: FC<ResourceListProps> = ({ columns, headerButtons
       headerButtons={headerButtons}
       breadcrumb={<AppBreadcrumb />}
     >
-      {isMounted ? (
+      {isReady ? (
         <DataGrid
           {...dataGridProps}
           onPaginationModelChange={handlePaginationModelChange}
