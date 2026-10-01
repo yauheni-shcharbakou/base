@@ -39,6 +39,7 @@ type Props = {
 };
 
 const white = { color: 'common.white' };
+const whiteOrDisabled = { ...white, '&.Mui-disabled': { color: 'rgba(255, 255, 255, 0.3)' } };
 
 /**
  * The strip over the top of a gallery's stage and its viewer: what the item is, and what can be
@@ -122,7 +123,7 @@ export const GalleryBar: FC<Props> = ({
               aria-label="Open"
               disabled={!!unavailableReason}
               onClick={() => onOpen(item)}
-              sx={{ ...white, '&.Mui-disabled': { color: 'rgba(255, 255, 255, 0.3)' } }}
+              sx={whiteOrDisabled}
             >
               {item.isFolder ? <FolderOpenOutlined /> : <OpenInNewOutlined />}
             </IconButton>
@@ -135,7 +136,7 @@ export const GalleryBar: FC<Props> = ({
           onRename={onRename}
           onPublicChange={onPublicChange}
           isPublicLocked={isPublicLocked}
-          buttonProps={{ size: 'medium', sx: white }}
+          buttonProps={{ size: 'medium', sx: whiteOrDisabled }}
         />
         <GalleryShortcuts
           kind={kind}

@@ -61,6 +61,19 @@ export type UploadWork =
   | { type: 'create'; keys: string[] }
   | { type: 'complete'; keys: string[] };
 
+/** On its way — neither done nor failed: what a cancel can still stop. */
+export const isUploadActive = ({ status }: Pick<QueuedUpload, 'status'>): boolean =>
+  status !== 'done' && status !== 'failed';
+
+/**
+ * Whether the upload is taking this folder item's place. The item is deleted by then, and only
+ * held on its page until the new one is listed: nothing can act on it.
+ */
+export const isReplacedBy = (
+  upload: Pick<QueuedUpload, 'replaces'> | undefined,
+  itemId: string,
+): boolean => upload?.replaces === itemId;
+
 // Still on the way to `uploaded`: once none is, nothing is worth waiting for.
 const isComing = ({ status }: QueuedUpload) =>
   status === 'queued' || status === 'creating' || status === 'uploading';
@@ -165,8 +178,12 @@ export const findUploadOf = (
   items.find((item) => item.replaces === id) ??
   (fileId ? items.find((item) => getUploadFileId(item) === fileId) : undefined);
 
-// No `percent` while it cannot be told: the bar runs without one.
-export type UploadProgress = { label: string; percent?: number };
+// `short` is the label for where there is no room — a row of the list. No `percent` while it cannot
+// be told: the bar runs without one.
+export type UploadProgress = { label: string; short: string; percent?: number };
+
+const WAITING: UploadProgress = { label: 'Waiting to upload…', short: 'Waiting' };
+const FINISHING: UploadProgress = { label: 'Finishing…', short: 'Finishing' };
 
 /**
  * What an item not yet openable says of its upload while this tab is at it — in place of the
@@ -180,15 +197,19 @@ export const getUploadProgress = (
   switch (upload?.status) {
     case 'queued':
     case 'creating':
-      return { label: 'Waiting to upload…' };
+      return WAITING;
     case 'uploading':
-      return { label: `Uploading… ${upload.progress}%`, percent: upload.progress };
+      return {
+        label: `Uploading… ${upload.progress}%`,
+        short: `${upload.progress}%`,
+        percent: upload.progress,
+      };
     case 'uploaded':
     case 'completing':
-      return { label: 'Finishing…' };
+      return FINISHING;
     case 'done':
     case 'failed':
-      return upload.replaces === itemId ? { label: 'Finishing…' } : undefined;
+      return isReplacedBy(upload, itemId) ? FINISHING : undefined;
     default:
       return undefined;
   }

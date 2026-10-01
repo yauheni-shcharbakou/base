@@ -8,7 +8,12 @@ const TUS_CHUNK_SIZE_BYTES = 20 * ONE_MB_BYTES;
 
 type Options = {
   onProgress?: (percent: number) => void;
+  // Aborts the upload: its requests stop, and it is rejected. What Bunny holds of it goes with the
+  // video, which whoever cancels deletes.
+  signal?: AbortSignal;
 };
+
+const CANCELLED_MESSAGE = 'The upload was cancelled';
 
 /**
  * Uploads a file straight from the browser to Bunny Stream with the credentials the create call
@@ -17,9 +22,14 @@ type Options = {
 export const uploadViaTus = (
   file: File,
   credentials: BrowserStorage.VideoTusUpload,
-  { onProgress }: Options = {},
+  { onProgress, signal }: Options = {},
 ): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new Error(CANCELLED_MESSAGE));
+      return;
+    }
+
     // A completed upload of a non-empty file always PATCHes at least once, so the absence of a PATCH
     // is proof the bytes never left the browser. Counting writes rather than watching `onProgress`
     // is the whole point: a tus upload that merely *finds* the data already at the provider reports
@@ -73,6 +83,16 @@ export const uploadViaTus = (
       },
       onError: (error) => reject(error),
     });
+
+    signal?.addEventListener(
+      'abort',
+      () => {
+        // An aborted tus upload calls neither `onSuccess` nor `onError`: the rejection is ours.
+        upload.abort().catch(() => undefined);
+        reject(new Error(CANCELLED_MESSAGE));
+      },
+      { once: true },
+    );
 
     upload.start();
   });

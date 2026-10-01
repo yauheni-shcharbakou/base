@@ -14,6 +14,7 @@ import {
 import {
   FOLDER_CONTENT_QUERY_KEY,
   storageUploadQueue,
+  useDroppedUploadRecords,
   useStorageUploads,
 } from '@/features/storage/hooks';
 import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
@@ -44,7 +45,7 @@ import { Database, StorageDatabaseEntity } from '@packages/common';
 import { useInvalidate } from '@refinedev/core';
 import { useQueryClient } from '@tanstack/react-query';
 import NextLink from 'next/link';
-import React, { FC, useEffect, useRef, useState } from 'react';
+import React, { FC, ReactNode, useEffect, useRef, useState } from 'react';
 import { StorageItemIcon } from '../folder-browser/storage-item-icon';
 
 const { STORAGE } = Database;
@@ -73,17 +74,8 @@ const getTitle = (rows: UploadRow[]) => {
   return `${done} ${done === 1 ? 'upload' : 'uploads'} complete`;
 };
 
-const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
+const UploadProgress: FC<{ item: QueuedUpload }> = ({ item }) => {
   switch (item.status) {
-    case 'done':
-      return <CheckCircleRounded color="success" fontSize="small" />;
-    case 'failed':
-      return (
-        <RowActions
-          onRetry={() => storageUploadQueue.retry([item.key])}
-          onDismiss={() => storageUploadQueue.dismiss([item.key])}
-        />
-      );
     case 'uploading':
       return <CircularProgress size={20} variant="determinate" value={item.progress} />;
     // Made, or sent and being confirmed: nothing to measure.
@@ -96,6 +88,52 @@ const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
         <Typography variant="caption" color="text.secondary">
           Waiting
         </Typography>
+      );
+  }
+};
+
+// What is still on its way, with the way to stop it: `name` is what the button stops.
+const ActiveState: FC<{ name: string; onCancel: () => void; children: ReactNode }> = ({
+  name,
+  onCancel,
+  children,
+}) => (
+  <Stack direction="row" alignItems="center" gap={0.5}>
+    {children}
+    <Tooltip title="Cancel">
+      <IconButton
+        size="small"
+        aria-label={`Cancel the upload of ${name}`}
+        // Not on a double click's second click: the row is gone by then, and the next one's button
+        // is under the pointer.
+        onClick={(event) => {
+          if (event.detail <= 1) {
+            onCancel();
+          }
+        }}
+      >
+        <CloseRounded fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  </Stack>
+);
+
+const UploadState: FC<{ item: QueuedUpload }> = ({ item }) => {
+  switch (item.status) {
+    case 'done':
+      return <CheckCircleRounded color="success" fontSize="small" />;
+    case 'failed':
+      return (
+        <RowActions
+          onRetry={() => storageUploadQueue.retry([item.key])}
+          onDismiss={() => storageUploadQueue.dismiss([item.key])}
+        />
+      );
+    default:
+      return (
+        <ActiveState name={item.file.name} onCancel={() => storageUploadQueue.cancel([item.key])}>
+          <UploadProgress item={item} />
+        </ActiveState>
       );
   }
 };
@@ -127,7 +165,7 @@ const FileUploadRow: FC<{ item: QueuedUpload; nested?: boolean }> = ({ item, nes
     <ListItem
       dense
       secondaryAction={<UploadState item={item} />}
-      sx={{ pr: 11, pl: nested ? 6 : 2 }}
+      sx={{ pr: 12, pl: nested ? 6 : 2 }}
     >
       <ListItemIcon sx={{ minWidth: 36 }}>
         <StorageItemIcon kind={kind} fontSize="small" />
@@ -184,7 +222,12 @@ const FolderUploadRow: FC<{ row: FolderRow }> = ({ row }) => {
   const files = [...failed, ...row.items.filter((item) => item.status !== 'failed')];
 
   const state = {
-    active: <CircularProgress size={20} variant="determinate" value={row.summary.progress} />,
+    // Cancelled for the files still on their way: what it has uploaded stays.
+    active: (
+      <ActiveState name={row.folder.name} onCancel={() => storageUploadQueue.cancel(keys)}>
+        <CircularProgress size={20} variant="determinate" value={row.summary.progress} />
+      </ActiveState>
+    ),
     // Dismissed whole: its uploaded files leave the box with the failed ones.
     failed: (
       <RowActions
@@ -202,7 +245,7 @@ const FolderUploadRow: FC<{ row: FolderRow }> = ({ row }) => {
           dense
           aria-expanded={isOpen}
           onClick={() => setIsOpen((open) => !open)}
-          sx={{ pr: 11 }}
+          sx={{ pr: 12 }}
         >
           <ListItemIcon sx={{ minWidth: 36 }}>
             <StorageItemIcon kind={StorageItemKind.FOLDER} fontSize="small" />
@@ -250,9 +293,10 @@ const FolderUploadRow: FC<{ row: FolderRow }> = ({ row }) => {
 
 /**
  * Drive's upload box, in the corner of every page: the queue of files dropped on the folder
- * browser, each with its progress — an uploaded folder as one row for all its files, unfolded on a
- * click — and a retry for what failed. It refreshes the folder listings and the media lists as
- * uploads finish or fail, and asks before the page is left mid-upload.
+ * browser, each with its progress and a cancel — an uploaded folder as one row for all its files,
+ * unfolded on a click — and a retry for what failed. It refreshes the folder listings and the media
+ * lists as uploads finish or fail, and as the record behind a cancelled or dismissed one goes; it
+ * asks before the page is left mid-upload.
  */
 export const StorageUploadPanel: FC = () => {
   const items = useStorageUploads();
@@ -261,14 +305,16 @@ export const StorageUploadPanel: FC = () => {
   const rows = groupUploads(items);
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
-  const settledCount = useRef(0);
+  const seen = useRef({ settled: 0, dropped: 0 });
   // A failed upload shows in its folder too: its record was made, and the item there says what the
   // upload is at and offers to send it again.
   const settled = summary.done + summary.failed;
+  // A record deleted behind a cancelled or dismissed upload took its folder item with it.
+  const dropped = useDroppedUploadRecords();
 
   useEffect(() => {
-    const hasMore = settled > settledCount.current;
-    settledCount.current = settled;
+    const hasMore = settled > seen.current.settled || dropped > seen.current.dropped;
+    seen.current = { settled, dropped };
 
     if (!hasMore) {
       return;
@@ -282,7 +328,7 @@ export const StorageUploadPanel: FC = () => {
     }, REFRESH_DELAY_MS);
 
     return () => clearTimeout(timeout);
-  }, [settled, queryClient, invalidate]);
+  }, [settled, dropped, queryClient, invalidate]);
 
   useEffect(() => {
     if (!summary.active) {
@@ -329,7 +375,8 @@ export const StorageUploadPanel: FC = () => {
         >
           {isCollapsed ? <ExpandLessRounded /> : <ExpandMoreRounded />}
         </IconButton>
-        {/* Nothing cancels a transfer, so the box stays until its uploads have ended. */}
+        {/* Closing forgets what has ended, and cancels nothing: a row still running has its own
+            Cancel, so the box stays until its uploads have ended. */}
         <Tooltip title={summary.active ? 'Uploads are still running' : 'Close'}>
           <span>
             <IconButton

@@ -28,6 +28,7 @@ import { BrowserCommon, BrowserStorage } from '@packages/proto';
 import React, { FC, useEffect, useRef } from 'react';
 import { StorageItemIcon } from './storage-item-icon';
 import { StorageItemMenu } from './storage-item-menu';
+import { StorageItemUploadBadge } from './storage-item-upload-badge';
 import type { FolderItemBehavior } from './use-folder-item-behavior';
 
 type Item = BrowserStorage.StorageObjectFolderItem;
@@ -64,7 +65,8 @@ const rowSx = {
 
 /**
  * Google Drive's list: one row per item, sorted by clicking a column, folders on top. A click
- * selects a row, a double click opens it; a folder's row takes a drop of other items.
+ * selects a row, a double click opens it; a folder's row takes a drop of other items. A file that
+ * cannot be opened yet says what its upload is at beside its name.
  */
 export const FolderListView: FC<Props> = ({
   items,
@@ -173,6 +175,7 @@ export const FolderListView: FC<Props> = ({
                         <PublicOutlined sx={{ fontSize: 16, color: 'text.secondary' }} />
                       </Box>
                     )}
+                    <StorageItemUploadBadge item={item} />
                   </Stack>
                 </TableCell>
                 <TableCell>{STORAGE_ITEM_KIND_LABELS[kind]}</TableCell>

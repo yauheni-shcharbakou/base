@@ -1,23 +1,21 @@
 'use client';
 
-import {
-  getFileUploadStatusColor,
-  getStorageItemKind,
-  StorageItemKind,
-} from '@/features/storage/helpers';
+import { getStorageItemKind, StorageItemKind } from '@/features/storage/helpers';
 import { getVideoDuration } from '@/features/video/helpers';
 import PlayCircleFilledRounded from '@mui/icons-material/PlayCircleFilledRounded';
 import { Box, Chip } from '@mui/material';
-import { BrowserStorage } from '@packages/proto';
+import type { BrowserStorage } from '@packages/proto';
 import Image from 'next/image';
 import React, { FC, useState } from 'react';
 import { StorageItemIcon } from './storage-item-icon';
+import { StorageItemUploadBadge } from './storage-item-upload-badge';
 
 type Props = {
   item: BrowserStorage.StorageObjectFolderItem;
   iconSize?: number | string;
   fit?: 'cover' | 'contain';
-  // Leaves out the badges — duration, upload status — where the thumbnail is too small for them.
+  // Leaves out the badges — duration, the upload's status or progress — where the thumbnail is too
+  // small for them.
   compact?: boolean;
   onPreviewError?: () => void;
 };
@@ -38,8 +36,6 @@ export const StorageItemThumbnail: FC<Props> = ({
   const kind = getStorageItemKind(item);
   const src = item.previewUrl;
   const hasPreview = !!src && src !== failedSrc;
-  const status = item.file?.uploadStatus;
-  const isPending = !item.isFolder && status !== BrowserStorage.FileUploadStatus.READY;
 
   return (
     <Box
@@ -101,14 +97,7 @@ export const StorageItemThumbnail: FC<Props> = ({
         />
       )}
 
-      {!compact && isPending && (
-        <Chip
-          size="small"
-          label={status ?? 'NO FILE'}
-          color={getFileUploadStatusColor(status) ?? 'default'}
-          sx={{ position: 'absolute', left: 6, top: 6, height: 20 }}
-        />
-      )}
+      {!compact && <StorageItemUploadBadge item={item} isOverlay />}
     </Box>
   );
 };

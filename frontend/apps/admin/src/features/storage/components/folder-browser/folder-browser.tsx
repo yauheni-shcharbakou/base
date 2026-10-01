@@ -48,7 +48,7 @@ import { Database, StorageDatabaseEntity } from '@packages/common';
 import type { BrowserStorage } from '@packages/proto';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { FC, useCallback, useRef, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { CreateFolderDialog } from './create-folder-dialog';
 import { DeleteStorageItemDialog } from './delete-storage-item-dialog';
 import { FolderBreadcrumbs } from './folder-breadcrumbs';
@@ -184,7 +184,33 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     currentId: isGallery ? params.focus : viewerId,
     onShow: isGallery ? selectItem : setViewerId,
   });
-  const { items } = reupload;
+  const { items, heldId } = reupload;
+
+  // The held item is deleted already: no rename, move, delete or visibility change takes it along,
+  // from its "⋮" (which rests), a key, or a selection it is part of.
+  const withoutHeld = (acted: Item[]) => acted.filter(({ id }) => id !== heldId);
+
+  const askRename = (item: Item) => {
+    if (item.id !== heldId) {
+      setPendingRename(item);
+    }
+  };
+
+  const askDelete = (acted: Item[]) => {
+    const left = withoutHeld(acted);
+
+    if (left.length) {
+      setPendingDelete(left);
+    }
+  };
+
+  const askMove = (acted: Item[]) => {
+    const left = withoutHeld(acted);
+
+    if (left.length) {
+      setPendingMove(left);
+    }
+  };
 
   const selection = useFolderSelection({
     items: content ? items : undefined,
@@ -204,6 +230,20 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
       [notify],
     ),
   });
+
+  const { selectedIds, remove: deselect } = selection;
+  const lastHeldId = useRef<string>(undefined);
+
+  // Let go — swapped for the new item, or dropped — the held item is gone for good: it leaves the
+  // selection, which would otherwise carry a deleted item into the next move or delete.
+  useEffect(() => {
+    const gone = lastHeldId.current;
+    lastHeldId.current = heldId;
+
+    if (gone && gone !== heldId && selectedIds.has(gone)) {
+      deselect([gone]);
+    }
+  }, [heldId, selectedIds, deselect]);
 
   const marquee = useMarqueeSelection(contentRef, {
     selectedIds: selection.selectedIds,
@@ -299,8 +339,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     onPrefetch: prefetchPage,
     isFilesOnly: !isGallery,
     onOpen: openExternal,
-    onRename: setPendingRename,
-    onDelete: (item) => setPendingDelete([item]),
+    onRename: askRename,
+    onDelete: (item) => askDelete([item]),
     onToggleInfo: () => setGalleryInfo(!preferences.galleryInfo),
     // Left from the grid or the list, the item last shown is selected, as in Drive.
     onExit: (item) => !isGallery && item && selection.click(item, {}),
@@ -331,9 +371,23 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
   // Nothing in a public folder goes private: the service refuses it, and the admin offers it not.
   const isPublicLocked = !!content?.folder.isPublic;
 
-  const setPublic = (items: Item[], isPublic: boolean) => publicity.mutate({ items, isPublic });
+  const setPublic = (acted: Item[], isPublic: boolean) => {
+    const items = withoutHeld(acted);
 
-  const move = (items: Item[], target: DropFolder) =>
+    if (items.length) {
+      publicity.mutate({ items, isPublic });
+    }
+  };
+
+  // From the dialog, or a drag onto a folder or a breadcrumb.
+  const move = (acted: Item[], target: DropFolder) => {
+    const items = withoutHeld(acted);
+
+    if (!items.length) {
+      setPendingMove(undefined);
+      return;
+    }
+
     moving.mutate(
       { items, target },
       {
@@ -343,6 +397,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         },
       },
     );
+  };
 
   const confirmDelete = (items: Item[]) =>
     deletion.mutate(items, {
@@ -381,9 +436,9 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
     menu: {
       getFolderHref,
       onMenuOpen: selection.ensureSelected,
-      onMove: (item) => setPendingMove(getActionItems(item)),
-      onDelete: (item) => setPendingDelete(getActionItems(item)),
-      onRename: setPendingRename,
+      onMove: (item) => askMove(getActionItems(item)),
+      onDelete: (item) => askDelete(getActionItems(item)),
+      onRename: askRename,
       onPublicChange: (item, isPublic) => setPublic(getActionItems(item), isPublic),
       getActionCount: (item) => getActionItems(item).length,
       getActionsPublic: (item) => getActionItems(item).every((action) => action.isPublic),
@@ -451,7 +506,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
 
         if (target) {
           event.preventDefault();
-          setPendingRename(target);
+          askRename(target);
         }
         break;
       }
@@ -466,7 +521,7 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         // A bare Backspace is up to the parent.
         if ((event.key === 'Delete' || isModified) && selectedItems.length) {
           event.preventDefault();
-          setPendingDelete(selectedItems);
+          askDelete(selectedItems);
         }
         break;
       case 'Enter': {
@@ -527,8 +582,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             onOpen={openItem}
             onOpenExternal={openExternal}
             onUploadAgain={reupload.uploadAgain}
-            onDelete={(item) => setPendingDelete([item])}
-            onRename={setPendingRename}
+            onDelete={(item) => askDelete([item])}
+            onRename={askRename}
             onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
             isPublicLocked={isPublicLocked}
             onPreviewError={refreshPreviews}
@@ -613,8 +668,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
             <FolderSelectionBar
               count={selection.selectedItems.length}
               onClear={selection.clear}
-              onMove={() => setPendingMove(selection.selectedItems)}
-              onDelete={() => setPendingDelete(selection.selectedItems)}
+              onMove={() => askMove(selection.selectedItems)}
+              onDelete={() => askDelete(selection.selectedItems)}
               onPublicChange={(isPublic) => setPublic(selection.selectedItems, isPublic)}
               isPublicLocked={isPublicLocked}
             />
@@ -682,8 +737,8 @@ export const FolderBrowser: FC<Props> = ({ folderId, preferences: initialPrefere
         onToggleInfo={() => setGalleryInfo(!preferences.galleryInfo)}
         onOpen={openExternal}
         onUploadAgain={reupload.uploadAgain}
-        onDelete={(item) => setPendingDelete([item])}
-        onRename={setPendingRename}
+        onDelete={(item) => askDelete([item])}
+        onRename={askRename}
         onPublicChange={(item, isPublic) => setPublic([item], isPublic)}
         isPublicLocked={isPublicLocked}
         onPreviewError={refreshPreviews}

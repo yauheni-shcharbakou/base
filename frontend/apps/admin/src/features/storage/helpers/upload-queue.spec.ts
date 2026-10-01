@@ -8,6 +8,8 @@ import {
   getUploadRowStatus,
   groupUploads,
   getRateLimitPause,
+  isReplacedBy,
+  isUploadActive,
   pickUploadWork,
   QueuedUpload,
   summarizeUploads,
@@ -153,6 +155,30 @@ describe('findUploadOf', () => {
   });
 });
 
+describe('isUploadActive', () => {
+  it('holds until the upload rests, done or failed', () => {
+    const statuses = ['queued', 'creating', 'uploading', 'uploaded', 'completing'] as const;
+
+    statuses.forEach((status) => expect(isUploadActive({ status })).toBe(true));
+    expect(isUploadActive({ status: 'done' })).toBe(false);
+    expect(isUploadActive({ status: 'failed' })).toBe(false);
+  });
+});
+
+describe('isReplacedBy', () => {
+  it('names the item the upload takes the place of, and no other', () => {
+    const replacing = itemOf('a', { replaces: 'item-1' });
+
+    expect(isReplacedBy(replacing, 'item-1')).toBe(true);
+    expect(isReplacedBy(replacing, 'item-2')).toBe(false);
+  });
+
+  it('is false for an upload of the item itself, and without one', () => {
+    expect(isReplacedBy(itemOf('a'), 'item-1')).toBe(false);
+    expect(isReplacedBy(undefined, 'item-1')).toBe(false);
+  });
+});
+
 describe('getUploadProgress', () => {
   const progressOf = (patch: Partial<QueuedUpload>, itemId = 'item-1') =>
     getUploadProgress(itemOf('a', patch), itemId);
@@ -160,15 +186,19 @@ describe('getUploadProgress', () => {
   it('tells how far the bytes are', () => {
     expect(progressOf({ status: 'uploading', progress: 42 })).toEqual({
       label: 'Uploading… 42%',
+      short: '42%',
       percent: 42,
     });
   });
 
   it('has no percent before the bytes go, or once they are in', () => {
-    expect(progressOf({ status: 'queued' })).toEqual({ label: 'Waiting to upload…' });
-    expect(progressOf({ status: 'creating' })).toEqual({ label: 'Waiting to upload…' });
-    expect(progressOf({ status: 'uploaded' })).toEqual({ label: 'Finishing…' });
-    expect(progressOf({ status: 'completing' })).toEqual({ label: 'Finishing…' });
+    const waiting = { label: 'Waiting to upload…', short: 'Waiting' };
+    const finishing = { label: 'Finishing…', short: 'Finishing' };
+
+    expect(progressOf({ status: 'queued' })).toEqual(waiting);
+    expect(progressOf({ status: 'creating' })).toEqual(waiting);
+    expect(progressOf({ status: 'uploaded' })).toEqual(finishing);
+    expect(progressOf({ status: 'completing' })).toEqual(finishing);
   });
 
   it('says nothing once the upload rests, or without one', () => {
@@ -178,7 +208,7 @@ describe('getUploadProgress', () => {
   });
 
   it('keeps the replaced item waiting for the listing once its replacement rests', () => {
-    const finishing = { label: 'Finishing…' };
+    const finishing = { label: 'Finishing…', short: 'Finishing' };
 
     expect(progressOf({ status: 'done', replaces: 'item-1' })).toEqual(finishing);
     expect(progressOf({ status: 'failed', replaces: 'item-1' })).toEqual(finishing);

@@ -4,7 +4,9 @@ import {
   getFolderContentPath,
   getFolderItemDownloadUrl,
   getFolderItemOpenUrl,
+  isReplacedBy,
 } from '@/features/storage/helpers';
+import { useUploadOf } from '@/features/storage/hooks';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import DownloadOutlined from '@mui/icons-material/DownloadOutlined';
 import DriveFileMoveOutlined from '@mui/icons-material/DriveFileMoveOutlined';
@@ -55,7 +57,8 @@ type Props = {
 /**
  * An item's "⋮": what a click does not — a rename, its visibility, a download, a move, a delete,
  * each with its key where it has one. Move, Delete and the Public switch act on the whole selection
- * when the item is part of it, as in Drive; Rename takes one item only.
+ * when the item is part of it, as in Drive; Rename takes one item only. It rests for an item being
+ * uploaded again, which is held on its page after its delete.
  */
 export const StorageItemMenu: FC<Props> = ({
   item,
@@ -71,6 +74,9 @@ export const StorageItemMenu: FC<Props> = ({
   buttonProps,
 }) => {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  // An item a new upload is taking the place of is deleted already, and only held on its page:
+  // there is nothing left for the menu to act on.
+  const isReplaced = isReplacedBy(useUploadOf(item), item.id);
   const openUrl = getFolderItemOpenUrl(item);
   const downloadUrl = getFolderItemDownloadUrl(item);
 
@@ -85,6 +91,7 @@ export const StorageItemMenu: FC<Props> = ({
         size="small"
         aria-label={`Actions for ${item.name}`}
         {...buttonProps}
+        disabled={isReplaced || buttonProps?.disabled}
         onClick={(event) => {
           stop(event);
           onMenuOpen?.(item);

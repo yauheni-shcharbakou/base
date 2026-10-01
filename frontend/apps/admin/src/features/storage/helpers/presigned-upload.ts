@@ -5,6 +5,8 @@ import axios from 'axios';
 
 type Options = {
   onProgress?: (percent: number) => void;
+  // Aborts the PUT: the upload is rejected, and nothing is confirmed.
+  signal?: AbortSignal;
 };
 
 /**
@@ -17,10 +19,11 @@ type Options = {
 export const putToPresignedUrl = async (
   file: File,
   upload: BrowserStorage.FilePresignedUpload,
-  { onProgress }: Options = {},
+  { onProgress, signal }: Options = {},
 ): Promise<void> => {
   await axios.put(upload.url, file, {
     headers: { 'Content-Type': upload.contentType },
+    signal,
     timeout: 0,
     maxBodyLength: Infinity,
     maxContentLength: Infinity,

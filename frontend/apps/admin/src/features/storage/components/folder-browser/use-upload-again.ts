@@ -41,6 +41,7 @@ type Options = {
  * The deleted item stays on the page (`items`, which the views take in place of the listing's),
  * showing the new upload's progress, until the listing brings the new item: the viewer stands
  * still, then shows the new item, and never visits a neighbour in between (`getReplaceStep`).
+ * Cancelling the new upload lets the held item go, as a deleted one does.
  */
 export const useUploadAgain = ({ userId, folder, items, scope, currentId, onShow }: Options) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -169,11 +170,15 @@ export const useUploadAgain = ({ userId, folder, items, scope, currentId, onShow
     [isSwapped, items, scope, held],
   );
 
+  // How many items the page shows beyond the listing's own: the one held, or none.
+  const heldCount = shownItems.length - items.length;
+
   return {
     // The page with the item being replaced still on it.
     items: shownItems,
-    // How many items the page shows beyond the listing's own: the one held, or none.
-    heldCount: shownItems.length - items.length,
+    heldCount,
+    // The item held on the page. It is deleted: nothing may act on it.
+    heldId: heldCount ? held?.item.id : undefined,
     uploadAgain,
     // A hidden `<input>` the caller renders: the picker opens from a click on it.
     inputProps: { ref: inputRef, type: 'file', hidden: true, onChange: handlePick } as const,

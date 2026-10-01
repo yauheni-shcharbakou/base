@@ -11,6 +11,7 @@ import {
   getCompleteDeadline,
   getRateLimitPause,
   getUploadFileId,
+  isUploadActive,
   pickUploadWork,
   QueuedUpload,
   UPLOAD_CONCURRENCY,
@@ -29,8 +30,10 @@ import type { CreatedUploadEntity } from '@/features/storage/types';
 import { uploadViaTus } from '@/features/video/helpers';
 import { StorageDatabaseEntity } from '@packages/common';
 import { BrowserStorage } from '@packages/proto';
-import { useSyncExternalStore } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useSyncExternalStore } from 'react';
 import { monotonicFactory } from 'ulid';
+import { dropFromFolderListings } from './folder-listing-cache';
 
 /**
  * A file to upload, the kind it goes as, the folder of the owner it goes into, the uploaded
@@ -60,15 +63,19 @@ const createRecords = (kind: UploadKind, items: QueuedUpload[]): Promise<Created
   }
 };
 
+type SendOptions = { onProgress: (percent: number) => void; signal: AbortSignal };
+
 // The bytes only. A file or an image is confirmed afterwards, with others (`complete`).
-const sendBytes = (item: QueuedUpload, onProgress: (percent: number) => void): Promise<void> => {
+const sendBytes = (item: QueuedUpload, options: SendOptions): Promise<void> => {
   switch (item.kind) {
     case VIDEO:
-      return uploadViaTus(item.file, (item.entity as CreatedVideo).upload, { onProgress });
+      return uploadViaTus(item.file, (item.entity as CreatedVideo).upload, options);
     default:
-      return putToPresignedUrl(item.file, (item.entity as CreatedFile | CreatedImage).upload, {
-        onProgress,
-      });
+      return putToPresignedUrl(
+        item.file,
+        (item.entity as CreatedFile | CreatedImage).upload,
+        options,
+      );
   }
 };
 
@@ -77,8 +84,8 @@ const sendBytes = (item: QueuedUpload, onProgress: (percent: number) => void): P
  * came, a few transfers at a time, while the admin moves on to other pages. Every step that calls
  * the backend takes many files at once — records made ten at a time, uploads confirmed twenty at a
  * time — and a call refused by the gateway's rate limit pauses the queue instead of failing files.
- * It lives outside React, so no page owns it; `StorageUploadPanel` shows it and refreshes the
- * listings as items finish.
+ * An upload still on its way can be cancelled. It lives outside React, so no page owns it;
+ * `StorageUploadPanel` shows it and refreshes the listings as items finish or their records go.
  */
 class StorageUploadQueue {
   private items: QueuedUpload[] = [];
@@ -87,6 +94,9 @@ class StorageUploadQueue {
   private nextKey = monotonicFactory();
   private pausedUntil = 0;
   private wakeTimer?: ReturnType<typeof setTimeout>;
+  // The transfers in flight, by item key: what a cancel aborts.
+  private transfers = new Map<string, AbortController>();
+  private dropped = 0;
 
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
@@ -94,6 +104,13 @@ class StorageUploadQueue {
   };
 
   getSnapshot = () => this.items;
+
+  /**
+   * How many records the queue has deleted behind items that left it — dismissed after a failure,
+   * or cancelled. A record takes its folder item with it, so each is a reason to read the listings
+   * again.
+   */
+  getDropped = () => this.dropped;
 
   /** Adds the files to the queue, and answers their keys in it, in order. */
   enqueue(files: UploadRequest[], userId: string): string[] {
@@ -152,13 +169,40 @@ class StorageUploadQueue {
         (status === 'done' || status === 'failed') && (!keys || keys.includes(key)),
     );
 
-    dismissed.forEach(({ status, entity, kind }) => {
-      if (status === 'failed' && entity) {
-        deleteOne({ resource: RESOURCE_BY_KIND[kind], id: entity.id }).catch(() => undefined);
-      }
-    });
+    dismissed.filter(({ status }) => status === 'failed').forEach((item) => this.dropRecord(item));
 
     this.set(this.items.filter((item) => !dismissed.includes(item)));
+  }
+
+  /**
+   * Stops uploads still on their way — `keys`, or all of them — and forgets them, as if they were
+   * never dropped: a transfer in flight is aborted, and a record already made is deleted, which
+   * takes its folder item and whatever bytes the provider holds. A record still being made is
+   * deleted as its create call answers (`create`).
+   */
+  cancel(keys?: string[]) {
+    const cancelled = this.items.filter(
+      (item) => isUploadActive(item) && (!keys || keys.includes(item.key)),
+    );
+
+    if (!cancelled.length) {
+      return;
+    }
+
+    const gone = new Set(cancelled.map(({ key }) => key));
+
+    // Out of the queue first, and by key: an aborted transfer reports its last progress as it
+    // dies, which must find no item to write to — written, the item would be a new object, and
+    // stay.
+    this.set(this.items.filter(({ key }) => !gone.has(key)));
+
+    cancelled.forEach((item) => {
+      this.transfers.get(item.key)?.abort();
+      this.dropRecord(item);
+    });
+
+    // What waited behind them — a batch to confirm, the next file — has no more to wait for.
+    this.pump();
   }
 
   /**
@@ -175,9 +219,28 @@ class StorageUploadQueue {
     }
   }
 
+  private notify() {
+    this.listeners.forEach((listener) => listener());
+  }
+
   private set(items: QueuedUpload[]) {
     this.items = items;
-    this.listeners.forEach((listener) => listener());
+    this.notify();
+  }
+
+  // Best effort: a record that survives is left to the storage cleanup cron. Counted once the call
+  // is back, whatever it answered — only then can a listing be read without the item.
+  private dropRecord({ kind, entity }: Pick<QueuedUpload, 'kind' | 'entity'>) {
+    if (!entity) {
+      return;
+    }
+
+    deleteOne({ resource: RESOURCE_BY_KIND[kind], id: entity.id })
+      .catch(() => undefined)
+      .then(() => {
+        this.dropped += 1;
+        this.notify();
+      });
   }
 
   private patch(
@@ -249,6 +312,12 @@ class StorageUploadQueue {
 
     try {
       const created = pairCreatedEntities(items, await createRecords(items[0].kind, items));
+      const left = new Set(this.items.map(({ key }) => key));
+
+      // Cancelled while its record was being made: the record goes, now that it has an id.
+      items
+        .filter(({ key }) => !left.has(key))
+        .forEach(({ key, kind }) => this.dropRecord({ kind, entity: created.get(key) }));
       // Back in the queue, now with credentials: the next turn uploads them.
       this.patch(keys, (item) => ({ status: 'queued', entity: created.get(item.key) }));
     } catch (error) {
@@ -296,17 +365,25 @@ class StorageUploadQueue {
   private async upload(key: string) {
     this.patch([key], { status: 'uploading', progress: 0 });
     const item = this.items.find((candidate) => candidate.key === key) as QueuedUpload;
+    const transfer = new AbortController();
 
+    this.transfers.set(key, transfer);
+
+    // A cancelled item has left the queue by the time its transfer ends: every patch below then
+    // finds nothing to write.
     try {
-      await sendBytes(item, (percent) => {
-        const progress = Math.floor(percent);
+      await sendBytes(item, {
+        signal: transfer.signal,
+        onProgress: (percent) => {
+          const progress = Math.floor(percent);
 
-        // Whole percents only: a byte-level event would redraw the panel hundreds of times.
-        if (
-          this.items.some((candidate) => candidate.key === key && candidate.progress !== progress)
-        ) {
-          this.patch([key], { progress });
-        }
+          // Whole percents only: a byte-level event would redraw the panel hundreds of times.
+          if (
+            this.items.some((candidate) => candidate.key === key && candidate.progress !== progress)
+          ) {
+            this.patch([key], { progress });
+          }
+        },
       });
       this.patch(
         [key],
@@ -316,6 +393,8 @@ class StorageUploadQueue {
       );
     } catch (error) {
       this.patch([key], { status: 'failed', error: getErrorMessage(error) });
+    } finally {
+      this.transfers.delete(key);
     }
   }
 }
@@ -332,9 +411,46 @@ export const useStorageUploads = () =>
     () => NO_UPLOADS,
   );
 
+const getNoDropped = () => 0;
+
+/** How many records the queue has deleted behind its items (`getDropped`). */
+export const useDroppedUploadRecords = () =>
+  useSyncExternalStore(storageUploadQueue.subscribe, storageUploadQueue.getDropped, getNoDropped);
+
+const getNoUpload = () => undefined;
+
 /**
  * The upload this tab's queue holds for a folder item (`findUploadOf`), redrawn as it moves: what
- * the item's stage reads its progress from, and whether its bytes can be sent again unpicked.
+ * the item reads its progress from, and whether its bytes can be sent again unpicked. Redrawn for
+ * this upload alone — a page of items each read theirs, and the queue changes with every percent of
+ * every file.
  */
-export const useUploadOf = (item: { id: string; fileId?: string }): QueuedUpload | undefined =>
-  findUploadOf(useStorageUploads(), item);
+export const useUploadOf = ({
+  id,
+  fileId,
+}: {
+  id: string;
+  fileId?: string;
+}): QueuedUpload | undefined =>
+  useSyncExternalStore(
+    storageUploadQueue.subscribe,
+    () => findUploadOf(storageUploadQueue.getSnapshot(), { id, fileId }),
+    getNoUpload,
+  );
+
+/**
+ * Cancels the upload a folder item shows: the upload leaves the queue (`cancel`), and the item
+ * leaves every cached listing at once, as a deleted one does — its record goes with the upload.
+ * The listings are read again once the record is gone (`StorageUploadPanel`).
+ */
+export const useCancelItemUpload = () => {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    (upload: Pick<QueuedUpload, 'key'>, item: { id: string }) => {
+      storageUploadQueue.cancel([upload.key]);
+      dropFromFolderListings(queryClient, [item]);
+    },
+    [queryClient],
+  );
+};

@@ -7,12 +7,13 @@ import {
   getFolderItemUnavailableReason,
   getStorageItemKind,
   getUploadProgress,
+  isUploadActive,
   PdfControls,
   shouldAutoloadPdf,
   STORAGE_ITEM_KIND_LABELS,
   StorageItemKind,
 } from '@/features/storage/helpers';
-import { useUploadOf } from '@/features/storage/hooks';
+import { useCancelItemUpload, useUploadOf } from '@/features/storage/hooks';
 import { BunnyPlayer, BunnyPlayerControls } from '@/features/video/components';
 import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import FolderOpenOutlined from '@mui/icons-material/FolderOpenOutlined';
@@ -81,8 +82,8 @@ const PDF_FAILURE_LABELS: Record<PdfFailure, string> = {
  * The large picture of a gallery or its viewer: an image's preview at once, then its original once
  * the selection rests; a video's poster that turns into the player on a click — or by itself, in
  * the viewer; a PDF's pages once the selection rests; a big icon for the rest — with what its upload
- * is at, for an item that cannot be opened yet — its progress, while this tab is sending it — and
- * "Upload again" and "Delete" once it has failed.
+ * is at, for an item that cannot be opened yet — its progress and a way to cancel it, while this tab
+ * is sending it — and "Upload again" and "Delete" once it has failed.
  * Keyed by item, so nothing of one item's state leaks into the next.
  */
 export const GalleryStage: FC<Props> = ({
@@ -100,6 +101,7 @@ export const GalleryStage: FC<Props> = ({
   const kind = getStorageItemKind(item);
   const openUrl = getFolderItemOpenUrl(item);
   const upload = useUploadOf(item);
+  const cancelUpload = useCancelItemUpload();
   const [originalSrc, setOriginalSrc] = useState<string>();
   const [isOriginalShown, setOriginalShown] = useState(false);
   const [isPreviewFailed, setPreviewFailed] = useState(false);
@@ -306,6 +308,23 @@ export const GalleryStage: FC<Props> = ({
           <Typography variant="body2" color={mutedColor} textAlign="center" role="status">
             {progress.label}
           </Typography>
+          {upload && isUploadActive(upload) && (
+            // Until the upload rests: then there is nothing left to stop. Not on a double click's
+            // second click: the item is gone by then, and its neighbour's button is under the
+            // pointer.
+            <Button
+              size="small"
+              color="inherit"
+              onClick={(event) => {
+                if (event.detail <= 1) {
+                  cancelUpload(upload, item);
+                }
+              }}
+              onDoubleClick={(event) => event.stopPropagation()}
+            >
+              Cancel upload
+            </Button>
+          )}
         </Stack>
       )}
       {unavailableReason && !progress && (
