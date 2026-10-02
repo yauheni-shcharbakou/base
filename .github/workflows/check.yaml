@@ -164,6 +164,11 @@ jobs:
       - name: 'Typecheck'
         run: 'pnpm typecheck'
 
+      # `.railway/` is no workspace, so `typecheck` never reaches it, and the Railway CLI strips the
+      # types without checking them: a wrong option in `railway.ts` is found here or in the dashboard.
+      - name: 'Railway config typechecks'
+        run: 'pnpm check:railway'
+
       - name: 'Lint'
         run: 'pnpm lint'
 
@@ -273,15 +278,20 @@ jobs:
       - 'changes'
       - 'check'
       - 'docs'
+      - 'railway-apply'
     # One of `check` and `docs` is always skipped, and a job with a skipped need is skipped itself
     # unless its `if` says otherwise. Neither may have failed: a tag does not go on a red main.
     # `changes` is asked for by name, since its failure skips both of the others.
+    # `railway-apply` must have succeeded, not been skipped: on a push it runs whenever the checks
+    # pass, so a skip means they did not, and a failure means the environment does not match the
+    # commit — a tag does not go on a commit whose infrastructure was not applied.
     if: >-
       !cancelled()
       && github.event_name == 'push'
       && needs.changes.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.check.result)
       && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
+      && needs.railway-apply.result == 'success'
     runs-on: 'ubuntu-latest'
     timeout-minutes: 5
     # The one job that writes: the workflow's token is read-only everywhere else.
@@ -345,3 +355,162 @@ jobs:
           bash scripts/release-notes.sh "$VERSION" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$TAG" > "$notes"
           gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$notes"
           echo "::notice::Published the release $TAG."
+
+  # What a pull request would change in Railway, shown in the run's summary: the plan is read-only
+  # and redacts variable values, and nothing is uploaded or commented, so the log of a public
+  # repository holds no state of the environment beyond the names of what changes. A fork's pull
+  # request and Dependabot's get no secrets, so there is nothing to plan with; they are skipped,
+  # not failed. Only `pull_request` ever reaches here, never `pull_request_target`.
+  railway-plan:
+    needs: 'changes'
+    if: >-
+      github.event_name == 'pull_request'
+      && needs.changes.outputs.code == 'true'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.actor != 'dependabot[bot]'
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 10
+    env:
+      # The CLI is pinned: its plan format and its destructive-change rules are what this file's
+      # `apply` job trusts. Dependabot bumps the SDK in the root package.json but cannot see this
+      # variable, so it moves by hand with it (the same value in both jobs).
+      RAILWAY_CLI_VERSION: '5.62.1'
+      NO_COLOR: '1'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      # Only the root: `.railway/railway.ts` imports the `railway` SDK from the root manifest.
+      - name: 'Install the Railway SDK'
+        run: 'pnpm install --frozen-lockfile --filter base'
+
+      - name: 'Install the Railway CLI'
+        run: 'npm install --global "@railway/cli@$RAILWAY_CLI_VERSION"'
+
+      - name: 'Plan'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+        run: |
+          code=0
+          railway config plan --verbose > "$RUNNER_TEMP/plan.txt" 2>&1 || code=$?
+          {
+            echo '### Railway plan'
+            echo '```'
+            cat "$RUNNER_TEMP/plan.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/plan.txt"
+          exit "$code"
+
+  # The environment is brought to what `.railway/railway.ts` says, once the merge commit is green:
+  # the services deploy from this same push (`checkSuites`), so the new configuration is in place
+  # before Railway builds them. The plan is made and applied in this one job and never stored: an
+  # artifact of a public repository is readable by anyone. A plan that deletes something — a
+  # service, or a variable set by hand in the dashboard and absent from the file — is applied only
+  # when the pull request that brought the commit carries the `railway:destructive` label.
+  railway-apply:
+    needs:
+      - 'changes'
+      - 'check'
+      - 'docs'
+    if: >-
+      !cancelled()
+      && github.event_name == 'push'
+      && needs.changes.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.check.result)
+      && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 10
+    # Listed in the repository's deployments, and the place to put a required reviewer later.
+    environment: 'production'
+    permissions:
+      contents: 'read'
+      # The labels of the pull request behind the commit.
+      pull-requests: 'read'
+    env:
+      RAILWAY_CLI_VERSION: '5.62.1'
+      NO_COLOR: '1'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: 'Install the Railway SDK'
+        run: 'pnpm install --frozen-lockfile --filter base'
+
+      - name: 'Install the Railway CLI'
+        run: 'npm install --global "@railway/cli@$RAILWAY_CLI_VERSION"'
+
+      # `--detailed-exit-code`: 0 is nothing to do, 2 is changes pending, anything else a failure.
+      - name: 'Plan'
+        id: 'plan'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+        run: |
+          code=0
+          railway config plan --verbose --detailed-exit-code --out "$RUNNER_TEMP/railway-plan.json" || code=$?
+          case "$code" in
+            0) echo 'pending=false' >> "$GITHUB_OUTPUT" ;;
+            2) echo 'pending=true' >> "$GITHUB_OUTPUT" ;;
+            *) exit "$code" ;;
+          esac
+
+      - name: 'Allow destructive changes'
+        id: 'destructive'
+        if: steps.plan.outputs.pending == 'true'
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+        run: |
+          if [ "$(jq -r '.destructive // false' "$RUNNER_TEMP/railway-plan.json")" != 'true' ]; then
+            echo 'confirm=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          labelled=$(gh api "repos/$GH_REPO/commits/$GITHUB_SHA/pulls" \
+            --jq 'any(.[]; any(.labels[]; .name == "railway:destructive"))')
+          if [ "$labelled" != 'true' ]; then
+            echo '::error::The plan deletes something in Railway. Label the pull request `railway:destructive` and re-run this job, or add what the dashboard holds to .railway/railway.ts.'
+            exit 1
+          fi
+          echo 'confirm=true' >> "$GITHUB_OUTPUT"
+
+      # The reviewed plan is applied as it is: if the environment moved since the plan above, the
+      # CLI refuses it (`configEtag`) instead of applying a stale one.
+      - name: 'Apply'
+        if: steps.plan.outputs.pending == 'true'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+          CONFIRM_DESTRUCTIVE: '${{ steps.destructive.outputs.confirm }}'
+        run: |
+          flags='--yes'
+          if [ "$CONFIRM_DESTRUCTIVE" = 'true' ]; then
+            flags="$flags --confirm-destructive"
+          fi
+          railway config apply --plan "$RUNNER_TEMP/railway-plan.json" $flags
+
+      # What the plan cannot see: it compares only what railway.ts declares, so a public domain or a
+      # TCP proxy made in the dashboard passes it. Run after the apply (also when there was nothing to
+      # apply), against the environment as it is now. Prints addresses only, never a hostname.
+      - name: 'No public endpoint outside the allow-list'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+        run: 'railway config pull --json 2>/dev/null | bash scripts/check-railway-exposure.sh'

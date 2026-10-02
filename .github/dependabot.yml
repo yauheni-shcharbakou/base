@@ -2,8 +2,7 @@ version: 2
 
 updates:
   # The workflows pin every action to a commit, which never moves by itself: without this an
-  # action's fixes stop arriving. One pull request a month for all of them. The npm side is left
-  # out on purpose — versions are bumped by hand, in the pnpm catalog.
+  # action's fixes stop arriving. One pull request a month for all of them.
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
@@ -12,3 +11,16 @@ updates:
       actions:
         patterns:
           - '*'
+
+  # The npm side is left out on purpose — versions are bumped by hand, in the pnpm catalog — except
+  # the Railway SDK that `.railway/railway.ts` imports: it is a literal in the root manifest, and
+  # a plan is made against Railway's API, which moves faster than we would remember to. The CLI is
+  # pinned in the workflow (`RAILWAY_CLI_VERSION`), out of Dependabot's reach, and moves with it
+  # by hand.
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'monthly'
+    allow:
+      - dependency-name: 'railway'
+    open-pull-requests-limit: 1

@@ -5,6 +5,54 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] — 2026-10-03 — `refactor/migrate-to-railway-iac`
+
+The Railway deployment moves from Config as Code (a `railway.toml` per app) to Infrastructure as
+Code: one `.railway/railway.ts` describes the services, Postgres, Redis, the volumes and every
+variable's name, and CI applies it on a green push to `main`. Railway deprecates Config as Code with
+a hard cutoff on 2026-12-01. Nothing in the services, their contracts or their variables changes; the
+major version is for the Railway project, which cannot move to this release without the steps below.
+The reasoning, including why this is not Railway's own action, is in
+[ADR-0038](docs/adr/0038-railway-iac-applied-by-ci.md).
+
+### Upgrade notes
+
+- **Create a Railway project token** for the `production` environment and store it as the
+  repository secret `RAILWAY_TOKEN`; create the label `railway:destructive` and, optionally, the
+  GitHub environment `production`.
+- **Clear the Config-as-code path** in the settings of each of the four services before the first
+  plan: while one is set, Railway refuses to plan a service that two files describe.
+- **Apply once by hand** (`railway config plan`, then `railway config apply`) before the first push
+  to `main`: the plan should hold build and deploy settings and a few variables, and no deletion.
+  The public TCP proxy of Postgres is closed by it; close any public domain the project should not
+  have in the dashboard.
+- From then on the dashboard is not the place to change a service: what `railway.ts` does not
+  declare is deleted by the next apply, unless the pull request carries `railway:destructive` and
+  the job is re-run. Secrets stay in the dashboard — every one is `preserve()` in the file.
+
+### Added
+
+- **`.railway/railway.ts`**, the project as code: the four services with their Dockerfile builds,
+  watch patterns and restart policy, Postgres on its live image (`postgres-ssl:17`), Redis, both
+  volumes, groups, and the non-secret variables as literals and references —
+  `Postgres.env.DATABASE_URL`, `Redis.env.REDIS_URL` and the gRPC URLs on each service's private
+  domain, port 8000. [`.railway/README.md`](.railway/README.md) has the flow and the rules.
+- **CI jobs `railway-plan` and `railway-apply`** in `check.yaml`: a pull request gets a read-only
+  plan in its run summary (values redacted, nothing uploaded, no secrets for forks); a green push
+  to `main` plans, applies that plan in the same job, and fails on a deletion without the label. The `release` job waits for it: a tag does not go on a commit whose infrastructure was not applied.
+- **A guard on public endpoints.** `scripts/check-railway-exposure.sh` reads
+  `railway config pull --json` after the apply and fails on a public domain or TCP proxy that
+  `.railway/public-endpoints.json` does not allow — the plan cannot see one made in the dashboard.
+- **`pnpm check:railway`**, a typecheck of `railway.ts` in the `check` job: the file belongs to no
+  workspace, and the CLI strips its types without checking them.
+- **Dependabot for the `railway` SDK**, monthly; the pinned CLI version in the workflow moves with
+  it by hand.
+
+### Removed
+
+- **The four `railway.toml` files** (`backend.auth`, `backend.api-gateway`, `backend.storage`,
+  `frontend.admin`); their settings are in `railway.ts`.
+
 ## [2.1.0] — 2026-10-02 — `fix/image-preview-cron-customization`
 
 The preview sweeps of `backend.storage` — the backstop that makes the image and PDF previews the

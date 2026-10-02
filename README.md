@@ -93,6 +93,7 @@ flowchart LR
 - [`docs/env.md`](docs/env.md) — every environment variable, generated from the zod schemas that validate it.
 - [`CHANGELOG.md`](CHANGELOG.md) — what changed in each release, with upgrade notes.
 - [`backend/apps/storage/README.md`](backend/apps/storage/README.md) — Bunny Storage / Stream dashboard setup and the storage-zone move runbook.
+- [`.railway/README.md`](.railway/README.md) — the Railway project as code, and how a merge into `main` applies it.
 - `CLAUDE.md` files (root, `backend/`, every app and package) — the conventions and internals of each part.
 
 ### Requirements
@@ -188,10 +189,10 @@ On **Railway**, set them per service before redeploying (`validateEnv` fails fas
 
 #### Redis on Railway
 
-Add the managed **Redis** database to the project and point all three backend services at it with a
-reference variable — `REDIS_URL=${{Redis.REDIS_PRIVATE_URL}}` on `backend.auth` and
+The managed **Redis** database is declared in `.railway/railway.ts`, and all three backend services
+point at it with a reference variable — `REDIS_URL: Redis.env.REDIS_URL` on `backend.auth` and
 `backend.storage` (event bus; auth also caches in it) and on `backend.api-gateway` (rate-limit
-counters). Use the *private* URL: the public one goes through a TCP proxy, which costs egress on
+counters). It is the *private* URL: the public one goes through a TCP proxy, which costs egress on
 every blocking command a BullMQ worker issues.
 
 Railway's private network (`*.railway.internal`) is IPv6-only in environments created before
@@ -276,12 +277,17 @@ pnpm lint # eslint --fix
 pnpm check:docs # docs layout: links, ADR index, workspace names, the changelog entry of the root version
 pnpm check:scripts # specs of the repo-level scripts
 pnpm check:env-docs # docs/env.md still matches the zod schemas
+pnpm check:railway # tsc over .railway/railway.ts, which is no workspace
 ```
 
 CI (`.github/workflows/check.yaml`) runs all of the above, the build and the tests on every pull
 request into `main`. A release is a merge into `main` that raises the root `version`: the same
 workflow then tags the merged commit `v<version>` and publishes a GitHub Release from that version's
 `CHANGELOG.md` entry.
+
+Deploys are the same workflow's: a pull request gets a read-only Railway plan in its run summary,
+and a green push to `main` applies `.railway/railway.ts` to the Railway project (see
+[`.railway/README.md`](.railway/README.md)).
 
 ##### Commands for run in docker
 
