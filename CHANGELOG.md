@@ -20,6 +20,9 @@ The reasoning, including why this is not Railway's own action, is in
 - **Create a Railway project token** for the `production` environment and store it as the
   repository secret `RAILWAY_TOKEN`; create the label `railway:destructive` and, optionally, the
   GitHub environment `production`.
+- **Name the four Railway services without dots**: `backend-auth`, `backend-api-gateway`,
+  `backend-storage`, `frontend-admin`. Railway reads the first dot of a reference as the end of a
+  service name, so a dotted service cannot be referenced. Packages and filters keep their names.
 - **Clear the Config-as-code path** in the settings of each of the four services before the first
   plan: while one is set, Railway refuses to plan a service that two files describe.
 - **Apply once by hand** (`railway config plan`, then `railway config apply`) before the first push

@@ -10,18 +10,22 @@ import {
   volume,
 } from 'railway/iac';
 
+// Service names carry no dot: Railway reads the first dot of a reference as the end of the service
+// name, so `${{backend.auth.X}}` resolves to an empty string. The packages of this repository keep
+// their dotted names (`backend.auth`); only the Railway services are named this way.
 const SERVICE = {
-  AUTH: 'backend.auth',
-  API_GATEWAY: 'backend.api-gateway',
-  STORAGE: 'backend.storage',
-  ADMIN: 'frontend.admin',
+  AUTH: 'backend-auth',
+  API_GATEWAY: 'backend-api-gateway',
+  STORAGE: 'backend-storage',
+  ADMIN: 'frontend-admin',
 } as const;
 
-// gRPC listens on one port in every service; a client reaches another service on its private
-// domain. The reference is a string because the port follows it.
+// gRPC listens on one port in every service; a client reaches another one on its private domain.
+// A string, not `service.env.RAILWAY_PRIVATE_DOMAIN`, because the port follows the reference.
 const GRPC_PORT = 8000;
 const bindGrpcUrl = `0.0.0.0:${GRPC_PORT}`;
-const privateGrpcUrl = (service: string) => `\${{${service}.RAILWAY_PRIVATE_DOMAIN}}:${GRPC_PORT}`;
+const privateGrpcUrl = (service: (typeof SERVICE)[keyof typeof SERVICE]) =>
+  `\${{${service}.RAILWAY_PRIVATE_DOMAIN}}:${GRPC_PORT}`;
 
 export default defineRailway(() => {
   const base = github('yauheni-shcharbakou/base', { checkSuites: true });
@@ -64,7 +68,7 @@ export default defineRailway(() => {
     },
     deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 3 },
     replicas: { 'europe-west4-drams3a': 1 },
-    networking: { privateNetworkEndpoint: 'backend-auth' },
+    networking: { privateNetworkEndpoint: SERVICE.AUTH },
     env: {
       ACCESS_JWT_SECRET: preserve(),
       ADMIN_EMAIL: preserve(),
@@ -91,7 +95,7 @@ export default defineRailway(() => {
     },
     deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 3 },
     replicas: { 'europe-west4-drams3a': 1 },
-    networking: { privateNetworkEndpoint: 'frontend-admin' },
+    networking: { privateNetworkEndpoint: SERVICE.ADMIN },
     env: { BACKEND_GRPC_URL: privateGrpcUrl(SERVICE.API_GATEWAY), NODE_ENV: 'production', PORT: '10000' },
   });
   const backendApiGateway = service(SERVICE.API_GATEWAY, {
@@ -103,7 +107,7 @@ export default defineRailway(() => {
     },
     deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 3 },
     replicas: { 'europe-west4-drams3a': 1 },
-    networking: { privateNetworkEndpoint: 'backend-api-gateway' },
+    networking: { privateNetworkEndpoint: SERVICE.API_GATEWAY },
     env: {
       API_GATEWAY_GRPC_URL: bindGrpcUrl,
       AUTH_GRPC_URL: privateGrpcUrl(SERVICE.AUTH),
@@ -125,7 +129,7 @@ export default defineRailway(() => {
     },
     deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 3 },
     replicas: { 'europe-west4-drams3a': 1 },
-    networking: { privateNetworkEndpoint: 'backend-storage' },
+    networking: { privateNetworkEndpoint: SERVICE.STORAGE },
     env: {
       AUTH_GRPC_URL: privateGrpcUrl(SERVICE.AUTH),
       BUNNY_STORAGE_API_KEY: preserve(),
