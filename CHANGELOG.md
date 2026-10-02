@@ -39,6 +39,8 @@ starts. The reasoning is in
 - The image and the document sweeps run on one code — `PreviewSweepUseCase` and
   `PreviewSweepScheduler`. In the log a PDF's row reads `Document <id>` where it read `File <id>`.
 - A migration's `--name` label is written in `snake_case`; the rule is in `backend/CLAUDE.md`.
+- The `/release` skill commits what it prepared, as `chore: release <version>`, once its checks
+  pass. It still does not push.
 
 ### Fixed
 
