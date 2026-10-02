@@ -5,6 +5,47 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] — 2026-10-02 — `fix/image-preview-cron-customization`
+
+The preview sweeps of `backend.storage` — the backstop that makes the image and PDF previews the
+upload event did not — stop being a fixed 20 rows every 10 minutes. A sweep now drains its backlog
+batch after batch within a time budget, gives up on a row that keeps failing, and stops instead of
+counting failures while the provider is down. All of it is tuned by env, and nothing in it needs an
+action on upgrade: the new variables have defaults, and the migration runs before the service
+starts. The reasoning is in
+[ADR-0037](docs/adr/0037-preview-sweep-drains-within-a-time-budget.md).
+
+### Added
+
+- **A sweep takes batch after batch** while there is a backlog and its budget lasts —
+  `STORAGE_{IMAGE,DOCUMENT}_PREVIEW_SWEEP_BUDGET_MINUTES`, 8 of every 10 minutes by default, 0 for
+  one batch a sweep. A backlog drains at the pace of the renders, with no pace to guess.
+- **A row is given up on after a cap of failed sweeps** —
+  `STORAGE_{IMAGE,DOCUMENT}_PREVIEW_SWEEP_MAX_ATTEMPTS`, 12 by default (two hours at the least), 0
+  for never. The count is the new `preview_attempts` column on `images` and `files`; a row the cap
+  marked is told from one no retry can help by that count, and
+  [`docs/env.md`](docs/env.md) has the statement that queues such rows again.
+- **Ten failures in a row stop a sweep, uncounted** —
+  `STORAGE_{IMAGE,DOCUMENT}_PREVIEW_SWEEP_BREAKER_THRESHOLD`, 10 by default, 0 for never: that many
+  at once is the provider down, not the rows, so an outage does not spend the cap of a backlog.
+  Keep the threshold at or under the batch limit.
+- **A tick is skipped while the previous sweep is still running**, per process.
+
+### Changed
+
+- The batch size and the grace of both sweeps are env's:
+  `STORAGE_{IMAGE,DOCUMENT}_PREVIEW_SWEEP_LIMIT` (20) and `…_SWEEP_GRACE_MINUTES` (10), the values
+  that were constants. The limit is a batch size now, not a pace.
+- The image and the document sweeps run on one code — `PreviewSweepUseCase` and
+  `PreviewSweepScheduler`. In the log a PDF's row reads `Document <id>` where it read `File <id>`.
+- A migration's `--name` label is written in `snake_case`; the rule is in `backend/CLAUDE.md`.
+
+### Fixed
+
+- **A batch of failing rows no longer holds a sweep back for good.** A sweep read the oldest rows
+  without a preview every time, so a limit's worth of rows that kept failing was all it ever read.
+  It now goes on from a cursor and passes them.
+
 ## [2.0.0] — 2026-10-01 — `feat/storage-updates`
 
 The event bus moves from NATS to Redis/BullMQ, media bytes stop crossing the backend, storage
