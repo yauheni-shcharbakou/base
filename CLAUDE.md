@@ -69,6 +69,7 @@ pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published
 pnpm check:scripts            # the specs of scripts/release-notes.sh, against its fixtures
+pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
 pnpm docker:db                # postgres + redis only, detached, no tunnel (docker:db:stop to stop)
@@ -110,6 +111,13 @@ cache (`.turbo/cache`) is carried between runs, pruned of entries older than a w
 top of a code change still runs everything. The list of what is not code is
 `scripts/classify-changes.sh`; a path it does not name is code. Actions are pinned to commits, which
 Dependabot moves once a month.
+
+**Deploy.** Railway is described by `.railway/railway.ts` (Infrastructure as Code), not by per-app
+`railway.toml` files. A pull request gets a read-only plan in the run's summary; a green push to
+`main` applies it (`railway-plan` / `railway-apply` in `check.yaml`). No secret values in that file —
+the repository is public, variables are `preserve()`. The flow, the `railway:destructive` label and
+the setup are in [.railway/README.md](.railway/README.md); the why is
+[ADR-0038](docs/adr/0038-railway-iac-applied-by-ci.md).
 
 **Releases.** A release is one merge into `main`. Before it, the root `package.json` `version` and
 the top entry of `CHANGELOG.md` move together and `README.md` is read against the branch — the

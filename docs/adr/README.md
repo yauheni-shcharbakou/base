@@ -64,3 +64,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0035](0035-client-address-from-one-trusted-header.md) | The client address is read from one header the proxy overwrites | Accepted | `frontend.admin`, `backend.api-gateway` |
 | [0036](0036-a-session-ends-with-a-document-load.md) | A session ends with a document load, not a soft navigation | Accepted | `frontend.admin` |
 | [0037](0037-preview-sweep-drains-within-a-time-budget.md) | A preview sweep takes batch after batch within a time budget, from a cursor | Accepted | `backend.storage` |
+| [0038](0038-railway-iac-applied-by-ci.md) | Railway is described by `.railway/railway.ts` and applied by our own CI job | Accepted | `.railway/`, `.github/workflows/check.yaml` |
