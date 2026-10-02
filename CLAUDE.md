@@ -113,9 +113,10 @@ Dependabot moves once a month.
 
 **Releases.** A release is one merge into `main`. Before it, the root `package.json` `version` and
 the top entry of `CHANGELOG.md` move together and `README.md` is read against the branch — the
-`/release` skill (`.claude/skills/release/`) does all three, and `check:docs` fails while the version
-and the entry disagree, or while the entry would publish badly (empty, an unclosed code fence, a
-relative link to a file that is not there). Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
+`/release` skill (`.claude/skills/release/`) does all three and commits them as
+`chore: release <version>` once its checks pass; it does not push. `check:docs` fails while the
+version and the entry disagree, or while the entry would publish badly (empty, an unclosed code
+fence, a relative link to a file that is not there). Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
 curated from the ADRs and the contract diffs, not generated from commits. **Nobody tags by hand:**
 on a green push to `main` the workflow's `release` job tags that commit `v<version>` and publishes
 a GitHub Release, each unless it exists — so a merge that left the version alone releases nothing,
