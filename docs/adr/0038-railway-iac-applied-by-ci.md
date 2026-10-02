@@ -44,8 +44,9 @@ Rejected alternatives:
   allowed per resource in `.railway/public-endpoints.json`
   (`scripts/check-railway-exposure.sh`). A TCP proxy is closed with an explicit `null`.
 - The CLI (`RAILWAY_CLI_VERSION` in the workflow) and the `railway` SDK (root devDependency) are
-  pinned and moved together. The token is a project token for `production`, the secret
-  `RAILWAY_TOKEN`; the apply job runs in the GitHub environment `production`.
+  pinned and move together; Dependabot bumps the SDK, the CLI follows by hand. The token is a
+  project token for `production`, the secret `RAILWAY_TOKEN`; the apply job runs in the GitHub
+  environment `production`.
 
 ## Consequences
 

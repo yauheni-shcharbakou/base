@@ -367,8 +367,8 @@ jobs:
     timeout-minutes: 10
     env:
       # The CLI is pinned: its plan format and its destructive-change rules are what this file's
-      # `apply` job trusts. Dependabot does not see it, so it moves by hand with the SDK in the
-      # root package.json.
+      # `apply` job trusts. Dependabot bumps the SDK in the root package.json but cannot see this
+      # variable, so it moves by hand with it (the same value in both jobs).
       RAILWAY_CLI_VERSION: '5.62.1'
       NO_COLOR: '1'
 

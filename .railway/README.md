@@ -43,8 +43,9 @@ Nobody runs `railway config apply` by hand in the normal flow.
 - A new service: add `service(...)` with `build` (`builder: "DOCKERFILE"`, `dockerfilePath`,
   `watchPatterns`) and `deploy`, put it in a `group`, and list its variables as `preserve()`.
 - Local commands (`railway config plan`) need `railway login`, `railway link` and
-  `pnpm install` at the root (the `railway` SDK is a root devDependency). The SDK and the CLI
-  (`RAILWAY_CLI_VERSION` in the workflow) move together, by hand.
+  `pnpm install` at the root (the `railway` SDK is a root devDependency). Dependabot bumps the SDK
+  monthly; the CLI (`RAILWAY_CLI_VERSION`, in both Railway jobs of the workflow) moves with it, by
+  hand — a pull request that bumps the SDK is the reminder.
 
 ## One-time setup
 
