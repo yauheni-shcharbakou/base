@@ -68,7 +68,7 @@ pnpm migrate:check            # fail while any service's entities and migration 
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published
-pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures) and classify-changes.sh
+pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh and check-railway-exposure.sh
 pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
@@ -108,8 +108,8 @@ cache (`.turbo/cache`) is carried between runs, pruned of entries older than a w
 **A change to documentation alone skips all of that**: when every changed path is a `*.md` or under
 `.claude/`, the `check` job and its servers never start, and a `docs` job runs `check:docs` and
 `check:env-docs` by themselves. A pull request is judged whole, against its base — a docs commit on
-top of a code change still runs everything. A change to `.railway/` (not its README) or to
-the exposure guard alone skips them too: a `railway-check` job typechecks `railway.ts`, and the plan
+top of a code change still runs everything. A change to `.railway/` (not its README) alone
+skips them too: a `railway-check` job typechecks `railway.ts`, and the plan
 and apply jobs run as usual. The list of what is not code is `scripts/classify-changes.sh`; a path
 it does not name is code. Actions are pinned to commits, which
 Dependabot moves once a month.

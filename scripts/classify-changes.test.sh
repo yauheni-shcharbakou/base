@@ -32,7 +32,7 @@ classifies 'a markdown file is docs' 'false true false' CHANGELOG.md docs/adr/00
 classifies "Claude's own files are nothing" 'false false false' .claude/settings.json .claude/plans/x.md
 classifies 'a plan is not a doc' 'false false false' .claude/plans/x.md
 classifies 'railway.ts alone is railway' 'false false true' .railway/railway.ts
-classifies 'the exposure guard is railway' 'false false true' scripts/check-railway-exposure.sh
+classifies 'the exposure guard is code, its spec runs in check' 'true false false' scripts/check-railway-exposure.sh
 classifies 'the allow-list is railway' 'false false true' .railway/public-endpoints.json
 classifies 'the railway README is docs' 'false true false' .railway/README.md
 classifies 'railway and docs together' 'false true true' .railway/railway.ts CHANGELOG.md
