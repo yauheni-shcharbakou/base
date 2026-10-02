@@ -278,15 +278,20 @@ jobs:
       - 'changes'
       - 'check'
       - 'docs'
+      - 'railway-apply'
     # One of `check` and `docs` is always skipped, and a job with a skipped need is skipped itself
     # unless its `if` says otherwise. Neither may have failed: a tag does not go on a red main.
     # `changes` is asked for by name, since its failure skips both of the others.
+    # `railway-apply` must have succeeded, not been skipped: on a push it runs whenever the checks
+    # pass, so a skip means they did not, and a failure means the environment does not match the
+    # commit — a tag does not go on a commit whose infrastructure was not applied.
     if: >-
       !cancelled()
       && github.event_name == 'push'
       && needs.changes.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.check.result)
       && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
+      && needs.railway-apply.result == 'success'
     runs-on: 'ubuntu-latest'
     timeout-minutes: 5
     # The one job that writes: the workflow's token is read-only everywhere else.

@@ -33,7 +33,8 @@ Rejected alternatives:
 - `check.yaml` has two jobs. `railway-plan` runs on a pull request from this repository and prints
   `railway config plan` (values redacted) in the run's summary: no comment, no artifact.
   `railway-apply` runs on a push to `main` after `check`/`docs` have passed, plans, and applies that
-  same plan file inside the job, so nothing is stored. The services deploy from the same push
+  same plan file inside the job, so nothing is stored. The `release` job needs it to have succeeded, so a tag is not put on a commit whose
+  infrastructure was not applied. The services deploy from the same push
   (`checkSuites`), so the configuration lands before the build.
 - A plan with deletions is applied only when the pull request behind the commit has the label
   `railway:destructive`; otherwise the job fails. A variable added by hand in the dashboard is

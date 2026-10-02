@@ -39,7 +39,7 @@ The reasoning, including why this is not Railway's own action, is in
   domain, port 8000. [`.railway/README.md`](.railway/README.md) has the flow and the rules.
 - **CI jobs `railway-plan` and `railway-apply`** in `check.yaml`: a pull request gets a read-only
   plan in its run summary (values redacted, nothing uploaded, no secrets for forks); a green push
-  to `main` plans, applies that plan in the same job, and fails on a deletion without the label.
+  to `main` plans, applies that plan in the same job, and fails on a deletion without the label. The `release` job waits for it: a tag does not go on a commit whose infrastructure was not applied.
 - **A guard on public endpoints.** `scripts/check-railway-exposure.sh` reads
   `railway config pull --json` after the apply and fails on a public domain or TCP proxy that
   `.railway/public-endpoints.json` does not allow — the plan cannot see one made in the dashboard.

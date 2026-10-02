@@ -114,7 +114,7 @@ Dependabot moves once a month.
 
 **Deploy.** Railway is described by `.railway/railway.ts` (Infrastructure as Code), not by per-app
 `railway.toml` files. A pull request gets a read-only plan in the run's summary; a green push to
-`main` applies it (`railway-plan` / `railway-apply` in `check.yaml`). No secret values in that file —
+`main` applies it (`railway-plan` / `railway-apply` in `check.yaml`). The `release` job needs `railway-apply` to have succeeded. No secret values in that file —
 the repository is public, variables are `preserve()`. The flow, the `railway:destructive` label and
 the setup are in [.railway/README.md](.railway/README.md); the why is
 [ADR-0038](docs/adr/0038-railway-iac-applied-by-ci.md).
