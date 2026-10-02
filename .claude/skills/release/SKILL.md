@@ -1,6 +1,6 @@
 ---
 name: release
-description: Prepare a branch for its merge into main — write the CHANGELOG.md entry for everything since main, bump the root version, and check README.md against the tree. Use before a push or a pull request into main, or when asked to "update the changelog", "bump the version", "cut a release", "prepare the merge", or "check the README is up to date".
+description: Prepare a branch for its merge into main — write the CHANGELOG.md entry for everything since main, bump the root version, check README.md against the tree, and commit the result once the checks pass. Use before a push or a pull request into main, or when asked to "update the changelog", "bump the version", "cut a release", "prepare the merge", or "check the README is up to date".
 ---
 
 # Preparing a release
@@ -10,6 +10,8 @@ entry, the root `package.json` gets the version that entry is headed with, and `
 against what the branch changed. `pnpm check:docs` fails while the version and the top entry
 disagree, so neither can land without the other — and while the entry would publish badly: it is
 empty, a code fence in it never closes, or a relative link in it names a file that does not exist.
+Once the checks pass, the skill commits what it prepared — `/release` ends with a release commit,
+not with a tree left to commit by hand.
 
 The changelog is **curated, not generated**. A branch here runs to hundreds of commits whose
 subjects describe steps, not outcomes; an entry says what a reader upgrading or returning to the
@@ -105,10 +107,25 @@ project needs, grouped by area. That is why there is no release tool in this rep
    wrapped lines, so a line that was meant to start a list item or a heading but lacks its marker
    shows up glued to the line above.
 
+8. **Commit**, once step 7 passes — invoking the skill is the request for it. While a check fails
+   there is no commit: fix what it names and run step 7 again, never around it (`--no-verify`).
+
+   ```bash
+   git add CHANGELOG.md package.json     # and README.md, when step 6 changed it
+   git commit -m 'chore: release X.Y.Z'
+   ```
+
+   - **Stage by name, never `git add -A`.** Whatever else is uncommitted in the tree is not the
+     release: leave it where it is and say so in the report.
+   - **A prepared branch gets a second commit, never an amend.** When step 1 found the entry
+     already there and extended it, the earlier release commit may be pushed; the new one carries
+     the same subject.
+   - Report the commit's hash, and whether the branch is ahead of its remote.
+
 ## What this skill does not do
 
-It does not commit or push — those wait for an explicit request. And it never tags or publishes:
-once the merge lands on `main` and the run is green, the `release` job of
+It does not push or open a pull request — those wait for an explicit request. And it never tags or
+publishes: once the merge lands on `main` and the run is green, the `release` job of
 `.github/workflows/check.yaml` tags that commit `vX.Y.Z` from the root version and publishes a
 GitHub Release, each unless it exists. A tag made by hand beforehand would only leave it on the
 wrong commit.
