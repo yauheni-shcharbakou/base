@@ -11,7 +11,7 @@
     "compile:env-docs": "turbo run compile --filter=@packages/env-docs",
     "check:env-docs": "pnpm --filter=@packages/env-docs run check",
     "check:docs": "bash scripts/docs-invariants.sh",
-    "check:scripts": "bash scripts/release-notes.test.sh",
+    "check:scripts": "bash scripts/release-notes.test.sh && bash scripts/classify-changes.test.sh",
     "check:railway": "tsc -p .railway/tsconfig.json",
     "dev": "turbo run dev --filter=\"backend.*\" --filter=\"frontend.*\"",
     "dev:backend": "turbo run dev --filter=\"backend.*\"",

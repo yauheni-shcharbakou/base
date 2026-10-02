@@ -33,6 +33,7 @@ jobs:
     outputs:
       code: '${{ steps.classify.outputs.code }}'
       docs: '${{ steps.classify.outputs.docs }}'
+      railway: '${{ steps.classify.outputs.railway }}'
 
     steps:
       - name: 'Checkout'
@@ -268,6 +269,34 @@ jobs:
       - name: 'Env tables match their schemas'
         run: 'pnpm check:env-docs'
 
+  # A change to the Railway configuration alone builds and tests nothing either: `railway.ts` belongs
+  # to no workspace, and only its typecheck reads it (the plan and the apply are the jobs below).
+  # Only the root is installed, which is where the SDK is.
+  railway-check:
+    needs: 'changes'
+    if: needs.changes.outputs.code != 'true' && needs.changes.outputs.railway == 'true'
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86' # v6.0.10
+
+      - name: 'Setup node.js'
+        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: 'Install the Railway SDK'
+        run: 'pnpm install --frozen-lockfile --filter base'
+
+      - name: 'Railway config typechecks'
+        run: 'pnpm check:railway'
+
   # A release is one merge into main, and its version is the root package.json's: the commit that
   # lands on main is tagged `v<version>` here and published as a GitHub Release whose body is that
   # version's CHANGELOG.md entry — each once per version. A push that releases nothing left the
@@ -365,7 +394,7 @@ jobs:
     needs: 'changes'
     if: >-
       github.event_name == 'pull_request'
-      && needs.changes.outputs.code == 'true'
+      && (needs.changes.outputs.code == 'true' || needs.changes.outputs.railway == 'true')
       && github.event.pull_request.head.repo.full_name == github.repository
       && github.actor != 'dependabot[bot]'
     runs-on: 'ubuntu-latest'
@@ -423,12 +452,14 @@ jobs:
       - 'changes'
       - 'check'
       - 'docs'
+      - 'railway-check'
     if: >-
       !cancelled()
       && github.event_name == 'push'
       && needs.changes.result == 'success'
       && contains(fromJSON('["success", "skipped"]'), needs.check.result)
       && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
+      && contains(fromJSON('["success", "skipped"]'), needs.railway-check.result)
     runs-on: 'ubuntu-latest'
     timeout-minutes: 10
     # Listed in the repository's deployments, and the place to put a required reviewer later.
