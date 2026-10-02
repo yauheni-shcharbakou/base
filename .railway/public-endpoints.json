@@ -1,5 +1,4 @@
 {
   "service.frontend.admin": ["serviceDomains"],
-  "service.backend.api-gateway": ["serviceDomains"],
   "service.backend.storage": ["serviceDomains"]
 }
