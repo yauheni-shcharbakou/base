@@ -1,0 +1,21 @@
+name: 'Turbo cache report'
+description: "Where this job's turbo cache hits came from, in the job summary, and a warning when the remote cache was out of reach."
+
+# The remote cache step may fail without failing the job (the local cache still serves), so a broken
+# exchange or a disabled team would otherwise show only as a slower run. Reads the run summaries the
+# job's `TURBO_RUN_SUMMARY` makes turbo write to `.turbo/runs/`; those hold the hashes of env values
+# and are never published — the summary gets counts alone. Must run before the remote cache action's
+# post step, which revokes the token the status request uses.
+inputs:
+  expect-remote:
+    description: 'Whether this run should have reached the remote cache: false for a fork, or with no `TURBO_TEAM`.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Turbo cache report'
+      shell: 'bash'
+      env:
+        EXPECT_REMOTE: '${{ inputs.expect-remote }}'
+      run: 'node "$GITHUB_ACTION_PATH/report.mjs"'

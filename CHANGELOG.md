@@ -56,6 +56,9 @@ that nothing enforced — a released changelog entry and a merged ADR stay as th
 
 - Specs for both checks, `scripts/released-entries.test.sh` and `scripts/frozen-adrs.test.sh`, run
   by `pnpm check:scripts`.
+- **A turbo cache report** in the summary of each cached CI job: remote hits, local hits and misses
+  for every turbo run, and a warning while the remote cache is out of reach — a failed exchange no
+  longer shows only as a slower run.
 
 ## [3.0.1] — 2026-10-03 — `refactor/migrate-to-railway-iac`
 

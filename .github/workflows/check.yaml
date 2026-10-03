@@ -100,6 +100,8 @@ jobs:
       # e2e suite migrates its own databases on this server.
       DATABASE_URL: 'postgresql://admin:password123@localhost:5432'
       TURBO_TELEMETRY_DISABLED: '1'
+      # Every turbo run writes `.turbo/runs/*.json`, which the cache report counts.
+      TURBO_RUN_SUMMARY: 'true'
 
     steps:
       - name: 'Checkout'
@@ -224,6 +226,15 @@ jobs:
             fi
           done < <(changed --diff-filter=AM "$BASE_SHA...HEAD" -- 'backend/apps/*/src/migrations/.snapshot-*.json')
           exit "$failed"
+
+      # Where the hits came from, in the job summary; a warning when the remote cache was out of
+      # reach. Before the remote cache action's post step, which revokes the token.
+      - name: 'Turbo cache report'
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: './.github/actions/turbo-cache-report'
+        with:
+          expect-remote: ${{ vars.TURBO_TEAM != '' && github.event.pull_request.head.repo.full_name == github.repository }}
 
       # Turbo never evicts, and each run restores the previous cache and adds to it. An entry is
       # dropped a week after it was written; the next miss rebuilds it.

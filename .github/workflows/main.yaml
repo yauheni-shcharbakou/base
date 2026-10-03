@@ -65,6 +65,7 @@ jobs:
       id-token: 'write'
     env:
       TURBO_TELEMETRY_DISABLED: '1'
+      TURBO_RUN_SUMMARY: 'true'
 
     steps:
       - name: 'Checkout'
@@ -96,6 +97,14 @@ jobs:
 
       - name: 'Build and typecheck'
         run: 'pnpm turbo run build typecheck'
+
+      # As in `check.yaml`. Here a remote hit is the proof the remote cache is read, not only written.
+      - name: 'Turbo cache report'
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: './.github/actions/turbo-cache-report'
+        with:
+          expect-remote: ${{ vars.TURBO_TEAM != '' }}
 
       # Turbo never evicts, and each run restores the previous cache and adds to it. An entry is
       # dropped a week after it was written; the next miss rebuilds it.

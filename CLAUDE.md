@@ -114,8 +114,11 @@ pull request's), then `railway-apply`, then `release`. Both share turbo's **Verc
 repository variable `TURBO_TEAM`, the trust is a "Turborepo CLI" OIDC policy in that team naming
 this repository). A fork's pull request gets no OIDC token, and a failed exchange only costs the
 remote cache; turbo's local cache (`.turbo/cache`), carried between runs through `actions/cache`
-and pruned of entries older than a week, is the fallback. The setup steps and protoc are local
-composite actions in `.github/actions/`.
+and pruned of entries older than a week, is the fallback. Since neither failure fails the job, each
+cached job ends with a turbo cache report in its summary — remote hits, local hits and misses per
+turbo run, counted from the run summaries `TURBO_RUN_SUMMARY` makes turbo write, which hold hashes
+of env values and are never published — and a warning while the remote cache is out of reach. The
+setup steps, protoc and that report are local composite actions in `.github/actions/`.
 **A change to documentation alone skips all of that**: when every changed path is a `*.md` or under
 `.claude/`, the `check` job and its servers never start, and a `docs` job runs `check:docs` and
 `check:env-docs` by themselves; on `main`, the build is skipped. A pull request is judged whole,
