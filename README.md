@@ -150,7 +150,7 @@ scripts/ # repo-level checks run by CI
 turbo/
   generators/ # directory with custom code generators
 .github/
-  actions/ # setup steps the workflows share
+  actions/ # composite actions the workflows share: setup, protoc, the turbo cache report
   workflows/ # CI: check.yaml on pull requests, main.yaml on main
 ```
 
