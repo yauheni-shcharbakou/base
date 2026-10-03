@@ -150,7 +150,8 @@ scripts/ # repo-level checks run by CI
 turbo/
   generators/ # directory with custom code generators
 .github/
-  workflows/ # CI
+  actions/ # setup steps the workflows share
+  workflows/ # CI: check.yaml on pull requests, main.yaml on main
 ```
 
 ### Environment variables
@@ -274,7 +275,7 @@ pnpm e2e # start the e2e servers, run every e2e suite with no skip allowed, stop
 ```shell
 pnpm typecheck # tsc --noEmit in every workspace
 pnpm lint # eslint --fix
-pnpm check:docs # docs layout: links, ADR index, workspace names, the changelog entry of the root version
+pnpm check:docs # docs layout: links, ADR index, workspace names, the changelog entry of the root version, released entries and merged ADRs unchanged
 pnpm check:scripts # specs of the repo-level scripts
 pnpm check:env-docs # docs/env.md still matches the zod schemas
 pnpm check:railway # tsc over .railway/railway.ts, which is no workspace

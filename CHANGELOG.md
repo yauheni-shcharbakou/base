@@ -5,6 +5,58 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2] — 2026-10-04 — `refactor/ci-optimization`
+
+CI no longer checks every merge twice. Pull requests keep the full check; a push to `main` only warms
+the cache, applies Railway and releases, because the ruleset now requires a branch to be up to date
+with `main` before it merges, so the merged tree is the one the pull request checked
+([ADR-0039](docs/adr/0039-main-trusts-the-pull-request-check.md)). Turbo shares a Vercel Remote Cache
+across pull requests and `main`, the unit suites run in half the time, and two documentation rules
+that nothing enforced — a released changelog entry and a merged ADR stay as they are — now fail
+`check:docs`. Nothing in the services, their contracts or their variables changes.
+
+### Changed
+
+#### CI
+
+- **Two workflows instead of one.** `.github/workflows/check.yaml` runs on pull requests only;
+  `.github/workflows/main.yaml` runs on a push to `main`: `build` and `typecheck` (no servers, no
+  lint, no tests), then `railway-apply`, then `release`. **The repository ruleset must keep
+  "Require branches to be up to date before merging" on** — without it `main` is untested. The
+  README badge follows `main.yaml`.
+- **Vercel Remote Cache for turbo**, in the free Hobby team, reached through a GitHub OIDC exchange
+  with no stored token. It needs a "Turborepo CLI" OIDC policy in that team naming this repository
+  and the repository variable `TURBO_TEAM` (the team slug); while the variable is unset, the step is
+  skipped. A fork's pull request, or a failed exchange, falls back to the `actions/cache` copy of
+  `.turbo/cache`, as before.
+- **Typecheck, lint, unit and e2e run as one turbo invocation** instead of four steps in sequence.
+- **protoc comes from its release zip** (pinned to 36.2, moved by hand) instead of
+  `apt-get update && apt-get install`. It and the pnpm/node.js setup are local composite actions in
+  `.github/actions/`, which Dependabot now watches too.
+- **`railway-apply` no longer records a GitHub deployment.** It keeps the `production` environment
+  for its protection rules (`deployment: false`); the deployment of record is Railway's own, under
+  `base / production`.
+
+#### Tests
+
+- **ts-jest only transpiles** (`isolatedModules` in each transform's inline tsconfig): `typecheck`
+  already checks the specs. Backend transforms pin `module: commonjs` and `moduleResolution: node10`,
+  which ts-jest used to force itself. The unit run takes about half the time and CPU it did.
+
+#### Documentation rules
+
+- **A released changelog entry is frozen.** `check:docs` compares the entry of every `v*` tag with
+  the one in that tag (`scripts/released-entries.sh`), and the Claude docs hook does on every edit to
+  `CHANGELOG.md`; a correction goes into the next entry.
+- **A merged ADR changes only its status line**, typos included: `check:docs` compares every ADR on
+  `origin/main` with the tree (`scripts/frozen-adrs.sh`). The "typos aside" exception is gone from
+  `docs/adr/README.md`.
+
+### Added
+
+- Specs for both checks, `scripts/released-entries.test.sh` and `scripts/frozen-adrs.test.sh`, run
+  by `pnpm check:scripts`.
+
 ## [3.0.1] — 2026-10-03 — `refactor/migrate-to-railway-iac`
 
 3.0.0 wrote the gRPC address of one service in another as a reference to a service with a dot in its
