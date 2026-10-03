@@ -111,6 +111,11 @@
             "ignoreCodes": [
               151002
             ]
+          },
+          "tsconfig": {
+            "isolatedModules": true,
+            "module": "commonjs",
+            "moduleResolution": "node10"
           }
         }
       ]

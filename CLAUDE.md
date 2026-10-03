@@ -147,6 +147,11 @@ is still empty passes `--passWithNoTests` in that script to keep the repo-wide r
 **Nothing that loads MikroORM runs under Jest:** MikroORM 7 is ESM-only and Jest's runtime has no
 `require(esm)`. A database spec runs on `node:test` instead — `backend.storage`'s `test:e2e` is the
 template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
+**ts-jest only transpiles** (`tsconfig: { isolatedModules: true }` in each transform): `typecheck`
+already checks the specs, and a second type check made up half the test run. A backend transform
+also sets `module: commonjs` and `moduleResolution: node10`, which ts-jest forced itself while it
+type-checked — under `nodenext` a transpiled `import()` stays native and fails under Jest. A new
+jest config copies the transform of its package's siblings.
 
 **Lint & strictness.**
 
