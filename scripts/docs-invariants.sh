@@ -11,6 +11,7 @@
 #   5. that entry can be published as it stands: it is not empty, its code fences close, and
 #      every relative link in it names a file that exists
 #   6. every released entry — its version is tagged — reads as it did in its tag
+#   7. every ADR merged into main reads as it does there, save its status line
 #
 # Deliberately NOT checked: duplicated wording. That needs a bespoke marker list
 # which goes stale faster than the docs do — dedup is an audit, not an invariant.
@@ -93,8 +94,14 @@ while IFS= read -r problem; do
   [ -n "$problem" ] && report "$problem"
 done < <(bash scripts/released-entries.sh)
 
+# 7. A merged ADR is immutable: a decision that changes gets a new ADR, and only the old one's
+#    status line moves (docs/adr/README.md). Its diff goes to stderr, past this report.
+while IFS= read -r problem; do
+  [ -n "$problem" ] && report "$problem"
+done < <(bash scripts/frozen-adrs.sh)
+
 if [ "$failed" -ne 0 ]; then
-  echo 'Fix the reference, add the missing ADR/index row, or bring the version and the changelog together; a released entry stays as released, a correction goes into the next one. See docs/adr/README.md and the /release skill.' >&2
+  echo 'Fix the reference, add the missing ADR/index row, or bring the version and the changelog together; a released entry stays as released, a correction goes into the next one; a merged ADR changes only its status line. See docs/adr/README.md and the /release skill.' >&2
 fi
 
 exit "$failed"

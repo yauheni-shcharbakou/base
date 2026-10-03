@@ -243,8 +243,12 @@ jobs:
         uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
         with:
           # The release tags, which hold each released changelog entry as published. `check` gets
-          # them through its full history.
+          # them, and main below, through its full history.
           fetch-tags: true
+
+      # The ADRs that have landed, which only their status line may change: main's tip alone.
+      - name: 'Fetch main'
+        run: 'git fetch --no-tags --depth=1 origin +refs/heads/main:refs/remotes/origin/main'
 
       # Before the install: bash, git, grep and awk are all it needs.
       - name: 'Docs layout holds'

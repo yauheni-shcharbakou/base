@@ -11,9 +11,11 @@ files, and the split is strict:
 
 ## Rules
 
-- **An ADR is never edited after it lands** (typos aside). A decision that changes gets a *new*
+- **An ADR is never edited after it lands**, typos included. A decision that changes gets a *new*
   ADR with `Supersedes 000N` in its status; the old one is amended with `Superseded by 000M` —
-  that one-line status edit is the only permitted change.
+  that one-line status edit is the only permitted change. `pnpm check:docs` holds every ADR on
+  `origin/main` to that (`scripts/frozen-adrs.sh`): an ADR a branch adds stays editable until it
+  merges.
 - **One owner per fact.** If a rationale lives here, the `CLAUDE.md` that owns the corresponding
   rule carries the rule plus a link — not a summary of the reasoning.
 - **Numbering is sequential and never reused**, even if an ADR is superseded or rejected.

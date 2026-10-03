@@ -40,7 +40,9 @@ by an existing ADR (extend the rule in `CLAUDE.md` instead).
 
 Never rewrite a landed ADR. Write a new one whose status reads `Accepted (date), supersedes 000N`,
 then edit **only** the old one's status line to `Superseded by 000M (date)`. Update both rows in the
-index, and repoint the `CLAUDE.md` link at the new ADR.
+index, and repoint the `CLAUDE.md` link at the new ADR. `check:docs` (and the docs hook) fails on any
+other change to an ADR that is on `origin/main` — a typo fix included; one the branch itself adds
+stays editable until it merges.
 
 ## Template
 
