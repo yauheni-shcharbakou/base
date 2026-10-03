@@ -122,8 +122,13 @@ jobs:
       && contains(fromJSON('["success", "skipped"]'), needs.build.result)
     runs-on: 'ubuntu-latest'
     timeout-minutes: 10
-    # Listed in the repository's deployments, and the place to put a required reviewer later.
-    environment: 'production'
+    # The environment for its protection rules (deployment branches: `main`; the place to put a
+    # required reviewer later), not for its history: an apply changes configuration, it deploys
+    # nothing. The deployment of record is Railway's own, which its GitHub app reports under
+    # `base / production` once the services roll out — a second one here would only double it.
+    environment:
+      name: 'production'
+      deployment: false
     permissions:
       contents: 'read'
       # The labels of the pull request behind the commit.
