@@ -1,20 +1,17 @@
 name: 'Check'
 
+# Pull requests only. main accepts nothing but a pull request whose required `check` passed on a
+# branch up to date with it, so the commit a merge lands is the tree checked here: `main.yaml` does
+# not check it again (ADR-0039).
 on:
   pull_request:
     branches:
       - 'main'
-  # A pull request reads caches saved by its own branch and by its base, never by another pull
-  # request. Running on main as well gives every new pull request main's turbo cache to start from.
-  push:
-    branches:
-      - 'main'
 
 concurrency:
-  group: 'check-${{ github.event.pull_request.number || github.ref }}'
-  # A newer push to a pull request supersedes the older run; a run on main finishes, so its cache
-  # is saved.
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: 'check-${{ github.event.pull_request.number }}'
+  # A newer push supersedes the older run.
+  cancel-in-progress: true
 
 permissions:
   contents: 'read'
@@ -46,23 +43,16 @@ jobs:
           sparse-checkout: 'scripts'
 
       # A pull request is classified whole, against its base, not by its last push: a docs commit
-      # on top of a failed code change must not turn the pull request green. A push to main is
-      # classified by what it added. What counts as code is in the script; a diff that cannot be
-      # computed is an empty list, which it reads as code.
+      # on top of a failed code change must not turn the pull request green. What counts as code is
+      # in the script; a diff that cannot be computed is an empty list, which it reads as code.
       - name: 'Classify the change'
         id: 'classify'
         env:
-          EVENT_NAME: '${{ github.event_name }}'
-          BASE_SHA: '${{ github.event.pull_request.base.sha || github.event.before }}'
+          BASE_SHA: '${{ github.event.pull_request.base.sha }}'
         run: |
           files=''
           if git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
-            if [ "$EVENT_NAME" = 'pull_request' ]; then
-              range="$BASE_SHA...HEAD"
-            else
-              range="$BASE_SHA..HEAD"
-            fi
-            files=$(git diff --name-only --no-renames "$range") || files=''
+            files=$(git diff --name-only --no-renames "$BASE_SHA...HEAD") || files=''
           fi
           printf '%s\n' "$files"
           printf '%s\n' "$files" | bash scripts/classify-changes.sh | tee -a "$GITHUB_OUTPUT"
@@ -74,6 +64,10 @@ jobs:
     # and the build in every leg.
     runs-on: 'ubuntu-latest'
     timeout-minutes: 30
+    permissions:
+      contents: 'read'
+      # The GitHub OIDC token the remote cache step exchanges for a Turborepo one.
+      id-token: 'write'
 
     # Every e2e suite skips itself when its server is unreachable, so each one needs its server
     # here, or the run is green without having tested anything. Locally, `pnpm docker:e2e` starts
@@ -106,6 +100,8 @@ jobs:
       # e2e suite migrates its own databases on this server.
       DATABASE_URL: 'postgresql://admin:password123@localhost:5432'
       TURBO_TELEMETRY_DISABLED: '1'
+      # Every turbo run writes `.turbo/runs/*.json`, which the cache report counts.
+      TURBO_RUN_SUMMARY: 'true'
 
     steps:
       - name: 'Checkout'
@@ -114,26 +110,33 @@ jobs:
           # The snapshot guard diffs the pull request against its base.
           fetch-depth: 0
 
-      - name: 'Setup pnpm'
-        uses: 'pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413' # v6.1.0
+      - name: 'Setup pnpm and node.js'
+        uses: './.github/actions/setup'
 
-      - name: 'Setup node.js'
-        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      # `build` runs the three `@*/proto` compiles, which need protoc. Unpinned on purpose: the
-      # generated files record no tool versions.
+      # `build` runs the three `@*/proto` compiles, which need protoc.
       - name: 'Install protoc'
-        run: 'sudo apt-get update -qq && sudo apt-get install -y -qq protobuf-compiler'
+        uses: './.github/actions/protoc'
 
       # Not a service container: JetStream needs the `-js` flag, and services take no command.
       - name: 'Start NATS'
         run: 'docker run -d --name nats -p 4222:4222 nats:2-alpine -js'
 
+      # Vercel Remote Cache, shared by every pull request and by main: what one run built, the next
+      # replays, whatever its branch. The GitHub OIDC token is exchanged for a short-lived
+      # Turborepo one (a policy in the Vercel team names this repository), so no secret is stored.
+      # A fork's pull request gets no OIDC token, and a failed exchange only costs the remote
+      # cache: the step may fail, the local cache below still serves.
+      - name: 'Turbo remote cache'
+        if: vars.TURBO_TEAM != '' && github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: 'vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f' # v1.1.0
+        with:
+          team: '${{ vars.TURBO_TEAM }}'
+
       # Turbo's local cache, carried between runs: a task whose inputs did not change replays its
-      # logs and outputs. `test`, `test:e2e` and `lint` are `cache: false` and always run.
+      # logs and outputs. `test`, `test:e2e` and `lint` are `cache: false` and always run. A pull
+      # request reads the caches of its own branch and of main, which `main.yaml` keeps warm — the
+      # fallback for the runs the remote cache does not reach (forks, a failed exchange).
       - name: 'Turbo cache'
         uses: 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' # v6.1.0
         with:
@@ -162,16 +165,20 @@ jobs:
             });
           '
 
-      - name: 'Typecheck'
-        run: 'pnpm typecheck'
+      # One turbo run rather than a step each: none of the four waits for another, and in sequence
+      # the three uncached ones were most of the job. `--continue` reports every failure, not the
+      # first; `grouped` keeps each task's log in one piece.
+      - name: 'Typecheck, lint and tests'
+        env:
+          # Every server runs beside the job, so an e2e suite that finds none fails instead of
+          # skipping. Only the e2e setups read it.
+          E2E_REQUIRE_SERVERS: '1'
+        run: 'pnpm turbo run typecheck lint test test:e2e --log-order=grouped --continue'
 
       # `.railway/` is no workspace, so `typecheck` never reaches it, and the Railway CLI strips the
       # types without checking them: a wrong option in `railway.ts` is found here or in the dashboard.
       - name: 'Railway config typechecks'
         run: 'pnpm check:railway'
-
-      - name: 'Lint'
-        run: 'pnpm lint'
 
       # The build regenerates code and formats it, and lint runs with --fix: anything they changed
       # is codegen, formatting or a lint fix the pull request did not commit.
@@ -203,8 +210,6 @@ jobs:
       # Only `migration:create` may move a snapshot (see backend/CLAUDE.md). One changed without a
       # migration beside it would make the next `migrate:create` drop whatever it lost.
       - name: 'Every snapshot change comes with a migration'
-        # A pull request's diff against its base; on main the change was checked before it merged.
-        if: github.event_name == 'pull_request'
         env:
           BASE_SHA: '${{ github.event.pull_request.base.sha }}'
         run: |
@@ -222,14 +227,14 @@ jobs:
           done < <(changed --diff-filter=AM "$BASE_SHA...HEAD" -- 'backend/apps/*/src/migrations/.snapshot-*.json')
           exit "$failed"
 
-      - name: 'Unit tests'
-        run: 'pnpm test'
-
-      - name: 'E2E tests'
-        env:
-          # Every server runs beside the job, so a suite that finds none fails instead of skipping.
-          E2E_REQUIRE_SERVERS: '1'
-        run: 'pnpm test:e2e'
+      # Where the hits came from, in the job summary; a warning when the remote cache was out of
+      # reach. Before the remote cache action's post step, which revokes the token.
+      - name: 'Turbo cache report'
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: './.github/actions/turbo-cache-report'
+        with:
+          expect-remote: ${{ vars.TURBO_TEAM != '' && github.event.pull_request.head.repo.full_name == github.repository }}
 
       # Turbo never evicts, and each run restores the previous cache and adds to it. An entry is
       # dropped a week after it was written; the next miss rebuilds it.
@@ -247,19 +252,21 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The release tags, which hold each released changelog entry as published. `check` gets
+          # them, and main below, through its full history.
+          fetch-tags: true
 
-      # Before the install: bash and grep are all it needs.
+      # The ADRs that have landed, which only their status line may change: main's tip alone.
+      - name: 'Fetch main'
+        run: 'git fetch --no-tags --depth=1 origin +refs/heads/main:refs/remotes/origin/main'
+
+      # Before the install: bash, git, grep and awk are all it needs.
       - name: 'Docs layout holds'
         run: 'bash scripts/docs-invariants.sh'
 
-      - name: 'Setup pnpm'
-        uses: 'pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413' # v6.1.0
-
-      - name: 'Setup node.js'
-        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
-        with:
-          node-version: 22
-          cache: 'pnpm'
+      - name: 'Setup pnpm and node.js'
+        uses: './.github/actions/setup'
 
       # The generator parses the config files as text, so it needs its own package and nothing
       # built: no other workspace is installed.
@@ -270,8 +277,8 @@ jobs:
         run: 'pnpm check:env-docs'
 
   # A change to the Railway configuration alone builds and tests nothing either: `railway.ts` belongs
-  # to no workspace, and only its typecheck reads it (the plan and the apply are the jobs below).
-  # Only the root is installed, which is where the SDK is.
+  # to no workspace, and only its typecheck reads it (the plan is the job below, the apply is in
+  # `main.yaml`). Only the root is installed, which is where the SDK is.
   railway-check:
     needs: 'changes'
     if: needs.changes.outputs.code != 'true' && needs.changes.outputs.railway == 'true'
@@ -282,108 +289,14 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
 
-      - name: 'Setup pnpm'
-        uses: 'pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413' # v6.1.0
-
-      - name: 'Setup node.js'
-        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
-        with:
-          node-version: 22
-          cache: 'pnpm'
+      - name: 'Setup pnpm and node.js'
+        uses: './.github/actions/setup'
 
       - name: 'Install the Railway SDK'
         run: 'pnpm install --frozen-lockfile --filter base'
 
       - name: 'Railway config typechecks'
         run: 'pnpm check:railway'
-
-  # A release is one merge into main, and its version is the root package.json's: the commit that
-  # lands on main is tagged `v<version>` here and published as a GitHub Release whose body is that
-  # version's CHANGELOG.md entry — each once per version. A push that releases nothing left the
-  # version alone, finds both there already and does nothing, so this needs no trigger of its own
-  # and no "is this a release" flag.
-  release:
-    needs:
-      - 'changes'
-      - 'check'
-      - 'docs'
-      - 'railway-apply'
-    # One of `check` and `docs` is always skipped, and a job with a skipped need is skipped itself
-    # unless its `if` says otherwise. Neither may have failed: a tag does not go on a red main.
-    # `changes` is asked for by name, since its failure skips both of the others.
-    # `railway-apply` must have succeeded, not been skipped: on a push it runs whenever the checks
-    # pass, so a skip means they did not, and a failure means the environment does not match the
-    # commit — a tag does not go on a commit whose infrastructure was not applied.
-    if: >-
-      !cancelled()
-      && github.event_name == 'push'
-      && needs.changes.result == 'success'
-      && contains(fromJSON('["success", "skipped"]'), needs.check.result)
-      && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
-      && needs.railway-apply.result == 'success'
-    runs-on: 'ubuntu-latest'
-    timeout-minutes: 5
-    # The one job that writes: the workflow's token is read-only everywhere else.
-    permissions:
-      contents: 'write'
-
-    steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
-        with:
-          # The version, its changelog entry, and the script that shapes the entry into notes.
-          sparse-checkout: |
-            /package.json
-            /CHANGELOG.md
-            /scripts/
-          sparse-checkout-cone-mode: false
-
-      # Read the way scripts/docs-invariants.sh reads it, which has already held it to the
-      # changelog's top entry.
-      - name: 'Read the version'
-        id: 'version'
-        run: |
-          version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
-          if [ -z "$version" ]; then
-            echo '::error::No version in the root package.json.'
-            exit 1
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=v$version" >> "$GITHUB_OUTPUT"
-
-      # Asked of the remote, not of the clone: a shallow checkout fetches no tags.
-      - name: 'Tag the release'
-        env:
-          TAG: '${{ steps.version.outputs.tag }}'
-        run: |
-          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
-            echo "$TAG exists already."
-            exit 0
-          fi
-          # Annotated, as v1.0.0 is: a plain `git describe` sees no other kind.
-          git -c user.name='github-actions[bot]' \
-            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            tag -a "$TAG" -m "$TAG" "$GITHUB_SHA"
-          git push origin "refs/tags/$TAG"
-          echo "::notice::Tagged $GITHUB_SHA as $TAG."
-
-      # Its own check rather than "the tag was just made": a run that tagged and then failed here
-      # publishes on its re-run. The notes link to the files as tagged, not as they are on main.
-      - name: 'Publish the release'
-        env:
-          GH_TOKEN: '${{ github.token }}'
-          GH_REPO: '${{ github.repository }}'
-          TAG: '${{ steps.version.outputs.tag }}'
-          VERSION: '${{ steps.version.outputs.version }}'
-        run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "The release $TAG exists already."
-            exit 0
-          fi
-          notes="$RUNNER_TEMP/release-notes.md"
-          bash scripts/release-notes.sh "$VERSION" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$TAG" > "$notes"
-          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$notes"
-          echo "::notice::Published the release $TAG."
 
   # What a pull request would change in Railway, shown in the run's summary: the plan is read-only
   # and redacts variable values, and nothing is uploaded or commented, so the log of a public
@@ -393,16 +306,15 @@ jobs:
   railway-plan:
     needs: 'changes'
     if: >-
-      github.event_name == 'pull_request'
-      && (needs.changes.outputs.code == 'true' || needs.changes.outputs.railway == 'true')
+      (needs.changes.outputs.code == 'true' || needs.changes.outputs.railway == 'true')
       && github.event.pull_request.head.repo.full_name == github.repository
       && github.actor != 'dependabot[bot]'
     runs-on: 'ubuntu-latest'
     timeout-minutes: 10
     env:
-      # The CLI is pinned: its plan format and its destructive-change rules are what this file's
-      # `apply` job trusts. Dependabot bumps the SDK in the root package.json but cannot see this
-      # variable, so it moves by hand with it (the same value in both jobs).
+      # The CLI is pinned: its plan format and its destructive-change rules are what the `apply` job
+      # of `main.yaml` trusts. Dependabot bumps the SDK in the root package.json but cannot see this
+      # variable, so it moves by hand with it (the same value in both workflows).
       RAILWAY_CLI_VERSION: '5.62.1'
       NO_COLOR: '1'
 
@@ -410,14 +322,8 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
 
-      - name: 'Setup pnpm'
-        uses: 'pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413' # v6.1.0
-
-      - name: 'Setup node.js'
-        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
-        with:
-          node-version: 22
-          cache: 'pnpm'
+      - name: 'Setup pnpm and node.js'
+        uses: './.github/actions/setup'
 
       # Only the root: `.railway/railway.ts` imports the `railway` SDK from the root manifest.
       - name: 'Install the Railway SDK'
@@ -440,108 +346,3 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           cat "$RUNNER_TEMP/plan.txt"
           exit "$code"
-
-  # The environment is brought to what `.railway/railway.ts` says, once the merge commit is green:
-  # the services deploy from this same push (`checkSuites`), so the new configuration is in place
-  # before Railway builds them. The plan is made and applied in this one job and never stored: an
-  # artifact of a public repository is readable by anyone. A plan that deletes something — a
-  # service, or a variable set by hand in the dashboard and absent from the file — is applied only
-  # when the pull request that brought the commit carries the `railway:destructive` label.
-  railway-apply:
-    needs:
-      - 'changes'
-      - 'check'
-      - 'docs'
-      - 'railway-check'
-    if: >-
-      !cancelled()
-      && github.event_name == 'push'
-      && needs.changes.result == 'success'
-      && contains(fromJSON('["success", "skipped"]'), needs.check.result)
-      && contains(fromJSON('["success", "skipped"]'), needs.docs.result)
-      && contains(fromJSON('["success", "skipped"]'), needs.railway-check.result)
-    runs-on: 'ubuntu-latest'
-    timeout-minutes: 10
-    # Listed in the repository's deployments, and the place to put a required reviewer later.
-    environment: 'production'
-    permissions:
-      contents: 'read'
-      # The labels of the pull request behind the commit.
-      pull-requests: 'read'
-    env:
-      RAILWAY_CLI_VERSION: '5.62.1'
-      NO_COLOR: '1'
-
-    steps:
-      - name: 'Checkout'
-        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
-
-      - name: 'Setup pnpm'
-        uses: 'pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413' # v6.1.0
-
-      - name: 'Setup node.js'
-        uses: 'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020' # v7.0.0
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: 'Install the Railway SDK'
-        run: 'pnpm install --frozen-lockfile --filter base'
-
-      - name: 'Install the Railway CLI'
-        run: 'npm install --global "@railway/cli@$RAILWAY_CLI_VERSION"'
-
-      # `--detailed-exit-code`: 0 is nothing to do, 2 is changes pending, anything else a failure.
-      - name: 'Plan'
-        id: 'plan'
-        env:
-          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
-        run: |
-          code=0
-          railway config plan --verbose --detailed-exit-code --out "$RUNNER_TEMP/railway-plan.json" || code=$?
-          case "$code" in
-            0) echo 'pending=false' >> "$GITHUB_OUTPUT" ;;
-            2) echo 'pending=true' >> "$GITHUB_OUTPUT" ;;
-            *) exit "$code" ;;
-          esac
-
-      - name: 'Allow destructive changes'
-        id: 'destructive'
-        if: steps.plan.outputs.pending == 'true'
-        env:
-          GH_TOKEN: '${{ github.token }}'
-          GH_REPO: '${{ github.repository }}'
-        run: |
-          if [ "$(jq -r '.destructive // false' "$RUNNER_TEMP/railway-plan.json")" != 'true' ]; then
-            echo 'confirm=false' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          labelled=$(gh api "repos/$GH_REPO/commits/$GITHUB_SHA/pulls" \
-            --jq 'any(.[]; any(.labels[]; .name == "railway:destructive"))')
-          if [ "$labelled" != 'true' ]; then
-            echo '::error::The plan deletes something in Railway. Label the pull request `railway:destructive` and re-run this job, or add what the dashboard holds to .railway/railway.ts.'
-            exit 1
-          fi
-          echo 'confirm=true' >> "$GITHUB_OUTPUT"
-
-      # The reviewed plan is applied as it is: if the environment moved since the plan above, the
-      # CLI refuses it (`configEtag`) instead of applying a stale one.
-      - name: 'Apply'
-        if: steps.plan.outputs.pending == 'true'
-        env:
-          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
-          CONFIRM_DESTRUCTIVE: '${{ steps.destructive.outputs.confirm }}'
-        run: |
-          flags='--yes'
-          if [ "$CONFIRM_DESTRUCTIVE" = 'true' ]; then
-            flags="$flags --confirm-destructive"
-          fi
-          railway config apply --plan "$RUNNER_TEMP/railway-plan.json" $flags
-
-      # What the plan cannot see: it compares only what railway.ts declares, so a public domain or a
-      # TCP proxy made in the dashboard passes it. Run after the apply (also when there was nothing to
-      # apply), against the environment as it is now. Prints addresses only, never a hostname.
-      - name: 'No public endpoint outside the allow-list'
-        env:
-          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
-        run: 'railway config pull --json 2>/dev/null | bash scripts/check-railway-exposure.sh'

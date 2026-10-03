@@ -2,9 +2,12 @@ version: 2
 
 updates:
   # The workflows pin every action to a commit, which never moves by itself: without this an
-  # action's fixes stop arriving. One pull request a month for all of them.
+  # action's fixes stop arriving. One pull request a month for all of them. The shared setup is a
+  # local composite action, which `/` alone does not reach.
   - package-ecosystem: 'github-actions'
-    directory: '/'
+    directories:
+      - '/'
+      - '/.github/actions/*'
     schedule:
       interval: 'monthly'
     groups:

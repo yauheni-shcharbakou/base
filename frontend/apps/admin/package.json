@@ -76,7 +76,8 @@
         {
           "tsconfig": {
             "module": "commonjs",
-            "target": "ES2021"
+            "target": "ES2021",
+            "isolatedModules": true
           }
         }
       ]

@@ -67,8 +67,8 @@ pnpm migrate                  # apply pending migrations in every DB-backed serv
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
-pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published
-pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh and check-railway-exposure.sh
+pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published, no released entry was edited, no merged ADR changed beyond its status line
+pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh, released-entries.sh and frozen-adrs.sh
 pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
@@ -99,24 +99,39 @@ targets, narrow the filter (`turbo run compile --filter=@backend/proto`).
 Creating a migration (and any other MikroORM CLI command) runs inside a service directory — see
 `backend/CLAUDE.md`.
 
-**CI.** `.github/workflows/check.yaml` runs on every pull request into `main` and every push to it (which seeds the turbo cache new pull requests start from): `build`, `typecheck`
-and `lint`, then fails if they left the tree dirty (stale codegen, unformatted code, unapplied lint
-fixes), then `check:docs`, `check:scripts`, `check:env-docs`, `migrate:check`, a guard against a migration snapshot
-changed without a new migration next to it, `test` and `test:e2e`. Postgres, Redis and NATS run
-beside the job and `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Turbo's local
-cache (`.turbo/cache`) is carried between runs, pruned of entries older than a week.
+**CI.** Two workflows. `.github/workflows/check.yaml` runs on every pull request into `main`:
+`build`, then `typecheck`, `lint`, `test` and `test:e2e` in one turbo run, then fails if they left
+the tree dirty (stale codegen, unformatted code, unapplied lint fixes), then `check:docs`,
+`check:scripts`, `check:env-docs`, `migrate:check` and a guard against a migration snapshot changed
+without a new migration next to it. Postgres, Redis and NATS run beside the job and
+`E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Its `check` job is the required
+status check. `.github/workflows/main.yaml` runs on every push to `main` and checks nothing again:
+the ruleset requires a branch up to date with `main` before a merge, so the merged tree is the one
+`check` passed — **turning that requirement off makes `main` untested**. It runs `build` and
+`typecheck` only to warm main's turbo cache (a pull request can read main's cache, never another
+pull request's), then `railway-apply`, then `release`. Both share turbo's **Vercel Remote Cache**
+(the free Hobby team, reached through a GitHub OIDC exchange — no stored token; the team slug is the
+repository variable `TURBO_TEAM`, the trust is a "Turborepo CLI" OIDC policy in that team naming
+this repository). A fork's pull request gets no OIDC token, and a failed exchange only costs the
+remote cache; turbo's local cache (`.turbo/cache`), carried between runs through `actions/cache`
+and pruned of entries older than a week, is the fallback. Since neither failure fails the job, each
+cached job ends with a turbo cache report in its summary — remote hits, local hits and misses per
+turbo run, counted from the run summaries `TURBO_RUN_SUMMARY` makes turbo write, which hold hashes
+of env values and are never published — and a warning while the remote cache is out of reach. The
+setup steps, protoc and that report are local composite actions in `.github/actions/`.
 **A change to documentation alone skips all of that**: when every changed path is a `*.md` or under
 `.claude/`, the `check` job and its servers never start, and a `docs` job runs `check:docs` and
-`check:env-docs` by themselves. A pull request is judged whole, against its base — a docs commit on
-top of a code change still runs everything. A change to `.railway/` (not its README) alone
-skips them too: a `railway-check` job typechecks `railway.ts`, and the plan
-and apply jobs run as usual. The list of what is not code is `scripts/classify-changes.sh`; a path
-it does not name is code. Actions are pinned to commits, which
-Dependabot moves once a month.
+`check:env-docs` by themselves; on `main`, the build is skipped. A pull request is judged whole,
+against its base — a docs commit on top of a code change still runs everything. A change to
+`.railway/` (not its README) alone skips them too: a `railway-check` job typechecks `railway.ts`,
+and the plan and apply jobs run as usual. The list of what is not code is
+`scripts/classify-changes.sh`; a path it does not name is code. Actions are pinned to commits, which
+Dependabot moves once a month. Why two workflows:
+[ADR-0039](docs/adr/0039-main-trusts-the-pull-request-check.md).
 
 **Deploy.** Railway is described by `.railway/railway.ts` (Infrastructure as Code), not by per-app
 `railway.toml` files. A pull request gets a read-only plan in the run's summary; a green push to
-`main` applies it (`railway-plan` / `railway-apply` in `check.yaml`). The `release` job needs `railway-apply` to have succeeded. No secret values in that file —
+`main` applies it (`railway-plan` in `check.yaml`, `railway-apply` in `main.yaml`). The `release` job needs `railway-apply` to have succeeded. No secret values in that file —
 the repository is public, variables are `preserve()`. The flow, the `railway:destructive` label and
 the setup are in [.railway/README.md](.railway/README.md); the why is
 [ADR-0038](docs/adr/0038-railway-iac-applied-by-ci.md).
@@ -126,9 +141,11 @@ the top entry of `CHANGELOG.md` move together and `README.md` is read against th
 `/release` skill (`.claude/skills/release/`) does all three and commits them as
 `chore: release <version>` once its checks pass; it does not push. `check:docs` fails while the
 version and the entry disagree, or while the entry would publish badly (empty, an unclosed code
-fence, a relative link to a file that is not there). Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
+fence, a relative link to a file that is not there). **A released entry is frozen:** once its version is tagged, it is
+the published Release body, so `check:docs` (and the docs hook, on an edit to `CHANGELOG.md`) fails
+while it differs from the entry in its tag — a correction goes into the next entry. Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
 curated from the ADRs and the contract diffs, not generated from commits. **Nobody tags by hand:**
-on a green push to `main` the workflow's `release` job tags that commit `v<version>` and publishes
+on a green push to `main` the `release` job of `main.yaml` tags that commit `v<version>` and publishes
 a GitHub Release, each unless it exists — so a merge that left the version alone releases nothing,
 and a version bumped without a merge is not a release. The Release's body is the entry itself, as
 `scripts/release-notes.sh <version>` prints it (wrapped lines joined, relative links pinned to the
@@ -147,6 +164,11 @@ is still empty passes `--passWithNoTests` in that script to keep the repo-wide r
 **Nothing that loads MikroORM runs under Jest:** MikroORM 7 is ESM-only and Jest's runtime has no
 `require(esm)`. A database spec runs on `node:test` instead — `backend.storage`'s `test:e2e` is the
 template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
+**ts-jest only transpiles** (`tsconfig: { isolatedModules: true }` in each transform): `typecheck`
+already checks the specs, and a second type check made up half the test run. A backend transform
+also sets `module: commonjs` and `moduleResolution: node10`, which ts-jest forced itself while it
+type-checked — under `nodenext` a transpiled `import()` stays native and fails under Jest. A new
+jest config copies the transform of its package's siblings.
 
 **Lint & strictness.**
 

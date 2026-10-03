@@ -20,7 +20,7 @@
 # `--file` reads another changelog (the specs' fixtures). Its path and every relative link are
 # read from the repository root, where CHANGELOG.md lives.
 #
-# One copy, three callers: the `release` job of .github/workflows/check.yaml, the docs invariants,
+# One copy, three callers: the `release` job of .github/workflows/main.yaml, the docs invariants,
 # and anyone previewing the notes before a merge. Specs: scripts/release-notes.test.sh. Exits 1
 # when the changelog has no entry for the version. Needs bash and awk alone.
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2

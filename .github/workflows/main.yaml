@@ -1,0 +1,293 @@
+name: 'Main'
+
+# What follows a merge: warm main's turbo cache, bring Railway to the commit, release it. Nothing
+# here checks the code again — main accepts only a pull request whose required `check` passed on a
+# branch up to date with it, so this commit's tree is the one `check.yaml` checked (ADR-0039).
+on:
+  push:
+    branches:
+      - 'main'
+
+concurrency:
+  group: 'main'
+  # Queued, never cancelled: a run that stops halfway leaves an apply or a release undone and saves
+  # no cache.
+  cancel-in-progress: false
+
+permissions:
+  contents: 'read'
+
+# Every action is pinned to a commit, with the release it is in beside it: a tag can be moved to
+# other code, a commit cannot. Dependabot moves both (`.github/dependabot.yml`).
+jobs:
+  # A push to main is classified by what it added; `check.yaml` explains the classifier. A diff
+  # that cannot be computed is an empty list, which it reads as code.
+  changes:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+    outputs:
+      code: '${{ steps.classify.outputs.code }}'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: 'blob:none'
+          sparse-checkout: 'scripts'
+
+      - name: 'Classify the change'
+        id: 'classify'
+        env:
+          BASE_SHA: '${{ github.event.before }}'
+        run: |
+          files=''
+          if git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only --no-renames "$BASE_SHA..HEAD") || files=''
+          fi
+          printf '%s\n' "$files"
+          printf '%s\n' "$files" | bash scripts/classify-changes.sh | tee -a "$GITHUB_OUTPUT"
+
+  # The remote cache already holds what the merged pull request built, so this mostly replays it.
+  # The local cache is the one that needs the build: a pull request reads the GitHub Actions caches
+  # saved by its own branch and by its base, never by another pull request, so main saves one for
+  # the runs the remote cache does not reach (forks, a failed exchange). Only the cacheable tasks:
+  # lint and the tests are `cache: false` and would save nothing. It also stands between a broken
+  # build and the apply below, and Railway waits for it before deploying (`checkSuites`).
+  build:
+    needs: 'changes'
+    if: needs.changes.outputs.code == 'true'
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 20
+    permissions:
+      contents: 'read'
+      # The GitHub OIDC token the remote cache step exchanges for a Turborepo one.
+      id-token: 'write'
+    env:
+      TURBO_TELEMETRY_DISABLED: '1'
+      TURBO_RUN_SUMMARY: 'true'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      - name: 'Setup pnpm and node.js'
+        uses: './.github/actions/setup'
+
+      - name: 'Install protoc'
+        uses: './.github/actions/protoc'
+
+      # As in `check.yaml`: a failed exchange costs the remote cache, not the run.
+      - name: 'Turbo remote cache'
+        if: vars.TURBO_TEAM != ''
+        continue-on-error: true
+        uses: 'vercel/setup-turborepo-remote-cache-action@49d7b1b46ba4c9251e1977986bfe18336feabc8f' # v1.1.0
+        with:
+          team: '${{ vars.TURBO_TEAM }}'
+
+      - name: 'Turbo cache'
+        uses: 'actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9' # v6.1.0
+        with:
+          path: '.turbo/cache'
+          key: 'turbo-${{ runner.os }}-${{ github.sha }}'
+          restore-keys: 'turbo-${{ runner.os }}-'
+
+      - name: 'Install dependencies'
+        run: 'pnpm install --frozen-lockfile'
+
+      - name: 'Build and typecheck'
+        run: 'pnpm turbo run build typecheck'
+
+      # As in `check.yaml`. Here a remote hit is the proof the remote cache is read, not only written.
+      - name: 'Turbo cache report'
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: './.github/actions/turbo-cache-report'
+        with:
+          expect-remote: ${{ vars.TURBO_TEAM != '' }}
+
+      # Turbo never evicts, and each run restores the previous cache and adds to it. An entry is
+      # dropped a week after it was written; the next miss rebuilds it.
+      - name: 'Prune turbo cache'
+        if: always()
+        run: 'find .turbo/cache -type f -mtime +7 -delete 2>/dev/null || true'
+
+  # The environment is brought to what `.railway/railway.ts` says, once the build is green: the
+  # services deploy from this same push (`checkSuites`), so the new configuration is in place
+  # before Railway builds them. The plan is made and applied in this one job and never stored: an
+  # artifact of a public repository is readable by anyone. A plan that deletes something — a
+  # service, or a variable set by hand in the dashboard and absent from the file — is applied only
+  # when the pull request that brought the commit carries the `railway:destructive` label.
+  # `railway.ts` itself was typechecked by the pull request; a broken one fails the plan here.
+  railway-apply:
+    needs:
+      - 'changes'
+      - 'build'
+    # `build` is skipped when the push changed no code, and a job with a skipped need is skipped
+    # itself unless its `if` says otherwise.
+    if: >-
+      !cancelled()
+      && needs.changes.result == 'success'
+      && contains(fromJSON('["success", "skipped"]'), needs.build.result)
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 10
+    # The environment for its protection rules (deployment branches: `main`; the place to put a
+    # required reviewer later), not for its history: an apply changes configuration, it deploys
+    # nothing. The deployment of record is Railway's own, which its GitHub app reports under
+    # `base / production` once the services roll out — a second one here would only double it.
+    environment:
+      name: 'production'
+      deployment: false
+    permissions:
+      contents: 'read'
+      # The labels of the pull request behind the commit.
+      pull-requests: 'read'
+    env:
+      # The same value as in `check.yaml`'s `railway-plan`: the plan a pull request showed is the
+      # plan applied here.
+      RAILWAY_CLI_VERSION: '5.62.1'
+      NO_COLOR: '1'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+
+      - name: 'Setup pnpm and node.js'
+        uses: './.github/actions/setup'
+
+      - name: 'Install the Railway SDK'
+        run: 'pnpm install --frozen-lockfile --filter base'
+
+      - name: 'Install the Railway CLI'
+        run: 'npm install --global "@railway/cli@$RAILWAY_CLI_VERSION"'
+
+      # `--detailed-exit-code`: 0 is nothing to do, 2 is changes pending, anything else a failure.
+      - name: 'Plan'
+        id: 'plan'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+        run: |
+          code=0
+          railway config plan --verbose --detailed-exit-code --out "$RUNNER_TEMP/railway-plan.json" || code=$?
+          case "$code" in
+            0) echo 'pending=false' >> "$GITHUB_OUTPUT" ;;
+            2) echo 'pending=true' >> "$GITHUB_OUTPUT" ;;
+            *) exit "$code" ;;
+          esac
+
+      - name: 'Allow destructive changes'
+        id: 'destructive'
+        if: steps.plan.outputs.pending == 'true'
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+        run: |
+          if [ "$(jq -r '.destructive // false' "$RUNNER_TEMP/railway-plan.json")" != 'true' ]; then
+            echo 'confirm=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          labelled=$(gh api "repos/$GH_REPO/commits/$GITHUB_SHA/pulls" \
+            --jq 'any(.[]; any(.labels[]; .name == "railway:destructive"))')
+          if [ "$labelled" != 'true' ]; then
+            echo '::error::The plan deletes something in Railway. Label the pull request `railway:destructive` and re-run this job, or add what the dashboard holds to .railway/railway.ts.'
+            exit 1
+          fi
+          echo 'confirm=true' >> "$GITHUB_OUTPUT"
+
+      # The reviewed plan is applied as it is: if the environment moved since the plan above, the
+      # CLI refuses it (`configEtag`) instead of applying a stale one.
+      - name: 'Apply'
+        if: steps.plan.outputs.pending == 'true'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+          CONFIRM_DESTRUCTIVE: '${{ steps.destructive.outputs.confirm }}'
+        run: |
+          flags='--yes'
+          if [ "$CONFIRM_DESTRUCTIVE" = 'true' ]; then
+            flags="$flags --confirm-destructive"
+          fi
+          railway config apply --plan "$RUNNER_TEMP/railway-plan.json" $flags
+
+      # What the plan cannot see: it compares only what railway.ts declares, so a public domain or a
+      # TCP proxy made in the dashboard passes it. Run after the apply (also when there was nothing to
+      # apply), against the environment as it is now. Prints addresses only, never a hostname.
+      - name: 'No public endpoint outside the allow-list'
+        env:
+          RAILWAY_TOKEN: '${{ secrets.RAILWAY_TOKEN }}'
+        run: 'railway config pull --json 2>/dev/null | bash scripts/check-railway-exposure.sh'
+
+  # A release is one merge into main, and its version is the root package.json's: the commit that
+  # lands on main is tagged `v<version>` here and published as a GitHub Release whose body is that
+  # version's CHANGELOG.md entry — each once per version. A push that releases nothing left the
+  # version alone, finds both there already and does nothing, so this needs no trigger of its own
+  # and no "is this a release" flag. `railway-apply` must have succeeded: it runs on every push
+  # whose build did not fail, so a skip means the build did, and a failure means the environment
+  # does not match the commit — a tag does not go on either.
+  release:
+    needs: 'railway-apply'
+    if: >-
+      !cancelled()
+      && needs.railway-apply.result == 'success'
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 5
+    # The one job that writes: the workflow's token is read-only everywhere else.
+    permissions:
+      contents: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The version, its changelog entry, and the script that shapes the entry into notes.
+          sparse-checkout: |
+            /package.json
+            /CHANGELOG.md
+            /scripts/
+          sparse-checkout-cone-mode: false
+
+      # Read the way scripts/docs-invariants.sh reads it, which has already held it to the
+      # changelog's top entry.
+      - name: 'Read the version'
+        id: 'version'
+        run: |
+          version=$(grep -m1 -oE '"version": *"[^"]+"' package.json | grep -oE '[0-9][^"]*')
+          if [ -z "$version" ]; then
+            echo '::error::No version in the root package.json.'
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      # Asked of the remote, not of the clone: a shallow checkout fetches no tags.
+      - name: 'Tag the release'
+        env:
+          TAG: '${{ steps.version.outputs.tag }}'
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "$TAG exists already."
+            exit 0
+          fi
+          # Annotated, as v1.0.0 is: a plain `git describe` sees no other kind.
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            tag -a "$TAG" -m "$TAG" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          echo "::notice::Tagged $GITHUB_SHA as $TAG."
+
+      # Its own check rather than "the tag was just made": a run that tagged and then failed here
+      # publishes on its re-run. The notes link to the files as tagged, not as they are on main.
+      - name: 'Publish the release'
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GH_REPO: '${{ github.repository }}'
+          TAG: '${{ steps.version.outputs.tag }}'
+          VERSION: '${{ steps.version.outputs.version }}'
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "The release $TAG exists already."
+            exit 0
+          fi
+          notes="$RUNNER_TEMP/release-notes.md"
+          bash scripts/release-notes.sh "$VERSION" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$TAG" > "$notes"
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$notes"
+          echo "::notice::Published the release $TAG."

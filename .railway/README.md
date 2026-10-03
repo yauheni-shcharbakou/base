@@ -11,10 +11,11 @@ Railway). Why it is applied by our own CI job and not by Railway's action:
 1. **Pull request** — the `railway-plan` job of `.github/workflows/check.yaml` runs
    `railway config plan` against production and prints it in the run's summary. Variable values are
    redacted. Fork and Dependabot pull requests get no secrets and skip it.
-2. **Merge into `main`** — once `check` is green, the `railway-apply` job plans again and applies
-   that plan. The services deploy from the same push (`checkSuites: true` makes Railway wait for the
-   checks), so the new configuration is in place before the new build starts. A push that changes
-   nothing in Railway plans no changes and applies nothing.
+2. **Merge into `main`** — the push runs `.github/workflows/main.yaml`; once its `build` is green,
+   the `railway-apply` job plans again and applies that plan. The services deploy from the same push
+   (`checkSuites: true` makes Railway wait for the checks), so the new configuration is in place
+   before the new build starts. A push that changes nothing in Railway plans no changes and applies
+   nothing.
 3. **Deletions need consent.** A plan that deletes anything — a service, or a variable that exists
    in the dashboard but not in `railway.ts` — fails the job unless the merged pull request carries
    the `railway:destructive` label (add it, then re-run the job).
