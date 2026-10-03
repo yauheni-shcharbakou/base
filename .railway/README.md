@@ -39,6 +39,10 @@ Nobody runs `railway config apply` by hand in the normal flow.
   resources may be public is listed in `public-endpoints.json`, and the last step of the
   `railway-apply` job (`scripts/check-railway-exposure.sh`, reading `railway config pull --json`)
   fails when the environment exposes anything else. Widening that list is the reviewed change.
+- **Railway service names have no dot** (`backend-auth`, `frontend-admin`; the packages of this
+  repository keep theirs, `backend.auth`). Railway reads the first dot of a reference as the end of
+  the service name, so `${{backend.auth.X}}` resolves to an empty string — `BACKEND_GRPC_URL` once
+  became `:8000`. `plan` cannot tell: it prints the template, not what Railway makes of it.
 - Keep one authoring file; no `partial` export.
 - A new service: add `service(...)` with `build` (`builder: "DOCKERFILE"`, `dockerfilePath`,
   `watchPatterns`) and `deploy`, put it in a `group`, and list its variables as `preserve()`.

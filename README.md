@@ -185,7 +185,7 @@ The keys are base64-encoded on purpose: a multi-line PEM does not survive `.env`
 - `backend/apps/api-gateway/.env` — `JWT_ACCESS_PUBLIC_KEY_BASE64` only
 - root `.env` — both (docker-compose forwards them)
 
-On **Railway**, set them per service before redeploying (`validateEnv` fails fast on startup otherwise): the private key on `backend.auth`, the public key on both `backend.auth` and `backend.api-gateway`. Declaring the public key as a project-level shared variable and referencing it via `${{shared.JWT_ACCESS_PUBLIC_KEY_BASE64}}` keeps the two services from drifting apart. Rotating the pair invalidates every issued access token — clients recover through the refresh flow.
+On **Railway**, set them per service before redeploying (`validateEnv` fails fast on startup otherwise): the private key on the `backend-auth` service, the public key on both `backend-auth` and `backend-api-gateway` (Railway services are named with hyphens, not the packages' dots). Declaring the public key as a project-level shared variable and referencing it via `${{shared.JWT_ACCESS_PUBLIC_KEY_BASE64}}` keeps the two services from drifting apart. Rotating the pair invalidates every issued access token — clients recover through the refresh flow.
 
 #### Redis on Railway
 

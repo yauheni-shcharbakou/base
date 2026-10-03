@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] — 2026-10-03 — `refactor/migrate-to-railway-iac`
+
+3.0.0 wrote the gRPC address of one service in another as a reference to a service with a dot in its
+name, and Railway resolves such a reference to an empty string: `BACKEND_GRPC_URL` became `:8000`,
+and the gateway and storage lost the address of auth the same way. The Railway services are now
+named without dots, which is the one thing a deployment of 3.0.0 has to do. Railway-only changes
+also get a lighter CI run.
+
+### Fixed
+
+- **A reference to a service with a dot in its name resolved to an empty string.** The Railway
+  services are named `backend-auth`, `backend-api-gateway`, `backend-storage` and `frontend-admin`
+  in `.railway/railway.ts`; the packages and the turbo filters keep their dotted names. Rename the
+  four services in the Railway dashboard **before** the next apply: under the old names the plan
+  creates four services and deletes four, which the apply refuses without the `railway:destructive`
+  label. `.railway/public-endpoints.json` is keyed by the new names.
+
+### Added
+
+- **A `railway-check` job** for a change to `.railway/` alone: the typecheck of `railway.ts`, with no
+  build, no tests and no servers, while the plan and the apply run as before. The classifier
+  (`scripts/classify-changes.sh`) gains a `railway` output for it.
+- **Specs for the CI scripts**: `scripts/classify-changes.test.sh` and
+  `scripts/check-railway-exposure.test.sh`, run by `pnpm check:scripts`.
+
 ## [3.0.0] — 2026-10-03 — `refactor/migrate-to-railway-iac`
 
 The Railway deployment moves from Config as Code (a `railway.toml` per app) to Infrastructure as
