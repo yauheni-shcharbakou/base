@@ -67,8 +67,8 @@ pnpm migrate                  # apply pending migrations in every DB-backed serv
 pnpm migrate:check            # fail while any service's entities and migration snapshot disagree (no DB needed)
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
-pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published
-pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh and check-railway-exposure.sh
+pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published, no released entry was edited
+pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh and released-entries.sh
 pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
@@ -138,7 +138,9 @@ the top entry of `CHANGELOG.md` move together and `README.md` is read against th
 `/release` skill (`.claude/skills/release/`) does all three and commits them as
 `chore: release <version>` once its checks pass; it does not push. `check:docs` fails while the
 version and the entry disagree, or while the entry would publish badly (empty, an unclosed code
-fence, a relative link to a file that is not there). Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
+fence, a relative link to a file that is not there). **A released entry is frozen:** once its version is tagged, it is
+the published Release body, so `check:docs` (and the docs hook, on an edit to `CHANGELOG.md`) fails
+while it differs from the entry in its tag — a correction goes into the next entry. Workspaces stay at `0.0.0`: the monorepo is released whole. The entry is
 curated from the ADRs and the contract diffs, not generated from commits. **Nobody tags by hand:**
 on a green push to `main` the `release` job of `main.yaml` tags that commit `v<version>` and publishes
 a GitHub Release, each unless it exists — so a merge that left the version alone releases nothing,

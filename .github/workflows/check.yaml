@@ -241,8 +241,12 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' # v7.0.1
+        with:
+          # The release tags, which hold each released changelog entry as published. `check` gets
+          # them through its full history.
+          fetch-tags: true
 
-      # Before the install: bash and grep are all it needs.
+      # Before the install: bash, git, grep and awk are all it needs.
       - name: 'Docs layout holds'
         run: 'bash scripts/docs-invariants.sh'
 

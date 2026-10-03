@@ -11,6 +11,11 @@
 #     edit to CHANGELOG.md or to the root version does not trigger them here: between the two
 #     the changelog ones are legitimately broken.
 #
+# On an edit to CHANGELOG.md:
+#   - no released entry changed (scripts/released-entries.sh, invariant 6 above). Unlike the
+#     other changelog invariants this one is never broken on the way to a release, so it runs
+#     at the edit: a released entry was published as it stood in its tag.
+#
 # On an edit to a zod env schema, a manifest, or a document carrying an env table:
 #   - the generated env tables still match the schemas (@packages/env-docs --check),
 #     which also rejects a `zod.number()` that forgot `zod.coerce` and a config file
@@ -24,9 +29,11 @@ path=$(printf '%s' "$content" | jq -r '.tool_input.file_path // ""')
 
 is_doc=false
 is_schema=false
+is_changelog=false
 
 case "$path" in
   */CLAUDE.md | CLAUDE.md | */docs/adr/*.md) is_doc=true ;;
+  */CHANGELOG.md | CHANGELOG.md) is_changelog=true ;;
   */docs/env.md | */common.validation.ts) is_schema=true ;;
   */package.json | */pnpm-workspace.yaml) is_schema=true ;;
   # Content, not filename: `*.config.ts` used to miss backend/apps/auth/src/config.ts, and a
@@ -51,6 +58,15 @@ if [ "$is_doc" = true ] && [ -f scripts/docs-invariants.sh ]; then
   fi
 fi
 
+# The released entries of the changelog, one line per entry edited; the diff on stderr is dropped.
+if [ "$is_changelog" = true ] && [ -f scripts/released-entries.sh ]; then
+  if ! released_report=$(GITHUB_ACTIONS='' bash scripts/released-entries.sh 2>/dev/null); then
+    while IFS= read -r line; do
+      [ -n "$line" ] && problems="${problems}  - ${line}"$'\n'
+    done <<<"$released_report"
+  fi
+fi
+
 # Generated env tables still match the schemas they are projected from. Runs the
 # generator's own --check rather than reimplementing it (~0.5 s).
 if [ "$is_schema" = true ]; then
@@ -65,7 +81,7 @@ fi
 
 if [ -n "$problems" ]; then
   jq -n --arg r "Documentation invariants broken (project hook):"$'\n'"${problems}
-Fix the reference, add the missing ADR/index row, or regenerate. See docs/adr/README.md." \
+Fix the reference, add the missing ADR/index row, or regenerate; restore a released changelog entry and put the correction in the next one. See docs/adr/README.md." \
     '{decision: "block", reason: $r}'
 fi
 exit 0

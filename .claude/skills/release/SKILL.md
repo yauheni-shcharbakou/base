@@ -28,7 +28,9 @@ project needs, grouped by area. That is why there is no release tool in this rep
    ```
 
    If the top entry of `CHANGELOG.md` is already for a version above the last tag, the branch was
-   prepared before — **extend that entry**, do not add a second one.
+   prepared before — **extend that entry**, do not add a second one. An entry at or below the last
+   tag is released: never edit it, whatever it says. `check:docs` compares each one with its tag
+   (`scripts/released-entries.sh`); a correction is a line in the new entry.
 
 2. **Collect what changed, from the most reliable source down.** Commit subjects come last: they
    include work that was added and reverted, or fixed, inside the same range.

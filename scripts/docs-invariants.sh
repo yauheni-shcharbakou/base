@@ -10,6 +10,7 @@
 #   4. the top entry of CHANGELOG.md is for the version in the root package.json
 #   5. that entry can be published as it stands: it is not empty, its code fences close, and
 #      every relative link in it names a file that exists
+#   6. every released entry — its version is tagged — reads as it did in its tag
 #
 # Deliberately NOT checked: duplicated wording. That needs a bespoke marker list
 # which goes stale faster than the docs do — dedup is an audit, not an invariant.
@@ -86,8 +87,14 @@ if [ -f CHANGELOG.md ] && [ -f package.json ]; then
   fi
 fi
 
+# 6. A released entry is frozen: it was published as the body of its GitHub Release, which no
+#    later edit reaches. Its diff goes to stderr, past this report.
+while IFS= read -r problem; do
+  [ -n "$problem" ] && report "$problem"
+done < <(bash scripts/released-entries.sh)
+
 if [ "$failed" -ne 0 ]; then
-  echo 'Fix the reference, add the missing ADR/index row, or bring the version and the changelog together. See docs/adr/README.md and the /release skill.' >&2
+  echo 'Fix the reference, add the missing ADR/index row, or bring the version and the changelog together; a released entry stays as released, a correction goes into the next one. See docs/adr/README.md and the /release skill.' >&2
 fi
 
 exit "$failed"
