@@ -1,0 +1,26 @@
+name: 'Install protoc'
+description: 'The protoc release binary, on PATH. The three `@*/proto` compiles need it whenever turbo misses their cache.'
+
+# The release zip rather than apt: no `apt-get update`, which alone took ten seconds of every run.
+# The generated files record no tool versions, so a bump changes nothing in them; it moves by hand,
+# out of Dependabot's reach.
+inputs:
+  version:
+    description: 'A protobuf release, without the `v`.'
+    default: '36.2'
+
+runs:
+  using: 'composite'
+  steps:
+    # The zip's `include/` holds the well-known types, which protoc finds beside its own binary.
+    - name: 'Install protoc'
+      shell: 'bash'
+      env:
+        VERSION: '${{ inputs.version }}'
+      run: |
+        dir="$RUNNER_TEMP/protoc"
+        curl -fsSL -o "$dir.zip" \
+          "https://github.com/protocolbuffers/protobuf/releases/download/v$VERSION/protoc-$VERSION-linux-x86_64.zip"
+        unzip -q -o "$dir.zip" -d "$dir"
+        echo "$dir/bin" >> "$GITHUB_PATH"
+        "$dir/bin/protoc" --version

@@ -126,7 +126,7 @@ project needs, grouped by area. That is why there is no release tool in this rep
 
 It does not push or open a pull request — those wait for an explicit request. And it never tags or
 publishes: once the merge lands on `main` and the run is green, the `release` job of
-`.github/workflows/check.yaml` tags that commit `vX.Y.Z` from the root version and publishes a
+`.github/workflows/main.yaml` tags that commit `vX.Y.Z` from the root version and publishes a
 GitHub Release, each unless it exists. A tag made by hand beforehand would only leave it on the
 wrong commit.
 

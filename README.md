@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/yauheni-shcharbakou/base/actions/workflows/check.yaml"><img alt="Check" src="https://github.com/yauheni-shcharbakou/base/actions/workflows/check.yaml/badge.svg?branch=main"></a>
+  <a href="https://github.com/yauheni-shcharbakou/base/actions/workflows/main.yaml"><img alt="Main" src="https://github.com/yauheni-shcharbakou/base/actions/workflows/main.yaml/badge.svg?branch=main"></a>
   <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D22.22-339933?logo=node.js&logoColor=white">
   <img alt="pnpm" src="https://img.shields.io/badge/pnpm-11.9.0-F69220?logo=pnpm&logoColor=white">
   <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-2.10-EF4444?logo=turborepo&logoColor=white">
@@ -281,13 +281,12 @@ pnpm check:railway # tsc over .railway/railway.ts, which is no workspace
 ```
 
 CI (`.github/workflows/check.yaml`) runs all of the above, the build and the tests on every pull
-request into `main`. A release is a merge into `main` that raises the root `version`: the same
-workflow then tags the merged commit `v<version>` and publishes a GitHub Release from that version's
-`CHANGELOG.md` entry.
-
-Deploys are the same workflow's: a pull request gets a read-only Railway plan in its run summary,
-and a green push to `main` applies `.railway/railway.ts` to the Railway project (see
-[`.railway/README.md`](.railway/README.md)).
+request into `main`; a branch merges only once it is up to date with `main` and green. The push the
+merge makes runs `.github/workflows/main.yaml`, which checks nothing again: it builds to warm the
+cache, applies `.railway/railway.ts` to the Railway project (see
+[`.railway/README.md`](.railway/README.md)) and, when the merge raised the root `version`, tags the
+merged commit `v<version>` and publishes a GitHub Release from that version's `CHANGELOG.md` entry.
+A pull request gets a read-only Railway plan in its run summary.
 
 ##### Commands for run in docker
 
