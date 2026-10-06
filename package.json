@@ -9,6 +9,7 @@
     "compile:proto": "turbo run compile --filter=\"@*/proto\"",
     "compile:event-bus": "turbo run compile --filter=\"@backend/event-bus*\"",
     "compile:env-docs": "turbo run compile --filter=@packages/env-docs",
+    "check:audit": "pnpm audit --prod --audit-level=high",
     "check:env-docs": "pnpm --filter=@packages/env-docs run check",
     "check:docs": "bash scripts/docs-invariants.sh",
     "check:scripts": "bash scripts/release-notes.test.sh && bash scripts/classify-changes.test.sh && bash scripts/check-railway-exposure.test.sh && bash scripts/released-entries.test.sh && bash scripts/frozen-adrs.test.sh",

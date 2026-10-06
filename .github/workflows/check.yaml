@@ -204,6 +204,11 @@ jobs:
       - name: 'Env tables match their schemas'
         run: 'pnpm check:env-docs'
 
+      # Reads the registry's advisory database, so a new advisory can fail a pull request that
+      # touched no dependency: fix it with an override in pnpm-workspace.yaml, not by skipping this.
+      - name: 'No high-severity advisory in production dependencies'
+        run: 'pnpm check:audit'
+
       - name: 'Entities match the migration snapshots'
         run: 'pnpm migrate:check'
 

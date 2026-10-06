@@ -69,6 +69,7 @@ pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published, no released entry was edited, no merged ADR changed beyond its status line
 pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh, released-entries.sh and frozen-adrs.sh
+pnpm check:audit              # pnpm audit --prod: fails on a high or critical advisory in a production dependency (CI runs it; fix with an override in pnpm-workspace.yaml)
 pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
@@ -102,7 +103,7 @@ Creating a migration (and any other MikroORM CLI command) runs inside a service 
 **CI.** Two workflows. `.github/workflows/check.yaml` runs on every pull request into `main`:
 `build`, then `typecheck`, `lint`, `test` and `test:e2e` in one turbo run, then fails if they left
 the tree dirty (stale codegen, unformatted code, unapplied lint fixes), then `check:docs`,
-`check:scripts`, `check:env-docs`, `migrate:check` and a guard against a migration snapshot changed
+`check:scripts`, `check:audit`, `check:env-docs`, `migrate:check` and a guard against a migration snapshot changed
 without a new migration next to it. Postgres, Redis and NATS run beside the job and
 `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Its `check` job is the required
 status check. `.github/workflows/main.yaml` runs on every push to `main` and checks nothing again:
