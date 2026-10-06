@@ -62,7 +62,10 @@ export class PgStorageObjectMapper extends PgMapper<
     return result;
   }
 
+  // `parentId` is what the contract carries. Serializing `parent` itself walks into its `children`,
+  // which the unit of work fills with every sibling it inserts, so a batch of n cost n² (10 s for
+  // a thousand folders). Ignored fields are never serialized, not dropped afterwards.
   stringify(entity: PgStorageObjectEntity): StorageObject {
-    return _.omit(wrap(entity).toObject(), ['children']) as StorageObject;
+    return wrap(entity).toObject(['children', 'parent']) as StorageObject;
   }
 }
