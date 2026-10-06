@@ -48,7 +48,7 @@ const context = (
   controller: Controller,
   method: string,
   entries: Record<string, string> = {},
-  { peer = '10.0.0.1:50000', data = {} as unknown } = {},
+  { peer = '10.0.0.1:50000', data = {} } = {},
 ) => {
   const host = new ExecutionContextHost(
     [data, metadataOf(entries), { getPeer: () => peer }],

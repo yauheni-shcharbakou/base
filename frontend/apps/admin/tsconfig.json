@@ -1,6 +1,7 @@
 {
   "extends": "@packages/configs/tsconfig/app/refine.tsconfig.json",
   "compilerOptions": {
+    "types": ["node", "jest"],
     "paths": {
       "@/*": ["./src/*"],
       "@/pages/*": ["./pages/*"]

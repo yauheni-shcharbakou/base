@@ -11,7 +11,7 @@
   <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D22.22.3-339933?logo=node.js&logoColor=white">
   <img alt="pnpm" src="https://img.shields.io/badge/pnpm-12.9.1-F69220?logo=pnpm&logoColor=white">
   <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-2.11-EF4444?logo=turborepo&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
 

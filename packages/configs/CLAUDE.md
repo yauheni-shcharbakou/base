@@ -12,12 +12,16 @@ Because the presets are read from outside the packages that use them, `packages/
 
 | File | Extended by | Notes |
 |------|-------------|-------|
-| `app/nest.tsconfig.json` | backend apps (auth, storage, api-gateway) | NodeNext, decorators, `strict` **off** (strictNullChecks/noImplicitAny off) |
-| `app/refine.tsconfig.json` | frontend/apps/admin | `strict` **on**, jsx preserve, next plugin, noEmit |
+| `app/nest.tsconfig.json` | backend apps (auth, storage, api-gateway) | NodeNext, decorators, `strict` **off** (explicitly) |
+| `app/refine.tsconfig.json` | frontend/apps/admin | `strict` **on**, ES2017, bundler resolution, jsx preserve, next plugin, noEmit |
 | `package/base.tsconfig.json` | leaf packages `@packages/*`, `@frontend/proto` | `strict` **on**, bundler resolution |
-| `package/nest.tsconfig.json` | all `@backend/packages/*` | extends `base`, but adds decorators/NodeNext and **drops** `strict` |
+| `package/nest.tsconfig.json` | all `@backend/packages/*` | extends `base`, adds decorators/NodeNext, turns off `strictNullChecks`/`noImplicitAny`/`strictBindCallApply` |
 
-Gotcha: backend configs are intentionally non-strict (`strict` off), even though `package/nest` extends the strict `base` and overrides it. Package presets are strict, app-nest is not.
+Gotchas (TypeScript 6 defaults):
+- **`types` defaults to `[]`**, so every preset lists `["node"]`; a workspace that needs more ambient types (the admin's `jest`) sets the whole array itself — `types` replaces, it does not merge.
+- **`strict` defaults to `true`**, so `app/nest` says `false` outright. `package/nest` stays partly strict: it inherits `strict: true` from `base` and turns off only the three flags above.
+- **`rootDir` defaults to the config's directory**: an app that emits pins it in its `tsconfig.build.json` (see the root `CLAUDE.md`, *Tests*).
+- `moduleResolution: node` and `target: es5` are deprecated: use `bundler`/`nodenext` and ES2015+ (no `ignoreDeprecations` — TypeScript 7 removes them).
 
 ## ESLint presets (`eslint/`)
 

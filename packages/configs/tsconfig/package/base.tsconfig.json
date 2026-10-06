@@ -10,5 +10,6 @@
     "preserveWatchOutput": true,
     "skipLibCheck": true,
     "strict": true,
+    "types": ["node"],
   },
 }

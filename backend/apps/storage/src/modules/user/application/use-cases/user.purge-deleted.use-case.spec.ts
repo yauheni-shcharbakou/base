@@ -27,7 +27,7 @@ describe('UserPurgeDeletedUseCase', () => {
     deleteMedia = { execute: vi.fn().mockResolvedValue(right(0)) };
 
     useCase = new UserPurgeDeletedUseCase(
-      directory as unknown as UserDirectoryService,
+      directory,
       fileRepository as unknown as FileRepository,
       storageObjectRepository as unknown as StorageObjectRepository,
       deleteRootFolder as unknown as StorageObjectDeleteRootFolderUseCase,

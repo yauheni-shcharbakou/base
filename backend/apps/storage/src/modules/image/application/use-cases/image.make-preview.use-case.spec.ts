@@ -70,7 +70,7 @@ describe('ImageMakePreviewUseCase', () => {
     useCase = new ImageMakePreviewUseCase(
       repository as unknown as ImageRepository,
       fileService as unknown as StorageFileService,
-      previewService as unknown as ImagePreviewService,
+      previewService,
       purgeService as unknown as FilePurgeService,
     );
   });

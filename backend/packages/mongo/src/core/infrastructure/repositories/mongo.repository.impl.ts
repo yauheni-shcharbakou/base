@@ -225,7 +225,7 @@ export abstract class MongoRepositoryImpl<
         {},
       ),
       $inc: updateData['inc'] ?? {},
-    } as UpdateQuery<Doc>;
+    };
   }
 
   async updateMany(query: Partial<Query>, updateData: Update): Promise<boolean> {

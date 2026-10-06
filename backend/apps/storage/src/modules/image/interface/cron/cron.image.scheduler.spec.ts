@@ -19,7 +19,7 @@ describe('CronImageScheduler', () => {
 
     scheduler = new CronImageScheduler(
       useCase as unknown as ImageSweepPreviewsUseCase,
-      runner as unknown as DatabaseRunnerService,
+      runner,
       configService as unknown as ConfigService<Config>,
     );
   });

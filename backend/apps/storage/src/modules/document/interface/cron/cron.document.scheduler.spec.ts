@@ -19,7 +19,7 @@ describe('CronDocumentScheduler', () => {
 
     scheduler = new CronDocumentScheduler(
       useCase as unknown as DocumentSweepPreviewsUseCase,
-      runner as unknown as DatabaseRunnerService,
+      runner,
       configService as unknown as ConfigService<Config>,
     );
   });

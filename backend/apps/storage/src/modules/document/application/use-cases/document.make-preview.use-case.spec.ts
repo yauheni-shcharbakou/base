@@ -64,7 +64,7 @@ describe('DocumentMakePreviewUseCase', () => {
     useCase = new DocumentMakePreviewUseCase(
       repository as unknown as FileRepository,
       fileService as unknown as StorageFileService,
-      previewService as unknown as DocumentPreviewService,
+      previewService,
       purgeService as unknown as FilePurgeService,
     );
   });

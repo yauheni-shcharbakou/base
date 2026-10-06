@@ -53,5 +53,5 @@ loads no ESM-only package, and nothing forced the change there.
 - A mock only reaches the module graph Vitest loads. A sibling package arrives as its built CommonJS
   `dist`, which Node requires on its own, so a dependency imported there cannot be replaced with
   `vi.mock` — such a seam is mocked through DI instead.
-- A Nest app's `tsconfig.build.json` must exclude `vitest*.config.mts`: `nest build` would otherwise
-  compile them, move the root of its output and put `main.js` under `dist/src/`.
+- A Nest app's `tsconfig.build.json` must exclude `vitest*.config.mts`: they sit outside its
+  `rootDir` (`./src`), and `nest build` would otherwise compile them and fail.

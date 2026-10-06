@@ -36,5 +36,5 @@ export function buildLeafStorageObject({
     ...(fileId ? { file: fileId } : {}),
     ...(imageId ? { image: imageId } : {}),
     ...(videoId ? { video: videoId } : {}),
-  } as RequiredEntityData<PgStorageObjectEntity>;
+  };
 }

@@ -13,8 +13,12 @@ import {
 
 const { PENDING, UPLOADED, READY, FAILED } = NestStorage.FileUploadStatus;
 
-const providerVideo = (providerId: string, status: number) =>
-  ({ providerId, status, duration: 1, views: 0 }) as StorageVideo;
+const providerVideo = (providerId: string, status: number) => ({
+  providerId,
+  status,
+  duration: 1,
+  views: 0,
+});
 
 const video = (providerId: string, uploadStatus?: NestStorage.FileUploadStatus) =>
   ({

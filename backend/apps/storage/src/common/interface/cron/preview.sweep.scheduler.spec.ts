@@ -17,7 +17,7 @@ describe('PreviewSweepScheduler', () => {
         'Row',
         budgetMinutes,
         useCase as unknown as PreviewSweepUseCase<{ id: string }>,
-        runner as unknown as DatabaseRunnerService,
+        runner,
       );
     }
 

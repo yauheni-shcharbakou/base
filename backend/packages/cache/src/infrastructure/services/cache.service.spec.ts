@@ -18,7 +18,7 @@ const buildBrokenStore = (): CacheStore => {
     delete: fail,
     deleteByPrefix: fail,
     increment: fail,
-  } as unknown as CacheStore;
+  };
 };
 
 describe('CacheService', () => {
