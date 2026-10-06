@@ -332,7 +332,6 @@ overrides:
   postcss: 8.5.29
   proxy-addr: 2.0.8
   qs: 6.16.0
-  react-hook-form: 7.57.0
   sanitize-html: 2.18.0
 
 importers:
@@ -1310,7 +1309,7 @@ importers:
         version: 1.14.5
       '@hookform/resolvers':
         specifier: 5.2.2
-        version: 5.2.2(react-hook-form@7.57.0(react@19.2.4))
+        version: 5.2.2(react-hook-form@7.89.0(@types/react@19.2.9)(react@19.2.4))
       '@mui/icons-material':
         specifier: 6.5.0
         version: 6.5.0(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react@19.2.9)(react@19.2.4)
@@ -1337,13 +1336,13 @@ importers:
         version: 2.0.1(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@refinedev/mui':
         specifier: 7.0.1
-        version: 7.0.1(aba639462f8a434fcd48295a2f0d7911)
+        version: 7.0.1(10f94fd9326eaf8dbe795f2490afc09d)
       '@refinedev/nextjs-router':
         specifier: 7.0.5
         version: 7.0.5(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(next@15.5.27(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@22.19.17)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@refinedev/react-hook-form':
         specifier: 5.0.4
-        version: 5.0.4(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.57.0(react@19.2.4))(react@19.2.4)
+        version: 5.0.4(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.89.0(@types/react@19.2.9)(react@19.2.4))(react@19.2.4)
       '@sweet-monads/either':
         specifier: 'catalog:'
         version: 3.3.1
@@ -1381,8 +1380,8 @@ importers:
         specifier: 15.0.0
         version: 15.0.0(react@19.2.4)
       react-hook-form:
-        specifier: 7.57.0
-        version: 7.57.0(react@19.2.4)
+        specifier: 7.89.0
+        version: 7.89.0(@types/react@19.2.9)(react@19.2.4)
       react-pdf:
         specifier: 11.0.0
         version: 11.0.0(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -2287,7 +2286,7 @@ packages:
   '@hookform/resolvers@5.2.2':
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
     peerDependencies:
-      react-hook-form: 7.57.0
+      react-hook-form: ^7.55.0
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3896,7 +3895,7 @@ packages:
       dayjs: ^1.10.7
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
-      react-hook-form: 7.57.0
+      react-hook-form: ^7.57.0
 
   '@refinedev/nextjs-router@7.0.5':
     resolution: {integrity: sha512-Z724KBsnEtESGYZMntXEhXr9gmQD/kD6s7poeMY4HeLtWLfNyJPdopHntD4BYMU1ApZweDBJeSqEuWjoL3/x5A==}
@@ -3918,7 +3917,7 @@ packages:
       '@types/react-dom': ^18.0.0 || ^19.0.0
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
-      react-hook-form: 7.57.0
+      react-hook-form: ^7.57.0
 
   '@refinedev/ui-types@2.0.1':
     resolution: {integrity: sha512-Fxsgr2JEsyEVGr5rMvOasQP5tj/1yD2m4M9XqDZQ+65B/ZB/vbkbB5+ltAhNlX2UwX8jr1mo8fnutHBltYxwfA==}
@@ -8182,11 +8181,15 @@ packages:
     peerDependencies:
       react: '>= 16.8 || 18.0.0'
 
-  react-hook-form@7.57.0:
-    resolution: {integrity: sha512-RbEks3+cbvTP84l/VXGUZ+JMrKOS8ykQCRYdm5aYsxnDquL0vspsyNhGRO7pcH6hsZqWlPOjLye7rJqdtdAmlg==}
+  react-hook-form@7.89.0:
+    resolution: {integrity: sha512-vKcoCfy8RKZDrhSdqsRFp0uEOdS1AhLjOL6hR7Wmfzg1akNxEhaPf5WORx8SgEQPVXakdDyDkqQp+KNxVnnPHg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
+      '@types/react': '*'
       react: ^16.8.0 || ^17 || ^18 || ^19
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -10353,10 +10356,10 @@ snapshots:
       protobufjs: 7.6.6
       yargs: 17.7.3
 
-  '@hookform/resolvers@5.2.2(react-hook-form@7.57.0(react@19.2.4))':
+  '@hookform/resolvers@5.2.2(react-hook-form@7.89.0(@types/react@19.2.9)(react@19.2.4))':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.57.0(react@19.2.4)
+      react-hook-form: 7.89.0(@types/react@19.2.9)(react@19.2.4)
 
   '@humanfs/core@0.19.2':
     dependencies:
@@ -11890,7 +11893,7 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
 
-  '@refinedev/mui@7.0.1(aba639462f8a434fcd48295a2f0d7911)':
+  '@refinedev/mui@7.0.1(10f94fd9326eaf8dbe795f2490afc09d)':
     dependencies:
       '@emotion/react': 11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1)
@@ -11900,7 +11903,7 @@ snapshots:
       '@mui/system': 6.5.0(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)
       '@mui/x-data-grid': 7.29.12(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@mui/system@6.5.0(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@refinedev/core': 5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@refinedev/react-hook-form': 5.0.4(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.57.0(react@19.2.4))(react@19.2.4)
+      '@refinedev/react-hook-form': 5.0.4(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.89.0(@types/react@19.2.9)(react@19.2.4))(react@19.2.4)
       '@refinedev/ui-types': 2.0.1(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       dayjs: 1.11.23
       lodash: 4.18.1
@@ -11908,7 +11911,7 @@ snapshots:
       notistack: 2.0.8(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@mui/material@6.5.0(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-hook-form: 7.57.0(react@19.2.4)
+      react-hook-form: 7.89.0(@types/react@19.2.9)(react@19.2.4)
       react-markdown: 6.0.3(@types/react@19.2.9)(react@19.2.4)(supports-color@8.1.1)
       remark-gfm: 1.0.0(supports-color@8.1.1)
       tslib: 2.8.1
@@ -11928,7 +11931,7 @@ snapshots:
       react-dom: 19.2.4(react@19.2.4)
       warn-once: 0.1.1
 
-  '@refinedev/react-hook-form@5.0.4(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.57.0(react@19.2.4))(react@19.2.4)':
+  '@refinedev/react-hook-form@5.0.4(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react-hook-form@7.89.0(@types/react@19.2.9)(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@refinedev/core': 5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@types/react': 19.2.9
@@ -11937,7 +11940,7 @@ snapshots:
       lodash-es: 4.18.1
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
-      react-hook-form: 7.57.0(react@19.2.4)
+      react-hook-form: 7.89.0(@types/react@19.2.9)(react@19.2.4)
 
   '@refinedev/ui-types@2.0.1(@refinedev/core@5.0.12(@tanstack/react-query@5.101.2(react@19.2.4))(@types/react-dom@19.2.2(@types/react@19.2.9))(@types/react@19.2.9)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -16653,9 +16656,11 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.4
 
-  react-hook-form@7.57.0(react@19.2.4):
+  react-hook-form@7.89.0(@types/react@19.2.9)(react@19.2.4):
     dependencies:
       react: 19.2.4
+    optionalDependencies:
+      '@types/react': 19.2.9
 
   react-is@16.13.1: {}
 

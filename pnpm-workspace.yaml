@@ -98,5 +98,4 @@ overrides:
   postcss: '8.5.29'
   'proxy-addr': '2.0.8'
   qs: '6.16.0'
-  'react-hook-form': '7.57.0'
   'sanitize-html': '2.18.0'
