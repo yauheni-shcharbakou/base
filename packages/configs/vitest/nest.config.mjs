@@ -1,4 +1,5 @@
-import { dirname, resolve } from 'path';
+import { readFileSync } from 'fs';
+import { basename, dirname, join, resolve } from 'path';
 import swc from 'unplugin-swc';
 import { fileURLToPath } from 'url';
 import { defineConfig } from 'vitest/config';
@@ -15,6 +16,11 @@ import { defineConfig } from 'vitest/config';
  * not. The path aliases are the three every backend tsconfig declares (`@/*`, `@modules/*`,
  * `@common/*`), so a workspace needs none of its own.
  *
+ * In CI the run's results go to the job summary as one table (`.github/actions/vitest-report`), not
+ * as Vitest's own block per run: its `github-actions` reporter keeps the failure annotations with
+ * the summary off, and the `json` reporter writes `<package>.<unit|e2e>.json` (the config file's
+ * name says which) into `VITEST_REPORT_DIR` when that is set.
+ *
  * @param {string} url the caller's `import.meta.url`.
  * @param {import('vitest/config').ViteUserConfig['test']} [test] test options merged over the
  *   defaults — `include`, `env`, `globalSetup`, `testTimeout` for an e2e config.
@@ -22,6 +28,20 @@ import { defineConfig } from 'vitest/config';
 export default function nestVitestConfig(url, test = {}) {
   const root = dirname(fileURLToPath(url));
   const src = resolve(root, 'src');
+  const { name } = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf-8'));
+  const suite = basename(fileURLToPath(url)).includes('.e2e.') ? 'e2e' : 'unit';
+  const reportDir = process.env.VITEST_REPORT_DIR;
+
+  // An explicit list drops the `github-actions` reporter Vitest adds on its own, so it is named
+  // here; `default` keeps the console output.
+  const reporters = ['default'];
+  if (process.env.GITHUB_ACTIONS) {
+    reporters.push(['github-actions', { jobSummary: { enabled: false } }]);
+  }
+  if (reportDir) {
+    const outputFile = join(reportDir, `${name.replaceAll('/', '__')}.${suite}.json`);
+    reporters.push(['json', { outputFile }]);
+  }
 
   return defineConfig({
     root,
@@ -46,6 +66,7 @@ export default function nestVitestConfig(url, test = {}) {
     test: {
       environment: 'node',
       include: ['src/**/*.spec.ts'],
+      reporters,
       ...test,
     },
   });

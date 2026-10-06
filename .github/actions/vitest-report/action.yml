@@ -1,0 +1,13 @@
+name: 'Vitest report'
+description: "One table of the job's Vitest results in the job summary: per package, its unit and e2e files and tests."
+
+# Vitest's own `github-actions` reporter writes a block per run — fourteen in a repo-wide one, none
+# saying more than its counts. The shared config (`@packages/configs/vitest/nest.config.mjs`) has the
+# `json` reporter write one file per package and suite into `VITEST_REPORT_DIR`, which this reads.
+# A suite that skipped for want of a server shows as skipped, not as passed.
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Vitest report'
+      shell: 'bash'
+      run: 'node "$GITHUB_ACTION_PATH/report.mjs"'

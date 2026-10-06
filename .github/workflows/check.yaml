@@ -102,6 +102,8 @@ jobs:
       TURBO_TELEMETRY_DISABLED: '1'
       # Every turbo run writes `.turbo/runs/*.json`, which the cache report counts.
       TURBO_RUN_SUMMARY: 'true'
+      # Where each Vitest run leaves its JSON report; the test report reads them into one table.
+      VITEST_REPORT_DIR: '${{ github.workspace }}/.vitest-reports'
 
     steps:
       - name: 'Checkout'
@@ -174,6 +176,12 @@ jobs:
           # skipping. Only the e2e setups read it.
           E2E_REQUIRE_SERVERS: '1'
         run: 'pnpm turbo run typecheck lint test test:e2e --log-order=grouped --continue'
+
+      # One table of every package's unit and e2e results, in place of a Vitest block per run.
+      - name: 'Test report'
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: './.github/actions/vitest-report'
 
       # `.railway/` is no workspace, so `typecheck` never reaches it, and the Railway CLI strips the
       # types without checking them: a wrong option in `railway.ts` is found here or in the dashboard.

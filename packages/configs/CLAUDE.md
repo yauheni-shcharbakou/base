@@ -75,6 +75,13 @@ and e2e alike. The argument is **required**: its directory is the root the spec 
 (`environment: 'node'`, `include: ['src/**/*.spec.ts']`) — an e2e config passes its own `include`,
 `env`, `globalSetup` and timeouts.
 
+The factory also sets the reporters. In CI `github-actions` stays for the failure annotations with its
+own job summary off, and when `VITEST_REPORT_DIR` is set a `json` reporter writes
+`<package>.<unit|e2e>.json` there (the config file's name picks which; `/` in a scoped name becomes
+`__`). `.github/actions/vitest-report` reads those into the one table of the job summary — a suite
+that skipped for want of a server shows as skipped there. A suite with no specs
+(`--passWithNoTests`) still writes an empty report, shown as `—`.
+
 Specs are compiled by **swc** (`unplugin-swc`, legacy decorators plus decorator metadata), not by
 Vite's own transform, which emits no `design:paramtypes` — and without them Nest's DI resolves every
 constructor parameter to `undefined`.
