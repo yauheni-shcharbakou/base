@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { AuthRefreshTokenPayloadParsed } from '@modules/auth/domain/interfaces/auth.interface';
 import { AuthSessionRepository } from '@modules/auth/domain/repositories/auth.session.repository';
 import { AuthTokenService } from '@modules/auth/domain/services/auth.token.service';
@@ -13,13 +14,13 @@ const payload = {
 } as AuthRefreshTokenPayloadParsed;
 
 describe('AuthLogoutUseCase', () => {
-  let parseRefreshTokenPayload: jest.Mock;
-  let deleteById: jest.Mock;
+  let parseRefreshTokenPayload: Mock;
+  let deleteById: Mock;
   let useCase: AuthLogoutUseCase;
 
   beforeEach(() => {
-    parseRefreshTokenPayload = jest.fn().mockReturnValue(right(payload));
-    deleteById = jest.fn().mockResolvedValue(right({}));
+    parseRefreshTokenPayload = vi.fn().mockReturnValue(right(payload));
+    deleteById = vi.fn().mockResolvedValue(right({}));
 
     useCase = new AuthLogoutUseCase(
       { parseRefreshTokenPayload } as unknown as AuthTokenService,

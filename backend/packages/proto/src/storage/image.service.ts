@@ -72,11 +72,13 @@ function ImageServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('ImageService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcStreamMethod('ImageService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
   };
 }
@@ -131,6 +133,7 @@ function ImageAdminServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('ImageAdminService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
@@ -140,6 +143,7 @@ function ImageAdminServiceControllerMethods() {
         method,
         descriptor,
       );
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
   };
 }
@@ -176,6 +180,7 @@ function ImageWebServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('ImageWebService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
@@ -185,6 +190,7 @@ function ImageWebServiceControllerMethods() {
         method,
         descriptor,
       );
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
   };
 }

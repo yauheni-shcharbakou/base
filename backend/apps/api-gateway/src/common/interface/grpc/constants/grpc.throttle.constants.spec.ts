@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import 'reflect-metadata';
 import { CacheModule } from '@backend/cache';
 import { CacheThrottlerStorage } from '@common/infrastructure/storages/cache.throttler.storage';

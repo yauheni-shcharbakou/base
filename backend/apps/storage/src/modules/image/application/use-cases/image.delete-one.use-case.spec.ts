@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
@@ -15,16 +16,16 @@ const image = {
 const byId = (id: string) => ({ id }) as NestStorage.ImageQuery;
 
 describe('ImageDeleteOneUseCase', () => {
-  let repository: { getOne: jest.Mock; deleteWithFile: jest.Mock };
-  let purgeService: { purge: jest.Mock };
+  let repository: { getOne: Mock; deleteWithFile: Mock };
+  let purgeService: { purge: Mock };
   let useCase: ImageDeleteOneUseCase;
 
   beforeEach(() => {
     repository = {
-      getOne: jest.fn().mockResolvedValue(right(image)),
-      deleteWithFile: jest.fn().mockResolvedValue(right(image)),
+      getOne: vi.fn().mockResolvedValue(right(image)),
+      deleteWithFile: vi.fn().mockResolvedValue(right(image)),
     };
-    purgeService = { purge: jest.fn().mockResolvedValue(undefined) };
+    purgeService = { purge: vi.fn().mockResolvedValue(undefined) };
 
     useCase = new ImageDeleteOneUseCase(
       repository as unknown as ImageRepository,

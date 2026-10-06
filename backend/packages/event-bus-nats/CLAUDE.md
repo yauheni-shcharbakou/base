@@ -155,7 +155,7 @@ tabulated in [docs/env.md](../../../docs/env.md).
 
 ```bash
 pnpm build            # format:generated → tsdown → dist
-pnpm test             # unit jest; single file: pnpm test -- nats.consumer.constants
+pnpm test             # unit vitest; single file: pnpm test -- nats.consumer.constants
 pnpm test:e2e         # broker-backed suite; auto-skips when no broker answers
 pnpm dev / test:watch / lint / format / format:generated / reset
 ```
@@ -178,11 +178,11 @@ pnpm test:e2e
   different `consumer` ids on `auth.user.create`. That is what makes it the only coverage
   `NatsControllerInterceptor` has: the handlers never ack, so a green run proves the interceptor
   acked, and the redelivery ladder proves it naked.
-- `test/nats-broker.setup.js` is a jest `globalSetup`, not a `beforeAll`, for two reasons that both
-  come down to timing: `nats.config.ts` validates env at module load, so `NATS_MAX_DELIVER=3` has to
-  be set before the spec is imported; and the broker probe has to land in `process.env` before the
-  workers fork, so the spec can pick `describe` vs `describe.skip` synchronously. Without a broker
-  jest reports the suite as *skipped* rather than passing on an empty run.
+- Two things happen before the spec is imported, both for timing: `nats.config.ts` validates env
+  at module load, so `NATS_MAX_DELIVER=3` is set in `vitest.e2e.config.mts`'s `env`; and
+  `test/nats-broker.setup.ts`, a Vitest `globalSetup`, probes the broker and `provide`s the answer,
+  so the spec picks `describe` vs `describe.skip` through `inject('natsBroker')` at module scope.
+  Without a broker the suite reports as *skipped* rather than passing on an empty run.
 - It wipes `auth-user-stream` in `beforeAll` (`deliver_policy: all` would otherwise replay the
   previous run's history) and leaves it behind afterwards, so a failure can be inspected in the
   broker. Reruns stay deterministic either way.

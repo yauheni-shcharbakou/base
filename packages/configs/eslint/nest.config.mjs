@@ -28,7 +28,6 @@ export default function nestConfig(url) {
       languageOptions: {
         globals: {
           ...globals.node,
-          ...globals.jest,
         },
         sourceType: 'commonjs',
         parserOptions: {

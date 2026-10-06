@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { DatabaseRunnerService } from '@backend/common';
 import { PreviewSweepUseCase } from '@common/application/use-cases/preview.sweep.use-case';
 import { Logger } from '@nestjs/common';
@@ -7,8 +8,8 @@ const NOW = new Date('2026-01-01T12:00:00Z');
 const MINUTE = 60_000;
 
 describe('PreviewSweepScheduler', () => {
-  let useCase: { execute: jest.Mock };
-  let runner: { isolatedRun: jest.Mock };
+  let useCase: { execute: Mock };
+  let runner: { isolatedRun: Mock };
 
   class SweepScheduler extends PreviewSweepScheduler {
     constructor(budgetMinutes: number) {
@@ -29,22 +30,22 @@ describe('PreviewSweepScheduler', () => {
 
   // A batch that takes this long and answers this cursor.
   const batch = (minutes: number, cursor?: string) => () => {
-    jest.setSystemTime(Date.now() + minutes * MINUTE);
+    vi.setSystemTime(Date.now() + minutes * MINUTE);
     return Promise.resolve(cursor);
   };
 
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(NOW);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.useFakeTimers().setSystemTime(NOW);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
-    useCase = { execute: jest.fn().mockResolvedValue(undefined) };
-    runner = { isolatedRun: jest.fn((work: () => Promise<unknown>) => work()) };
+    useCase = { execute: vi.fn().mockResolvedValue(undefined) };
+    runner = { isolatedRun: vi.fn((work: () => Promise<unknown>) => work()) };
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('takes batch after batch from where the last one ended, each in a context of its own', async () => {

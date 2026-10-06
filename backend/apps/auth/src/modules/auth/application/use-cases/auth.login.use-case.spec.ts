@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestAuth } from '@backend/proto';
 import { AuthSessionRepository } from '@modules/auth/domain/repositories/auth.session.repository';
 import { AuthTokenService } from '@modules/auth/domain/services/auth.token.service';
@@ -23,20 +24,20 @@ const tokens: NestAuth.AuthTokens = {
 };
 
 describe('AuthLoginUseCase', () => {
-  let compare: jest.Mock;
-  let generateTokens: jest.Mock;
-  let saveOne: jest.Mock;
-  let updateById: jest.Mock;
+  let compare: Mock;
+  let generateTokens: Mock;
+  let saveOne: Mock;
+  let updateById: Mock;
   let useCase: AuthLoginUseCase;
 
   beforeEach(() => {
-    compare = jest.fn().mockResolvedValue(true);
-    generateTokens = jest.fn().mockResolvedValue(right(tokens));
-    saveOne = jest.fn().mockResolvedValue(right({ id: SESSION_ID }));
-    updateById = jest.fn().mockResolvedValue(right({ id: SESSION_ID }));
+    compare = vi.fn().mockResolvedValue(true);
+    generateTokens = vi.fn().mockResolvedValue(right(tokens));
+    saveOne = vi.fn().mockResolvedValue(right({ id: SESSION_ID }));
+    updateById = vi.fn().mockResolvedValue(right({ id: SESSION_ID }));
 
     useCase = new AuthLoginUseCase(
-      { getOneInternal: jest.fn().mockResolvedValue(right(user)) } as unknown as UserRepository,
+      { getOneInternal: vi.fn().mockResolvedValue(right(user)) } as unknown as UserRepository,
       { generateTokens } as unknown as AuthTokenService,
       { compare } as unknown as CryptoService,
       { saveOne, updateById } as unknown as AuthSessionRepository,

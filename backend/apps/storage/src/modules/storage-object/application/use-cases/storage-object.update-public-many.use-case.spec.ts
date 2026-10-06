@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
@@ -28,23 +29,23 @@ const file = {
 
 describe('StorageObjectUpdatePublicManyUseCase', () => {
   let repository: {
-    withTreeLock: jest.Mock;
-    updateAndCascadePublic: jest.Mock;
+    withTreeLock: Mock;
+    updateAndCascadePublic: Mock;
   };
   let validation: {
-    validateBatch: jest.Mock;
-    validateVisibility: jest.Mock;
+    validateBatch: Mock;
+    validateVisibility: Mock;
   };
   let useCase: StorageObjectUpdatePublicManyUseCase;
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
-      updateAndCascadePublic: jest.fn((id: string) => Promise.resolve(right({ id }))),
+      withTreeLock: vi.fn((_userId: string, work: () => Promise<unknown>) => work()),
+      updateAndCascadePublic: vi.fn((id: string) => Promise.resolve(right({ id }))),
     };
     validation = {
-      validateBatch: jest.fn().mockResolvedValue(right([folder, file])),
-      validateVisibility: jest.fn().mockResolvedValue(right(undefined)),
+      validateBatch: vi.fn().mockResolvedValue(right([folder, file])),
+      validateVisibility: vi.fn().mockResolvedValue(right(undefined)),
     };
 
     useCase = new StorageObjectUpdatePublicManyUseCase(

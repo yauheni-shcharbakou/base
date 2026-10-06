@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { EventBusHost } from '@backend/event-bus';
 import { NestAuth } from '@backend/proto';
 import { ConsumerInfo, JetStreamManager, jetstreamManager } from '@nats-io/jetstream';
@@ -16,9 +17,16 @@ import { NatsController, NatsEvent } from '../decorators';
 const NATS_URL = process.env.NATS_URL ?? 'nats://localhost:4222';
 const STREAM = 'auth-user-stream';
 
-// `test/nats-broker.setup.js` probes the broker before the workers fork. Skipping outright beats
+declare module 'vitest' {
+  export interface ProvidedContext {
+    /** Whether `test/nats-broker.setup.ts` found a broker to run against. */
+    natsBroker: boolean;
+  }
+}
+
+// `test/nats-broker.setup.ts` probes the broker before the workers start. Skipping outright beats
 // a suite that passes because it silently did nothing.
-const describeWithBroker = process.env.NATS_E2E_BROKER === '1' ? describe : describe.skip;
+const describeWithBroker = describe.skipIf(!inject('natsBroker'));
 
 type Received = { event: NestAuth.User; delivery: number; durable: string };
 
@@ -94,7 +102,7 @@ describeWithBroker('NATS transport (live broker)', () => {
 
   let app: INestApplication;
   // A single observer connection for the assertions, so the suite leaves no open handle behind
-  // and jest can exit on its own.
+  // and the worker can exit on its own.
   let probe: NatsConnection;
   let manager: JetStreamManager;
   let consumers: ConsumerInfo[];

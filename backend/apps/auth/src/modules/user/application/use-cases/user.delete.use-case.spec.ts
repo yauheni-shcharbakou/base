@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { CacheService, MemoryCacheStore } from '@backend/cache';
 import { UserEventBus } from '@backend/event-bus';
 import { NestAuth } from '@backend/proto';
@@ -19,12 +20,12 @@ const user: NestAuth.User = {
 describe('UserDeleteUseCase', () => {
   let cache: CacheService;
   let repository: {
-    getMany: jest.Mock;
-    deleteById: jest.Mock;
-    deleteOne: jest.Mock;
-    deleteMany: jest.Mock;
+    getMany: Mock;
+    deleteById: Mock;
+    deleteOne: Mock;
+    deleteMany: Mock;
   };
-  let eventBus: { emitDelete: jest.Mock; emitManyDelete: jest.Mock };
+  let eventBus: { emitDelete: Mock; emitManyDelete: Mock };
   let useCase: UserDeleteUseCase;
 
   beforeEach(() => {
@@ -33,15 +34,15 @@ describe('UserDeleteUseCase', () => {
       namespace: 'auth:user',
     });
     repository = {
-      getMany: jest.fn().mockResolvedValue([user]),
-      deleteById: jest.fn().mockResolvedValue(right(user)),
-      deleteOne: jest.fn().mockResolvedValue(right(user)),
-      deleteMany: jest.fn().mockResolvedValue(true),
+      getMany: vi.fn().mockResolvedValue([user]),
+      deleteById: vi.fn().mockResolvedValue(right(user)),
+      deleteOne: vi.fn().mockResolvedValue(right(user)),
+      deleteMany: vi.fn().mockResolvedValue(true),
     };
 
     eventBus = {
-      emitDelete: jest.fn().mockResolvedValue(undefined),
-      emitManyDelete: jest.fn().mockResolvedValue([]),
+      emitDelete: vi.fn().mockResolvedValue(undefined),
+      emitManyDelete: vi.fn().mockResolvedValue([]),
     };
 
     useCase = new UserDeleteUseCase(
@@ -83,7 +84,7 @@ describe('UserDeleteUseCase', () => {
   });
 
   it('clears the whole scope on a bulk delete, which reports no ids', async () => {
-    const deleteByPrefix = jest.spyOn(cache, 'deleteByPrefix');
+    const deleteByPrefix = vi.spyOn(cache, 'deleteByPrefix');
     const otherUser = { ...user, id: OTHER_USER_ID };
     repository.getMany.mockResolvedValue([user, otherUser]);
     await cache.set(USER_ID, user);

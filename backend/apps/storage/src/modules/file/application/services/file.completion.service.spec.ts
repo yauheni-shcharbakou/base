@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FileEventBus, FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
@@ -13,21 +14,21 @@ const file = (uploadStatus = PENDING) =>
   ({ id: 'file-1', providerId: 'dev/u/a.jpg', size: 10, uploadStatus }) as NestStorage.File;
 
 describe('FileCompletionService', () => {
-  let repository: Record<'updateOne' | 'getById' | 'updateById', jest.Mock>;
-  let storage: { getObjectSize: jest.Mock };
-  let purge: { purge: jest.Mock };
-  let eventBus: { emitReady: jest.Mock };
+  let repository: Record<'updateOne' | 'getById' | 'updateById', Mock>;
+  let storage: { getObjectSize: Mock };
+  let purge: { purge: Mock };
+  let eventBus: { emitReady: Mock };
   let service: FileCompletionService;
 
   beforeEach(() => {
     repository = {
-      updateOne: jest.fn().mockResolvedValue(right(file(READY))),
-      getById: jest.fn().mockResolvedValue(right(file(READY))),
-      updateById: jest.fn(),
+      updateOne: vi.fn().mockResolvedValue(right(file(READY))),
+      getById: vi.fn().mockResolvedValue(right(file(READY))),
+      updateById: vi.fn(),
     };
-    storage = { getObjectSize: jest.fn().mockResolvedValue(right(10)) };
-    purge = { purge: jest.fn() };
-    eventBus = { emitReady: jest.fn().mockResolvedValue(undefined) };
+    storage = { getObjectSize: vi.fn().mockResolvedValue(right(10)) };
+    purge = { purge: vi.fn() };
+    eventBus = { emitReady: vi.fn().mockResolvedValue(undefined) };
 
     service = new FileCompletionService(
       repository as unknown as FileRepository,
@@ -63,7 +64,7 @@ describe('FileCompletionService', () => {
 
   // The upload did complete; a lost event only delays the preview until the sweep.
   it('still answers the READY file when the emit fails', async () => {
-    const logError = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const logError = vi.spyOn(Logger.prototype, 'error').mockReturnValue(undefined);
     eventBus.emitReady.mockRejectedValue(new Error('Redis is down'));
 
     const result = await service.complete(file());
@@ -84,7 +85,7 @@ describe('FileCompletionService', () => {
   });
 
   it('fails the file and purges its bytes when the size is not the declared one', async () => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
     storage.getObjectSize.mockResolvedValue(right(7));
 
     const result = await service.complete(file());

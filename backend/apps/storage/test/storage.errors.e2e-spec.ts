@@ -1,4 +1,3 @@
-import './pg.e2e';
 import { NestCommon, NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
@@ -17,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { Either } from '@sweet-monads/either';
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it } from 'node:test';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { startOrm } from './pg.e2e';
 
 const USER_ID = '01JQ0000000000000000000000';
@@ -35,9 +34,8 @@ describe('storage repository errors against Postgres', () => {
   let videoRepository: PgVideoRepositoryImpl;
   let storageObjectRepository: PgStorageObjectRepositoryImpl;
 
-  // In a hook, not in an async suite body: `node:test` reports an error thrown there but still
-  // exits 0, which would turn a broken migration into a green run.
-  before(async () => {
+  // In a hook, not in the suite body, which Vitest collects synchronously and cannot await.
+  beforeAll(async () => {
     orm = await startOrm({ database: 'errors' });
 
     if (!orm) {
@@ -53,7 +51,7 @@ describe('storage repository errors against Postgres', () => {
     );
   });
 
-  after(() => orm?.close());
+  afterAll(() => orm?.close());
 
   beforeEach(async () => {
     if (!orm) {

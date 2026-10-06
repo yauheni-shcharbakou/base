@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
@@ -26,27 +27,27 @@ const file = {
 
 describe('StorageObjectMoveManyUseCase', () => {
   let repository: {
-    withTreeLock: jest.Mock;
-    getAllChildrenIds: jest.Mock;
-    updateAndCascadePublic: jest.Mock;
+    withTreeLock: Mock;
+    getAllChildrenIds: Mock;
+    updateAndCascadePublic: Mock;
   };
   let validation: {
-    validateBatch: jest.Mock;
-    validatePlacement: jest.Mock;
-    resolveFreeName: jest.Mock;
+    validateBatch: Mock;
+    validatePlacement: Mock;
+    resolveFreeName: Mock;
   };
   let useCase: StorageObjectMoveManyUseCase;
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
-      getAllChildrenIds: jest.fn().mockResolvedValue(right(new Set(['child-folder']))),
-      updateAndCascadePublic: jest.fn((id: string) => Promise.resolve(right({ id }))),
+      withTreeLock: vi.fn((_userId: string, work: () => Promise<unknown>) => work()),
+      getAllChildrenIds: vi.fn().mockResolvedValue(right(new Set(['child-folder']))),
+      updateAndCascadePublic: vi.fn((id: string) => Promise.resolve(right({ id }))),
     };
     validation = {
-      validateBatch: jest.fn().mockResolvedValue(right([folder, file])),
-      validatePlacement: jest.fn().mockResolvedValue(right({ isPublic: true })),
-      resolveFreeName: jest.fn(({ name }: { name: string }) => Promise.resolve(name)),
+      validateBatch: vi.fn().mockResolvedValue(right([folder, file])),
+      validatePlacement: vi.fn().mockResolvedValue(right({ isPublic: true })),
+      resolveFreeName: vi.fn(({ name }: { name: string }) => Promise.resolve(name)),
     };
 
     useCase = new StorageObjectMoveManyUseCase(

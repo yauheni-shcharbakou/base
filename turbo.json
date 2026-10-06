@@ -1,5 +1,6 @@
 {
-  "$schema": "https://turbo.build/schema.json",
+  "$schema": "https://v2-11-7.turborepo.dev/schema.json",
+  "agentGuidance": false,
   "concurrency": "10",
   "envMode": "loose",
   // `packages/configs/**` is global because its presets are read from outside the packages that

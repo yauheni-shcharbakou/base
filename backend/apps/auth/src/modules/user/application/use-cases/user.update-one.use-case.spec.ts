@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { CacheService, MemoryCacheStore } from '@backend/cache';
 import { NestAuth } from '@backend/proto';
 import { AuthSessionRepository } from '@modules/auth/domain/repositories/auth.session.repository';
@@ -18,9 +19,9 @@ const user: NestAuth.User = {
 
 describe('UserUpdateOneUseCase', () => {
   let cache: CacheService;
-  let updateOne: jest.Mock;
-  let hash: jest.Mock;
-  let deleteByUser: jest.Mock;
+  let updateOne: Mock;
+  let hash: Mock;
+  let deleteByUser: Mock;
   let useCase: UserUpdateOneUseCase;
 
   beforeEach(() => {
@@ -28,9 +29,9 @@ describe('UserUpdateOneUseCase', () => {
       keyPrefix: 'cache',
       namespace: 'auth:user',
     });
-    updateOne = jest.fn().mockResolvedValue(right(user));
-    hash = jest.fn().mockResolvedValue(right('hashed'));
-    deleteByUser = jest.fn().mockResolvedValue(1);
+    updateOne = vi.fn().mockResolvedValue(right(user));
+    hash = vi.fn().mockResolvedValue(right('hashed'));
+    deleteByUser = vi.fn().mockResolvedValue(1);
 
     useCase = new UserUpdateOneUseCase(
       { updateOne } as unknown as UserRepository,

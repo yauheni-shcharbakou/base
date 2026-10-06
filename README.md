@@ -8,9 +8,9 @@
 
 <p align="center">
   <a href="https://github.com/yauheni-shcharbakou/base/actions/workflows/main.yaml"><img alt="Main" src="https://github.com/yauheni-shcharbakou/base/actions/workflows/main.yaml/badge.svg?branch=main"></a>
-  <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D22.22-339933?logo=node.js&logoColor=white">
-  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-11.9.0-F69220?logo=pnpm&logoColor=white">
-  <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-2.10-EF4444?logo=turborepo&logoColor=white">
+  <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D22.22.3-339933?logo=node.js&logoColor=white">
+  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-12.9.1-F69220?logo=pnpm&logoColor=white">
+  <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-2.11-EF4444?logo=turborepo&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
@@ -98,8 +98,8 @@ flowchart LR
 
 ### Requirements
 
-- Node.js 22.22.0+
-- pnpm 11.9.0
+- Node.js 22.22.3+
+- pnpm 12.9.1
 - Installed `protobuf` compiler (for development and gRPC compiler only)
 - Installed `docker` and `docker compose` (optional)
 
@@ -110,7 +110,7 @@ flowchart LR
 > - Turborepo + pnpm workspaces (shared versions in a pnpm catalog)
 > - TypeScript
 > - Protobuf / gRPC (custom codegen)
-> - Jest, plus `node:test` for the database specs
+> - Vitest (backend), Jest (admin panel)
 
 > Admin panel
 >

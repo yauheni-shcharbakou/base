@@ -15,11 +15,11 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json --passWithNoTests",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:debug": "vitest run --inspect-brk --no-file-parallelism",
+    "test:e2e": "vitest run --config vitest.e2e.config.mts --passWithNoTests",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
@@ -36,8 +36,8 @@
     "@nestjs/jwt": "catalog:",
     "@nestjs/microservices": "catalog:",
     "@nestjs/platform-express": "catalog:",
-    "@nestjs/swagger": "11.4.5",
-    "@nestjs/throttler": "6.5.0",
+    "@nestjs/swagger": "12.0.2",
+    "@nestjs/throttler": "6.7.1",
     "@packages/common": "workspace:*",
     "@packages/proto": "workspace:*",
     "@sweet-monads/either": "catalog:",
@@ -54,51 +54,15 @@
     "@nestjs/testing": "catalog:",
     "@packages/configs": "workspace:*",
     "@types/express": "catalog:",
-    "@types/jest": "catalog:",
     "@types/lodash": "catalog:",
     "@types/supertest": "catalog:",
-    "jest": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "source-map-support": "catalog:",
     "supertest": "catalog:",
-    "ts-jest": "catalog:",
     "ts-loader": "catalog:",
     "ts-node": "catalog:",
-    "tsconfig-paths": "catalog:"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "moduleNameMapper": {
-      "^@modules/(.*)$": "<rootDir>/modules/$1",
-      "^@common/(.*)$": "<rootDir>/common/$1",
-      "^@/(.*)$": "<rootDir>/$1"
-    },
-    "transform": {
-      "^.+\\.(t|j)s$": [
-        "ts-jest",
-        {
-          "diagnostics": {
-            "ignoreCodes": [
-              151002
-            ]
-          },
-          "tsconfig": {
-            "isolatedModules": true,
-            "module": "commonjs",
-            "moduleResolution": "node10"
-          }
-        }
-      ]
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "tsconfig-paths": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -4,7 +4,7 @@ Guidance for working inside `packages/configs`. For monorepo-wide conventions (w
 
 ## What this is
 
-Centralized **ESLint** (flat config, factory functions), **tsconfig** and **tsdown** presets for every workspace. There is no build: no `src`, no `dist`, no runtime output — just config files. Consumers wire them directly (`extends` for tsconfig, `import` a factory for eslint and tsdown), so editing a preset affects everyone at once.
+Centralized **ESLint** (flat config, factory functions), **tsconfig**, **tsdown** and **Vitest** presets for every workspace. There is no build: no `src`, no `dist`, no runtime output — just config files. Consumers wire them directly (`extends` for tsconfig, `import` a factory for eslint, tsdown and vitest), so editing a preset affects everyone at once.
 
 Because the presets are read from outside the packages that use them, `packages/configs/**` is listed in the root `turbo.json` `globalDependencies` — otherwise an edit here would never reach a build hash.
 
@@ -62,6 +62,27 @@ Defaults are `entry: 'src/index.ts'`, `format: ['cjs']`, `dts: true`. `overrides
 - `@backend/event-bus` passes named entries for its second, build-time `compiler` entrypoint.
 
 A package that needs an external the factory cannot see is a package with an undeclared dependency — declare it in its `package.json` rather than hand-adding to `neverBundle`. The factory reads dependency **names**, not versions, so a `"catalog:"` specifier works exactly like a literal one.
+
+## Vitest preset (`vitest/nest.config.mjs`)
+
+`nestVitestConfig(import.meta.url, test?)` — the whole test config of every backend workspace, unit
+and e2e alike. The argument is **required**: its directory is the root the spec globs and the
+`@/`, `@modules/`, `@common/` aliases resolve against. `test` is merged over the defaults
+(`environment: 'node'`, `include: ['src/**/*.spec.ts']`) — an e2e config passes its own `include`,
+`env`, `globalSetup` and timeouts.
+
+Specs are compiled by **swc** (`unplugin-swc`, legacy decorators plus decorator metadata), not by
+Vite's own transform, which emits no `design:paramtypes` — and without them Nest's DI resolves every
+constructor parameter to `undefined`.
+
+```ts
+// backend/*/vitest.config.mts
+import nestVitestConfig from '@packages/configs/vitest/nest.config.mjs';
+
+export default nestVitestConfig(import.meta.url);
+```
+
+> **Why Vitest, and why swc:** [docs/adr/0040-backend-specs-on-vitest.md](../../docs/adr/0040-backend-specs-on-vitest.md)
 
 ## Layer-direction guard (`eslint/layer-guard.mjs`)
 

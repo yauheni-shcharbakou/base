@@ -1,8 +1,9 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryCacheStore } from './memory.cache.store';
 
 describe('MemoryCacheStore', () => {
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('reads back what it stored', async () => {
@@ -31,15 +32,15 @@ describe('MemoryCacheStore', () => {
 
   describe('expiry', () => {
     it('drops an entry once its TTL has passed', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const store = new MemoryCacheStore();
 
       await store.set('cache:auth:user:1', 'value', 60);
-      jest.advanceTimersByTime(59_000);
+      vi.advanceTimersByTime(59_000);
       await expect(store.get('cache:auth:user:1')).resolves.toBe('value');
 
-      jest.advanceTimersByTime(2_000);
+      vi.advanceTimersByTime(2_000);
       await expect(store.get('cache:auth:user:1')).resolves.toBeNull();
       await expect(store.has('cache:auth:user:1')).resolves.toBe(false);
     });
@@ -48,12 +49,12 @@ describe('MemoryCacheStore', () => {
       ['no TTL', undefined],
       ['a zero TTL', 0],
     ])('keeps an entry stored with %s', async (_name, ttl) => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const store = new MemoryCacheStore();
 
       await store.set('cache:auth:user:1', 'value', ttl);
-      jest.advanceTimersByTime(10 * 24 * 3600 * 1000);
+      vi.advanceTimersByTime(10 * 24 * 3600 * 1000);
 
       await expect(store.get('cache:auth:user:1')).resolves.toBe('value');
     });
@@ -92,15 +93,15 @@ describe('MemoryCacheStore', () => {
     });
 
     it('keeps the window the first hit started, then starts over', async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const store = new MemoryCacheStore();
 
       await store.increment('hits', 60_000);
-      jest.advanceTimersByTime(40_000);
+      vi.advanceTimersByTime(40_000);
       await expect(store.increment('hits', 60_000)).resolves.toEqual({ value: 2, ttlMs: 20_000 });
 
-      jest.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(20_000);
       await expect(store.increment('hits', 60_000)).resolves.toEqual({ value: 1, ttlMs: 60_000 });
     });
 

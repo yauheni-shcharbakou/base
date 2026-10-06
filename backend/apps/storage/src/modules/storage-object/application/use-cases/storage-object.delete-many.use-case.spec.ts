@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
@@ -27,16 +28,16 @@ const file = {
 } as StorageObject;
 
 describe('StorageObjectDeleteManyUseCase', () => {
-  let repository: { withTreeLock: jest.Mock; markManyDeletedWithDescendants: jest.Mock };
-  let validation: { validateBatch: jest.Mock };
+  let repository: { withTreeLock: Mock; markManyDeletedWithDescendants: Mock };
+  let validation: { validateBatch: Mock };
   let useCase: StorageObjectDeleteManyUseCase;
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
-      markManyDeletedWithDescendants: jest.fn().mockResolvedValue(right(5)),
+      withTreeLock: vi.fn((_userId: string, work: () => Promise<unknown>) => work()),
+      markManyDeletedWithDescendants: vi.fn().mockResolvedValue(right(5)),
     };
-    validation = { validateBatch: jest.fn().mockResolvedValue(right([folder, file])) };
+    validation = { validateBatch: vi.fn().mockResolvedValue(right([folder, file])) };
 
     useCase = new StorageObjectDeleteManyUseCase(
       repository as unknown as StorageObjectRepository,

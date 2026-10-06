@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
@@ -17,16 +18,16 @@ const video = {
 const byId = (id: string) => ({ id }) as NestStorage.VideoQuery;
 
 describe('VideoDeleteOneUseCase', () => {
-  let repository: { getOne: jest.Mock; deleteWithFile: jest.Mock };
-  let purgeService: { purge: jest.Mock };
+  let repository: { getOne: Mock; deleteWithFile: Mock };
+  let purgeService: { purge: Mock };
   let useCase: VideoDeleteOneUseCase;
 
   beforeEach(() => {
     repository = {
-      getOne: jest.fn().mockResolvedValue(right(video)),
-      deleteWithFile: jest.fn().mockResolvedValue(right(video)),
+      getOne: vi.fn().mockResolvedValue(right(video)),
+      deleteWithFile: vi.fn().mockResolvedValue(right(video)),
     };
-    purgeService = { purge: jest.fn().mockResolvedValue(undefined) };
+    purgeService = { purge: vi.fn().mockResolvedValue(undefined) };
 
     useCase = new VideoDeleteOneUseCase(
       repository as unknown as VideoRepository,

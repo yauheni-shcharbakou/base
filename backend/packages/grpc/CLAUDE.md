@@ -36,7 +36,7 @@ The gRPC loader reads the original `.proto` files at runtime from `PROTO_PATH = 
 ```bash
 pnpm build            # tsdown → dist (cjs + d.ts)
 pnpm dev              # tsdown --watch
-pnpm test             # jest: the exception and status-code mappers
+pnpm test             # vitest: the exception and status-code mappers
 pnpm lint             # eslint --fix
 pnpm format / reset
 ```

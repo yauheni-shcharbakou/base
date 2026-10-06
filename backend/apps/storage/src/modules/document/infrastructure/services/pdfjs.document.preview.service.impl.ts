@@ -22,9 +22,8 @@ export const DOCUMENT_PREVIEW_TIMEOUT_MS = 20_000;
 // in the service's memory.
 const WORKER_HEAP_MB = 512;
 
-// Beside this file: compiled `.js` in `dist`, or `.ts` when run from source (node:test through
-// ts-node), where the worker inherits the loader from `execArgv` — the test runner's own flags left
-// out, which a worker refuses.
+// Beside this file: compiled `.js` in `dist`, or `.ts` when run from source (the e2e suite), where
+// the worker inherits the loader from `execArgv` — `--test*` flags left out, which a worker refuses.
 const WORKER_FILE = join(__dirname, '..', 'workers', `pdf-first-page.worker${extname(__filename)}`);
 const workerExecArgv = () => process.execArgv.filter((arg) => !arg.startsWith('--test'));
 

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { CacheStore } from '../../domain';
 import { MemoryCacheStore } from '../stores';
@@ -21,14 +22,14 @@ const buildBrokenStore = (): CacheStore => {
 };
 
 describe('CacheService', () => {
-  let warn: jest.SpyInstance;
+  let warn: MockInstance;
 
   beforeEach(() => {
-    warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    warn = vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('keys', () => {
@@ -52,7 +53,7 @@ describe('CacheService', () => {
   describe('ttl', () => {
     it('applies the configured default', async () => {
       const store = new MemoryCacheStore();
-      const set = jest.spyOn(store, 'set');
+      const set = vi.spyOn(store, 'set');
 
       await buildService(store).set('user:1', 'value');
 
@@ -61,7 +62,7 @@ describe('CacheService', () => {
 
     it('lets the call override it', async () => {
       const store = new MemoryCacheStore();
-      const set = jest.spyOn(store, 'set');
+      const set = vi.spyOn(store, 'set');
 
       await buildService(store).set('user:1', 'value', 60);
 
@@ -70,7 +71,7 @@ describe('CacheService', () => {
 
     it('turns a zero default into no expiry at all', async () => {
       const store = new MemoryCacheStore();
-      const set = jest.spyOn(store, 'set');
+      const set = vi.spyOn(store, 'set');
 
       await new CacheService(store, { keyPrefix: 'cache', defaultTtl: 0 }).set('user:1', 'value');
 
@@ -105,7 +106,7 @@ describe('CacheService', () => {
   describe('wrap', () => {
     it('serves a hit without calling the factory', async () => {
       const service = buildService();
-      const factory = jest.fn(() => Promise.resolve('fresh'));
+      const factory = vi.fn(() => Promise.resolve('fresh'));
 
       await service.set('user:1', 'cached');
 
@@ -122,7 +123,7 @@ describe('CacheService', () => {
 
     it('runs the factory once for concurrent misses of the same key', async () => {
       const service = buildService();
-      const factory = jest.fn(() => Promise.resolve('fresh'));
+      const factory = vi.fn(() => Promise.resolve('fresh'));
 
       const results = await Promise.all([
         service.wrap('user:1', factory),
@@ -136,7 +137,7 @@ describe('CacheService', () => {
 
     it('shares the in-flight call with a scope of the same key', async () => {
       const service = buildService();
-      const factory = jest.fn(() => Promise.resolve('fresh'));
+      const factory = vi.fn(() => Promise.resolve('fresh'));
 
       await Promise.all([
         service.scope('user').wrap('1', factory),
@@ -148,7 +149,7 @@ describe('CacheService', () => {
 
     it('lets a later call miss again once the first one settled', async () => {
       const service = buildService(buildBrokenStore());
-      const factory = jest.fn(() => Promise.resolve('fresh'));
+      const factory = vi.fn(() => Promise.resolve('fresh'));
 
       await service.wrap('user:1', factory);
       await service.wrap('user:1', factory);
@@ -168,7 +169,7 @@ describe('CacheService', () => {
   describe('increment', () => {
     it('counts under the namespaced key and records a write', async () => {
       const store = new MemoryCacheStore();
-      const increment = jest.spyOn(store, 'increment');
+      const increment = vi.spyOn(store, 'increment');
       const service = buildService(store);
 
       await service.increment('hits:1', 60_000);

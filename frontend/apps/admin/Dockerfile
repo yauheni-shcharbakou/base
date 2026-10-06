@@ -8,13 +8,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
-RUN corepack prepare pnpm@11.9.0 --activate
+RUN corepack prepare pnpm@12.9.1 --activate
 RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS prepare
-RUN pnpm add -g turbo@2.10.2
+RUN pnpm add -g turbo@2.11.7
 COPY . .
 COPY ./turbo.prod.json ./turbo.json
 RUN turbo prune frontend.admin --docker

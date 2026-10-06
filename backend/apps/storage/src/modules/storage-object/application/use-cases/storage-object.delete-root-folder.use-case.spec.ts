@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
@@ -17,17 +18,17 @@ const root = {
 
 describe('StorageObjectDeleteRootFolderUseCase', () => {
   let repository: {
-    withTreeLock: jest.Mock;
-    getOne: jest.Mock;
-    markDeletedWithDescendants: jest.Mock;
+    withTreeLock: Mock;
+    getOne: Mock;
+    markDeletedWithDescendants: Mock;
   };
   let useCase: StorageObjectDeleteRootFolderUseCase;
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
-      getOne: jest.fn().mockResolvedValue(right(root)),
-      markDeletedWithDescendants: jest.fn().mockResolvedValue(right(5)),
+      withTreeLock: vi.fn((_userId: string, work: () => Promise<unknown>) => work()),
+      getOne: vi.fn().mockResolvedValue(right(root)),
+      markDeletedWithDescendants: vi.fn().mockResolvedValue(right(5)),
     };
 
     useCase = new StorageObjectDeleteRootFolderUseCase(

@@ -1,16 +1,17 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { RedisQueueClient } from './redis.queue.client';
 
-const queueInstances: { name: string; add: jest.Mock; addBulk: jest.Mock; close: jest.Mock }[] = [];
+const queueInstances: { name: string; add: Mock; addBulk: Mock; close: Mock }[] = [];
 
-jest.mock('bullmq', () => ({
-  Queue: jest.fn().mockImplementation((name: string) => {
+vi.mock('bullmq', () => ({
+  Queue: vi.fn().mockImplementation(function (name: string) {
     const queue = {
       name,
-      add: jest.fn(() => Promise.resolve({ id: '1' })),
-      addBulk: jest.fn(() => Promise.resolve([])),
-      close: jest.fn(() => Promise.resolve()),
+      add: vi.fn(() => Promise.resolve({ id: '1' })),
+      addBulk: vi.fn(() => Promise.resolve([])),
+      close: vi.fn(() => Promise.resolve()),
     };
 
     queueInstances.push(queue);
@@ -25,11 +26,11 @@ const buildClient = (commandTimeoutMs = 5000): RedisQueueClient => {
 
 describe('RedisQueueClient', () => {
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {

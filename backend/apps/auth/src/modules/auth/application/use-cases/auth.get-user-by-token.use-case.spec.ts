@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { CacheService, MemoryCacheStore } from '@backend/cache';
 import { AuthTokenPayloadParsed } from '@backend/common';
 import { NestAuth } from '@backend/proto';
@@ -21,8 +22,8 @@ const payload = { id: USER_ID, login: user.email, role: user.role } as AuthToken
 
 describe('AuthGetUserByTokenUseCase', () => {
   let cache: CacheService;
-  let getById: jest.Mock<Promise<Either<NotFoundException, NestAuth.User>>, [string]>;
-  let parseAccessTokenPayload: jest.Mock<Either<Error, AuthTokenPayloadParsed>, [string]>;
+  let getById: Mock<(id: string) => Promise<Either<NotFoundException, NestAuth.User>>>;
+  let parseAccessTokenPayload: Mock<(token: string) => Either<Error, AuthTokenPayloadParsed>>;
   let useCase: AuthGetUserByTokenUseCase;
 
   beforeEach(() => {
@@ -32,8 +33,8 @@ describe('AuthGetUserByTokenUseCase', () => {
       keyPrefix: 'cache',
       namespace: 'auth:user',
     });
-    getById = jest.fn().mockResolvedValue(right(user));
-    parseAccessTokenPayload = jest.fn().mockReturnValue(right(payload));
+    getById = vi.fn().mockResolvedValue(right(user));
+    parseAccessTokenPayload = vi.fn().mockReturnValue(right(payload));
 
     useCase = new AuthGetUserByTokenUseCase(
       { getById } as unknown as UserRepository,
@@ -75,7 +76,7 @@ describe('AuthGetUserByTokenUseCase', () => {
 
   it('touches neither the cache nor the repository when the token does not parse', async () => {
     parseAccessTokenPayload.mockReturnValue(left(new Error('invalid')));
-    const get = jest.spyOn(cache, 'get');
+    const get = vi.spyOn(cache, 'get');
 
     const result = await useCase.execute({ accessToken: ACCESS_TOKEN });
 

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
@@ -9,19 +10,19 @@ const populated = (id: string) =>
   ({ ...row(id), file: { id: `file-of-${id}` } }) as NestStorage.StorageObjectPopulated;
 
 describe('GrpcStorageObjectController batch writes', () => {
-  let getUseCase: { getMany: jest.Mock };
-  let deleteManyUseCase: { execute: jest.Mock };
-  let moveManyUseCase: { execute: jest.Mock };
-  let updatePublicManyUseCase: { execute: jest.Mock };
+  let getUseCase: { getMany: Mock };
+  let deleteManyUseCase: { execute: Mock };
+  let moveManyUseCase: { execute: Mock };
+  let updatePublicManyUseCase: { execute: Mock };
   let controller: GrpcStorageObjectController;
 
   beforeEach(() => {
     // Read back in another order than written, as the database may.
-    getUseCase = { getMany: jest.fn().mockResolvedValue([populated('b'), populated('a')]) };
-    deleteManyUseCase = { execute: jest.fn().mockResolvedValue(right([row('a'), row('b')])) };
-    moveManyUseCase = { execute: jest.fn().mockResolvedValue(right([row('a'), row('b')])) };
+    getUseCase = { getMany: vi.fn().mockResolvedValue([populated('b'), populated('a')]) };
+    deleteManyUseCase = { execute: vi.fn().mockResolvedValue(right([row('a'), row('b')])) };
+    moveManyUseCase = { execute: vi.fn().mockResolvedValue(right([row('a'), row('b')])) };
     updatePublicManyUseCase = {
-      execute: jest.fn().mockResolvedValue(right([row('a'), row('b')])),
+      execute: vi.fn().mockResolvedValue(right([row('a'), row('b')])),
     };
 
     const unused = {} as never;

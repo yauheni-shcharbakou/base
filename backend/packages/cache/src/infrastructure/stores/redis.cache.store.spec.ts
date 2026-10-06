@@ -1,25 +1,26 @@
+import { describe, expect, it, type Mock, vi } from 'vitest';
 import type Redis from 'ioredis';
 import { CACHE_INCREMENT_SCRIPT } from '../constants';
 import { RedisCacheStore } from './redis.cache.store';
 
 type RedisStub = {
-  get: jest.Mock;
-  set: jest.Mock;
-  exists: jest.Mock;
-  unlink: jest.Mock;
-  scan: jest.Mock;
-  keys: jest.Mock;
-  eval: jest.Mock;
+  get: Mock;
+  set: Mock;
+  exists: Mock;
+  unlink: Mock;
+  scan: Mock;
+  keys: Mock;
+  eval: Mock;
 };
 
 const buildStub = (): RedisStub => ({
-  get: jest.fn(() => Promise.resolve(null)),
-  set: jest.fn(() => Promise.resolve('OK')),
-  exists: jest.fn(() => Promise.resolve(0)),
-  unlink: jest.fn((...keys: string[]) => Promise.resolve(keys.length)),
-  scan: jest.fn(() => Promise.resolve(['0', []])),
-  keys: jest.fn(() => Promise.resolve([])),
-  eval: jest.fn(() => Promise.resolve([1, 60_000])),
+  get: vi.fn(() => Promise.resolve(null)),
+  set: vi.fn(() => Promise.resolve('OK')),
+  exists: vi.fn(() => Promise.resolve(0)),
+  unlink: vi.fn((...keys: string[]) => Promise.resolve(keys.length)),
+  scan: vi.fn(() => Promise.resolve(['0', []])),
+  keys: vi.fn(() => Promise.resolve([])),
+  eval: vi.fn(() => Promise.resolve([1, 60_000])),
 });
 
 const buildStore = (client: RedisStub): RedisCacheStore =>

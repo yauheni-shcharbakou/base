@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { CacheMetrics } from './cache.metrics';
 
 describe('CacheMetrics', () => {

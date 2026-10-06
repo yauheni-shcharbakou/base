@@ -1,4 +1,3 @@
-import './pg.e2e';
 import { NestCommon, NestStorage } from '@backend/proto';
 import { PgFileEntity } from '@common/infrastructure/pg/entities/pg.file.entity';
 import { PgImageEntity } from '@common/infrastructure/pg/entities/pg.image.entity';
@@ -26,7 +25,7 @@ import { EntityManager, MikroORM } from '@mikro-orm/postgresql';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { left, right } from '@sweet-monads/either';
 import assert from 'node:assert/strict';
-import { after, before, beforeEach, describe, it } from 'node:test';
+import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 import { setTimeout } from 'node:timers/promises';
 import { startOrm } from './pg.e2e';
 
@@ -60,9 +59,8 @@ describe('storage-object tree against Postgres', () => {
   // Every statement the ORM sends; a spec resets it to measure what one call costs.
   let statements: string[] = [];
 
-  // In a hook, not in an async suite body: `node:test` reports an error thrown there but still
-  // exits 0, which would turn a broken migration into a green run.
-  before(async () => {
+  // In a hook, not in the suite body, which Vitest collects synchronously and cannot await.
+  beforeAll(async () => {
     orm = await startOrm({ database: 'tree', onQuery: (message) => statements.push(message) });
 
     if (!orm) {
@@ -96,7 +94,7 @@ describe('storage-object tree against Postgres', () => {
     videoRepository = new PgVideoRepositoryImpl(em.getRepository(PgVideoEntity));
   });
 
-  after(() => orm?.close());
+  afterAll(() => orm?.close());
 
   // Skipped rather than failed without a server, like the Redis e2e suites. The timeout turns a
   // recursion that never ends into a failure instead of a hung run.

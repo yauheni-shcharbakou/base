@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FilePurgeService } from '@modules/file/application/services/file.purge.service';
 import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { FileDropService } from './file.drop.service';
@@ -5,13 +6,13 @@ import { FileDropService } from './file.drop.service';
 const files = [{ id: 'f1', providerId: 'dev/a.png' }, { id: 'f2' }] as FileWithMedia[];
 
 describe('FileDropService', () => {
-  let repository: { deleteMany: jest.Mock };
-  let purgeService: { purgeFiles: jest.Mock };
+  let repository: { deleteMany: Mock };
+  let purgeService: { purgeFiles: Mock };
   let service: FileDropService;
 
   beforeEach(() => {
-    repository = { deleteMany: jest.fn().mockResolvedValue(true) };
-    purgeService = { purgeFiles: jest.fn().mockResolvedValue(undefined) };
+    repository = { deleteMany: vi.fn().mockResolvedValue(true) };
+    purgeService = { purgeFiles: vi.fn().mockResolvedValue(undefined) };
     service = new FileDropService(
       repository as unknown as FileRepository,
       purgeService as unknown as FilePurgeService,

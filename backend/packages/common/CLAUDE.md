@@ -31,7 +31,7 @@ The hand-written core of the backend's data layer: the abstract **contracts** th
 ```bash
 pnpm build            # tsdown → dist (cjs + d.ts)
 pnpm dev              # tsdown --watch
-pnpm test             # jest; single file: pnpm test -- error.utils
+pnpm test             # vitest; single file: pnpm test -- error.utils
 pnpm test:watch
 pnpm lint             # eslint --fix
 pnpm format           # prettier src

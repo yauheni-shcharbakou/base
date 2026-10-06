@@ -30,7 +30,7 @@ You may compact aggressively:
 
 ## Overview
 
-Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microservices (backend) and a Next.js/Refine admin panel (frontend), wired together by Protobuf codegen and a Redis/BullMQ event bus. Requires Node ≥22.22, pnpm 11.9.0 (pinned by `packageManager`), and `protoc` (only for proto compilation).
+Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microservices (backend) and a Next.js/Refine admin panel (frontend), wired together by Protobuf codegen and a Redis/BullMQ event bus. Requires Node ≥22.22.3 (the Nest 12 CLI), pnpm 12.9.1 (pinned by `packageManager`), and `protoc` (only for proto compilation).
 
 ## Workspaces & naming
 
@@ -153,7 +153,7 @@ tag): what the entry says is what the Release says, so write it for that reader.
 specs are `scripts/release-notes.test.sh` — a change to how lines are joined starts with a fixture
 in `scripts/fixtures/release-notes/`, which are `.txt` so that a change to one still counts as code.
 
-**Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
+**Tests.** The backend runs on **Vitest**, the admin on Jest. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single
 file: `pnpm test -- path/to/file.spec.ts`). A package with no `*.spec.ts` under `src/` has no
 suite — there is no central list. Both turbo tasks depend on `^build`, because specs import
@@ -161,14 +161,17 @@ sibling packages through their built `dist`; `test:e2e` is `cache: false` — wh
 skips depends on a reachable broker or database, which turbo cannot hash. A backend app whose suite
 is still empty passes `--passWithNoTests` in that script to keep the repo-wide run green (the
 `test:e2e` of `api-gateway` and `auth`) — **drop the flag the moment the suite gets its first spec.**
-**Nothing that loads MikroORM runs under Jest:** MikroORM 7 is ESM-only and Jest's runtime has no
-`require(esm)`. A database spec runs on `node:test` instead — `backend.storage`'s `test:e2e` is the
-template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
-**ts-jest only transpiles** (`tsconfig: { isolatedModules: true }` in each transform): `typecheck`
-already checks the specs, and a second type check made up half the test run. A backend transform
-also sets `module: commonjs` and `moduleResolution: node10`, which ts-jest forced itself while it
-type-checked — under `nodenext` a transpiled `import()` stays native and fails under Jest. A new
-jest config copies the transform of its package's siblings.
+**A backend workspace's config is one call:** `vitest.config.mts` (and `vitest.e2e.config.mts` for an
+e2e suite) default-exports `nestVitestConfig(import.meta.url, test?)` from
+`@packages/configs/vitest/nest.config.mjs`. It compiles specs with swc — Nest's DI needs the
+decorator metadata Vite's own transform never emits — and maps the `@/`, `@modules/`, `@common/`
+aliases. Specs import `describe`/`it`/`expect`/`vi` from `vitest`; there are no globals. A suite
+that needs a server probes it in a `globalSetup`, `provide`s the answer and skips through
+`describe.skipIf(!inject(…))`; env a config module validates at load goes in the config's `env`.
+A Nest app's `tsconfig.build.json` excludes `vitest*.config.mts`, or `nest build` moves `main.js`
+to `dist/src/` ([ADR-0040](docs/adr/0040-backend-specs-on-vitest.md)).
+Under Jest the admin's ts-jest only transpiles (`isolatedModules` in its transform): `typecheck`
+already checks the specs.
 
 **Lint & strictness.**
 

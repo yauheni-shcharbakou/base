@@ -1,6 +1,6 @@
 # 0017 — Database specs run on `node:test` against a migrated Postgres, not on Jest
 
-**Status:** Accepted (2026-09-26)
+**Status:** Superseded by 0040 (2026-10-07)
 **Applies to:** `backend.storage`
 
 ## Context

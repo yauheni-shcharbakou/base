@@ -1,3 +1,4 @@
+import { beforeAll, describe, expect, it } from 'vitest';
 import 'reflect-metadata';
 import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { RpcParamtype } from '@nestjs/microservices/enums/rpc-paramtype.enum';

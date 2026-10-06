@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { isUnfilteredQuery } from './query.utils';
 
 describe('isUnfilteredQuery', () => {

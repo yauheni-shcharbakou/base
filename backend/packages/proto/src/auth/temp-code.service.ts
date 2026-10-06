@@ -56,6 +56,7 @@ function TempCodeServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('TempCodeService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
@@ -65,6 +66,7 @@ function TempCodeServiceControllerMethods() {
         method,
         descriptor,
       );
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
   };
 }
@@ -114,6 +116,7 @@ function TempCodeAdminServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('TempCodeAdminService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
@@ -123,6 +126,7 @@ function TempCodeAdminServiceControllerMethods() {
         method,
         descriptor,
       );
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
   };
 }
@@ -141,6 +145,7 @@ function TempCodeWebServiceControllerMethods() {
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod('TempCodeWebService', method)(constructor.prototype[method], method, descriptor);
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
     const grpcStreamMethods: string[] = [];
     for (const method of grpcStreamMethods) {
@@ -150,6 +155,7 @@ function TempCodeWebServiceControllerMethods() {
         method,
         descriptor,
       );
+      Object.defineProperty(constructor.prototype, method, descriptor);
     }
   };
 }

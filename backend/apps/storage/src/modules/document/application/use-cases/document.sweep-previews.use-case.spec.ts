@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { Config } from '@/config';
 import {
   DocumentMakePreviewUseCase,
@@ -14,20 +15,20 @@ const SETTINGS = { limit: 2, graceMinutes: 25, maxAttempts: 3, breakerThreshold:
 // What a sweep does is specced once, on `PreviewSweepUseCase`; here, what the document sweep
 // runs on.
 describe('DocumentSweepPreviewsUseCase', () => {
-  let repository: { getManyWithoutPreview: jest.Mock; countPreviewAttempt: jest.Mock };
-  let makePreviewUseCase: { execute: jest.Mock };
-  let configService: { getOrThrow: jest.Mock };
+  let repository: { getManyWithoutPreview: Mock; countPreviewAttempt: Mock };
+  let makePreviewUseCase: { execute: Mock };
+  let configService: { getOrThrow: Mock };
   let useCase: DocumentSweepPreviewsUseCase;
 
   beforeEach(() => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
     repository = {
-      getManyWithoutPreview: jest.fn().mockResolvedValue([{ id: 'file-1' }]),
-      countPreviewAttempt: jest.fn().mockResolvedValue(right(false)),
+      getManyWithoutPreview: vi.fn().mockResolvedValue([{ id: 'file-1' }]),
+      countPreviewAttempt: vi.fn().mockResolvedValue(right(false)),
     };
-    makePreviewUseCase = { execute: jest.fn().mockResolvedValue(right(true)) };
-    configService = { getOrThrow: jest.fn().mockReturnValue(SETTINGS) };
+    makePreviewUseCase = { execute: vi.fn().mockResolvedValue(right(true)) };
+    configService = { getOrThrow: vi.fn().mockReturnValue(SETTINGS) };
 
     useCase = new DocumentSweepPreviewsUseCase(
       repository as unknown as FileRepository,
@@ -37,7 +38,7 @@ describe('DocumentSweepPreviewsUseCase', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('is tuned by the document sweep settings', () => {

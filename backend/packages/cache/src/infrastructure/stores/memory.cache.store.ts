@@ -13,7 +13,7 @@ type MemoryCacheEntry = {
  * is not a deployment option.
  *
  * Expiry is lazy (checked on read) rather than timer-driven, unlike `MemoryCache` in
- * `@backend/common`: a `setTimeout` per key keeps jest from exiting and buys nothing here.
+ * `@backend/common`: a `setTimeout` per key keeps a test run from exiting and buys nothing here.
  * The trade-off is that a key nobody reads again holds its memory until `clear`/`deleteByPrefix`.
  */
 export class MemoryCacheStore extends CacheStore {

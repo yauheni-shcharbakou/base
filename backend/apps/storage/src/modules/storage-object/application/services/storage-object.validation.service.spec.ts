@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import {
   StorageObjectMedia,
@@ -12,21 +13,21 @@ import {
 
 describe('StorageObjectValidationService', () => {
   let repository: {
-    isExists: jest.Mock;
-    distinct: jest.Mock;
-    getOne: jest.Mock;
-    getMany: jest.Mock;
-    getMediaToPlace: jest.Mock;
+    isExists: Mock;
+    distinct: Mock;
+    getOne: Mock;
+    getMany: Mock;
+    getMediaToPlace: Mock;
   };
   let service: StorageObjectValidationService;
 
   beforeEach(() => {
     repository = {
-      isExists: jest.fn().mockResolvedValue(false),
-      distinct: jest.fn().mockResolvedValue(new Set()),
-      getOne: jest.fn().mockResolvedValue(right({ id: 'root', isPublic: true })),
-      getMany: jest.fn().mockResolvedValue([]),
-      getMediaToPlace: jest.fn(),
+      isExists: vi.fn().mockResolvedValue(false),
+      distinct: vi.fn().mockResolvedValue(new Set()),
+      getOne: vi.fn().mockResolvedValue(right({ id: 'root', isPublic: true })),
+      getMany: vi.fn().mockResolvedValue([]),
+      getMediaToPlace: vi.fn(),
     };
 
     service = new StorageObjectValidationService(repository as unknown as StorageObjectRepository);

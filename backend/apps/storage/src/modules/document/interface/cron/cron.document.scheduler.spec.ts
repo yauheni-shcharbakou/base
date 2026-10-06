@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { DatabaseRunnerService } from '@backend/common';
 import { Config } from '@/config';
 import { DocumentSweepPreviewsUseCase } from '@modules/document/application/use-cases/document.sweep-previews.use-case';
@@ -6,15 +7,15 @@ import { CronDocumentScheduler } from './cron.document.scheduler';
 
 // How a sweep is run is specced once, on `PreviewSweepScheduler`; here, what this one runs.
 describe('CronDocumentScheduler', () => {
-  let useCase: { execute: jest.Mock };
-  let runner: { isolatedRun: jest.Mock };
-  let configService: { getOrThrow: jest.Mock };
+  let useCase: { execute: Mock };
+  let runner: { isolatedRun: Mock };
+  let configService: { getOrThrow: Mock };
   let scheduler: CronDocumentScheduler;
 
   beforeEach(() => {
-    useCase = { execute: jest.fn().mockResolvedValue(undefined) };
-    runner = { isolatedRun: jest.fn((work: () => Promise<unknown>) => work()) };
-    configService = { getOrThrow: jest.fn().mockReturnValue({ budgetMinutes: 8 }) };
+    useCase = { execute: vi.fn().mockResolvedValue(undefined) };
+    runner = { isolatedRun: vi.fn((work: () => Promise<unknown>) => work()) };
+    configService = { getOrThrow: vi.fn().mockReturnValue({ budgetMinutes: 8 }) };
 
     scheduler = new CronDocumentScheduler(
       useCase as unknown as DocumentSweepPreviewsUseCase,

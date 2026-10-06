@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { Config } from '@/config';
 import { FileDropService } from '@modules/file/application/services/file.drop.service';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
@@ -14,24 +15,24 @@ const VIDEO_WINDOW_MINUTES = 120;
 
 describe('FileCleanupUseCase', () => {
   let repository: {
-    failPendingBefore: jest.Mock;
-    getMany: jest.Mock;
-    getManyInDeletedStorageObjects: jest.Mock;
+    failPendingBefore: Mock;
+    getMany: Mock;
+    getManyInDeletedStorageObjects: Mock;
   };
-  let dropService: { drop: jest.Mock };
+  let dropService: { drop: Mock };
   let useCase: FileCleanupUseCase;
 
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(NOW);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    vi.useFakeTimers().setSystemTime(NOW);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
 
     repository = {
-      failPendingBefore: jest.fn().mockResolvedValue(right(0)),
-      getMany: jest.fn().mockResolvedValue([]),
-      getManyInDeletedStorageObjects: jest.fn().mockResolvedValue([]),
+      failPendingBefore: vi.fn().mockResolvedValue(right(0)),
+      getMany: vi.fn().mockResolvedValue([]),
+      getManyInDeletedStorageObjects: vi.fn().mockResolvedValue([]),
     };
-    dropService = { drop: jest.fn().mockResolvedValue(true) };
+    dropService = { drop: vi.fn().mockResolvedValue(true) };
     useCase = new FileCleanupUseCase(
       repository as unknown as FileRepository,
       dropService as unknown as FileDropService,
@@ -42,8 +43,8 @@ describe('FileCleanupUseCase', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('fails the uploads older than the longer upload window and its grace', async () => {

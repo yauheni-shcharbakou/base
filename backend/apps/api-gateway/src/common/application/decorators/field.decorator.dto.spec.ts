@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import 'reflect-metadata';
 import { NestStorage } from '@backend/proto';
 import { ImageCreateDto } from '@modules/image/application/dto/image.create.dto';

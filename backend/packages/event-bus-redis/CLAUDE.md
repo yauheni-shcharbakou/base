@@ -202,7 +202,7 @@ unnamespaced factory merges into one flat store where the last module loaded win
 
 ```bash
 pnpm build            # format:generated → tsdown → dist
-pnpm test             # unit jest; single file: pnpm test -- redis.queue.constants
+pnpm test             # unit vitest; single file: pnpm test -- redis.queue.constants
 pnpm test:e2e         # server-backed suite; auto-skips when no Redis answers
 pnpm dev / test:watch / lint / format / format:generated / reset
 ```
@@ -233,17 +233,17 @@ pnpm test:e2e
 - `redis.parking.e2e-spec.ts` reproduces the first-boot race on `storage.file.purge`: an
   `onlyEmitting` app emits with nobody subscribed, a second app registers for the first time and gets
   the replay, a third restart gets nothing.
-- `test/redis-server.setup.js` is a jest `globalSetup`, not a `beforeAll`, for two reasons that both
-  come down to timing: `redis.config.ts` validates env at module load, so the overrides have to be
-  set before the spec is imported; and the server probe has to land in `process.env` before the
-  workers fork, so the spec can pick `describe` vs `describe.skip` synchronously. Without a server
-  jest reports the suites as *skipped* rather than passing on an empty run.
-- The setup pins `REDIS_QUEUE_PREFIX=bull-e2e` and `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e`, so the
+- Two things happen before a spec is imported, both for timing: `redis.config.ts` validates env at
+  module load, so the overrides are in `vitest.e2e.config.mts`'s `env`; and
+  `test/redis-server.setup.ts`, a Vitest `globalSetup`, probes the server and `provide`s the answer,
+  so each spec picks `describe` vs `describe.skip` through `inject('redisServer')` at module scope.
+  Without a server the suites report as *skipped* rather than passing on an empty run.
+- The config pins `REDIS_QUEUE_PREFIX=bull-e2e` and `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e`, so the
   suite cannot touch a local dev run's queues and registries, and `REDIS_JOB_ATTEMPTS=3` with
   `REDIS_JOB_BACKOFF_DELAY=100` so the retry ladder takes milliseconds instead of minutes.
-- It probes with a raw socket rather than ioredis: a failed client connection leaves reconnect
-  machinery behind that keeps jest from exiting, and the skip path is exactly the one that has to
-  stay quiet.
+- The setup probes with a raw socket rather than ioredis: a failed client connection leaves
+  reconnect machinery behind that keeps the run from exiting, and the skip path is exactly the one
+  that has to stay quiet.
 - Each spec wipes only **its own** event's keys in `beforeAll` — a blanket wipe of the prefixes would
   let two files in parallel workers destroy each other's state. Keys are left behind afterwards, so a
   failed run can be inspected.

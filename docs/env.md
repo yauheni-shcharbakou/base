@@ -53,9 +53,9 @@ packages validate is still written down once.
 
 <!-- env-table:end -->
 
-`NODE_ENV` accepts `test` only so a jest spec that transitively imports a config module does not die
-at import time; consumers compare it against `development` / `production` alone. `PORT` falls back
-to `10000` in `commonConfig()` rather than in the schema.
+`NODE_ENV` accepts `test` only so a spec — Vitest and Jest both set it — that transitively imports
+a config module does not die at import time; consumers compare it against `development` /
+`production` alone. `PORT` falls back to `10000` in `commonConfig()` rather than in the schema.
 
 ### `DatabaseValidationSchema`
 
@@ -157,7 +157,7 @@ where ioredis' default A-record lookup fails with `ENOTFOUND`. Force `6` if reco
 flaky on such a network.
 
 The e2e suite pins `REDIS_QUEUE_PREFIX=bull-e2e`, `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e` and a
-short retry ladder from a jest `globalSetup` — the config validates env at module load, so an
+short retry ladder from `vitest.e2e.config.mts`'s `env` — the config validates env at module load, so an
 override set any later would be read by nobody.
 
 ### `@backend/event-bus-nats`

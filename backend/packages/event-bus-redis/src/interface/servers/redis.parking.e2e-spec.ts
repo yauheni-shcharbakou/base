@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { EventBusHost, FilePurgeType } from '@backend/event-bus';
 import type { FilePurgeEvent } from '@backend/event-bus';
 import { INestApplication } from '@nestjs/common';
@@ -17,8 +18,8 @@ const PARKING_KEY = `event-bus-e2e:parked:${EVENT_ID}`;
 const SUBSCRIPTION_KEY = `event-bus-e2e:subs:${EVENT_ID}`;
 
 // A different host and event from `redis.transport.e2e-spec.ts`, so the two files cannot disturb
-// each other even when jest runs them in parallel.
-const describeWithServer = process.env.REDIS_E2E_SERVER === '1' ? describe : describe.skip;
+// each other even when Vitest runs them in parallel.
+const describeWithServer = describe.skipIf(!inject('redisServer'));
 
 const received: FilePurgeEvent[] = [];
 

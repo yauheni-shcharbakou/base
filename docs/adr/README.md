@@ -45,7 +45,7 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0014](0014-video-uploads-bypass-the-backend.md) | Video bytes go browser → Bunny directly, and the callback lands on storage | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin` |
 | [0015](0015-file-uploads-presigned-s3-put.md) | File and image bytes go browser → Bunny Storage over a pre-signed S3 PUT, confirmed by a call | Accepted | `backend.storage`, `backend.api-gateway`, `frontend.admin` |
 | [0016](0016-provider-purge-over-the-event-bus.md) | Provider objects are purged over the event bus, and deleted storage objects are swept by a cron | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis` |
-| [0017](0017-database-specs-on-node-test.md) | Database specs run on `node:test` against a migrated Postgres, not on Jest | Accepted | `backend.storage` |
+| [0017](0017-database-specs-on-node-test.md) | Database specs run on `node:test` against a migrated Postgres, not on Jest | Superseded by 0040 | `backend.storage` |
 | [0018](0018-folder-paths-computed-on-read.md) | Folder paths are computed on read, and a folder's visibility cascades in its own transaction | Accepted | `backend.storage`, `@backend/event-bus`, `@backend/event-bus-redis`, `@backend/event-bus-nats` |
 | [0019](0019-tree-writes-under-one-advisory-lock.md) | Writes to the storage-object tree run under one advisory lock | Superseded in part by 0021 | `backend.storage` |
 | [0020](0020-server-action-failures-as-values.md) | Admin server actions return their failure as a value, and the gateway keeps the callee's status | Accepted | `frontend.admin`, `@backend/grpc`, `backend.api-gateway` |
@@ -68,3 +68,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0037](0037-preview-sweep-drains-within-a-time-budget.md) | A preview sweep takes batch after batch within a time budget, from a cursor | Accepted | `backend.storage` |
 | [0038](0038-railway-iac-applied-by-ci.md) | Railway is described by `.railway/railway.ts` and applied by our own CI job | Accepted | `.railway/`, `.github/workflows/check.yaml` |
 | [0039](0039-main-trusts-the-pull-request-check.md) | A push to main trusts the pull request's check; turbo shares one remote cache | Accepted | `.github/workflows/check.yaml`, `.github/workflows/main.yaml`, `.github/actions/` |
+| [0040](0040-backend-specs-on-vitest.md) | Backend specs run on Vitest, compiled by swc | Accepted | backend apps, `@backend/{common,grpc,cache,event-bus-redis,event-bus-nats}`, `@packages/configs` |

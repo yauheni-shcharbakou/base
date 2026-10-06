@@ -1,3 +1,4 @@
+import { beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FilePurgeType } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import {
@@ -30,38 +31,35 @@ const file = (overrides: Partial<NestStorage.File> = {}) =>
   }) as NestStorage.File;
 
 describe('DocumentMakePreviewUseCase', () => {
-  let repository: Record<
-    'getById' | 'setPreview' | 'markPreviewFailed' | 'isExistsById',
-    jest.Mock
-  >;
-  let fileService: Record<'getObjectStream' | 'putObject' | 'createPreviewKey', jest.Mock>;
-  let previewService: { render: jest.Mock };
-  let purgeService: { purge: jest.Mock };
+  let repository: Record<'getById' | 'setPreview' | 'markPreviewFailed' | 'isExistsById', Mock>;
+  let fileService: Record<'getObjectStream' | 'putObject' | 'createPreviewKey', Mock>;
+  let previewService: { render: Mock };
+  let purgeService: { purge: Mock };
   let useCase: DocumentMakePreviewUseCase;
 
   const run = () => useCase.execute({ fileId: 'file-1' });
 
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    vi.spyOn(Logger.prototype, 'warn').mockReturnValue(undefined);
   });
 
   beforeEach(() => {
     repository = {
-      getById: jest.fn().mockResolvedValue(right(file())),
-      setPreview: jest.fn().mockResolvedValue(right(true)),
-      markPreviewFailed: jest.fn().mockResolvedValue(right(true)),
-      isExistsById: jest.fn().mockResolvedValue(true),
+      getById: vi.fn().mockResolvedValue(right(file())),
+      setPreview: vi.fn().mockResolvedValue(right(true)),
+      markPreviewFailed: vi.fn().mockResolvedValue(right(true)),
+      isExistsById: vi.fn().mockResolvedValue(true),
     };
     fileService = {
       // A fresh stream per call: one is consumed by the read.
-      getObjectStream: jest
+      getObjectStream: vi
         .fn()
         .mockImplementation(() => Promise.resolve(right(Readable.from([BYTES])))),
-      putObject: jest.fn().mockResolvedValue(right(true)),
-      createPreviewKey: jest.fn().mockReturnValue('dev/u/a.preview.webp'),
+      putObject: vi.fn().mockResolvedValue(right(true)),
+      createPreviewKey: vi.fn().mockReturnValue('dev/u/a.preview.webp'),
     };
-    previewService = { render: jest.fn().mockResolvedValue(right(PREVIEW)) };
-    purgeService = { purge: jest.fn().mockResolvedValue(undefined) };
+    previewService = { render: vi.fn().mockResolvedValue(right(PREVIEW)) };
+    purgeService = { purge: vi.fn().mockResolvedValue(undefined) };
 
     useCase = new DocumentMakePreviewUseCase(
       repository as unknown as FileRepository,

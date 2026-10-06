@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import 'reflect-metadata';
 import { EventPattern } from '@nestjs/microservices';
 import { PATTERN_METADATA } from '@nestjs/microservices/constants';
@@ -19,7 +20,7 @@ describe('RedisController', () => {
   it('rewrites the bare event id into a consumer-scoped queue name', () => {
     @RedisController({ consumer: 'storage.file' })
     class Controller {
-      @EventPattern('auth.user.create')
+      @EventPattern<string>('auth.user.create')
       onUserCreate(): void {}
     }
 
@@ -37,13 +38,13 @@ describe('RedisController', () => {
   it('gives two controllers on the same event independent queues', () => {
     @RedisController({ consumer: 'storage.file' })
     class FileController {
-      @EventPattern('auth.user.create')
+      @EventPattern<string>('auth.user.create')
       onUserCreate(): void {}
     }
 
     @RedisController({ consumer: 'storage.storage-object' })
     class StorageObjectController {
-      @EventPattern('auth.user.create')
+      @EventPattern<string>('auth.user.create')
       onUserCreate(): void {}
     }
 
@@ -63,10 +64,10 @@ describe('RedisController', () => {
   it('registers every event a controller subscribes to', () => {
     @RedisController({ consumer: 'storage.file' })
     class Controller {
-      @EventPattern('storage.video.upload.finish')
+      @EventPattern<string>('storage.video.upload.finish')
       onUploadFinish(): void {}
 
-      @EventPattern('storage.video.upload.fail')
+      @EventPattern<string>('storage.video.upload.fail')
       onUploadFail(): void {}
     }
 
@@ -80,7 +81,7 @@ describe('RedisController', () => {
   it('carries the concurrency override into the subscription', () => {
     @RedisController({ consumer: 'storage.file', concurrency: 5 })
     class Controller {
-      @EventPattern('auth.user.create')
+      @EventPattern<string>('auth.user.create')
       onUserCreate(): void {}
     }
 
@@ -92,7 +93,7 @@ describe('RedisController', () => {
     const Decorate = RedisController({ consumer: 'storage.file' });
 
     class Controller {
-      @EventPattern('auth.user.create')
+      @EventPattern<string>('auth.user.create')
       onUserCreate(): void {}
     }
 
@@ -107,7 +108,7 @@ describe('RedisController', () => {
     expect(() => {
       @RedisController({ consumer: 'Storage File' })
       class Controller {
-        @EventPattern('auth.user.create')
+        @EventPattern<string>('auth.user.create')
         onUserCreate(): void {}
       }
 

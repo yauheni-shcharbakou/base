@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type Redis from 'ioredis';
 import { RedisQueueSubscription } from '../types';
@@ -16,23 +17,23 @@ const buildSubscription = (eventId: string, consumerId: string): RedisQueueSubsc
 const buildDeps = () => {
   // `results` drives what each queued SADD is reported to have returned: 1 = newly added.
   const pipeline = {
-    sadd: jest.fn(() => pipeline),
-    publish: jest.fn(() => pipeline),
-    exec: jest.fn(() => Promise.resolve<[Error | null, unknown][]>([])),
+    sadd: vi.fn(() => pipeline),
+    publish: vi.fn(() => pipeline),
+    exec: vi.fn(() => Promise.resolve<[Error | null, unknown][]>([])),
   };
 
   const subscriber = {
-    on: jest.fn(),
+    on: vi.fn(),
     status: 'ready',
-    subscribe: jest.fn(() => Promise.resolve(1)),
-    quit: jest.fn(() => Promise.resolve('OK')),
-    disconnect: jest.fn(),
+    subscribe: vi.fn(() => Promise.resolve(1)),
+    quit: vi.fn(() => Promise.resolve('OK')),
+    disconnect: vi.fn(),
   };
 
   const connection = {
-    pipeline: jest.fn(() => pipeline),
-    smembers: jest.fn(() => Promise.resolve<string[]>([])),
-    duplicate: jest.fn(() => subscriber),
+    pipeline: vi.fn(() => pipeline),
+    smembers: vi.fn(() => Promise.resolve<string[]>([])),
+    duplicate: vi.fn(() => subscriber),
   };
 
   return { pipeline, subscriber, connection };
@@ -62,11 +63,11 @@ const withSaddResults = (deps: ReturnType<typeof buildDeps>, added: number[], to
 
 describe('RedisSubscriptionRegistry', () => {
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('publish', () => {
@@ -273,7 +274,7 @@ describe('RedisSubscriptionRegistry', () => {
     it('reports an outage once, and again after the channel recovers', async () => {
       const deps = buildDeps();
       // The suite-wide spy from `beforeAll`; re-spying would hand back the same accumulated mock.
-      const warn = jest.mocked(Logger.prototype.warn);
+      const warn = vi.mocked(Logger.prototype.warn);
       warn.mockClear();
 
       await buildRegistry(deps).onApplicationBootstrap();

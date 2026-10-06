@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FilePurgeEvent, FilePurgeType } from '@backend/event-bus';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
 import { StorageVideoService } from '@modules/storage/domain/services/storage.video.service';
@@ -6,13 +7,13 @@ import { left, right } from '@sweet-monads/either';
 import { StoragePurgeUseCase } from './storage.purge.use-case';
 
 describe('StoragePurgeUseCase', () => {
-  let fileService: { deleteFile: jest.Mock };
-  let videoService: { deleteVideo: jest.Mock };
+  let fileService: { deleteFile: Mock };
+  let videoService: { deleteVideo: Mock };
   let useCase: StoragePurgeUseCase;
 
   beforeEach(() => {
-    fileService = { deleteFile: jest.fn().mockResolvedValue(right(true)) };
-    videoService = { deleteVideo: jest.fn().mockResolvedValue(right(true)) };
+    fileService = { deleteFile: vi.fn().mockResolvedValue(right(true)) };
+    videoService = { deleteVideo: vi.fn().mockResolvedValue(right(true)) };
 
     useCase = new StoragePurgeUseCase(
       fileService as unknown as StorageFileService,

@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type { Job, Queue } from 'bullmq';
 import type Redis from 'ioredis';
@@ -10,12 +11,15 @@ import { RedisMediatorService } from './redis.mediator.service';
 const workerInstances: {
   name: string;
   processor: (job: Job) => Promise<void>;
-  close: jest.Mock;
+  close: Mock;
 }[] = [];
 
-jest.mock('bullmq', () => ({
-  Worker: jest.fn().mockImplementation((name: string, processor: (job: Job) => Promise<void>) => {
-    const worker = { name, processor, on: jest.fn(), close: jest.fn(() => Promise.resolve()) };
+vi.mock('bullmq', () => ({
+  Worker: vi.fn().mockImplementation(function (
+    name: string,
+    processor: (job: Job) => Promise<void>,
+  ) {
+    const worker = { name, processor, on: vi.fn(), close: vi.fn(() => Promise.resolve()) };
 
     workerInstances.push(worker);
 
@@ -26,11 +30,11 @@ jest.mock('bullmq', () => ({
 const buildJob = (id: string | undefined, data: unknown): Job => ({ id, data }) as Job;
 
 const buildDeps = () => {
-  const add = jest.fn(() => Promise.resolve({}));
+  const add = vi.fn(() => Promise.resolve({}));
 
-  const client = { getQueue: jest.fn(() => ({ add }) as unknown as Queue) };
-  const parking = { park: jest.fn(() => Promise.resolve()) };
-  const subscriptionRegistry = { getConsumers: jest.fn(() => Promise.resolve<string[]>([])) };
+  const client = { getQueue: vi.fn(() => ({ add }) as unknown as Queue) };
+  const parking = { park: vi.fn(() => Promise.resolve()) };
+  const subscriptionRegistry = { getConsumers: vi.fn(() => Promise.resolve<string[]>([])) };
 
   return { add, client, parking, subscriptionRegistry };
 };
@@ -65,12 +69,12 @@ const fanOut = async (eventId: string, job: Job): Promise<void> => {
 
 describe('RedisMediatorService', () => {
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {

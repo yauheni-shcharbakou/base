@@ -7,6 +7,6 @@
       "@compiler/*": ["./compiler/*"],
     },
   },
-  "include": ["src", "compiler"],
+  "include": ["src", "compiler", "test"],
   "exclude": ["node_modules", "dist"],
 }
