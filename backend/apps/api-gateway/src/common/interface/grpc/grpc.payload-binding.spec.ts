@@ -35,6 +35,9 @@ const controllerPaths = (): string[] =>
 describe('gRPC controller handlers', () => {
   const handlers: Handler[] = [];
 
+  // The first import of every controller also transforms its whole graph (Nest, `@backend/proto`)
+  // through swc, which on a CI runner busy with the rest of the turbo run took past the default
+  // 10 s. The spec cannot import them statically: `import.meta.glob` is ESM, and this app is CJS.
   beforeAll(async () => {
     for (const path of controllerPaths()) {
       const exported: Record<string, unknown> = await import(path);
@@ -54,7 +57,7 @@ describe('gRPC controller handlers', () => {
         }
       }
     }
-  });
+  }, 60_000);
 
   // A moved directory would otherwise leave the check below passing over nothing.
   it('are found', () => {
