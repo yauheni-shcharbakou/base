@@ -15,7 +15,7 @@ packages:
 #
 # Not the same thing as `overrides` below: a catalog resolves the version a workspace *asks*
 # for, an override rewrites what the whole tree *gets*, transitive dependencies included.
-# `@grpc/grpc-js`, `axios`, `lodash` and `protobufjs` are in both, deliberately.
+# `axios` and `protobufjs` are in both, deliberately (see their comments there).
 catalog:
   '@grpc/grpc-js': '1.14.5'
   '@grpc/proto-loader': '0.8.1'
@@ -85,17 +85,12 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
 overrides:
+  # Copies of axios deep in the tree lagged behind, and it has a long record of vulnerable and compromised releases:
+  # held here even while every parent's range would accept the catalog version.
   axios: '1.20.0'
-  browserslist: '4.28.8'
-  lodash: '4.18.1'
+  # Not a security pin: two copies of protobufjs encode `google.protobuf.Timestamp` differently,
+  # so the gRPC loader and the generated code must share one. Never remove.
   protobufjs: '7.6.6'
-  '@grpc/grpc-js': '1.14.5'
-  tmp: '0.2.7'
-  ws: '8.22.0'
-  'form-data': '4.0.6'
   'http-proxy-middleware': '4.2.0'
-  multer: '2.4.0'
   postcss: '8.5.29'
-  'proxy-addr': '2.0.8'
   qs: '6.16.0'
-  'sanitize-html': '2.18.0'
