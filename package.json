@@ -12,7 +12,7 @@
     "check:audit": "pnpm audit --prod --audit-level=high",
     "check:env-docs": "pnpm --filter=@packages/env-docs run check",
     "check:docs": "bash scripts/docs-invariants.sh",
-    "check:scripts": "bash scripts/release-notes.test.sh && bash scripts/classify-changes.test.sh && bash scripts/check-railway-exposure.test.sh && bash scripts/released-entries.test.sh && bash scripts/frozen-adrs.test.sh && bash scripts/stale-overrides.test.sh",
+    "check:scripts": "bash scripts/release-notes.test.sh && bash scripts/classify-changes.test.sh && bash scripts/check-railway-exposure.test.sh && bash scripts/released-entries.test.sh && bash scripts/frozen-adrs.test.sh && bash scripts/stale-overrides.test.sh && bash scripts/audit-paths.test.sh",
     "check:railway": "tsc -p .railway/tsconfig.json",
     "dev": "turbo run dev --filter=\"backend.*\" --filter=\"frontend.*\"",
     "dev:backend": "turbo run dev --filter=\"backend.*\"",

@@ -55,20 +55,16 @@ never audits. Every step below is the same in both; where a step differs, it say
    GHSA, `dev` otherwise.
 
    - **Advisory** — the GHSA id, linked (`https://github.com/advisories/GHSA-…`).
-   - **Path** — direct or transitive, through which parent, in which workspaces. Read it from the
-     audit's own `findings[].paths` (`<workspace>><direct dep>>…><parent>><pkg>`, the workspace
-     with `/` spelled `__`), all advisories in one pass — not one `pnpm why` per row:
+   - **Path** — direct or transitive, through which parent, in which workspaces, for every
+     advisory in one pass over the audit's own `findings[].paths` — not one `pnpm why` per row:
 
      ```bash
-     jq -r '.advisories[] | [.findings[].paths[] | split(">")] as $p
-       | [.github_advisory_id, .module_name, ([.findings[].version] | unique | join(",")),
-          ($p | map(.[0] | gsub("__"; "/")) | unique | join(" ")),
-          (if any($p[]; length == 2) then "direct" else "via " + ($p | map(.[1]) | unique | join(",")) end),
-          "parents " + ($p | map(.[-2]) | unique | join(","))] | @tsv' /tmp/audit-prod.json
+     bash scripts/audit-paths.sh /tmp/audit-prod.json   # --dev: /tmp/audit.json
      ```
 
-     With `--dev`, read `/tmp/audit.json` instead. The `parents` column is what step 3 decides on;
-     `pnpm why -r <pkg>` is left for a row that needs the full chain.
+     One line per advisory, already sorted critical → low: severity, GHSA, package, vulnerable
+     versions, workspaces, `direct` / `via <direct deps>`, and the parents — the column step 3
+     decides on. `pnpm why -r <pkg>` is left for a row that needs the full chain.
 
    - **Proposed fix** — from step 3. Mark a **major** bump explicitly: it can break the build or
      the runtime, and the checks in step 5 only cover what the specs cover.

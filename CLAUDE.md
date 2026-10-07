@@ -68,7 +68,7 @@ pnpm migrate:check            # fail while any service's entities and migration 
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published, no released entry was edited, no merged ADR changed beyond its status line
-pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh, released-entries.sh, frozen-adrs.sh and stale-overrides.sh
+pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh, released-entries.sh, frozen-adrs.sh, stale-overrides.sh and audit-paths.sh
 pnpm check:audit              # pnpm audit --prod: fails on a high or critical advisory in a production dependency (CI runs it; the `/audit` skill proposes and applies the fix)
 pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
