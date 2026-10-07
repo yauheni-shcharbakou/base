@@ -149,7 +149,7 @@ CacheModule.forRoot({ namespace: 'auth', driver: 'memory' }); // explicit overri
 
 `CacheConnectionService.onApplicationShutdown` only sends `QUIT` when the client is `ready`. `quit()`
 is a command, not a socket operation: on a client that is still connecting it waits in the offline
-queue, which on a shutdown *because* Redis went away means waiting forever. Either way it then calls
+queue, which on a shutdown _because_ Redis went away means waiting forever. Either way it then calls
 `disconnect()`, or a process that closed mid-connect would keep an open handle and never exit. The
 e2e suite covers both paths.
 
@@ -208,7 +208,7 @@ The setup follows the event bus' for the same two timing reasons: the config val
 module load, so the overrides sit in `vitest.e2e.config.mts`'s `env`, and `test/cache-server.setup.ts`
 (a Vitest `globalSetup`) probes the server and `provide`s the answer, which the spec reads with
 `inject('cacheServer')` to pick `describe` vs `describe.skip` — without a server the suite reports
-as *skipped* rather than passing on an empty run. The config pins `CACHE_KEY_PREFIX=cache-e2e` so the
+as _skipped_ rather than passing on an empty run. The config pins `CACHE_KEY_PREFIX=cache-e2e` so the
 suite cannot touch a local dev run's keys, and `CACHE_TTL=2` so an expiry can be waited out. The
 probe is a raw socket: a failed ioredis connection leaves reconnect machinery that keeps the run
 from exiting, on exactly the path that has to stay quiet.

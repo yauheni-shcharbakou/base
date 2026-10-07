@@ -78,7 +78,7 @@ more reason the two adapters are never wired at once.
 
 <!-- env-table:start src=backend/packages/common/src/common/infrastructure/configs/common.config.ts -->
 
-Nothing of its own — the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Nothing of its own — the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 
@@ -86,7 +86,7 @@ Nothing of its own — the shared shape `NodeValidationSchema` from `@packages/c
 
 <!-- env-table:start src=backend/packages/pg/src/core/infrastructure/configs/pg.config.ts -->
 
-Nothing of its own — the shared shapes `NodeValidationSchema` and `DatabaseValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Nothing of its own — the shared shapes `NodeValidationSchema` and `DatabaseValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 
@@ -97,7 +97,7 @@ the CLI can run a migration from source.
 
 <!-- env-table:start src=backend/packages/mongo/src/core/infrastructure/configs/mongo.config.ts -->
 
-Nothing of its own — the shared shape `DatabaseValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Nothing of its own — the shared shape `DatabaseValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 
@@ -350,7 +350,7 @@ domain events.
 | `DEFAULT_EMAIL`    | email  | `admin@gmail.com` |
 | `DEFAULT_PASSWORD` | string | `string123`       |
 
-Plus the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Plus the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 

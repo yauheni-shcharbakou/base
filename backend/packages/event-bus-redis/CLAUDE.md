@@ -1,14 +1,15 @@
 # CLAUDE.md — @backend/event-bus-redis
 
 Guidance for working inside `backend/packages/event-bus-redis`. Read first: the root `CLAUDE.md`
-*Event-bus codegen pipeline* section, `backend/packages/event-bus/CLAUDE.md` (the abstract ports,
+_Event-bus codegen pipeline_ section, `backend/packages/event-bus/CLAUDE.md` (the abstract ports,
 the naming rules and the **bus-wide semantics** — JSON payloads, at-least-once, error messages), and
 `backend/CLAUDE.md` (shared package conventions). This file is the Redis/BullMQ runtime.
 
 **Status: the live transport.** `backend.auth` and `backend.storage` run on it (`RedisModule.forRoot`
-+ `REDIS_MICROSERVICE_OPTIONS`, subscribers under `interface/redis/`); `@backend/event-bus-nats` is
-dormant. `docker-compose.yml` runs a `redis` service in the `local`/`all` profiles and passes
-`REDIS_URL` to both services. `backend.api-gateway` uses no event bus at all.
+
+- `REDIS_MICROSERVICE_OPTIONS`, subscribers under `interface/redis/`); `@backend/event-bus-nats` is
+  dormant. `docker-compose.yml` runs a `redis` service in the `local`/`all` profiles and passes
+  `REDIS_URL` to both services. `backend.api-gateway` uses no event bus at all.
 
 ## Dual nature
 
@@ -91,9 +92,7 @@ Concrete adapter for the abstract ports of `@backend/event-bus`:
 ```ts
 @RedisController({ consumer: 'storage.file' })
 @RedisVideoTransport.ControllerMethods()
-export class RedisFileController
-  implements RedisVideoEventController, RedisUserCreateEventHandler
-{
+export class RedisFileController implements RedisVideoEventController, RedisUserCreateEventHandler {
   async onUploaded(event: NestStorage.Video): Promise<void> {}
   async onUploadFinish(event: NestStorage.Video): Promise<void> {}
   async onUploadFail(event: NestStorage.Video): Promise<void> {}
@@ -165,7 +164,7 @@ blocking commands) plus ioredis' offline queue means a command against a dead br
 and forever. Every path that a caller or the process itself waits on is therefore bounded:
 
 - **Boot** — `RedisConnectionService.waitUntilReady(REDIS_READY_TIMEOUT)` runs before the first
-  command, at the head of `RedisEventBusServer.listen()` *and* of the mediator's bootstrap hook.
+  command, at the head of `RedisEventBusServer.listen()` _and_ of the mediator's bootstrap hook.
   Two places, because an `onlyEmitting` service registers no microservice and runs only the hook.
   A rejection reaches `main.ts`, which logs it and exits 1.
 - **Emit** — `RedisQueueClient.emit`/`emitMany` are raced against `REDIS_COMMAND_TIMEOUT` and throw,
@@ -237,7 +236,7 @@ pnpm test:e2e
   module load, so the overrides are in `vitest.e2e.config.mts`'s `env`; and
   `test/redis-server.setup.ts`, a Vitest `globalSetup`, probes the server and `provide`s the answer,
   so each spec picks `describe` vs `describe.skip` through `inject('redisServer')` at module scope.
-  Without a server the suites report as *skipped* rather than passing on an empty run.
+  Without a server the suites report as _skipped_ rather than passing on an empty run.
 - The config pins `REDIS_QUEUE_PREFIX=bull-e2e` and `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e`, so the
   suite cannot touch a local dev run's queues and registries, and `REDIS_JOB_ATTEMPTS=3` with
   `REDIS_JOB_BACKOFF_DELAY=100` so the retry ladder takes milliseconds instead of minutes.

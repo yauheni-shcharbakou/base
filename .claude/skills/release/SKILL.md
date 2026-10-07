@@ -35,15 +35,15 @@ project needs, grouped by area. That is why there is no release tool in this rep
 2. **Collect what changed, from the most reliable source down.** Commit subjects come last: they
    include work that was added and reverted, or fixed, inside the same range.
 
-   | Source | Tells you |
-   |---|---|
-   | `git diff --name-status main...HEAD -- docs/adr` | every structural decision, with its reason — link each one |
-   | `git diff main...HEAD -- packages/proto/pkg` | added, changed and **removed** RPCs, messages, fields |
-   | `git diff main...HEAD -- backend/packages/event-bus/src/strategy` | added and removed events, payload shapes |
-   | `git diff --name-status main...HEAD -- '**/src/migrations'` | schema changes |
-   | `git diff main...HEAD -- docs/env.md '**/.env.example' docker-compose.yml` | new, renamed, removed and newly required variables |
-   | `git diff --name-status --diff-filter=D main...HEAD` | what was removed |
-   | the commit log | everything else — features, fixes, tooling |
+   | Source                                                                     | Tells you                                                  |
+   | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+   | `git diff --name-status main...HEAD -- docs/adr`                           | every structural decision, with its reason — link each one |
+   | `git diff main...HEAD -- packages/proto/pkg`                               | added, changed and **removed** RPCs, messages, fields      |
+   | `git diff main...HEAD -- backend/packages/event-bus/src/strategy`          | added and removed events, payload shapes                   |
+   | `git diff --name-status main...HEAD -- '**/src/migrations'`                | schema changes                                             |
+   | `git diff main...HEAD -- docs/env.md '**/.env.example' docker-compose.yml` | new, renamed, removed and newly required variables         |
+   | `git diff --name-status --diff-filter=D main...HEAD`                       | what was removed                                           |
+   | the commit log                                                             | everything else — features, fixes, tooling                 |
 
 3. **Pick the version.** Semantic Versioning, read for a deployed monorepo rather than a library:
 
@@ -65,10 +65,14 @@ project needs, grouped by area. That is why there is no release tool in this rep
 
    Two to five sentences: what this release is about.
 
-   ### Upgrade notes      ← major only: what a deployment must do, one bullet per action
+   ### Upgrade notes ← major only: what a deployment must do, one bullet per action
+
    ### Added
+
    ### Changed
+
    ### Removed
+
    ### Fixed
    ```
 

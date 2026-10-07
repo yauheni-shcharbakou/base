@@ -199,6 +199,10 @@ jobs:
             exit 1
           fi
 
+      # `lint` formats what ESLint covers; this is the rest (markdown, JSON, generated migrations).
+      - name: 'Formatting holds'
+        run: 'pnpm exec prettier --check .'
+
       # Here as well as in `docs`: a renamed or removed package leaves its name behind in a
       # CLAUDE.md that the change never touched.
       - name: 'Docs layout holds'

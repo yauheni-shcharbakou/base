@@ -4,7 +4,7 @@ Guidance for working inside `backend/apps/api-gateway`. The general hexagonal/us
 
 ## What this service is
 
-The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). gRPC unary calls are rate-limited (see *Rate limiting* below); HTTP has no controllers, only Swagger UI, and is not limited. It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency) — its one Redis use is the rate-limit counters, through `@backend/cache`; it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
+The edge service — the only HTTP-facing backend. `main.ts` serves **REST + Swagger UI at `/`** (global `ValidationPipe`, `RpcExceptionFilter` + `HttpExceptionFilter`) and **also runs as a gRPC server** (`GrpcModule.forRoot({ host: 'apiGateway' })` — the admin frontend calls it over gRPC). gRPC unary calls are rate-limited (see _Rate limiting_ below); HTTP has no controllers, only Swagger UI, and is not limited. It owns **no database and no event bus** (no `@backend/event-bus-redis` / `@backend/event-bus` dependency) — its one Redis use is the rate-limit counters, through `@backend/cache`; it only proxies inbound REST/gRPC calls to the internal `auth` / `storage` gRPC services. Bootstrap connects a single microservice — `GRPC_MICROSERVICE_OPTIONS` from `@backend/grpc`.
 
 ## Layers (two, by design)
 
@@ -13,7 +13,7 @@ Each `src/modules/<feature>/` has only:
 - **interface/grpc/** — audience-split controllers (`*.web.controller.ts`, `*.admin.controller.ts`, `*.public.controller.ts`). Thin: implement the generated `Grpc<X><Audience>ServiceController`, decorate with an access decorator (below) + `Grpc<X><Audience>Transport.ControllerMethods()`, and delegate each method to a proxy service.
 - **application/** — `services/*.proxy.service.ts` (the proxy logic) + `dto/*` (validated request DTOs) + optional `mappers/*`.
 
-No `domain/`/`infrastructure/` per module — there are no entities, repositories, or persistence to abstract. Cross-cutting auth lives in the shared `src/common/` (which *does* use the full `application`/`domain`/`interface` split). `eslint.config.mjs` wires `@packages/configs` `layerGuard()` alongside `nestConfig`, same as `auth`/`storage` — keep imports pointed inward.
+No `domain/`/`infrastructure/` per module — there are no entities, repositories, or persistence to abstract. Cross-cutting auth lives in the shared `src/common/` (which _does_ use the full `application`/`domain`/`interface` split). `eslint.config.mjs` wires `@packages/configs` `layerGuard()` alongside `nestConfig`, same as `auth`/`storage` — keep imports pointed inward.
 
 ## Modules (`src/modules/`)
 
@@ -32,6 +32,7 @@ There is **no `grpc-access` module** — authorization is the global `CommonModu
   - `checkUnaryAccess` — **async**, calls `auth.me` over gRPC on every request, so a deleted user or a role change takes effect immediately. This service caches **nothing**: the response is cached inside `backend.auth`, which owns the writes and can evict precisely. Don't add a token-keyed cache here — the gateway has no way to invalidate it.
 
     > **Why the cache sits in auth and not in this guard:** [docs/adr/0011-identity-cached-in-auth.md](../../../docs/adr/0011-identity-cached-in-auth.md)
+
   - `checkStreamAccess` — **sync**, verifies the RS256 access token locally via `TokenService` → `JwtTokenServiceImpl` (`common/infrastructure/services`), reading `role` straight from the payload and rejecting anything whose `aud` is not `AuthTokenAudience.ACCESS` (enforced by the jwt `audience` option, so a refresh token cannot be replayed here). It must stay synchronous: an async guard on a client-stream gRPC method defers the handler and the incoming message stream stalls (`bufferUntilDrained` in `@nestjs/microservices` is best-effort). This is why the gateway holds the JWT **public** key (`JWT_ACCESS_PUBLIC_KEY_BASE64`) — it verifies but cannot issue tokens.
 - Controller decorators (`common/interface/grpc/decorators/grpc.controller.decorator.ts`): `@PublicGrpcController()` (skips auth), `@DefaultGrpcController()` (authenticated — `GrpcAccessUnaryGuard` reads the `access-token` gRPC metadata), `@AdminGrpcController()` (additionally requires `UserRole.ADMIN`).
 - **Stream methods** use `@GrpcStreamMethod()` → `GrpcAccessStreamGuard`, which reads the same `access-token` metadata and calls `checkStreamAccess`. Both guards put the resolved id into the `user-id` metadata for `@GrpcUserId()`.
@@ -52,7 +53,7 @@ GrpcThrottlerGuard)` — a controller built without them is not limited. Limits 
   (`DEFAULT_THROTTLE`). So a batch upload's creates and confirmations cannot stall the pages the
   admin browses meanwhile, and the other way round. Each named throttler's `skipIf` picks the
   bucket by handler name. The list is explicit rather than a `get*` rule: an rpc left out of it is
-  counted as a write, the stricter bucket — add a new read there. The throttler runs *after* the
+  counted as a write, the stricter bucket — add a new read there. The throttler runs _after_ the
   access guard, which is why a call over the limit has still cost an `auth.me` round trip.
 - **Public** (`@PublicGrpcController()`, i.e. login / refresh / logout): 10 / 60s **per client address**, set
   with `@Throttle` in the decorator over both buckets. A `user-id` a public caller sends is ignored. The address is the

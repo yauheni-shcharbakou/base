@@ -62,12 +62,7 @@ export default function nestConfig(url) {
           {
             // Build-time code may reach for devDependencies; `src/` may not. The compiler glob
             // is here because the event-bus adapters lint `compiler/` alongside `src/`.
-            devDependencies: [
-              '**/*.spec.ts',
-              '**/*.e2e-spec.ts',
-              '**/test/**',
-              '**/compiler/**',
-            ],
+            devDependencies: ['**/*.spec.ts', '**/*.e2e-spec.ts', '**/test/**', '**/compiler/**'],
             optionalDependencies: false,
             peerDependencies: false,
           },

@@ -16,11 +16,7 @@
     {
       "name": "storage",
       "runtimeExecutable": "env",
-      "runtimeArgs": [
-        "PORT=3200",
-        "pnpm",
-        "dev:backend.storage"
-      ],
+      "runtimeArgs": ["PORT=3200", "pnpm", "dev:backend.storage"],
       "port": 3200
     },
     {

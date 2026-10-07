@@ -20,7 +20,7 @@ src/
     pg.module.ts
 ```
 
-**Rules:** put concrete impls of `@backend/common` contracts and MikroORM-bound code (entities, config, mappers) in `infrastructure/`; put inbound entrypoints (interceptors — anything Nest *drives*) in `interface/`. The public API is the root `src/index.ts` barrel — consumers import flat symbols (`PgEntity`, `PgRepositoryImpl`, `PgMapper`, `PgProp`, `PgSchema`, `PgModule`, `definePgConfig`) from `@backend/pg`, never deep paths, so internal moves stay invisible as long as the barrel re-exports the same names. Inside the package, `@/core` aliases `core/`.
+**Rules:** put concrete impls of `@backend/common` contracts and MikroORM-bound code (entities, config, mappers) in `infrastructure/`; put inbound entrypoints (interceptors — anything Nest _drives_) in `interface/`. The public API is the root `src/index.ts` barrel — consumers import flat symbols (`PgEntity`, `PgRepositoryImpl`, `PgMapper`, `PgProp`, `PgSchema`, `PgModule`, `definePgConfig`) from `@backend/pg`, never deep paths, so internal moves stay invisible as long as the barrel re-exports the same names. Inside the package, `@/core` aliases `core/`.
 
 ## Module (`pg.module.ts`)
 

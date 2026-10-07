@@ -1,8 +1,6 @@
 {
   "name": "public",
-  "namespaces": [
-    "public"
-  ],
+  "namespaces": ["public"],
   "tables": [
     {
       "name": "sessions",
@@ -107,9 +105,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
           "constraint": false,
           "keyName": "sessions_created_at_index",
@@ -117,9 +113,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "expired_at"
-          ],
+          "columnNames": ["expired_at"],
           "composite": false,
           "constraint": false,
           "keyName": "sessions_expired_at_index",
@@ -127,9 +121,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "sessions_pkey",
@@ -137,9 +129,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "token_id"
-          ],
+          "columnNames": ["token_id"],
           "composite": false,
           "constraint": true,
           "keyName": "sessions_token_id_unique",
@@ -147,9 +137,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "composite": false,
           "constraint": false,
           "keyName": "sessions_user_id_index",
@@ -160,14 +148,10 @@
       "checks": [],
       "foreignKeys": {
         "sessions_user_id_foreign": {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "constraintName": "sessions_user_id_foreign",
           "localTableName": "public.sessions",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.users",
           "deleteRule": "cascade"
         }
@@ -293,9 +277,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
           "constraint": false,
           "keyName": "temp-codes_created_at_index",
@@ -303,9 +285,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "expired_at"
-          ],
+          "columnNames": ["expired_at"],
           "composite": false,
           "constraint": false,
           "keyName": "temp-codes_expired_at_index",
@@ -313,9 +293,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "temp-codes_pkey",
@@ -323,9 +301,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "composite": false,
           "constraint": false,
           "keyName": "temp-codes_user_id_index",
@@ -336,14 +312,10 @@
       "checks": [],
       "foreignKeys": {
         "temp-codes_user_id_foreign": {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "constraintName": "temp-codes_user_id_foreign",
           "localTableName": "public.temp-codes",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.users",
           "deleteRule": "cascade"
         }
@@ -431,10 +403,7 @@
           "scale": null,
           "default": "'USER'",
           "comment": null,
-          "enumItems": [
-            "ADMIN",
-            "USER"
-          ],
+          "enumItems": ["ADMIN", "USER"],
           "mappedType": "enum"
         },
         "updated_at": {
@@ -456,9 +425,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "created_at"
-          ],
+          "columnNames": ["created_at"],
           "composite": false,
           "constraint": false,
           "keyName": "users_created_at_index",
@@ -466,9 +433,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "email"
-          ],
+          "columnNames": ["email"],
           "composite": false,
           "constraint": false,
           "keyName": "users_email_index",
@@ -476,9 +441,7 @@
           "unique": false
         },
         {
-          "columnNames": [
-            "email"
-          ],
+          "columnNames": ["email"],
           "composite": false,
           "constraint": true,
           "keyName": "users_email_unique",
@@ -486,9 +449,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "users_pkey",
@@ -496,9 +457,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "role"
-          ],
+          "columnNames": ["role"],
           "composite": false,
           "constraint": false,
           "keyName": "users_role_index",

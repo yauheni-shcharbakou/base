@@ -1,6 +1,6 @@
 # CLAUDE.md — @packages/proto
 
-Guidance for working inside `packages/proto`. The end-to-end contract flow (what `.proto` is, the three output flavors, how Transports are consumed) is in the root `CLAUDE.md` *Protobuf codegen pipeline* section — this file documents the **compiler internals**.
+Guidance for working inside `packages/proto`. The end-to-end contract flow (what `.proto` is, the three output flavors, how Transports are consumed) is in the root `CLAUDE.md` _Protobuf codegen pipeline_ section — this file documents the **compiler internals**.
 
 ## Roles of this package
 
@@ -25,11 +25,11 @@ Every `main.ts` rethrows and exits 1, so a failed codegen fails its turbo task.
 
 Built via `BaseAdapter.createFactory({ name, targetRoot, templatePath?, transformTasks })`; the subclass overrides `onFile` to call `runProtoc(relativePath, { pluginPath, outDir, options })` with its own ts-proto `options`.
 
-| Adapter | Lives in | Output | Notable ts-proto options |
-|---------|----------|--------|--------------------------|
-| `browser` | `packages/proto/compiler/adapters/browser` | this package's `src/` | `onlyTypes`, `outputServices=false` |
-| `nest` | `backend/packages/proto/compiler` | `@backend/proto` `src/` | `nestJs`, `useMapType=false` |
-| `client` | `frontend/packages/proto/compiler` | `@frontend/proto` `src/` | `outputServices=grpc-js` |
+| Adapter   | Lives in                                   | Output                   | Notable ts-proto options            |
+| --------- | ------------------------------------------ | ------------------------ | ----------------------------------- |
+| `browser` | `packages/proto/compiler/adapters/browser` | this package's `src/`    | `onlyTypes`, `outputServices=false` |
+| `nest`    | `backend/packages/proto/compiler`          | `@backend/proto` `src/`  | `nestJs`, `useMapType=false`        |
+| `client`  | `frontend/packages/proto/compiler`         | `@frontend/proto` `src/` | `outputServices=grpc-js`            |
 
 ## `@packages/proto/compiler` (`compiler/index.ts`)
 

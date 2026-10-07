@@ -83,6 +83,10 @@ appends it to the class name as it is (`Migration20261001231531_preview_attempts
 generates a class that does not compile; the file name is dot-cased from it either way
 (`20261001231531.preview.attempts.migration.ts`).
 
+**Format the migrations right after `migrate:create`** — `pnpm exec prettier --write backend/apps/<service>/src/migrations`.
+MikroORM writes the migration and rewrites the snapshot unformatted, and CI's `prettier --check .` fails on
+both; the service's own `format` script covers `src/**/*.ts` only and skips the snapshot JSON.
+
 `migrate:check` catches a forgotten `migrate:create` and never connects to the database, so CI runs
 it without one and turbo caches it; `pnpm migrate` / `pnpm migrate:check` at the root
 run them in every service.
@@ -97,7 +101,7 @@ These hold for every `backend/packages/*` — don't restate them in a package's 
   `^build` rebuilds before a downstream `build`/`compile` — rebuild after changes, or run `pnpm dev`.
 - **Public API is the flat root `src/index.ts` barrel.** Inside a package, `@/*` aliases `src/*`.
 - **Specs sit next to their subject** (`*.spec.ts` / `*.e2e-spec.ts` under `src/`). They are
-  excluded from the turbo `build` inputs and are not part of the tsdown entry graph, but they *are*
+  excluded from the turbo `build` inputs and are not part of the tsdown entry graph, but they _are_
   in the tsconfig, so `tsc` and `eslint` type-check them — `layerGuard()` included, where it is
   wired. Target lib is ES2021: assign `cause` via `Object.assign`, not `err.cause =`.
 - **`src/generated/**` is never hand-edited** — fix the source of truth (a `.proto`, the

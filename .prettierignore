@@ -10,3 +10,7 @@ packages/proto/pkg/**/*.proto
 packages/proto/src/**/*.ts
 */packages/proto/src/**/*.ts
 backend/packages/*/src/generated/*.ts
+frontend/apps/admin/public/pdfjs/**
+turbo/generators/package/templates/**/package.json.hbs
+# Merged ADRs are frozen: check:docs refuses any change beyond the status line.
+docs/adr/0*.md

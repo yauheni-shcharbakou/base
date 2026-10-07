@@ -107,6 +107,6 @@ export class EnvTableRenderer {
     const noun = references.length > 1 ? 'shapes' : 'shape';
     const lead = hasTable ? 'Plus the shared' : 'Nothing of its own — the shared';
 
-    return `${lead} ${noun} ${enumerate(references)} from ${code(SHARED_SCHEMA_PACKAGE)}, tabulated under *Shared shapes*.`;
+    return `${lead} ${noun} ${enumerate(references)} from ${code(SHARED_SCHEMA_PACKAGE)}, tabulated under _Shared shapes_.`;
   }
 }

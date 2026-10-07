@@ -1,7 +1,7 @@
 # CLAUDE.md — @backend/event-bus-nats
 
 Guidance for working inside `backend/packages/event-bus-nats`. Read first: the root `CLAUDE.md`
-*Event-bus codegen pipeline* section, `backend/packages/event-bus/CLAUDE.md` (the abstract ports, the
+_Event-bus codegen pipeline_ section, `backend/packages/event-bus/CLAUDE.md` (the abstract ports, the
 naming rules and the **bus-wide semantics** — JSON payloads, at-least-once, error messages), and
 `backend/CLAUDE.md` (shared package conventions). This file is the NATS JetStream runtime.
 
@@ -33,9 +33,7 @@ kebab-case `eventId` into subjects instead of using it verbatim as a queue name.
 ```ts
 @NatsController({ consumer: 'storage.file' })
 @NatsVideoTransport.ControllerMethods()
-export class NatsFileController
-  implements NatsVideoEventController, NatsUserCreateEventHandler
-{
+export class NatsFileController implements NatsVideoEventController, NatsUserCreateEventHandler {
   async onUploaded(event: NestStorage.Video): Promise<void> {}
   async onUploadFinish(event: NestStorage.Video): Promise<void> {}
   async onUploadFail(event: NestStorage.Video): Promise<void> {}
@@ -182,7 +180,7 @@ pnpm test:e2e
   at module load, so `NATS_MAX_DELIVER=3` is set in `vitest.e2e.config.mts`'s `env`; and
   `test/nats-broker.setup.ts`, a Vitest `globalSetup`, probes the broker and `provide`s the answer,
   so the spec picks `describe` vs `describe.skip` through `inject('natsBroker')` at module scope.
-  Without a broker the suite reports as *skipped* rather than passing on an empty run.
+  Without a broker the suite reports as _skipped_ rather than passing on an empty run.
 - It wipes `auth-user-stream` in `beforeAll` (`deliver_policy: all` would otherwise replay the
   previous run's history) and leaves it behind afterwards, so a failure can be inspected in the
   broker. Reruns stay deterministic either way.

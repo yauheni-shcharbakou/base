@@ -193,7 +193,7 @@ On **Railway**, set them per service before redeploying (`validateEnv` fails fas
 The managed **Redis** database is declared in `.railway/railway.ts`, and all three backend services
 point at it with a reference variable — `REDIS_URL: Redis.env.REDIS_URL` on `backend.auth` and
 `backend.storage` (event bus; auth also caches in it) and on `backend.api-gateway` (rate-limit
-counters). It is the *private* URL: the public one goes through a TCP proxy, which costs egress on
+counters). It is the _private_ URL: the public one goes through a TCP proxy, which costs egress on
 every blocking command a BullMQ worker issues.
 
 Railway's private network (`*.railway.internal`) is IPv6-only in environments created before
