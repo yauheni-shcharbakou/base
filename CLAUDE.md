@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Documentation layout.** Facts have a single owner: this file covers the monorepo as a whole,
 `backend/CLAUDE.md` the backend conventions, and each app/package its own internals. Rationale for
 structural decisions ("why it was built this way") lives in [`docs/adr/`](docs/adr/README.md) and is
-linked from the rule it explains — read an ADR only when the *why* matters. When something changes,
+linked from the rule it explains — read an ADR only when the _why_ matters. When something changes,
 update the one owning file rather than restating it in a second one.
 
 ## Conversation compaction policy
@@ -44,7 +44,7 @@ Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microserv
 
 Inside an app, TS path aliases are `@/*` (src), `@modules/*`, `@common/*`, and `@compiler/*` (proto package only). Cross-package imports always use the `@backend/…`/`@packages/…` names, never relative paths.
 
-**Dependency versions:** a dependency more than one workspace declares is pinned once, in the `catalog:` block of `pnpm-workspace.yaml`, and each manifest asks for it as `"lodash": "catalog:"`. The workspace still declares what it imports — that is what the tsdown factory and `import-x/no-extraneous-dependencies` read — while the version cannot drift between packages. Bump a shared version in `pnpm-workspace.yaml`, not in a manifest; a dependency only one workspace uses keeps its literal version there. This is not `overrides` (further down the same file): a catalog resolves what a workspace *asks* for, an override rewrites what the whole tree *gets*, transitive dependencies included.
+**Dependency versions:** a dependency more than one workspace declares is pinned once, in the `catalog:` block of `pnpm-workspace.yaml`, and each manifest asks for it as `"lodash": "catalog:"`. The workspace still declares what it imports — that is what the tsdown factory and `import-x/no-extraneous-dependencies` read — while the version cannot drift between packages. Bump a shared version in `pnpm-workspace.yaml`, not in a manifest; a dependency only one workspace uses keeps its literal version there. This is not `overrides` (further down the same file): a catalog resolves what a workspace _asks_ for, an override rewrites what the whole tree _gets_, transitive dependencies included.
 
 **Build config:** every package that ships a `dist/` builds with tsdown through one shared factory — `nodePackageConfig(import.meta.url)` from `@packages/configs/tsdown/package.config.mjs`. It reads the package's **own** `package.json` to decide what stays external, so an import the package does not declare gets bundled into `dist/` instead of being required at runtime. Declare the dependency; don't hand-extend `neverBundle`.
 
@@ -191,7 +191,7 @@ already checks the specs.
 
 A TypeScript LSP (the `typescript-lsp` plugin) may be available in a session. Two rules specific to this monorepo:
 
-- **LSP within a package, grep across packages.** Cross-package imports (`@backend/*`, `@packages/*`) resolve to the built `dist/*.d.cts`, not source, so `findReferences` / `goToImplementation` on a *source* symbol only cover the same package — they miss consumers in sibling packages (e.g. pg/mongo/auth/storage that consume a `@backend/common` contract). For "who across the repo uses this shared symbol", use grep/Explore; use the LSP for within-package definition / hover / references / diagnostics, where it is precise.
+- **LSP within a package, grep across packages.** Cross-package imports (`@backend/*`, `@packages/*`) resolve to the built `dist/*.d.cts`, not source, so `findReferences` / `goToImplementation` on a _source_ symbol only cover the same package — they miss consumers in sibling packages (e.g. pg/mongo/auth/storage that consume a `@backend/common` contract). For "who across the repo uses this shared symbol", use grep/Explore; use the LSP for within-package definition / hover / references / diagnostics, where it is precise.
 - **Warm up with a repeat query.** tsserver indexes lazily, so the first `findReferences` / `workspaceSymbol` right after the server connects under-reports (can return just the declaration). Run the query a second time for the complete result.
 
 ## Protobuf codegen pipeline (the backbone)
@@ -225,11 +225,11 @@ committed and never hand-edited.
 
 Three packages, each compiling its own generated code in its own turbo task:
 
-| Package | Role |
-|---|---|
-| `@backend/event-bus` | Strategy + compiler. Emits the abstract `<Service>EventBus` ports and `EventBusHost`. Owns the naming rules and the bus-wide semantics. |
-| `@backend/event-bus-redis` | **The live transport** (Redis/BullMQ) — `auth` and `storage` run on it. |
-| `@backend/event-bus-nats` | The dormant alternative (NATS JetStream) — generated, built and tested, wired into no service. |
+| Package                    | Role                                                                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `@backend/event-bus`       | Strategy + compiler. Emits the abstract `<Service>EventBus` ports and `EventBusHost`. Owns the naming rules and the bus-wide semantics. |
+| `@backend/event-bus-redis` | **The live transport** (Redis/BullMQ) — `auth` and `storage` run on it.                                                                 |
+| `@backend/event-bus-nats`  | The dormant alternative (NATS JetStream) — generated, built and tested, wired into no service.                                          |
 
 Each package's `CLAUDE.md` covers its internals; the decisions behind the split are ADRs
 [0001](docs/adr/0001-redis-as-live-transport.md)–[0007](docs/adr/0007-natsjs-v3-direct.md).
@@ -256,7 +256,7 @@ shared package conventions are in **`backend/CLAUDE.md`**. `backend/apps/auth` i
 implementation; `backend.api-gateway` is a deliberate two-layer exception.
 
 **Caching** is `@backend/cache`: one `CacheStore` port with a Redis and an in-memory adapter behind a
-single `CacheModule`, injected as `CacheService`. Unlike the event bus it is *not* split per
+single `CacheModule`, injected as `CacheService`. Unlike the event bus it is _not_ split per
 transport — the reasoning is [ADR-0009](docs/adr/0009-cache-one-package-driver-switch.md), the
 internals are in that package's `CLAUDE.md`. `backend.auth` is its one cache consumer: it caches the
 user behind the gateway's per-request access check, and evicts on every user write — why there and
