@@ -71,10 +71,14 @@ again — so the skill also checks whether the existing ones still earn their pl
    package and whether the lockfile resolves any copy below the pin. It restores both files after
    each entry, and takes package names to judge only those. Its output, one line per entry:
 
-   - `stale <pkg>` → propose removing it — unless it pins a version for a reason other than
-     security: the catalog comment says so, or `git log -S '<pkg>:' -- pnpm-workspace.yaml` does.
+   - `stale <pkg>` → propose removing it.
+   - `kept <pkg>: <why>` → a comment right above the entry holds it, whatever a resolve would
+     show; the `<why>` is that comment's first line. Nothing to show, nothing to propose.
    - `needed <pkg>: <why>` → it stays; nothing to show.
    - `skipped <pkg>: <why>` → a range or a selector; judge it by hand, or leave it.
+
+   When the user keeps an override the script called stale, write their reason as a comment right
+   above the entry, first line self-contained — the next run then prints `kept`, not `stale`.
 
    "Stale" means the parents' ranges accept the pinned version, so the current lockfile keeps it
    without the override. It does not promise a later resolve stays above it — a parent release

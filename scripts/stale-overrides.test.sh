@@ -35,6 +35,13 @@ WORKSPACE="packages:
 
 overrides:
   qs: '6.16.0'
+  # Kept: one copy or dates break.
+  # A second line, never printed.
+  protobufjs: '7.6.6'
+  #No space after the hash.
+  pinned-range: '^1.0.0'
+  # A comment a blank line cuts off.
+
   '@grpc/grpc-js': '1.14.5'
   ws: '^8.0.0'
   'a>b': '1.0.0' # a selector
@@ -96,7 +103,9 @@ holds() {
 
 dir=$(fresh)
 resolves "$dir" qs@6.16.0 qsx@1.0.0 "'@grpc/grpc-js@1.14.5'" "'@grpc/grpc-js@1.15.0(peer@1.0.0)'"
-prints 'every entry is judged, ranges and selectors are skipped' "$dir" 1 "stale qs
+prints 'every entry is judged, commented ones kept, ranges and selectors skipped' "$dir" 1 "stale qs
+kept protobufjs: Kept: one copy or dates break.
+kept pinned-range: No space after the hash.
 stale @grpc/grpc-js
 skipped ws: '^8.0.0' is not an exact version
 skipped a>b: a selector, not a package name"
@@ -107,6 +116,11 @@ dir=$(fresh)
 resolves "$dir" qs@6.16.0
 prints 'only the named packages are judged' "$dir" 1 'stale qs' qs
 holds 'only the judged line is dropped' "! grep -q '^  qs:' '$dir/seen.yaml' && grep -q 'grpc-js' '$dir/seen.yaml' && grep -q '^onlyBuiltDependencies:' '$dir/seen.yaml'"
+
+dir=$(fresh)
+resolves "$dir" protobufjs@6.0.0
+prints 'a kept entry is never resolved without it' "$dir" 0 'kept protobufjs: Kept: one copy or dates break.' protobufjs
+holds 'a kept entry triggers no install' "[ ! -e '$dir/seen.yaml' ]"
 
 dir=$(fresh)
 resolves "$dir" qs@6.16.0

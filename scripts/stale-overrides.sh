@@ -10,9 +10,11 @@
 #   - does `pnpm audit --prod` report an advisory for the package?
 #   - does the lockfile resolve any copy of it below the pinned version?
 #
-# Both no → the override is stale. Prints one line per entry — `stale <pkg>`, `needed <pkg>: <why>`
-# or `skipped <pkg>: <why>` — and exits 1 when any is stale. Only an exact pin (`1.2.3`) on a plain
-# package name is judged; a range or a selector (`a>b`, `a@<2`) is skipped, not guessed at.
+# Both no → the override is stale. Prints one line per entry — `stale <pkg>`, `needed <pkg>: <why>`,
+# `kept <pkg>: <why>` or `skipped <pkg>: <why>` — and exits 1 when any is stale. An entry with a
+# comment right above it is kept unjudged: the comment is a person's reason, which no resolve can
+# overrule, and its first line is the `<why>`. Only an exact pin (`1.2.3`) on a plain package name
+# is judged; a range or a selector (`a>b`, `a@<2`) is skipped, not guessed at.
 #
 # The two files are copied aside first and restored after every entry and on exit, whatever
 # happens: the tree is left as it was found, uncommitted edits included. `node_modules` is never
@@ -53,11 +55,18 @@ cp pnpm-workspace.yaml pnpm-lock.yaml "$backup/"
 restore() { cp "$backup/pnpm-workspace.yaml" "$backup/pnpm-lock.yaml" .; }
 trap 'restore; rm -rf "$backup"' EXIT
 
-# "<line number>\t<key>\t<value>" per entry of the top-level `overrides:` block, quotes stripped.
+# "<line number>\t<key>\t<value>\t<reason>" per entry of the top-level `overrides:` block, quotes
+# stripped; the reason is the first line of the comment right above the entry, or empty.
 entries=$(awk '
   /^overrides:/ { block = 1; next }
   block && /^[^ #]/ { block = 0 }
-  block && /^  [^ #]/ {
+  !block { next }
+  /^  #/ {
+    if (reason == "") { reason = $0; sub(/^  #[ \t]*/, "", reason) }
+    next
+  }
+  !/^  [^ #]/ { reason = ""; next }
+  {
     line = $0
     sub(/^  /, "", line)
     sub(/[ \t]+#.*$/, "", line)
@@ -66,7 +75,8 @@ entries=$(awk '
     value = substr(line, split_at + 2)
     gsub(/^[\x27"]|[\x27"]$/, "", key)
     gsub(/^[\x27"]|[\x27"]$/, "", value)
-    printf "%d\t%s\t%s\n", NR, key, value
+    printf "%d\t%s\t%s\t%s\n", NR, key, value, reason
+    reason = ""
   }
 ' pnpm-workspace.yaml)
 
@@ -88,9 +98,13 @@ resolved() {
 
 stale=0
 
-while IFS=$'\t' read -r line pkg pin; do
+while IFS=$'\t' read -r line pkg pin reason; do
   [ -n "$pkg" ] || continue
   if [ "${#only[@]}" -gt 0 ] && ! printf '%s\n' "${only[@]}" | grep -Fxq -- "$pkg"; then
+    continue
+  fi
+  if [ -n "$reason" ]; then
+    echo "kept ${pkg}: ${reason}"
     continue
   fi
   if [[ "${pkg#@}" == *[@\>]* ]]; then
