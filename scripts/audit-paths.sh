@@ -22,22 +22,22 @@
 # A report with no advisories prints nothing and exits 0; input that is not such a report exits 2.
 # Its specs are scripts/audit-paths.test.sh. Needs bash and jq.
 usage='usage: audit-paths.sh [--prod-report <prod.json>] [<report.json>]'
+usage_error() {
+  echo "$usage" >&2
+  exit 2
+}
 prod=''
 input=()
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --prod-report)
-      [ $# -ge 2 ] || {
-        echo "$usage" >&2
-        exit 2
-      }
+      [ -n "${2:-}" ] || usage_error
       prod=$2
       shift 2
       ;;
     -*)
-      echo "$usage" >&2
-      exit 2
+      usage_error
       ;;
     *)
       input+=("$1")
@@ -45,10 +45,7 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
-[ "${#input[@]}" -le 1 ] || {
-  echo "$usage" >&2
-  exit 2
-}
+[ "${#input[@]}" -le 1 ] || usage_error
 source=${input[0]:-/dev/stdin}
 
 # "<GHSA>@<version>" of every finding the production report has; null without --prod-report.

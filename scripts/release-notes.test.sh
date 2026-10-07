@@ -95,7 +95,11 @@ run 'a prefix of a version is not that version' --file "$changelog" 2.0
 exits 1
 
 run 'no version' --file "$changelog"
-exits 1
+exits 2
+has 'usage:'
+
+run '--file needs a path' --file
+exits 2
 has 'usage:'
 
 run 'an unknown option' --nope 2.0.0

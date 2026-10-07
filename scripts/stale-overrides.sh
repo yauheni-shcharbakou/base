@@ -27,6 +27,10 @@
 # point `--repo` at a scratch directory. Needs bash, awk, jq and sort -V.
 repo="$(dirname "${BASH_SOURCE[0]}")/.."
 usage='usage: stale-overrides.sh [--dev] [--repo <dir>] [<pkg>...]'
+usage_error() {
+  echo "$usage" >&2
+  exit 2
+}
 only=()
 scope=(--prod)
 
@@ -37,12 +41,12 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --repo)
-      repo=${2:?$usage}
+      [ -n "${2:-}" ] || usage_error
+      repo=$2
       shift 2
       ;;
     -*)
-      echo "$usage" >&2
-      exit 2
+      usage_error
       ;;
     *)
       only+=("$1")

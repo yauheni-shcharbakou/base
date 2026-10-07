@@ -98,6 +98,24 @@ repo "$released" "$released"
 expects 'no tags outside CI hold nothing' 0
 expects 'no tags in CI fail' 1 1
 
+usage='usage: released-entries.sh [--repo <dir>]'
+# refuses <name> <arg>...: a usage error — exit 2 and the usage line alone on stderr.
+refuses() {
+  local name=$1 output actual
+  shift
+  output=$(bash "$script" "$@" 2>&1 >/dev/null)
+  actual=$?
+  if [ "$actual" = 2 ] && [ "$output" = "$usage" ]; then
+    passed=$((passed + 1))
+  else
+    echo "FAIL: ${name} — exited ${actual}, expected 2; stderr: ${output}"
+    failed=$((failed + 1))
+  fi
+}
+
+refuses '--repo needs a directory' --repo
+refuses 'an unknown option' --nope
+
 if [ "$failed" -gt 0 ]; then
   echo "${failed} failed, ${passed} passed."
   exit 1

@@ -22,10 +22,14 @@
 #
 # One copy, three callers: the `release` job of .github/workflows/main.yaml, the docs invariants,
 # and anyone previewing the notes before a merge. Specs: scripts/release-notes.test.sh. Exits 1
-# when the changelog has no entry for the version. Needs bash and awk alone.
+# when the changelog has no entry for the version, 2 on a usage error. Needs bash and awk alone.
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 
 usage='usage: release-notes.sh [--check] [--file <changelog>] <version> [<link base>]'
+usage_error() {
+  echo "$usage" >&2
+  exit 2
+}
 check=0
 file=CHANGELOG.md
 
@@ -36,18 +40,19 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --file)
-      file=${2:?$usage}
+      [ -n "${2:-}" ] || usage_error
+      file=$2
       shift 2
       ;;
     -*)
-      echo "$usage" >&2
-      exit 2
+      usage_error
       ;;
     *) break ;;
   esac
 done
 
-version=${1:?$usage}
+[ -n "${1:-}" ] || usage_error
+version=$1
 base=${2:-}
 
 if [ ! -f "$file" ]; then

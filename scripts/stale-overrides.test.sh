@@ -175,6 +175,10 @@ dir=$(fresh)
 echo 'not json' >"$dir/audit.json"
 prints 'an unreadable audit means needed, not stale' "$dir" 0 'needed qs: pnpm audit gave no answer' qs
 
+usage='usage: stale-overrides.sh [--dev] [--repo <dir>] [<pkg>...]'
+prints '--repo needs a directory' "$(fresh)" 2 "$usage" --repo
+prints 'an unknown option is an error' "$(fresh)" 2 "$usage" --nope
+
 prints 'a directory without the workspace file is an error' "$scratch/bin" 2 "no pnpm-workspace.yaml in $scratch/bin"
 
 if [ "$failed" -gt 0 ]; then
