@@ -171,6 +171,8 @@ decorator metadata Vite's own transform never emits — and maps the `@/`, `@mod
 aliases. Specs import `describe`/`it`/`expect`/`vi` from `vitest`; there are no globals. A suite
 that needs a server probes it in a `globalSetup`, `provide`s the answer and skips through
 `describe.skipIf(!inject(…))`; env a config module validates at load goes in the config's `env`.
+An e2e suite runs with Nest's static `Logger` off — no spec asserts on a log, and a request failed
+on purpose would print its stack; `E2E_LOGS=1 pnpm test:e2e` brings the logs back for debugging.
 A Nest app's `tsconfig.build.json` pins `rootDir` to `./src` — TypeScript 6 defaults it to the
 config's directory, which moves `main.js` to `dist/src/` — with `tsBuildInfoFile` under `dist`, and
 excludes `vitest*.config.mts`, which sit outside that root ([ADR-0040](docs/adr/0040-backend-specs-on-vitest.md)).

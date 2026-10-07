@@ -21,6 +21,9 @@ import { defineConfig } from 'vitest/config';
  * the summary off, and the `json` reporter writes `<package>.<unit|e2e>.json` (the config file's
  * name says which) into `VITEST_REPORT_DIR` when that is set.
  *
+ * An e2e suite runs with Nest's static `Logger` switched off (`silence-nest-logger.setup.mjs`);
+ * `E2E_LOGS=1` turns it back on.
+ *
  * @param {string} url the caller's `import.meta.url`.
  * @param {import('vitest/config').ViteUserConfig['test']} [test] test options merged over the
  *   defaults — `include`, `env`, `globalSetup`, `testTimeout` for an e2e config.
@@ -68,6 +71,13 @@ export default function nestVitestConfig(url, test = {}) {
       include: ['src/**/*.spec.ts'],
       reporters,
       ...test,
+      // Joined, not replaced: a config's own setup files still run after the silenced logger.
+      setupFiles: [
+        ...(suite === 'e2e'
+          ? [fileURLToPath(new URL('./silence-nest-logger.setup.mjs', import.meta.url))]
+          : []),
+        ...[test.setupFiles ?? []].flat(),
+      ],
     },
   });
 }
