@@ -10,8 +10,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 script="$(pwd)/scripts/snapshot-migrations.sh"
 
-passed=0
-failed=0
+. scripts/lib/spec.sh
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
@@ -45,15 +44,7 @@ prints() {
   [ $# -gt 0 ] || set -- main
   actual=$(bash "$script" --repo "$dir" "$@" 2>&1)
   status=$?
-  if [ "$actual" = "$expected" ] && [ "$status" = "$expected_status" ]; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: ${name} — exit ${status}, expected ${expected_status}; got:"
-    echo "$actual" | sed 's/^/    /'
-    echo "  expected:"
-    echo "$expected" | sed 's/^/    /'
-    failed=$((failed + 1))
-  fi
+  matches "$expected_status" "$expected" "$status" "$actual"
 }
 
 dir=$(fresh)
@@ -117,8 +108,4 @@ prints 'a base is needed' "$(fresh)" 2 "$usage" ''
 prints '--repo needs a directory' "$(fresh)" 2 "$usage" --repo
 prints 'an unknown option is an error' "$(fresh)" 2 "$usage" --nope main
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "snapshot-migrations: ${passed} specs passed."
+finish snapshot-migrations

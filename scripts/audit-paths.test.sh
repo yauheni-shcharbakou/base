@@ -10,8 +10,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 script="$(pwd)/scripts/audit-paths.sh"
 
-passed=0
-failed=0
+. scripts/lib/spec.sh
 tab=$'\t'
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
@@ -22,15 +21,7 @@ prints() {
   shift 4
   actual=$(printf '%s' "$report" | bash "$script" "$@" 2>&1)
   status=$?
-  if [ "$actual" = "$expected" ] && [ "$status" = "$expected_status" ]; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: ${name} — exit ${status}, expected ${expected_status}; got:"
-    echo "$actual" | sed 's/^/    /'
-    echo "  expected:"
-    echo "$expected" | sed 's/^/    /'
-    failed=$((failed + 1))
-  fi
+  matches "$expected_status" "$expected" "$status" "$actual"
 }
 
 # advisory <key> <GHSA> <severity> <package> <version> <patched> <path>... — one entry of
@@ -153,8 +144,4 @@ prints 'a production report that is not one is an error' 2 \
 
 prints '--prod-report needs a file' 2 "$usage" '' --prod-report
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "audit-paths: ${passed} specs passed."
+finish audit-paths

@@ -12,8 +12,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 script="$(pwd)/scripts/stale-overrides.sh"
 
-passed=0
-failed=0
+. scripts/lib/spec.sh
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
@@ -86,25 +85,13 @@ prints() {
   shift 4
   actual=$(PATH="$scratch/bin:$PATH" FAKE_DIR="$dir" bash "$script" --repo "$dir" "$@" 2>&1)
   status=$?
-  if [ "$actual" = "$expected" ] && [ "$status" = "$expected_status" ]; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: ${name} — exit ${status}, expected ${expected_status}; got:"
-    echo "$actual" | sed 's/^/    /'
-    echo "  expected:"
-    echo "$expected" | sed 's/^/    /'
-    failed=$((failed + 1))
-  fi
+  matches "$expected_status" "$expected" "$status" "$actual"
 }
 
 # holds <name> <condition>
 holds() {
-  if eval "$2"; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: $1"
-    failed=$((failed + 1))
-  fi
+  local name=$1
+  if eval "$2"; then pass; else fail 'does not hold'; fi
 }
 
 dir=$(fresh)
@@ -181,8 +168,4 @@ prints 'an unknown option is an error' "$(fresh)" 2 "$usage" --nope
 
 prints 'a directory without the workspace file is an error' "$scratch/bin" 2 "no pnpm-workspace.yaml in $scratch/bin"
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "stale-overrides: ${passed} specs passed."
+finish stale-overrides
