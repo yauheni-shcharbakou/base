@@ -69,3 +69,4 @@ template, updates this index, and links the ADR from the owning `CLAUDE.md`.
 | [0038](0038-railway-iac-applied-by-ci.md) | Railway is described by `.railway/railway.ts` and applied by our own CI job | Accepted | `.railway/`, `.github/workflows/check.yaml` |
 | [0039](0039-main-trusts-the-pull-request-check.md) | A push to main trusts the pull request's check; turbo shares one remote cache | Accepted | `.github/workflows/check.yaml`, `.github/workflows/main.yaml`, `.github/actions/` |
 | [0040](0040-backend-specs-on-vitest.md) | Backend specs run on Vitest, compiled by swc | Accepted | backend apps, `@backend/{common,grpc,cache,event-bus-redis,event-bus-nats}`, `@packages/configs` |
+| [0041](0041-a-mapper-names-the-relations-it-serializes.md) | A mapper names the relations it serializes; every other relation is its key | Accepted | `@backend/pg`, `backend.storage`, `backend.auth` |

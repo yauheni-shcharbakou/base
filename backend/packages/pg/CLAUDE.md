@@ -42,6 +42,27 @@ Every subclass declares the abstract `resourceName` ("Storage object", "User"), 
 
 `saveOne`/`saveMany` additionally run their `catch` through `toRepositoryError`, which turns a MikroORM `UniqueConstraintViolationException` into a `ConflictException`. Callers can then tell "this row already exists" from a real write failure — an at-least-once event handler treats the former as success and must retry on the latter (see `StorageObjectCreateRootFolderUseCase` in `backend.storage`).
 
+## Mapper serialization
+
+`PgMapper.stringify` is MikroORM's `serialize`, never `toJSON`: **a relation is its key unless the
+mapper names it.** A subclass declares two lists and no `stringify` of its own:
+
+- `populate` — relations serialized as objects, at any depth (`file`, `file.image`), and only where
+  the read loaded them; a named relation the read left alone is still its key. A lazy scalar (a
+  `{ lazy: true }` formula) needs no entry: it appears wherever the read populated it.
+- `exclude` — properties never visited, at any depth (`file.storageObject`, `hash`). Exclude the
+  back-reference of every populated relation (`image.file` under `file`'s `image`), and any column the
+  contract must not carry.
+
+`toJSON` expands every relation the identity map happens to hold, so the answer depended on what
+else the request had loaded: a leaf reached its folder and every sibling the unit of work had put in
+its `children` (n², out of memory at a few hundred), a temp code its user with the password hash. The
+paths are not type-checked — a relation typed as a proto message has nothing past it — so a misspelt
+one serializes the property it meant to cut; `auth`'s user mapper excluded a `tempTokens` that never
+existed. The price is that every relation a contract carries as an object is declared.
+
+> **Why:** [docs/adr/0041-a-mapper-names-the-relations-it-serializes.md](../../../docs/adr/0041-a-mapper-names-the-relations-it-serializes.md)
+
 ## Entities & IDs
 
 - `PgEntity<OptProps>` — abstract base with `id`, `createdAt`, `updatedAt` (auto `onUpdate`). Decorate concretes with `@PgSchema({ tableName })` (use a `*DatabaseEntity` enum value from `@packages/common`) and `@PgProp.*`.
@@ -63,4 +84,5 @@ MikroORM CLI loads it without an app.
 ```bash
 pnpm build / dev / typecheck / lint / format / reset
 ```
+
 - `lodash` is declared in this package's deps, with `@types/lodash` in devDeps.

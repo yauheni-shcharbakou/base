@@ -1,6 +1,6 @@
 import { PgMapper } from '@backend/pg';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
-import { ObjectQuery, wrap } from '@mikro-orm/core';
+import { ObjectQuery } from '@mikro-orm/core';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageObjectQuery } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import _ from 'lodash';
@@ -14,6 +14,22 @@ export class PgStorageObjectMapper extends PgMapper<
   StorageObject,
   StorageObjectQuery
 > {
+  // `StorageObjectPopulated` holds the media a read asked for. `parentId` is what the contract
+  // carries: `parent` leads into its `children`, which the unit of work fills with every sibling it
+  // inserts, so a batch of n cost n² (10 s for a thousand folders).
+  protected readonly populate = ['file', 'image', 'video'];
+  protected readonly exclude = [
+    'parent',
+    'children',
+    'file.storageObject',
+    'file.image',
+    'file.video',
+    'image.storageObject',
+    'image.file',
+    'video.storageObject',
+    'video.file',
+  ];
+
   transformQuery({
     isPublic,
     isFolder,
@@ -60,12 +76,5 @@ export class PgStorageObjectMapper extends PgMapper<
     }
 
     return result;
-  }
-
-  // `parentId` is what the contract carries. Serializing `parent` itself walks into its `children`,
-  // which the unit of work fills with every sibling it inserts, so a batch of n cost n² (10 s for
-  // a thousand folders). Ignored fields are never serialized, not dropped afterwards.
-  stringify(entity: PgStorageObjectEntity): StorageObject {
-    return wrap(entity).toObject(['children', 'parent']) as StorageObject;
   }
 }

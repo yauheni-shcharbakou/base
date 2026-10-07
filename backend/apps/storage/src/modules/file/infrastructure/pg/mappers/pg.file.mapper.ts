@@ -5,9 +5,20 @@ import {
   isBackingFilter,
   isPlacedFilter,
 } from '@common/infrastructure/pg/factories/pg.media.filters';
-import { ObjectQuery, serialize } from '@mikro-orm/core';
+import { ObjectQuery } from '@mikro-orm/core';
 
 export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestStorage.FileQuery> {
+  // The cleanup paths read a file with its image and video (`FileWithMedia`). Never a storage
+  // object, which leads to its folder and every sibling there.
+  protected readonly populate = ['image', 'video'];
+  protected readonly exclude = [
+    'storageObject',
+    'image.storageObject',
+    'image.file',
+    'video.storageObject',
+    'video.file',
+  ];
+
   protected readonly computedFilters = {
     isPlaced: isPlacedFilter<PgFileEntity>(),
     isBacking: isBackingFilter<PgFileEntity>(),
@@ -39,23 +50,5 @@ export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestS
     }
 
     return result;
-  }
-
-  // The contract is the file alone; the cleanup paths read it with its image and video
-  // (`FileWithMedia`). Never its storage object, which walks its whole folder — see the image
-  // mapper. Excluded paths are never visited.
-  stringify(entity: PgFileEntity): NestStorage.File {
-    return serialize(entity, {
-      populate: ['image', 'video'],
-      // `image` and `video` are typed as the proto messages, which have no relations, so the paths
-      // past them do not type-check; the metadata does have them.
-      exclude: [
-        'storageObject',
-        'image.storageObject',
-        'image.file',
-        'video.storageObject',
-        'video.file',
-      ] as never[],
-    });
   }
 }

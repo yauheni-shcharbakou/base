@@ -1,6 +1,6 @@
 import { DatabaseRepositoryGetList, QueryOf } from '@backend/common';
 import { NestCommon } from '@backend/proto';
-import { ObjectQuery, wrap } from '@mikro-orm/core';
+import { ObjectQuery, serialize } from '@mikro-orm/core';
 import _ from 'lodash';
 import { PgEntity } from '../entities';
 import { PgSorting } from '../types';
@@ -20,6 +20,16 @@ export class PgMapper<
   Query extends QueryOf<Entity> = QueryOf<Entity>,
 > {
   constructor(protected readonly fieldNameConverter: Record<string, keyof Doc | string> = {}) {}
+
+  /**
+   * Relations serialized as objects where the read loaded them, at any depth (`file`, `file.image`);
+   * every other relation is its key. A lazy scalar (a `{ lazy: true }` formula) needs no entry: it is
+   * serialized wherever the read loaded it.
+   */
+  protected readonly populate: readonly string[] = [];
+
+  /** Properties left out, at any depth (`file.storageObject`). An excluded one is never visited. */
+  protected readonly exclude: readonly string[] = [];
 
   protected readonly additionalFilterConverters: [NestCommon.LogicalOperator, FilterConverter][] =
     [];
@@ -229,8 +239,18 @@ export class PgMapper<
     return queryFilter;
   }
 
+  /**
+   * The row as the contract carries it: relations as keys, except the ones `populate` names. Not
+   * `toJSON`, which expands every relation the identity map happens to hold, so that the answer
+   * depended on what else the request had loaded: a leaf reached its folder and every sibling there
+   * (n², then out of memory), a temp code its user with the password hash.
+   */
   stringify(entity: Doc): Entity {
-    return wrap(entity).toJSON() as unknown as Entity;
+    // The paths are checked against nothing: a relation typed as a proto message has none past it.
+    return serialize(entity, {
+      populate: [...this.populate],
+      exclude: [...this.exclude],
+    } as never) as unknown as Entity;
   }
 
   stringifyMany(entities: Doc[]): Entity[] {

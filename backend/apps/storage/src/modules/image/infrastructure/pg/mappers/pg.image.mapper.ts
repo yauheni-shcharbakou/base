@@ -5,7 +5,6 @@ import {
   backingFileStatusFilter,
   isPlacedFilter,
 } from '@common/infrastructure/pg/factories/pg.media.filters';
-import { serialize } from '@mikro-orm/core';
 
 /**
  * `ImageQuery` (`id`/`ids`/`file`/`userId`) is fully covered by the base `PgMapper.transformQuery`,
@@ -22,17 +21,8 @@ export class PgImageMapper extends PgMapper<
     uploadStatus: backingFileStatusFilter<PgImageEntity>(),
   };
 
-  // The contract (`Image`, `ImagePopulated`) holds the file and nothing past it. `toJSON` follows
-  // every loaded relation, and a storage object leads to its folder and, through the `children` the
-  // unit of work fills, to every sibling: a batch placed in a folder the EntityManager holds cost
-  // n² (30 s for a hundred images). What is not populated stays a key, what is excluded is never
-  // visited.
-  stringify(entity: PgImageEntity): NestStorage.Image {
-    return serialize(entity, {
-      populate: ['file'],
-      // `file` is typed as the proto `File`, which has no relations, so the paths past it do not
-      // type-check; the metadata does have them.
-      exclude: ['storageObject', 'file.storageObject', 'file.image', 'file.video'] as never[],
-    });
-  }
+  // The contract (`Image`, `ImagePopulated`) holds the file and nothing past it. Never a storage
+  // object, which leads to its folder and every sibling there.
+  protected readonly populate = ['file'];
+  protected readonly exclude = ['storageObject', 'file.storageObject', 'file.image', 'file.video'];
 }
