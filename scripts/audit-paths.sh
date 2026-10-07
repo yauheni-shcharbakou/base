@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Where each advisory of a `pnpm audit --json` report sits in the tree, one line per advisory.
 #
-#   pnpm audit [--prod] --json | scripts/audit-paths.sh
-#   scripts/audit-paths.sh <report.json>
+#   pnpm audit [--prod] --json | scripts/audit-paths.sh [--prod-report <prod.json>]
+#   scripts/audit-paths.sh [--prod-report <prod.json>] <report.json>
 #
 # Prints, tab-separated and sorted critical → low (then by package):
 #
-#   <severity> <GHSA> <package> <versions> <workspaces> <how> <parents>
+#   <severity> <GHSA> <package> [<scope>] <versions> <workspaces> <how> <parents>
 #
 # read from the report's own `findings[].paths` (`<workspace>><direct dep>>…><parent>><pkg>`, the
 # workspace with `/` spelled `__`), so the `/audit` skill gets every row's path in one pass instead
@@ -14,26 +14,71 @@
 # packages that depend on it, `-` when only workspaces do — the column the choice of fix turns on.
 # Lists are comma-separated, except workspaces (space-separated, there can be many).
 #
+# With `--prod-report`, the report is a whole-tree audit (`/audit --dev`) and <scope> says whether
+# the advisory ships: `prod` when the `--prod` report given there has the same GHSA at one of the
+# same versions, `dev` otherwise. By version, not GHSA alone — one advisory often covers several
+# copies of a package, only some of which are in production.
+#
 # A report with no advisories prints nothing and exits 0; input that is not such a report exits 2.
 # Its specs are scripts/audit-paths.test.sh. Needs bash and jq.
-usage='usage: audit-paths.sh [<report.json>]'
-[ $# -le 1 ] || {
+usage='usage: audit-paths.sh [--prod-report <prod.json>] [<report.json>]'
+prod=''
+input=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --prod-report)
+      [ $# -ge 2 ] || {
+        echo "$usage" >&2
+        exit 2
+      }
+      prod=$2
+      shift 2
+      ;;
+    -*)
+      echo "$usage" >&2
+      exit 2
+      ;;
+    *)
+      input+=("$1")
+      shift
+      ;;
+  esac
+done
+[ "${#input[@]}" -le 1 ] || {
   echo "$usage" >&2
   exit 2
 }
+source=${input[0]:-/dev/stdin}
 
-jq -r '
+# "<GHSA>@<version>" of every finding the production report has; null without --prod-report.
+shipped=null
+if [ -n "$prod" ]; then
+  shipped=$(jq -c '
+    if (.advisories | type) != "object" then error("not a pnpm audit report") else . end
+    | [.advisories[] | .github_advisory_id as $id | .findings[]? | "\($id)@\(.version)"] | unique
+  ' "$prod" 2>/dev/null) || {
+    echo "audit-paths: ${prod} is not a pnpm audit --json report" >&2
+    exit 2
+  }
+fi
+
+jq -r --argjson shipped "$shipped" '
   def rank: {critical: 0, high: 1, moderate: 2, low: 3, info: 4}[.] // 5;
   def list(sep): unique | if length == 0 then "-" else join(sep) end;
   if (.advisories | type) != "object" then error("not a pnpm audit report") else . end
   | [.advisories[]]
   | sort_by((.severity | rank), .module_name, .github_advisory_id, [.findings[]?.version])[]
+  | .github_advisory_id as $id
   | [.findings[]?.paths[]? | split(">")] as $paths
   | ($paths | map(select(length > 2))) as $deep
   | [
       .severity,
-      .github_advisory_id,
+      $id,
       .module_name,
+      (if $shipped == null then empty
+       elif any(.findings[]?; "\($id)@\(.version)" | IN($shipped[])) then "prod"
+       else "dev" end),
       ([.findings[]?.version] | list(",")),
       ($paths | map(.[0] | gsub("__"; "/")) | list(" ")),
       ([
@@ -43,7 +88,7 @@ jq -r '
       ($deep | map(.[-2]) | list(","))
     ]
   | @tsv
-' "${1:-/dev/stdin}" 2>/dev/null || {
-  echo "audit-paths: ${1:-stdin} is not a pnpm audit --json report" >&2
+' "$source" 2>/dev/null || {
+  echo "audit-paths: ${input[0]:-stdin} is not a pnpm audit --json report" >&2
   exit 2
 }

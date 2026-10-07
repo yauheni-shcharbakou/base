@@ -38,7 +38,7 @@ never audits. Every step below is the same in both; where a step differs, it say
 
    ```bash
    pnpm audit --prod --json >/tmp/audit-prod.json
-   pnpm audit --json >/tmp/audit.json   # --dev only: the whole tree; the --prod file gives Scope
+   pnpm audit --json >/tmp/audit.json   # --dev only: the whole tree
    ```
 
    It exits non-zero whenever it finds something; only output that is not JSON is a failure.
@@ -51,20 +51,21 @@ never audits. Every step below is the same in both; where a step differs, it say
    | Severity | Package | Vulnerable → patched | Advisory | Path | Proposed fix |
    | -------- | ------- | -------------------- | -------- | ---- | ------------ |
 
-   With `--dev`, a **Scope** column after Package: `prod` when the `--prod` audit reports the same
-   GHSA, `dev` otherwise.
+   With `--dev`, a **Scope** column after Package — `prod` or `dev`, from the script below.
 
    - **Advisory** — the GHSA id, linked (`https://github.com/advisories/GHSA-…`).
    - **Path** — direct or transitive, through which parent, in which workspaces, for every
      advisory in one pass over the audit's own `findings[].paths` — not one `pnpm why` per row:
 
      ```bash
-     bash scripts/audit-paths.sh /tmp/audit-prod.json   # --dev: /tmp/audit.json
+     bash scripts/audit-paths.sh /tmp/audit-prod.json
+     bash scripts/audit-paths.sh --prod-report /tmp/audit-prod.json /tmp/audit.json   # --dev
      ```
 
-     One line per advisory, already sorted critical → low: severity, GHSA, package, vulnerable
-     versions, workspaces, `direct` / `via <direct deps>`, and the parents — the column step 3
-     decides on. `pnpm why -r <pkg>` is left for a row that needs the full chain.
+     One line per advisory, already sorted critical → low: severity, GHSA, package, the scope
+     (with `--prod-report` only: `prod` when production has that GHSA at the same version),
+     vulnerable versions, workspaces, `direct` / `via <direct deps>`, and the parents — the column
+     step 3 decides on. `pnpm why -r <pkg>` is left for a row that needs the full chain.
 
    - **Proposed fix** — from step 3. Mark a **major** bump explicitly: it can break the build or
      the runtime, and the checks in step 5 only cover what the specs cover.

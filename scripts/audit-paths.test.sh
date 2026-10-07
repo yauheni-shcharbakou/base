@@ -88,7 +88,32 @@ prints 'output that is not JSON is an error' 2 'audit-paths: stdin is not a pnpm
 
 prints 'JSON without advisories is an error' 2 'audit-paths: stdin is not a pnpm audit --json report' '{"error":"x"}'
 
-prints 'more than one argument is an error' 2 'usage: audit-paths.sh [<report.json>]' '' a b
+usage='usage: audit-paths.sh [--prod-report <prod.json>] [<report.json>]'
+prints 'more than one argument is an error' 2 "$usage" '' a b
+prints 'an unknown flag is an error' 2 "$usage" '' --dev
+
+# The whole tree has GHSA-v at 1.0.0 and 2.0.0; production only at 1.0.0.
+whole=$(report "$(advisory 1 high pkg 1.0.0 '.>pkg' | jq -c '.["1"].github_advisory_id = "GHSA-v"')" \
+  "$(advisory 2 high pkg 2.0.0 '.>x>pkg' | jq -c '.["2"].github_advisory_id = "GHSA-v"')" \
+  "$only_direct")
+report "$(advisory 1 high pkg 1.0.0 '.>pkg' | jq -c '.["1"].github_advisory_id = "GHSA-v"')" >"$scratch/prod.json"
+prints 'with --prod-report, scope is prod only for a GHSA at a version production has' 0 \
+  "high${tab}GHSA-v${tab}pkg${tab}prod${tab}1.0.0${tab}.${tab}direct${tab}-
+high${tab}GHSA-v${tab}pkg${tab}dev${tab}2.0.0${tab}.${tab}via x${tab}x
+low${tab}GHSA-o${tab}figlet${tab}dev${tab}1.0.0${tab}packages/configs${tab}direct${tab}-" \
+  "$whole" --prod-report "$scratch/prod.json"
+
+report >"$scratch/clean.json"
+prints 'a clean production report makes every row dev' 0 \
+  "low${tab}GHSA-o${tab}figlet${tab}dev${tab}1.0.0${tab}packages/configs${tab}direct${tab}-" \
+  "$(report "$only_direct")" --prod-report "$scratch/clean.json"
+
+echo 'ERR_PNPM_AUDIT_BAD_RESPONSE' >"$scratch/bad.json"
+prints 'a production report that is not one is an error' 2 \
+  "audit-paths: $scratch/bad.json is not a pnpm audit --json report" \
+  "$(report "$only_direct")" --prod-report "$scratch/bad.json"
+
+prints '--prod-report needs a file' 2 "$usage" '' --prod-report
 
 if [ "$failed" -gt 0 ]; then
   echo "${failed} failed, ${passed} passed."
