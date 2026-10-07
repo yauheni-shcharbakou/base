@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 # Which entries of `overrides:` in pnpm-workspace.yaml the tree no longer needs.
 #
-#   scripts/stale-overrides.sh [--repo <dir>] [<pkg>...]
+#   scripts/stale-overrides.sh [--dev] [--repo <dir>] [<pkg>...]
 #
 # An override pins a transitive version nobody upgrades again, so each one has to keep earning its
 # place. For every entry (or only the named ones) the script drops that one line, re-resolves the
 # lockfile (`pnpm install --lockfile-only`), and asks two questions of the tree without it:
 #
-#   - does `pnpm audit --prod` report an advisory for the package?
+#   - does `pnpm audit --prod` report an advisory for the package that the tree with every override
+#     does not report (the baseline, audited once before the first entry)?
 #   - does the lockfile resolve any copy of it below the pinned version?
 #
-# Both no → the override is stale. Prints one line per entry — `stale <pkg>`, `needed <pkg>: <why>`,
+# Both no → the override is stale. The baseline is what makes `--dev` usable: it audits the whole
+# tree, devDependencies included (no `--prod`), where advisories nobody has fixed yet already exist
+# and must not make every override on that package look needed. An unreadable baseline counts as
+# empty, which can only turn a stale verdict into a needed one. Prints one line per entry — `stale <pkg>`, `needed <pkg>: <why>`,
 # `kept <pkg>: <why>` or `skipped <pkg>: <why>` — and exits 1 when any is stale. An entry with a
 # comment right above it is kept unjudged: the comment is a person's reason, which no resolve can
 # overrule, and its first line is the `<why>`. Only an exact pin (`1.2.3`) on a plain package name
@@ -22,11 +26,16 @@
 # skill runs it. Its specs, scripts/stale-overrides.test.sh, put a fake `pnpm` first on PATH and
 # point `--repo` at a scratch directory. Needs bash, awk, jq and sort -V.
 repo="$(dirname "${BASH_SOURCE[0]}")/.."
-usage='usage: stale-overrides.sh [--repo <dir>] [<pkg>...]'
+usage='usage: stale-overrides.sh [--dev] [--repo <dir>] [<pkg>...]'
 only=()
+scope=(--prod)
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    --dev)
+      scope=()
+      shift
+      ;;
     --repo)
       repo=${2:?$usage}
       shift 2
@@ -96,6 +105,15 @@ resolved() {
   ' pnpm-lock.yaml | sort -uV
 }
 
+# `pnpm audit` exits non-zero when it finds anything; only unreadable output is an error.
+audit() { pnpm audit "${scope[@]}" --json 2>/dev/null; }
+
+# {"<pkg>": ["GHSA-…", …]} the tree reports with every override in place.
+baseline=$(audit | jq -c \
+  'reduce (.advisories[]? | select(.module_name)) as $a ({}; .[$a.module_name] += [$a.github_advisory_id])' \
+  2>/dev/null) || baseline='{}'
+[ -n "$baseline" ] || baseline='{}'
+
 stale=0
 
 while IFS=$'\t' read -r line pkg pin reason; do
@@ -123,11 +141,9 @@ while IFS=$'\t' read -r line pkg pin reason; do
     continue
   fi
 
-  # `pnpm audit` exits non-zero when it finds anything; only unreadable output is an error.
-  audit=$(pnpm audit --prod --json 2>/dev/null)
-  if ! advisories=$(jq -r --arg p "$pkg" \
-    '[.advisories[]? | select(.module_name == $p) | .github_advisory_id] | join(", ")' \
-    <<<"$audit" 2>/dev/null); then
+  if ! advisories=$(audit | jq -r --arg p "$pkg" --argjson base "$baseline" \
+    '[.advisories[]? | select(.module_name == $p) | .github_advisory_id] - ($base[$p] // []) | join(", ")' \
+    2>/dev/null); then
     echo "needed ${pkg}: pnpm audit gave no answer"
     restore
     continue

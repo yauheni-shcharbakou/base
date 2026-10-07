@@ -3,9 +3,10 @@
 #
 # The real answer needs the registry, so `pnpm` here is a fake put first on PATH, run in a scratch
 # directory. It answers from files the spec writes next to it — `resolved.yaml` is the lockfile
-# `pnpm install` writes, `audit.json` what `pnpm audit` prints, `install-fails` fails the install —
-# and copies the pnpm-workspace.yaml each install sees to `seen.yaml`, so a spec can read which line
-# was dropped.
+# `pnpm install` writes, `audit-base.json` what `pnpm audit` prints before the first install (the
+# baseline), `audit.json` what it prints after, `install-fails` fails the install — copies the
+# pnpm-workspace.yaml each install sees to `seen.yaml`, so a spec can read which line was dropped,
+# and appends the arguments of each audit to `audit-args`.
 #
 # Run by `pnpm check:scripts`, in CI's `check` job. Needs bash, awk, jq and sort -V.
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
@@ -25,7 +26,12 @@ case "$1" in
     cat "$FAKE_DIR/resolved.yaml" 2>/dev/null >pnpm-lock.yaml || echo 'resolved' >pnpm-lock.yaml
     [ ! -e "$FAKE_DIR/install-fails" ]
     ;;
-  audit) cat "$FAKE_DIR/audit.json" 2>/dev/null || echo '{"advisories":{}}' ;;
+  audit)
+    echo "$*" >>"$FAKE_DIR/audit-args"
+    answer=audit.json
+    [ -e "$FAKE_DIR/seen.yaml" ] || answer=audit-base.json
+    cat "$FAKE_DIR/$answer" 2>/dev/null || echo '{"advisories":{}}'
+    ;;
 esac
 FAKE
 chmod +x "$scratch/bin/pnpm"
@@ -126,6 +132,28 @@ dir=$(fresh)
 resolves "$dir" qs@6.16.0
 echo '{"advisories":{"1":{"module_name":"qs","github_advisory_id":"GHSA-xxxx-yyyy-zzzz"},"2":{"module_name":"ws","github_advisory_id":"GHSA-other"}}}' >"$dir/audit.json"
 prints 'an advisory without it means needed' "$dir" 0 'needed qs: GHSA-xxxx-yyyy-zzzz without it' qs
+
+dir=$(fresh)
+resolves "$dir" qs@6.16.0
+echo '{"advisories":{"1":{"module_name":"qs","github_advisory_id":"GHSA-old"}}}' >"$dir/audit-base.json"
+cp "$dir/audit-base.json" "$dir/audit.json"
+prints 'an advisory the baseline already reports does not make it needed' "$dir" 1 'stale qs' qs
+
+dir=$(fresh)
+resolves "$dir" qs@6.16.0
+echo '{"advisories":{"1":{"module_name":"qs","github_advisory_id":"GHSA-old"}}}' >"$dir/audit-base.json"
+echo '{"advisories":{"1":{"module_name":"qs","github_advisory_id":"GHSA-old"},"2":{"module_name":"qs","github_advisory_id":"GHSA-new"}}}' >"$dir/audit.json"
+prints 'only an advisory the baseline lacks makes it needed' "$dir" 0 'needed qs: GHSA-new without it' qs
+
+dir=$(fresh)
+resolves "$dir" qs@6.16.0
+prints 'the audit is --prod by default' "$dir" 1 'stale qs' qs
+holds 'both audits ask for --prod' "[ \"\$(grep -c -- '--prod' '$dir/audit-args')\" = 2 ]"
+
+dir=$(fresh)
+resolves "$dir" qs@6.16.0
+prints 'the audit covers dev dependencies with --dev' "$dir" 1 'stale qs' --dev qs
+holds 'no audit asks for --prod with --dev' "[ \"\$(wc -l <'$dir/audit-args' | tr -d ' ')\" = 2 ] && ! grep -q -- '--prod' '$dir/audit-args'"
 
 dir=$(fresh)
 resolves "$dir" qs@6.15.1 "qs@6.15.1(peer@2.0.0)" qs@6.16.0

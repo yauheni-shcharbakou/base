@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Audit the production dependencies for known vulnerabilities, propose a fix for each advisory — a catalog or manifest bump, a lockfile-only update, or an override in pnpm-workspace.yaml — apply the approved ones, run the CI checks and commit. Also flags overrides that are no longer needed. Use when `pnpm check:audit` fails, or when asked to "audit dependencies", "fix vulnerabilities", "check for CVEs" or "clean up overrides".
+description: Audit the production dependencies for known vulnerabilities, propose a fix for each advisory — a catalog or manifest bump, a lockfile-only update, or an override in pnpm-workspace.yaml — apply the approved ones, run the CI checks and commit. Also flags overrides that are no longer needed. With `--dev`, covers the devDependencies too. Use when `pnpm check:audit` fails, or when asked to "audit dependencies", "audit dev dependencies", "fix vulnerabilities", "check for CVEs" or "clean up overrides".
 ---
 
 # Fixing a dependency advisory
@@ -14,6 +14,10 @@ What a tool cannot decide, and this skill exists for, is **which lever** fixes a
 what we declare, a lockfile refresh inside the ranges we already have, or an `override` that rewrites
 the whole tree. Overrides are the last resort — each one pins a transitive version nobody upgrades
 again — so the skill also checks whether the existing ones still earn their place.
+
+**Two modes.** Plain `/audit` covers what CI fails on and what ships: the production dependencies.
+`/audit --dev` covers the whole tree, devDependencies included — the build, lint and test tooling CI
+never audits. Every step below is the same in both; where a step differs, it says so.
 
 ## Steps
 
@@ -34,6 +38,7 @@ again — so the skill also checks whether the existing ones still earn their pl
 
    ```bash
    pnpm audit --prod --json
+   pnpm audit --json                 # --dev: the whole tree; keep the --prod output for Scope
    ```
 
    No advisories → say so, run step 3's override check anyway (an audit-clean tree is exactly when
@@ -43,6 +48,10 @@ again — so the skill also checks whether the existing ones still earn their pl
 
    | Severity | Package | Vulnerable → patched | Advisory | Path | Proposed fix |
    | -------- | ------- | -------------------- | -------- | ---- | ------------ |
+
+   With `--dev`, a **Scope** column after Package: `prod` when the `--prod` audit reports the same
+   GHSA, `dev` otherwise.
+
    - **Advisory** — the GHSA id, linked (`https://github.com/advisories/GHSA-…`).
    - **Path** — from `pnpm why -r <pkg>`: direct or transitive, through which parent, in which
      workspaces.
@@ -62,14 +71,21 @@ again — so the skill also checks whether the existing ones still earn their pl
       existing ones, pinned to the exact patched version (`qs: '6.16.0'`, not a range). Before
       settling on it, check whether a newer parent would do: `pnpm view <parent> dependencies`.
 
+   For a `dev` row the order matters more: an override rewrites the **whole** tree, production
+   included, so a dev-only advisory fixed that way can change what ships. Exhaust the devDependency
+   bump and the lockfile refresh first, and say in the row when an override would reach prod
+   packages too (`pnpm why -r <pkg> --prod` is not empty).
+
    A package in both `catalog:` and `overrides:` (`@grpc/grpc-js`, `axios`, `lodash`,
    `protobufjs`) is deliberate — the catalog for what we ask for, the override for what the
    transitive tree gets. Bump both together.
 
-   **Stale overrides.** `bash scripts/stale-overrides.sh` judges every entry of `overrides:`: it
-   drops one line, re-resolves the lockfile, and asks whether `pnpm audit --prod` then reports the
-   package and whether the lockfile resolves any copy below the pin. It restores both files after
-   each entry, and takes package names to judge only those. Its output, one line per entry:
+   **Stale overrides.** `bash scripts/stale-overrides.sh` (`--dev` in that mode) judges every entry
+   of `overrides:`: it drops one line, re-resolves the lockfile, and asks whether `pnpm audit
+--prod` (the whole tree with `--dev`) then reports an advisory for the package that the tree with
+   every override did not, and whether the lockfile resolves any copy below the pin. It restores
+   both files after each entry, and takes package names to judge only those. Its output, one line
+   per entry:
 
    - `stale <pkg>` → propose removing it.
    - `kept <pkg>: <why>` → a comment right above the entry holds it, whatever a resolve would
@@ -102,6 +118,9 @@ again — so the skill also checks whether the existing ones still earn their pl
    git status --short                # only the files the fix touched
    ```
 
+   With `--dev`, also `pnpm audit --audit-level=high` before and after, and report both counts:
+   `check:audit` still guards prod, this shows what the fix did for the rest.
+
    `lint` runs with `--fix`: anything it or the build leaves changed outside the fix would also fail
    CI's dirty-tree check. On any failure there is no commit — show the output, name the fix that
    caused it, and offer to revert just that one (its lines in `pnpm-workspace.yaml` or the
@@ -115,10 +134,13 @@ again — so the skill also checks whether the existing ones still earn their pl
    ```
 
    The body is the table of what was applied (and the overrides removed). A removal-only change is
-   `chore(deps): drop stale overrides <pkg>…`. Report the hash.
+   `chore(deps): drop stale overrides <pkg>…`. A fix that touches devDependencies only ships
+   nothing, so it is `build(deps): <pkg>[, <pkg>…] (<GHSA-…>[, …])`, not `fix`. Report the hash.
 
 ## What this skill does not do
 
 It does not push, and it does not prepare the release: an advisory fix is a **patch** release —
 run `/release` before the merge so the version and a `### Fixed` line in `CHANGELOG.md` go with it.
-It also does not chase devDependencies: `--prod` is what CI fails on, and what ships.
+A devDependencies-only fix (`build(deps)`) is a patch too, under `### Tooling`, not `### Fixed`.
+Without `--dev` it leaves devDependencies alone: `--prod` is what CI fails on, and what ships;
+`--dev` is a review on request, never a gate.
