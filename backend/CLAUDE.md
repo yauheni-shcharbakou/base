@@ -73,7 +73,7 @@ Run inside the service directory (e.g. `backend/apps/auth`), against the databas
 
 ```bash
 pnpm migrate                  # apply the pending migrations (migration:up)
-pnpm migrate:create           # generate one from the entity diff; --name <label> to name it
+pnpm migrate:create           # generate one from the entity diff (and format src/migrations); --name <label> to name it
 pnpm migrate:check            # exit non-zero while the entities and the snapshot disagree
 pnpm orm <command>            # any CLI command: migration:list / :pending / :down, debug
 ```
@@ -82,10 +82,6 @@ pnpm orm <command>            # any CLI command: migration:list / :pending / :do
 appends it to the class name as it is (`Migration20261001231531_preview_attempts`), so a `.` or a `-`
 generates a class that does not compile; the file name is dot-cased from it either way
 (`20261001231531.preview.attempts.migration.ts`).
-
-**Format the migrations right after `migrate:create`** — `pnpm exec prettier --write backend/apps/<service>/src/migrations`.
-MikroORM writes the migration and rewrites the snapshot unformatted, and CI's `prettier --check .` fails on
-both; the service's own `format` script covers `src/**/*.ts` only and skips the snapshot JSON.
 
 `migrate:check` catches a forgotten `migrate:create` and never connects to the database, so CI runs
 it without one and turbo caches it; `pnpm migrate` / `pnpm migrate:check` at the root
