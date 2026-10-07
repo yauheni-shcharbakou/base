@@ -83,8 +83,12 @@
     "format": {
       "cache": false
     },
+    // The same edges as typecheck: the typed rules read a sibling package through its built `dist`,
+    // and with `--fix` a missing or half-written one is not an error but a rewrite. Its types
+    // resolve to `any`, and `no-unnecessary-type-assertion` deletes every cast that was needed.
     "lint": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build", "compile"]
     },
     "reset": {
       "cache": false
