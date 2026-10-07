@@ -46,26 +46,34 @@ never audits. Every step below is the same in both; where a step differs, it say
    No advisories → say so, run step 3's override check anyway (an audit-clean tree is exactly when
    a stale override shows), and stop if that finds nothing either.
 
-2. **Show one table, change nothing yet.** One row per advisory, sorted critical → low:
+2. **Show one table, change nothing yet.** One row per package, sorted critical → low:
 
    | Severity | Package | Vulnerable → patched | Advisory | Path | Proposed fix |
    | -------- | ------- | -------------------- | -------- | ---- | ------------ |
 
    With `--dev`, a **Scope** column after Package — `prod` or `dev`, from the script below.
 
-   - **Advisory** — the GHSA id, linked (`https://github.com/advisories/GHSA-…`).
-   - **Path** — direct or transitive, through which parent, in which workspaces, for every
-     advisory in one pass over the audit's own `findings[].paths` — not one `pnpm why` per row:
+   Every column but Proposed fix comes from one pass over the audit's own JSON — not one
+   `pnpm why` per row:
 
-     ```bash
-     bash scripts/audit-paths.sh /tmp/audit-prod.json
-     bash scripts/audit-paths.sh --prod-report /tmp/audit-prod.json /tmp/audit.json   # --dev
-     ```
+   ```bash
+   bash scripts/audit-paths.sh --by-package /tmp/audit-prod.json
+   bash scripts/audit-paths.sh --by-package --prod-report /tmp/audit-prod.json /tmp/audit.json   # --dev
+   ```
 
-     One line per advisory, already sorted critical → low: severity, GHSA, package, the scope
-     (with `--prod-report` only: `prod` when production has that GHSA at the same version),
-     vulnerable versions, workspaces, `direct` / `via <direct deps>`, and the parents — the column
-     step 3 decides on. `pnpm why -r <pkg>` is left for a row that needs the full chain.
+   One line per package (and scope), already sorted critical → low: the highest severity, its
+   GHSAs, the package, the scope (with `--prod-report` only: `prod` when production has that GHSA
+   at the same version), the vulnerable versions and, in the same order, the version that fixes
+   each, the workspaces, `direct` / `via <direct deps>`, and the parents — the column step 3
+   decides on. Without `--by-package` it prints one line per advisory instead.
+
+   - **Severity** — the highest, with the count per severity when the package has several
+     (`high ×7, moderate ×1`).
+   - **Vulnerable → patched** — one pair per version. `no fix` means no release fixes it: say so in
+     Proposed fix, there is nothing to apply.
+   - **Advisory** — each GHSA id, linked (`https://github.com/advisories/GHSA-…`).
+   - **Path** — direct or transitive, through which parent, in which workspaces.
+     `pnpm why -r <pkg>` is left for a row that needs the full chain.
 
    - **Proposed fix** — from step 3. Mark a **major** bump explicitly: it can break the build or
      the runtime, and the checks in step 5 only cover what the specs cover.
