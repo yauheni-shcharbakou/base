@@ -37,9 +37,11 @@ never audits. Every step below is the same in both; where a step differs, it say
 1. **Run the audit**, in full — every severity, not just what CI fails on:
 
    ```bash
-   pnpm audit --prod --json
-   pnpm audit --json                 # --dev: the whole tree; keep the --prod output for Scope
+   pnpm audit --prod --json >/tmp/audit-prod.json
+   pnpm audit --json >/tmp/audit.json   # --dev only: the whole tree; the --prod file gives Scope
    ```
+
+   It exits non-zero whenever it finds something; only output that is not JSON is a failure.
 
    No advisories → say so, run step 3's override check anyway (an audit-clean tree is exactly when
    a stale override shows), and stop if that finds nothing either.
@@ -53,8 +55,21 @@ never audits. Every step below is the same in both; where a step differs, it say
    GHSA, `dev` otherwise.
 
    - **Advisory** — the GHSA id, linked (`https://github.com/advisories/GHSA-…`).
-   - **Path** — from `pnpm why -r <pkg>`: direct or transitive, through which parent, in which
-     workspaces.
+   - **Path** — direct or transitive, through which parent, in which workspaces. Read it from the
+     audit's own `findings[].paths` (`<workspace>><direct dep>>…><parent>><pkg>`, the workspace
+     with `/` spelled `__`), all advisories in one pass — not one `pnpm why` per row:
+
+     ```bash
+     jq -r '.advisories[] | [.findings[].paths[] | split(">")] as $p
+       | [.github_advisory_id, .module_name, ([.findings[].version] | unique | join(",")),
+          ($p | map(.[0] | gsub("__"; "/")) | unique | join(" ")),
+          (if any($p[]; length == 2) then "direct" else "via " + ($p | map(.[1]) | unique | join(",")) end),
+          "parents " + ($p | map(.[-2]) | unique | join(","))] | @tsv' /tmp/audit-prod.json
+     ```
+
+     With `--dev`, read `/tmp/audit.json` instead. The `parents` column is what step 3 decides on;
+     `pnpm why -r <pkg>` is left for a row that needs the full chain.
+
    - **Proposed fix** — from step 3. Mark a **major** bump explicitly: it can break the build or
      the runtime, and the checks in step 5 only cover what the specs cover.
    - Rows from step 3's override check go below, as `remove override <pkg>`.
