@@ -55,8 +55,9 @@ nothing bootstraps the app to migrate it.
 - **Only `migration:create` moves the snapshot.** MikroORM would rewrite it after `migration:up` /
   `:down` / `:fresh` from the database it ran against, raw-SQL constraints included (storage's
   owner-scoped parent key), and the next `migrate:create` would then drop them — so
-  `definePgConfig` turns the snapshot off for those commands. A snapshot that changes in git
-  without a new migration next to it is a bug, and CI refuses it.
+  `definePgConfig` turns the snapshot off for those commands. A snapshot whose content changes in
+  git without a new migration next to it is a bug, and CI refuses it
+  (`scripts/snapshot-migrations.sh`); reformatting it is not a change.
 - **A data change is a migration too** — a backfill is a TS migration ordered with the schema it
   needs. There is no task runner. What must hold on every start rather than once belongs to the
   service: auth creates its first admin itself (see its `CLAUDE.md`).

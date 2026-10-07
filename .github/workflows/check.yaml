@@ -243,24 +243,12 @@ jobs:
         run: 'pnpm migrate:check'
 
       # Only `migration:create` may move a snapshot (see backend/CLAUDE.md). One changed without a
-      # migration beside it would make the next `migrate:create` drop whatever it lost.
+      # migration beside it would make the next `migrate:create` drop whatever it lost. Judged by
+      # content, so reformatting a snapshot is no change.
       - name: 'Every snapshot change comes with a migration'
         env:
           BASE_SHA: '${{ github.event.pull_request.base.sha }}'
-        run: |
-          changed() {
-            git diff --name-only --no-renames "$@"
-          }
-          failed=0
-          while IFS= read -r snapshot; do
-            [ -n "$snapshot" ] || continue
-            dir=$(dirname "$snapshot")
-            if [ -z "$(changed --diff-filter=A "$BASE_SHA...HEAD" -- "$dir/*.migration.ts")" ]; then
-              echo "::error file=$snapshot::The snapshot changed without a new migration in $dir. Generate one with \`pnpm migrate:create\`."
-              failed=1
-            fi
-          done < <(changed --diff-filter=AM "$BASE_SHA...HEAD" -- 'backend/apps/*/src/migrations/.snapshot-*.json')
-          exit "$failed"
+        run: 'bash scripts/snapshot-migrations.sh "$BASE_SHA"'
 
       # Where the hits came from, in the job summary; a warning when the remote cache was out of
       # reach. Before the remote cache action's post step, which revokes the token.
