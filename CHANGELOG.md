@@ -5,6 +5,79 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] — 2026-10-08 — `feat/bump-deps-versions`
+
+The backend moves to Nest 12 and TypeScript 6, and since Nest 12 ships ESM only, which Jest cannot
+load on Node 22, every backend suite moves to Vitest
+([ADR-0040](docs/adr/0040-backend-specs-on-vitest.md)). A mapper now serializes only the relations
+it names, which fixes storage batches that took tens of seconds or ran out of memory, and keeps the
+user's password hash out of what the temp-code and session mappers return
+([ADR-0041](docs/adr/0041-a-mapper-names-the-relations-it-serializes.md)). CI gains a dependency
+audit and a formatting check. No contract, event, variable or migration changes.
+
+### Changed
+
+#### Dependencies
+
+- **Nest 12** (`@nestjs/*` 12.x, `@nestjs/swagger` 12, `@nestjs/mongoose` 12), **MikroORM 7.2**,
+  **TypeScript 6.0.3**, turbo 2.11.7, tsdown 0.23. A Nest app's `tsconfig.build.json` pins `rootDir`
+  to `./src`, or TypeScript 6 builds `main.js` into `dist/src/`.
+- **pnpm 12.9.1 and Node ≥22.22.3** (the Nest 12 CLI's floor). The Dockerfiles follow; a local
+  checkout needs `corepack prepare pnpm@12.9.1 --activate` or equivalent.
+- **Fewer overrides.** `scripts/stale-overrides.sh` showed that lodash, `@grpc/grpc-js`, tmp, ws,
+  form-data, multer and sanitize-html no longer need one; axios and protobufjs stay, each with its
+  reason beside it. `react-hook-form` is pinned at 7.89.0 in the admin instead of overridden, and
+  `@refinedev/devtools` is a devDependency. `pnpm audit --prod` reports nothing.
+
+#### Tests
+
+- **Backend specs run on Vitest**, the storage database suite included (it supersedes
+  [ADR-0017](docs/adr/0017-database-specs-on-node-test.md)). Each workspace's config is one call to
+  `nestVitestConfig` from `@packages/configs`, which compiles specs through swc for Nest's decorator
+  metadata. The admin stays on Jest.
+- **E2e suites run with Nest's logger off**; `E2E_LOGS=1` brings it back for a debugging run.
+
+#### CI
+
+- **`pnpm check:audit`** (`pnpm audit --prod --audit-level=high`) fails the check on a high or
+  critical advisory in a production dependency; advisories below that are listed in the job summary
+  with a warning.
+- **`prettier --check .`** fails a pull request with unformatted files; the repo was formatted once.
+  The apps' `format` scripts and `migrate:create` format JSON (the migration snapshots) too.
+- **One table of Vitest results** in the job summary — files, tests and wall time per package, unit
+  beside e2e — with failed and skipped tests marked, so an e2e suite that found no server cannot pass
+  for green.
+- `lint` waits on `^build` and `compile`, as `typecheck` does: run beside a rebuild, it could read a
+  sibling's half-written `dist`, and `--fix` then removed a cast the code needed.
+- The guard against a migration snapshot changed without a migration compares the JSON content, not
+  the bytes, so a reformat is no change (`scripts/snapshot-migrations.sh`).
+
+### Added
+
+- **The `/audit` skill** (`.claude/skills/audit/`): a failing `check:audit` becomes one table of
+  advisories, a fix per row — a bump, a lockfile refresh, an override last — the CI checks and a
+  commit. `--dev` covers devDependencies too. **`scripts/stale-overrides.sh`** judges each override
+  by dropping it and re-resolving the lockfile; **`scripts/audit-paths.sh`** shows each advisory's
+  path, scope and fix. Both have specs in `pnpm check:scripts`, which now share
+  `scripts/lib/spec.sh`.
+
+### Fixed
+
+#### Storage
+
+- **A batch of objects mapped in n².** Serializing a saved object followed its `parent`, whose
+  `children` the unit of work fills with every sibling the batch inserted: a thousand folders took
+  about 11 s, a hundred images placed in a folder 30 s, a hundred videos 60 s, and a few hundred ran
+  out of memory. Storage objects, files, images and videos now serialize what their contract holds;
+  an e2e suite holds the batch time.
+
+#### Auth
+
+- **The temp-code and session mappers returned their loaded user, password hash included**, and the
+  user mapper omitted a `tempTokens` field that does not exist, so a user's `tempCodes` reached the
+  cache. Neither crossed the wire (the contracts have no such fields). `user` is now its id, and the
+  user mapper drops `hash` and `tempCodes`.
+
 ## [3.0.2] — 2026-10-04 — `refactor/ci-optimization`
 
 CI no longer checks every merge twice. Pull requests keep the full check; a push to `main` only warms
