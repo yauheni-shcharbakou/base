@@ -123,9 +123,14 @@ project needs, grouped by area. That is why there is no release tool in this rep
 
    - **Stage by name, never `git add -A`.** Whatever else is uncommitted in the tree is not the
      release: leave it where it is and say so in the report.
-   - **A prepared branch gets a second commit, never an amend.** When step 1 found the entry
-     already there and extended it, the earlier release commit may be pushed; the new one carries
-     the same subject.
+   - **A prepared branch: amend only what nobody else has.** When step 1 found the entry already
+     there and extended it (or changed its version), look at the earlier release commit:
+     - **unpushed and still `HEAD`** (`git branch -r --contains <hash>` prints nothing) — fold the
+       change into it with `git commit --amend -m 'chore: release X.Y.Z'`: a branch should not carry
+       two release commits, least of all for two different versions;
+     - **pushed, or with other commits on top** — a second commit with the subject
+       `chore: release X.Y.Z`. Rewriting a pushed commit needs a force push, and folding one under
+       later work rewrites that work too.
    - Report the commit's hash, and whether the branch is ahead of its remote.
 
 ## What this skill does not do
