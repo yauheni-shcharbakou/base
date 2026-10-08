@@ -8,7 +8,7 @@ The hand-written infrastructure that wraps all NestJS gRPC transport: server opt
 
 ## Module (`grpc.module.ts`)
 
-- `GrpcModule.forRoot({ host?, appClientStrategy? })` — when `host` is set, provides `GRPC_MICROSERVICE_OPTIONS` (the server config for *this* service, consumed in `main.ts`). `appClientStrategy` registers outbound clients. Global module.
+- `GrpcModule.forRoot({ host?, appClientStrategy? })` — when `host` is set, provides `GRPC_MICROSERVICE_OPTIONS` (the server config for _this_ service, consumed in `main.ts`). `appClientStrategy` registers outbound clients. Global module.
 - `GrpcModule.forFeature({ strategy })` — registers outbound gRPC clients for a feature module.
 - A `GrpcStrategy` is `{ <host>: ServiceName[] }`. A module-level `GrpcClientRegistry` (global singleton) accumulates strategies, then wires `ClientsModule` providers + per-service DI tokens.
 
@@ -36,7 +36,7 @@ The gRPC loader reads the original `.proto` files at runtime from `PROTO_PATH = 
 ```bash
 pnpm build            # tsdown → dist (cjs + d.ts)
 pnpm dev              # tsdown --watch
-pnpm test             # jest: the exception and status-code mappers
+pnpm test             # vitest: the exception and status-code mappers
 pnpm lint             # eslint --fix
 pnpm format / reset
 ```

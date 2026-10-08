@@ -20,4 +20,9 @@ export class PgImageMapper extends PgMapper<
     isPlaced: isPlacedFilter<PgImageEntity>(),
     uploadStatus: backingFileStatusFilter<PgImageEntity>(),
   };
+
+  // The contract (`Image`, `ImagePopulated`) holds the file and nothing past it. Never a storage
+  // object, which leads to its folder and every sibling there.
+  protected readonly populate = ['file'];
+  protected readonly exclude = ['storageObject', 'file.storageObject', 'file.image', 'file.video'];
 }

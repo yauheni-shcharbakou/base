@@ -55,8 +55,9 @@ nothing bootstraps the app to migrate it.
 - **Only `migration:create` moves the snapshot.** MikroORM would rewrite it after `migration:up` /
   `:down` / `:fresh` from the database it ran against, raw-SQL constraints included (storage's
   owner-scoped parent key), and the next `migrate:create` would then drop them — so
-  `definePgConfig` turns the snapshot off for those commands. A snapshot that changes in git
-  without a new migration next to it is a bug, and CI refuses it.
+  `definePgConfig` turns the snapshot off for those commands. A snapshot whose content changes in
+  git without a new migration next to it is a bug, and CI refuses it
+  (`scripts/snapshot-migrations.sh`); reformatting it is not a change.
 - **A data change is a migration too** — a backfill is a TS migration ordered with the schema it
   needs. There is no task runner. What must hold on every start rather than once belongs to the
   service: auth creates its first admin itself (see its `CLAUDE.md`).
@@ -73,7 +74,7 @@ Run inside the service directory (e.g. `backend/apps/auth`), against the databas
 
 ```bash
 pnpm migrate                  # apply the pending migrations (migration:up)
-pnpm migrate:create           # generate one from the entity diff; --name <label> to name it
+pnpm migrate:create           # generate one from the entity diff (and format src/migrations); --name <label> to name it
 pnpm migrate:check            # exit non-zero while the entities and the snapshot disagree
 pnpm orm <command>            # any CLI command: migration:list / :pending / :down, debug
 ```
@@ -97,7 +98,7 @@ These hold for every `backend/packages/*` — don't restate them in a package's 
   `^build` rebuilds before a downstream `build`/`compile` — rebuild after changes, or run `pnpm dev`.
 - **Public API is the flat root `src/index.ts` barrel.** Inside a package, `@/*` aliases `src/*`.
 - **Specs sit next to their subject** (`*.spec.ts` / `*.e2e-spec.ts` under `src/`). They are
-  excluded from the turbo `build` inputs and are not part of the tsdown entry graph, but they *are*
+  excluded from the turbo `build` inputs and are not part of the tsdown entry graph, but they _are_
   in the tsconfig, so `tsc` and `eslint` type-check them — `layerGuard()` included, where it is
   wired. Target lib is ES2021: assign `cause` via `Object.assign`, not `err.cause =`.
 - **`src/generated/**` is never hand-edited** — fix the source of truth (a `.proto`, the

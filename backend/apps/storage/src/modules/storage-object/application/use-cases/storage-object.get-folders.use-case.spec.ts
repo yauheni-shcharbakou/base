@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import { left, right } from '@sweet-monads/either';
@@ -6,13 +7,13 @@ import { StorageObjectGetFoldersUseCase } from './storage-object.get-folders.use
 const folders = [{ id: 'root', folderPath: '/' }] as NestStorage.StorageObjectPopulated[];
 
 describe('StorageObjectGetFoldersUseCase', () => {
-  let repository: { getAllChildrenIds: jest.Mock; getMany: jest.Mock };
+  let repository: { getAllChildrenIds: Mock; getMany: Mock };
   let useCase: StorageObjectGetFoldersUseCase;
 
   beforeEach(() => {
     repository = {
-      getAllChildrenIds: jest.fn().mockResolvedValue(right(new Set(['child']))),
-      getMany: jest.fn().mockResolvedValue(folders),
+      getAllChildrenIds: vi.fn().mockResolvedValue(right(new Set(['child']))),
+      getMany: vi.fn().mockResolvedValue(folders),
     };
 
     useCase = new StorageObjectGetFoldersUseCase(repository as unknown as StorageObjectRepository);

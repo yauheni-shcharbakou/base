@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { FileCompletionService } from '@modules/file/application/services/file.completion.service';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
@@ -8,14 +9,14 @@ import { FileCompleteManyUseCase } from './file.complete-many.use-case';
 const file = (id: string) => ({ id, providerId: `dev/${id}`, size: 1 }) as NestStorage.File;
 
 describe('FileCompleteManyUseCase', () => {
-  let repository: { getMany: jest.Mock };
-  let completion: { complete: jest.Mock };
+  let repository: { getMany: Mock };
+  let completion: { complete: Mock };
   let useCase: FileCompleteManyUseCase;
 
   beforeEach(() => {
-    repository = { getMany: jest.fn().mockResolvedValue([file('a'), file('b'), file('c')]) };
+    repository = { getMany: vi.fn().mockResolvedValue([file('a'), file('b'), file('c')]) };
     completion = {
-      complete: jest.fn((row: NestStorage.File) =>
+      complete: vi.fn((row: NestStorage.File) =>
         Promise.resolve(
           row.id === 'b'
             ? left(new ConflictException('File has not been uploaded yet'))

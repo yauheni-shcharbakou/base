@@ -1,6 +1,6 @@
 # CLAUDE.md — @packages/compiler-utils
 
-Guidance for working inside `packages/compiler-utils`. For monorepo-wide conventions (naming, turbo, prettier), see the root `CLAUDE.md`. For context on the compilers themselves, see its *Protobuf codegen pipeline* and *Event-bus codegen pipeline* sections.
+Guidance for working inside `packages/compiler-utils`. For monorepo-wide conventions (naming, turbo, prettier), see the root `CLAUDE.md`. For context on the compilers themselves, see its _Protobuf codegen pipeline_ and _Event-bus codegen pipeline_ sections.
 
 ## What this is
 

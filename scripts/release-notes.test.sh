@@ -19,17 +19,7 @@ broken="$fixtures/changelog.broken.txt"
 actual=$(mktemp)
 trap 'rm -f "$actual"' EXIT
 
-passed=0
-failed=0
-
-pass() {
-  passed=$((passed + 1))
-}
-
-fail() {
-  echo "FAIL: ${name} — $1"
-  failed=$((failed + 1))
-}
+. scripts/lib/spec.sh
 
 # Runs the script; its output (stderr too) lands in $actual and its exit code in $status.
 run() {
@@ -95,7 +85,11 @@ run 'a prefix of a version is not that version' --file "$changelog" 2.0
 exits 1
 
 run 'no version' --file "$changelog"
-exits 1
+exits 2
+has 'usage:'
+
+run '--file needs a path' --file
+exits 2
 has 'usage:'
 
 run 'an unknown option' --nope 2.0.0
@@ -135,9 +129,4 @@ lacks 'docs/env.md'
 lacks 'example.test'
 lines 2
 
-if [ "$failed" -ne 0 ]; then
-  echo "release-notes: ${failed} failed, ${passed} passed."
-  exit 1
-fi
-
-echo "release-notes: ${passed} assertions passed."
+finish release-notes assertions

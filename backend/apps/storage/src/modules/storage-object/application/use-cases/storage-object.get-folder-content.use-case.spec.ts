@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestCommon, NestStorage } from '@backend/proto';
 import { StorageObjectRepository } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import { StorageFileService } from '@modules/storage/domain/services/storage.file.service';
@@ -58,27 +59,23 @@ const request = (
 });
 
 describe('StorageObjectGetFolderContentUseCase', () => {
-  let repository: Record<'getOne' | 'getAncestors' | 'getList' | 'count', jest.Mock>;
-  let fileService: { getFileSignedUrl: jest.Mock };
-  let videoService: { getThumbnailUrl: jest.Mock };
+  let repository: Record<'getOne' | 'getAncestors' | 'getList' | 'count', Mock>;
+  let fileService: { getFileSignedUrl: Mock };
+  let videoService: { getThumbnailUrl: Mock };
   let useCase: StorageObjectGetFolderContentUseCase;
 
   beforeEach(() => {
     repository = {
-      getOne: jest.fn().mockResolvedValue(right(folder)),
-      getAncestors: jest.fn().mockResolvedValue(right(ancestors)),
-      getList: jest.fn().mockResolvedValue({ items, total: 7 }),
-      count: jest.fn().mockResolvedValue(3),
+      getOne: vi.fn().mockResolvedValue(right(folder)),
+      getAncestors: vi.fn().mockResolvedValue(right(ancestors)),
+      getList: vi.fn().mockResolvedValue({ items, total: 7 }),
+      count: vi.fn().mockResolvedValue(3),
     };
     fileService = {
-      getFileSignedUrl: jest.fn((providerId: string) =>
-        right(`https://storage.test/${providerId}`),
-      ),
+      getFileSignedUrl: vi.fn((providerId: string) => right(`https://storage.test/${providerId}`)),
     };
     videoService = {
-      getThumbnailUrl: jest.fn((guid: string) =>
-        right(`https://stream.test/${guid}/thumbnail.jpg`),
-      ),
+      getThumbnailUrl: vi.fn((guid: string) => right(`https://stream.test/${guid}/thumbnail.jpg`)),
     };
 
     useCase = new StorageObjectGetFolderContentUseCase(

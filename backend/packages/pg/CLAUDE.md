@@ -20,7 +20,7 @@ src/
     pg.module.ts
 ```
 
-**Rules:** put concrete impls of `@backend/common` contracts and MikroORM-bound code (entities, config, mappers) in `infrastructure/`; put inbound entrypoints (interceptors — anything Nest *drives*) in `interface/`. The public API is the root `src/index.ts` barrel — consumers import flat symbols (`PgEntity`, `PgRepositoryImpl`, `PgMapper`, `PgProp`, `PgSchema`, `PgModule`, `definePgConfig`) from `@backend/pg`, never deep paths, so internal moves stay invisible as long as the barrel re-exports the same names. Inside the package, `@/core` aliases `core/`.
+**Rules:** put concrete impls of `@backend/common` contracts and MikroORM-bound code (entities, config, mappers) in `infrastructure/`; put inbound entrypoints (interceptors — anything Nest _drives_) in `interface/`. The public API is the root `src/index.ts` barrel — consumers import flat symbols (`PgEntity`, `PgRepositoryImpl`, `PgMapper`, `PgProp`, `PgSchema`, `PgModule`, `definePgConfig`) from `@backend/pg`, never deep paths, so internal moves stay invisible as long as the barrel re-exports the same names. Inside the package, `@/core` aliases `core/`.
 
 ## Module (`pg.module.ts`)
 
@@ -41,6 +41,27 @@ Every subclass declares the abstract `resourceName` ("Storage object", "User"), 
 **`updateMany` and `deleteMany` refuse a query that constrains nothing** with a `BadRequestException` ("Storage object delete: a filter is required"), judged on what `transformQuery` produced, not on what the caller sent. A read is not guarded, by decision: `getMany({ ids: [] })` returns every row, because an empty list is no constraint, not a constraint nothing meets. The gRPC loader runs with `defaults`/`arrays`, so a client that sends no filter arrives as `{ ids: [] }`, and the mapper drops an empty list — without the check, one request writes every row. A use-case that reads the rows before writing them by id (`UserDeleteUseCase` in `backend.auth`) is past this guard by the time it writes, so it refuses first with `isUnfilteredQuery` from `@backend/common`.
 
 `saveOne`/`saveMany` additionally run their `catch` through `toRepositoryError`, which turns a MikroORM `UniqueConstraintViolationException` into a `ConflictException`. Callers can then tell "this row already exists" from a real write failure — an at-least-once event handler treats the former as success and must retry on the latter (see `StorageObjectCreateRootFolderUseCase` in `backend.storage`).
+
+## Mapper serialization
+
+`PgMapper.stringify` is MikroORM's `serialize`, never `toJSON`: **a relation is its key unless the
+mapper names it.** A subclass declares two lists and no `stringify` of its own:
+
+- `populate` — relations serialized as objects, at any depth (`file`, `file.image`), and only where
+  the read loaded them; a named relation the read left alone is still its key. A lazy scalar (a
+  `{ lazy: true }` formula) needs no entry: it appears wherever the read populated it.
+- `exclude` — properties never visited, at any depth (`file.storageObject`, `hash`). Exclude the
+  back-reference of every populated relation (`image.file` under `file`'s `image`), and any column the
+  contract must not carry.
+
+`toJSON` expands every relation the identity map happens to hold, so the answer depended on what
+else the request had loaded: a leaf reached its folder and every sibling the unit of work had put in
+its `children` (n², out of memory at a few hundred), a temp code its user with the password hash. The
+paths are not type-checked — a relation typed as a proto message has nothing past it — so a misspelt
+one serializes the property it meant to cut; `auth`'s user mapper excluded a `tempTokens` that never
+existed. The price is that every relation a contract carries as an object is declared.
+
+> **Why:** [docs/adr/0041-a-mapper-names-the-relations-it-serializes.md](../../../docs/adr/0041-a-mapper-names-the-relations-it-serializes.md)
 
 ## Entities & IDs
 
@@ -63,4 +84,5 @@ MikroORM CLI loads it without an app.
 ```bash
 pnpm build / dev / typecheck / lint / format / reset
 ```
+
 - `lodash` is declared in this package's deps, with `@types/lodash` in devDeps.

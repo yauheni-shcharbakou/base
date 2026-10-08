@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import 'reflect-metadata';
 import { Metadata, status } from '@grpc/grpc-js';
 import { GUARDS_METADATA } from '@nestjs/common/constants';
@@ -47,7 +48,7 @@ const context = (
   controller: Controller,
   method: string,
   entries: Record<string, string> = {},
-  { peer = '10.0.0.1:50000', data = {} as unknown } = {},
+  { peer = '10.0.0.1:50000', data = {} } = {},
 ) => {
   const host = new ExecutionContextHost(
     [data, metadataOf(entries), { getPeer: () => peer }],

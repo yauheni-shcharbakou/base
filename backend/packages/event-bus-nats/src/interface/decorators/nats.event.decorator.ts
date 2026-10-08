@@ -7,5 +7,5 @@ type NatsEventParams = {
 
 export const NatsEvent = (params: NatsEventParams): MethodDecorator => {
   params.registerStream?.();
-  return EventPattern(params.pattern);
+  return EventPattern<string>(params.pattern);
 };

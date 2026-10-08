@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import 'reflect-metadata';
 import { EventPattern } from '@nestjs/microservices';
 import { PATTERN_METADATA } from '@nestjs/microservices/constants';
@@ -19,7 +20,7 @@ describe('NatsController', () => {
   it('rewrites the bare subject into a consumer-scoped pattern', () => {
     @NatsController({ consumer: 'storage.file' })
     class Controller {
-      @EventPattern('auth-user-create')
+      @EventPattern<string>('auth-user-create')
       onUserCreate(): void {}
     }
 
@@ -29,13 +30,13 @@ describe('NatsController', () => {
   it('gives two controllers on the same subject independent patterns and durables', () => {
     @NatsController({ consumer: 'storage.file' })
     class FileController {
-      @EventPattern('auth-user-create')
+      @EventPattern<string>('auth-user-create')
       onUserCreate(): void {}
     }
 
     @NatsController({ consumer: 'storage.storage-object' })
     class StorageObjectController {
-      @EventPattern('auth-user-create')
+      @EventPattern<string>('auth-user-create')
       onUserCreate(): void {}
     }
 
@@ -56,7 +57,7 @@ describe('NatsController', () => {
     const Decorate = NatsController({ consumer: 'storage.file' });
 
     class Controller {
-      @EventPattern('auth-user-create')
+      @EventPattern<string>('auth-user-create')
       onUserCreate(): void {}
     }
 
@@ -70,7 +71,7 @@ describe('NatsController', () => {
     expect(() => {
       @NatsController({ consumer: 'Storage File' })
       class Controller {
-        @EventPattern('auth-user-create')
+        @EventPattern<string>('auth-user-create')
         onUserCreate(): void {}
       }
 

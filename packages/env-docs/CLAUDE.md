@@ -46,7 +46,7 @@ a table) is a parse error rather than an empty block.
 - Several sources are comma-separated (`src=a.ts,b.ts`); the table then gains a `Source` column.
 - `path.ts#ExportName` targets a named exported shape instead of the file's `validateEnv` calls —
   how the shared `NodeValidationSchema` / `DatabaseValidationSchema` are tabulated.
-- Everything outside the markers is left alone. Prose explaining *why* a value is what it is
+- Everything outside the markers is left alone. Prose explaining _why_ a value is what it is
   belongs there, not in the table: defaults drift, reasons do not.
 - A marker inside a fenced code block is documentation of the syntax, not a use of it, and is
   skipped — which is what makes this section possible.
@@ -66,7 +66,7 @@ when either of these breaks:
   declaration); anything no marker names is an error. A `--check` cannot fix it by writing, since
   nothing tells the generator which section a new config belongs under.
 - **The service map matches the manifests.** A package appears in a service's row when it is in the
-  transitive closure of that service's `workspace:*` dependencies *and* owns a marker source of its
+  transitive closure of that service's `workspace:*` dependencies _and_ owns a marker source of its
   own. `@packages/common` therefore does not appear — its markers address named shapes, and its
   variables are already counted through whichever package spreads them. An app is a workspace whose
   name carries no `/` (`backend.auth` against `@backend/pg`), which is the repository's own naming

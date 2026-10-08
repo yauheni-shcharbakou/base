@@ -10,5 +10,5 @@ type RedisEventParams = {
  * class decorator runs, because that is the first point where the consumer id is known.
  */
 export const RedisEvent = (params: RedisEventParams): MethodDecorator => {
-  return EventPattern(params.pattern);
+  return EventPattern<string>(params.pattern);
 };

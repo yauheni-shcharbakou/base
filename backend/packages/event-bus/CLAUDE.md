@@ -1,7 +1,7 @@
 # CLAUDE.md — @backend/event-bus
 
 Guidance for working inside `backend/packages/event-bus`. The pipeline overview is in the root
-`CLAUDE.md` *Event-bus codegen pipeline* section; shared backend package conventions are in
+`CLAUDE.md` _Event-bus codegen pipeline_ section; shared backend package conventions are in
 `backend/CLAUDE.md`. This file is the package internals **and the owner of the rules that hold for
 the bus as a whole**, regardless of transport.
 

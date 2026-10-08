@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { EventBusHost } from '@backend/event-bus';
 import { NestAuth } from '@backend/proto';
 import { INestApplication } from '@nestjs/common';
@@ -15,9 +16,16 @@ import { RedisController, RedisEvent } from '../decorators';
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 const EVENT_ID = 'auth.user.create';
 
-// `test/redis-server.setup.js` probes the server before the workers fork. Skipping outright beats
+declare module 'vitest' {
+  export interface ProvidedContext {
+    /** Whether `test/redis-server.setup.ts` found a Redis to run against. */
+    redisServer: boolean;
+  }
+}
+
+// `test/redis-server.setup.ts` probes the server before the workers start. Skipping outright beats
 // a suite that passes because it silently did nothing.
-const describeWithServer = process.env.REDIS_E2E_SERVER === '1' ? describe : describe.skip;
+const describeWithServer = describe.skipIf(!inject('redisServer'));
 
 type Received = {
   event: NestAuth.User;

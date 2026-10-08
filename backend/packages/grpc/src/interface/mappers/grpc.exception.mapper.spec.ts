@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { Metadata, status as GrpcStatus, type ServiceError } from '@grpc/grpc-js';
 import {
   BadRequestException,

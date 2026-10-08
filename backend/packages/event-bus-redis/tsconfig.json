@@ -4,9 +4,9 @@
     "rootDir": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@compiler/*": ["./compiler/*"],
-    },
+      "@compiler/*": ["./compiler/*"]
+    }
   },
-  "include": ["src", "compiler"],
-  "exclude": ["node_modules", "dist"],
+  "include": ["src", "compiler", "test"],
+  "exclude": ["node_modules", "dist"]
 }

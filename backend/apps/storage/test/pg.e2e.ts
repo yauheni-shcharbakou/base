@@ -1,8 +1,5 @@
-// Imported first by every Postgres spec: `@backend/pg` validates its env when the module loads, so
-// the default has to be in place before anything pulls it in. The fallback is the database
-// `pnpm docker:db` starts.
-process.env.DATABASE_URL ??= 'postgresql://admin:password123@localhost:5432';
-
+// `DATABASE_URL` falls back to the database `pnpm docker:db` starts — in `vitest.e2e.config.mts`,
+// because `@backend/pg` validates its env when the module loads, before any statement here runs.
 import ormConfig from '@/mikro-orm.config';
 import { ReflectMetadataProvider } from '@mikro-orm/decorators/legacy';
 import { Migrator } from '@mikro-orm/migrations';
@@ -17,18 +14,22 @@ const MIGRATIONS_DIR = join(__dirname, '../src/migrations');
 // The real migrations rather than a schema generated from the entities: the FK rules the deletion
 // paths rely on (`on delete cascade`, `on delete set null`) are what production has, not what the
 // metadata would regenerate.
-const loadMigrations = () =>
-  readdirSync(MIGRATIONS_DIR)
+const loadMigrations = async () => {
+  const files = readdirSync(MIGRATIONS_DIR)
     .filter((file) => file.endsWith('.migration.ts'))
-    .sort()
-    // A synchronous require through ts-node: MikroORM's own loader imports ESM-style, which
-    // cannot read a `.ts` file here.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    .flatMap((file) => Object.values(require(join(MIGRATIONS_DIR, file)) as object));
+    .sort();
+
+  // Through Vitest's own loader, which compiles the `.ts`; MikroORM's would hand it to Node as is.
+  const modules = await Promise.all(
+    files.map((file) => import(join(MIGRATIONS_DIR, file)) as Promise<object>),
+  );
+
+  return modules.flatMap((module) => Object.values(module));
+};
 
 export interface StartOrmOptions {
   /**
-   * Suffix of the spec's own database. `node --test` runs spec files in parallel processes, and each
+   * Suffix of the spec's own database. Vitest runs spec files in parallel workers, and each
    * one drops and re-migrates its schema, so two specs sharing a database wipe each other's tables.
    */
   database?: string;
@@ -56,7 +57,7 @@ export const startOrm = async ({ database, onQuery }: StartOrmOptions = {}): Pro
     extensions: [Migrator],
     migrations: {
       tableName: 'mikro_orm_migrations',
-      migrationsList: loadMigrations(),
+      migrationsList: await loadMigrations(),
       transactional: true,
       allOrNothing: true,
       silent: true,

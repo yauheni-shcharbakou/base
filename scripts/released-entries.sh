@@ -22,16 +22,21 @@
 # scripts/released-entries.test.sh, which point `--repo` at a scratch repository. Needs bash, git
 # and awk alone.
 repo="$(dirname "${BASH_SOURCE[0]}")/.."
+usage='usage: released-entries.sh [--repo <dir>]'
+usage_error() {
+  echo "$usage" >&2
+  exit 2
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo)
-      repo=${2:?usage: released-entries.sh [--repo <dir>]}
+      [ -n "${2:-}" ] || usage_error
+      repo=$2
       shift 2
       ;;
     *)
-      echo 'usage: released-entries.sh [--repo <dir>]' >&2
-      exit 2
+      usage_error
       ;;
   esac
 done

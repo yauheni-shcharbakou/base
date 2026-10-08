@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FileDeleteByOwnerUseCase } from '@modules/file/application/use-cases/file.delete-by-owner.use-case';
 import { FileRepository } from '@modules/file/domain/repositories/file.repository';
 import { StorageObjectDeleteRootFolderUseCase } from '@modules/storage-object/application/use-cases/storage-object.delete-root-folder.use-case';
@@ -8,25 +9,25 @@ import { left, right } from '@sweet-monads/either';
 import { UserPurgeDeletedUseCase } from './user.purge-deleted.use-case';
 
 describe('UserPurgeDeletedUseCase', () => {
-  let directory: { getExistingIds: jest.Mock };
-  let fileRepository: { getOwnerIds: jest.Mock };
-  let storageObjectRepository: { getLiveOwnerIds: jest.Mock };
-  let deleteRootFolder: { execute: jest.Mock };
-  let deleteMedia: { execute: jest.Mock };
+  let directory: { getExistingIds: Mock };
+  let fileRepository: { getOwnerIds: Mock };
+  let storageObjectRepository: { getLiveOwnerIds: Mock };
+  let deleteRootFolder: { execute: Mock };
+  let deleteMedia: { execute: Mock };
   let useCase: UserPurgeDeletedUseCase;
 
   beforeEach(() => {
-    jest.spyOn(Logger.prototype, 'log').mockImplementation();
-    jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    vi.spyOn(Logger.prototype, 'log').mockReturnValue(undefined);
+    vi.spyOn(Logger.prototype, 'error').mockReturnValue(undefined);
 
-    directory = { getExistingIds: jest.fn().mockResolvedValue(right(new Set(['alive']))) };
-    fileRepository = { getOwnerIds: jest.fn().mockResolvedValue(['alive', 'gone']) };
-    storageObjectRepository = { getLiveOwnerIds: jest.fn().mockResolvedValue(['alive', 'stale']) };
-    deleteRootFolder = { execute: jest.fn().mockResolvedValue(right(undefined)) };
-    deleteMedia = { execute: jest.fn().mockResolvedValue(right(0)) };
+    directory = { getExistingIds: vi.fn().mockResolvedValue(right(new Set(['alive']))) };
+    fileRepository = { getOwnerIds: vi.fn().mockResolvedValue(['alive', 'gone']) };
+    storageObjectRepository = { getLiveOwnerIds: vi.fn().mockResolvedValue(['alive', 'stale']) };
+    deleteRootFolder = { execute: vi.fn().mockResolvedValue(right(undefined)) };
+    deleteMedia = { execute: vi.fn().mockResolvedValue(right(0)) };
 
     useCase = new UserPurgeDeletedUseCase(
-      directory as unknown as UserDirectoryService,
+      directory,
       fileRepository as unknown as FileRepository,
       storageObjectRepository as unknown as StorageObjectRepository,
       deleteRootFolder as unknown as StorageObjectDeleteRootFolderUseCase,
@@ -34,7 +35,7 @@ describe('UserPurgeDeletedUseCase', () => {
     );
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('purges the tree and the media of every owner auth no longer knows', async () => {
     const result = await useCase.execute();

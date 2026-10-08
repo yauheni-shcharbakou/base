@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { VideoEventBus } from '@backend/event-bus';
 import { NestStorage } from '@backend/proto';
 import { StorageVideo } from '@modules/storage/domain/entities/storage.video.interface';
@@ -12,8 +13,12 @@ import {
 
 const { PENDING, UPLOADED, READY, FAILED } = NestStorage.FileUploadStatus;
 
-const providerVideo = (providerId: string, status: number) =>
-  ({ providerId, status, duration: 1, views: 0 }) as StorageVideo;
+const providerVideo = (providerId: string, status: number) => ({
+  providerId,
+  status,
+  duration: 1,
+  views: 0,
+});
 
 const video = (providerId: string, uploadStatus?: NestStorage.FileUploadStatus) =>
   ({
@@ -23,9 +28,9 @@ const video = (providerId: string, uploadStatus?: NestStorage.FileUploadStatus) 
   }) as NestStorage.VideoPopulated;
 
 describe('VideoSyncWithProviderUseCase', () => {
-  let repository: { bulkUpdate: jest.Mock; getMany: jest.Mock };
-  let storage: { getList: jest.Mock };
-  let eventBus: { emitUploadFinish: jest.Mock; emitUploadFail: jest.Mock };
+  let repository: { bulkUpdate: Mock; getMany: Mock };
+  let storage: { getList: Mock };
+  let eventBus: { emitUploadFinish: Mock; emitUploadFail: Mock };
   let useCase: VideoSyncWithProviderUseCase;
 
   const sync = async (items: StorageVideo[], videos: NestStorage.VideoPopulated[]) => {
@@ -35,12 +40,12 @@ describe('VideoSyncWithProviderUseCase', () => {
   };
 
   beforeEach(() => {
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
-    repository = { bulkUpdate: jest.fn().mockResolvedValue(right(true)), getMany: jest.fn() };
-    storage = { getList: jest.fn() };
-    eventBus = { emitUploadFinish: jest.fn(), emitUploadFail: jest.fn() };
+    repository = { bulkUpdate: vi.fn().mockResolvedValue(right(true)), getMany: vi.fn() };
+    storage = { getList: vi.fn() };
+    eventBus = { emitUploadFinish: vi.fn(), emitUploadFail: vi.fn() };
     useCase = new VideoSyncWithProviderUseCase(
       repository as unknown as VideoRepository,
       storage as unknown as StorageVideoService,
@@ -48,7 +53,7 @@ describe('VideoSyncWithProviderUseCase', () => {
     );
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('makes READY every encoded video whose row is short of it, whatever it says', async () => {
     const rows = [video('a', PENDING), video('b', UPLOADED), video('c', FAILED)];

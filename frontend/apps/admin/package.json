@@ -29,7 +29,6 @@
     "@packages/common": "workspace:*",
     "@packages/proto": "workspace:*",
     "@refinedev/core": "5.0.12",
-    "@refinedev/devtools": "2.0.5",
     "@refinedev/kbar": "2.0.1",
     "@refinedev/mui": "7.0.1",
     "@refinedev/nextjs-router": "7.0.5",
@@ -40,14 +39,15 @@
     "change-case-all": "catalog:",
     "js-cookie": "3.0.8",
     "lodash": "catalog:",
-    "next": "15.5.18",
+    "next": "15.5.27",
     "pdfjs-dist": "catalog:",
     "player.js": "0.1.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-dropzone": "15.0.0",
-    "react-hook-form": "7.57.0",
+    "react-hook-form": "7.89.0",
     "react-pdf": "11.0.0",
+    "sharp": "catalog:",
     "tus-js-client": "4.3.1",
     "ulid": "catalog:",
     "zod": "catalog:"
@@ -55,14 +55,15 @@
   "devDependencies": {
     "@packages/configs": "workspace:*",
     "@refinedev/cli": "2.16.52",
-    "@types/jest": "catalog:",
+    "@refinedev/devtools": "2.0.5",
+    "@types/jest": "30.0.0",
     "@types/js-cookie": "3.0.6",
     "@types/lodash": "catalog:",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.2",
     "cross-env": "10.1.0",
-    "jest": "catalog:",
-    "ts-jest": "catalog:"
+    "jest": "30.3.0",
+    "ts-jest": "29.4.14"
   },
   "jest": {
     "rootDir": "src",
@@ -76,7 +77,9 @@
         {
           "tsconfig": {
             "module": "commonjs",
+            "moduleResolution": "bundler",
             "target": "ES2021",
+            "rootDir": ".",
             "isolatedModules": true
           }
         }

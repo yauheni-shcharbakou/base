@@ -1,6 +1,6 @@
 # CLAUDE.md — @frontend/proto
 
-Guidance for working inside `frontend/packages/proto`. The cross-service contract flow and the three generated proto flavors are documented in the root `CLAUDE.md` *Protobuf codegen pipeline* section — read that first.
+Guidance for working inside `frontend/packages/proto`. The cross-service contract flow and the three generated proto flavors are documented in the root `CLAUDE.md` _Protobuf codegen pipeline_ section — read that first.
 
 ## What this is
 

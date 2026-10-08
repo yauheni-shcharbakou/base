@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Documentation layout.** Facts have a single owner: this file covers the monorepo as a whole,
 `backend/CLAUDE.md` the backend conventions, and each app/package its own internals. Rationale for
 structural decisions ("why it was built this way") lives in [`docs/adr/`](docs/adr/README.md) and is
-linked from the rule it explains — read an ADR only when the *why* matters. When something changes,
+linked from the rule it explains — read an ADR only when the _why_ matters. When something changes,
 update the one owning file rather than restating it in a second one.
 
 ## Conversation compaction policy
@@ -30,7 +30,7 @@ You may compact aggressively:
 
 ## Overview
 
-Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microservices (backend) and a Next.js/Refine admin panel (frontend), wired together by Protobuf codegen and a Redis/BullMQ event bus. Requires Node ≥22.22, pnpm 11.9.0 (pinned by `packageManager`), and `protoc` (only for proto compilation).
+Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microservices (backend) and a Next.js/Refine admin panel (frontend), wired together by Protobuf codegen and a Redis/BullMQ event bus. Requires Node ≥22.22.3 (the Nest 12 CLI), pnpm 12.9.1 (pinned by `packageManager`), and `protoc` (only for proto compilation).
 
 ## Workspaces & naming
 
@@ -44,7 +44,7 @@ Personal-website monorepo: a Turborepo + pnpm workspace of NestJS gRPC microserv
 
 Inside an app, TS path aliases are `@/*` (src), `@modules/*`, `@common/*`, and `@compiler/*` (proto package only). Cross-package imports always use the `@backend/…`/`@packages/…` names, never relative paths.
 
-**Dependency versions:** a dependency more than one workspace declares is pinned once, in the `catalog:` block of `pnpm-workspace.yaml`, and each manifest asks for it as `"lodash": "catalog:"`. The workspace still declares what it imports — that is what the tsdown factory and `import-x/no-extraneous-dependencies` read — while the version cannot drift between packages. Bump a shared version in `pnpm-workspace.yaml`, not in a manifest; a dependency only one workspace uses keeps its literal version there. This is not `overrides` (further down the same file): a catalog resolves what a workspace *asks* for, an override rewrites what the whole tree *gets*, transitive dependencies included.
+**Dependency versions:** a dependency more than one workspace declares is pinned once, in the `catalog:` block of `pnpm-workspace.yaml`, and each manifest asks for it as `"lodash": "catalog:"`. The workspace still declares what it imports — that is what the tsdown factory and `import-x/no-extraneous-dependencies` read — while the version cannot drift between packages. Bump a shared version in `pnpm-workspace.yaml`, not in a manifest; a dependency only one workspace uses keeps its literal version there. This is not `overrides` (further down the same file): a catalog resolves what a workspace _asks_ for, an override rewrites what the whole tree _gets_, transitive dependencies included.
 
 **Build config:** every package that ships a `dist/` builds with tsdown through one shared factory — `nodePackageConfig(import.meta.url)` from `@packages/configs/tsdown/package.config.mjs`. It reads the package's **own** `package.json` to decide what stays external, so an import the package does not declare gets bundled into `dist/` instead of being required at runtime. Declare the dependency; don't hand-extend `neverBundle`.
 
@@ -68,7 +68,8 @@ pnpm migrate:check            # fail while any service's entities and migration 
 pnpm lint                     # eslint --fix across workspaces
 pnpm format                   # prettier
 pnpm check:docs               # the docs layout holds: links into docs/ resolve, every ADR is indexed, workspace names in a CLAUDE.md exist, the changelog's top entry is the root version and can be published, no released entry was edited, no merged ADR changed beyond its status line
-pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh, released-entries.sh and frozen-adrs.sh
+pnpm check:scripts            # the specs of scripts/release-notes.sh (against its fixtures), classify-changes.sh, check-railway-exposure.sh, released-entries.sh, frozen-adrs.sh, stale-overrides.sh, audit-paths.sh and snapshot-migrations.sh
+pnpm check:audit              # pnpm audit --prod: fails on a high or critical advisory in a production dependency (CI runs it; the `/audit` skill proposes and applies the fix)
 pnpm check:railway            # tsc over .railway/railway.ts (no workspace, so `typecheck` skips it)
 pnpm docker:local             # postgres + redis + the ngrok tunnel for Bunny Stream webhooks (local dev)
 pnpm docker:local:d           # the same, detached
@@ -102,7 +103,7 @@ Creating a migration (and any other MikroORM CLI command) runs inside a service 
 **CI.** Two workflows. `.github/workflows/check.yaml` runs on every pull request into `main`:
 `build`, then `typecheck`, `lint`, `test` and `test:e2e` in one turbo run, then fails if they left
 the tree dirty (stale codegen, unformatted code, unapplied lint fixes), then `check:docs`,
-`check:scripts`, `check:env-docs`, `migrate:check` and a guard against a migration snapshot changed
+`check:scripts`, `check:audit`, `check:env-docs`, `migrate:check` and a guard against a migration snapshot changed
 without a new migration next to it. Postgres, Redis and NATS run beside the job and
 `E2E_REQUIRE_SERVERS=1` turns a skipped e2e suite into a failure. Its `check` job is the required
 status check. `.github/workflows/main.yaml` runs on every push to `main` and checks nothing again:
@@ -118,7 +119,9 @@ and pruned of entries older than a week, is the fallback. Since neither failure 
 cached job ends with a turbo cache report in its summary — remote hits, local hits and misses per
 turbo run, counted from the run summaries `TURBO_RUN_SUMMARY` makes turbo write, which hold hashes
 of env values and are never published — and a warning while the remote cache is out of reach. The
-setup steps, protoc and that report are local composite actions in `.github/actions/`.
+setup steps, protoc, that report and the Vitest report — one table of every package's unit and e2e
+results, read from the JSON reports the shared Vitest config writes — are local composite actions in
+`.github/actions/`.
 **A change to documentation alone skips all of that**: when every changed path is a `*.md` or under
 `.claude/`, the `check` job and its servers never start, and a `docs` job runs `check:docs` and
 `check:env-docs` by themselves; on `main`, the build is skipped. A pull request is judged whole,
@@ -153,7 +156,7 @@ tag): what the entry says is what the Release says, so write it for that reader.
 specs are `scripts/release-notes.test.sh` — a change to how lines are joined starts with a fixture
 in `scripts/fixtures/release-notes/`, which are `.txt` so that a change to one still counts as code.
 
-**Tests.** Jest is configured per package that has tests. Run repo-wide from the root (`pnpm test`,
+**Tests.** The backend runs on **Vitest**, the admin on Jest. Run repo-wide from the root (`pnpm test`,
 `pnpm test:e2e`, scoped with `--filter=<pkgname>`) or inside a package (`pnpm test:watch`, single
 file: `pnpm test -- path/to/file.spec.ts`). A package with no `*.spec.ts` under `src/` has no
 suite — there is no central list. Both turbo tasks depend on `^build`, because specs import
@@ -161,14 +164,20 @@ sibling packages through their built `dist`; `test:e2e` is `cache: false` — wh
 skips depends on a reachable broker or database, which turbo cannot hash. A backend app whose suite
 is still empty passes `--passWithNoTests` in that script to keep the repo-wide run green (the
 `test:e2e` of `api-gateway` and `auth`) — **drop the flag the moment the suite gets its first spec.**
-**Nothing that loads MikroORM runs under Jest:** MikroORM 7 is ESM-only and Jest's runtime has no
-`require(esm)`. A database spec runs on `node:test` instead — `backend.storage`'s `test:e2e` is the
-template ([ADR-0017](docs/adr/0017-database-specs-on-node-test.md)).
-**ts-jest only transpiles** (`tsconfig: { isolatedModules: true }` in each transform): `typecheck`
-already checks the specs, and a second type check made up half the test run. A backend transform
-also sets `module: commonjs` and `moduleResolution: node10`, which ts-jest forced itself while it
-type-checked — under `nodenext` a transpiled `import()` stays native and fails under Jest. A new
-jest config copies the transform of its package's siblings.
+**A backend workspace's config is one call:** `vitest.config.mts` (and `vitest.e2e.config.mts` for an
+e2e suite) default-exports `nestVitestConfig(import.meta.url, test?)` from
+`@packages/configs/vitest/nest.config.mjs`. It compiles specs with swc — Nest's DI needs the
+decorator metadata Vite's own transform never emits — and maps the `@/`, `@modules/`, `@common/`
+aliases. Specs import `describe`/`it`/`expect`/`vi` from `vitest`; there are no globals. A suite
+that needs a server probes it in a `globalSetup`, `provide`s the answer and skips through
+`describe.skipIf(!inject(…))`; env a config module validates at load goes in the config's `env`.
+An e2e suite runs with Nest's static `Logger` off — no spec asserts on a log, and a request failed
+on purpose would print its stack; `E2E_LOGS=1 pnpm test:e2e` brings the logs back for debugging.
+A Nest app's `tsconfig.build.json` pins `rootDir` to `./src` — TypeScript 6 defaults it to the
+config's directory, which moves `main.js` to `dist/src/` — with `tsBuildInfoFile` under `dist`, and
+excludes `vitest*.config.mts`, which sit outside that root ([ADR-0040](docs/adr/0040-backend-specs-on-vitest.md)).
+Under Jest the admin's ts-jest only transpiles (`isolatedModules` in its transform): `typecheck`
+already checks the specs.
 
 **Lint & strictness.**
 
@@ -182,7 +191,7 @@ jest config copies the transform of its package's siblings.
 
 A TypeScript LSP (the `typescript-lsp` plugin) may be available in a session. Two rules specific to this monorepo:
 
-- **LSP within a package, grep across packages.** Cross-package imports (`@backend/*`, `@packages/*`) resolve to the built `dist/*.d.cts`, not source, so `findReferences` / `goToImplementation` on a *source* symbol only cover the same package — they miss consumers in sibling packages (e.g. pg/mongo/auth/storage that consume a `@backend/common` contract). For "who across the repo uses this shared symbol", use grep/Explore; use the LSP for within-package definition / hover / references / diagnostics, where it is precise.
+- **LSP within a package, grep across packages.** Cross-package imports (`@backend/*`, `@packages/*`) resolve to the built `dist/*.d.cts`, not source, so `findReferences` / `goToImplementation` on a _source_ symbol only cover the same package — they miss consumers in sibling packages (e.g. pg/mongo/auth/storage that consume a `@backend/common` contract). For "who across the repo uses this shared symbol", use grep/Explore; use the LSP for within-package definition / hover / references / diagnostics, where it is precise.
 - **Warm up with a repeat query.** tsserver indexes lazily, so the first `findReferences` / `workspaceSymbol` right after the server connects under-reports (can return just the declaration). Run the query a second time for the complete result.
 
 ## Protobuf codegen pipeline (the backbone)
@@ -216,11 +225,11 @@ committed and never hand-edited.
 
 Three packages, each compiling its own generated code in its own turbo task:
 
-| Package | Role |
-|---|---|
-| `@backend/event-bus` | Strategy + compiler. Emits the abstract `<Service>EventBus` ports and `EventBusHost`. Owns the naming rules and the bus-wide semantics. |
-| `@backend/event-bus-redis` | **The live transport** (Redis/BullMQ) — `auth` and `storage` run on it. |
-| `@backend/event-bus-nats` | The dormant alternative (NATS JetStream) — generated, built and tested, wired into no service. |
+| Package                    | Role                                                                                                                                    |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `@backend/event-bus`       | Strategy + compiler. Emits the abstract `<Service>EventBus` ports and `EventBusHost`. Owns the naming rules and the bus-wide semantics. |
+| `@backend/event-bus-redis` | **The live transport** (Redis/BullMQ) — `auth` and `storage` run on it.                                                                 |
+| `@backend/event-bus-nats`  | The dormant alternative (NATS JetStream) — generated, built and tested, wired into no service.                                          |
 
 Each package's `CLAUDE.md` covers its internals; the decisions behind the split are ADRs
 [0001](docs/adr/0001-redis-as-live-transport.md)–[0007](docs/adr/0007-natsjs-v3-direct.md).
@@ -247,7 +256,7 @@ shared package conventions are in **`backend/CLAUDE.md`**. `backend/apps/auth` i
 implementation; `backend.api-gateway` is a deliberate two-layer exception.
 
 **Caching** is `@backend/cache`: one `CacheStore` port with a Redis and an in-memory adapter behind a
-single `CacheModule`, injected as `CacheService`. Unlike the event bus it is *not* split per
+single `CacheModule`, injected as `CacheService`. Unlike the event bus it is _not_ split per
 transport — the reasoning is [ADR-0009](docs/adr/0009-cache-one-package-driver-switch.md), the
 internals are in that package's `CLAUDE.md`. `backend.auth` is its one cache consumer: it caches the
 user behind the gateway's per-request access check, and evicts on every user write — why there and

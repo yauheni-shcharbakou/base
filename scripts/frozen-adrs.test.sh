@@ -12,8 +12,7 @@ script="$PWD/scripts/frozen-adrs.sh"
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-passed=0
-failed=0
+. scripts/lib/spec.sh
 
 landed='# 0001 — Something was decided
 
@@ -54,12 +53,7 @@ expects() {
   local name=$1 expected=$2 actual
   env GITHUB_ACTIONS="${3:-}" bash "$script" --repo "$scratch/repo" >/dev/null 2>&1
   actual=$?
-  if [ "$actual" = "$expected" ]; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: ${name} — exited ${actual}, expected ${expected}"
-    failed=$((failed + 1))
-  fi
+  if [ "$actual" = "$expected" ]; then pass; else fail "exited ${actual}, expected ${expected}"; fi
 }
 
 repo
@@ -111,8 +105,19 @@ write "$adr" "${landed/Why it had to be decided./Edited.}"
 expects 'no base outside CI holds nothing' 0
 expects 'no base in CI fails' 1 1
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "frozen-adrs: ${passed} specs passed."
+usage='usage: frozen-adrs.sh [--repo <dir>] [--base <ref>]'
+# refuses <name> <arg>...: a usage error — exit 2 and the usage line alone on stderr.
+refuses() {
+  local name=$1 output actual
+  shift
+  output=$(bash "$script" "$@" 2>&1 >/dev/null)
+  actual=$?
+  matches 2 "$usage" "$actual" "$output"
+}
+
+refuses '--repo needs a directory' --repo
+refuses '--base needs a ref' --repo "$scratch/repo" --base
+refuses 'an empty --base is no ref' --base ''
+refuses 'an unknown option' --nope
+
+finish frozen-adrs

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestAuth } from '@backend/proto';
 import {
   AuthRefreshTokenPayloadParsed,
@@ -44,31 +45,31 @@ const payload = {
 } as AuthRefreshTokenPayloadParsed;
 
 describe('AuthRefreshTokenUseCase', () => {
-  let parseRefreshTokenPayload: jest.Mock;
-  let generateTokens: jest.Mock;
-  let getById: jest.Mock;
-  let rotateToken: jest.Mock;
-  let deleteById: jest.Mock;
+  let parseRefreshTokenPayload: Mock;
+  let generateTokens: Mock;
+  let getById: Mock;
+  let rotateToken: Mock;
+  let deleteById: Mock;
   let useCase: AuthRefreshTokenUseCase;
 
   beforeEach(() => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
-    parseRefreshTokenPayload = jest.fn().mockReturnValue(right(payload));
-    generateTokens = jest.fn().mockResolvedValue(right(tokens));
-    getById = jest.fn().mockResolvedValue(right(session));
-    rotateToken = jest.fn().mockResolvedValue(true);
-    deleteById = jest.fn().mockResolvedValue(right(session));
+    parseRefreshTokenPayload = vi.fn().mockReturnValue(right(payload));
+    generateTokens = vi.fn().mockResolvedValue(right(tokens));
+    getById = vi.fn().mockResolvedValue(right(session));
+    rotateToken = vi.fn().mockResolvedValue(true);
+    deleteById = vi.fn().mockResolvedValue(right(session));
 
     useCase = new AuthRefreshTokenUseCase(
-      { getById: jest.fn().mockResolvedValue(right(user)) } as unknown as UserRepository,
+      { getById: vi.fn().mockResolvedValue(right(user)) } as unknown as UserRepository,
       { parseRefreshTokenPayload, generateTokens } as unknown as AuthTokenService,
       { getById, rotateToken, deleteById } as unknown as AuthSessionRepository,
     );
   });
 
-  afterEach(() => jest.restoreAllMocks());
+  afterEach(() => vi.restoreAllMocks());
 
   it('replaces the spent token with a new one of the same session', async () => {
     const result = await useCase.execute({ refreshToken: REFRESH_TOKEN });

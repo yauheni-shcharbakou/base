@@ -102,6 +102,8 @@ jobs:
       TURBO_TELEMETRY_DISABLED: '1'
       # Every turbo run writes `.turbo/runs/*.json`, which the cache report counts.
       TURBO_RUN_SUMMARY: 'true'
+      # Where each Vitest run leaves its JSON report; the test report reads them into one table.
+      VITEST_REPORT_DIR: '${{ github.workspace }}/.vitest-reports'
 
     steps:
       - name: 'Checkout'
@@ -175,6 +177,12 @@ jobs:
           E2E_REQUIRE_SERVERS: '1'
         run: 'pnpm turbo run typecheck lint test test:e2e --log-order=grouped --continue'
 
+      # One table of every package's unit and e2e results, in place of a Vitest block per run.
+      - name: 'Test report'
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: './.github/actions/vitest-report'
+
       # `.railway/` is no workspace, so `typecheck` never reaches it, and the Railway CLI strips the
       # types without checking them: a wrong option in `railway.ts` is found here or in the dashboard.
       - name: 'Railway config typechecks'
@@ -191,6 +199,10 @@ jobs:
             exit 1
           fi
 
+      # `lint` formats what ESLint covers; this is the rest (markdown, JSON, generated migrations).
+      - name: 'Formatting holds'
+        run: 'pnpm exec prettier --check .'
+
       # Here as well as in `docs`: a renamed or removed package leaves its name behind in a
       # CLAUDE.md that the change never touched.
       - name: 'Docs layout holds'
@@ -204,28 +216,39 @@ jobs:
       - name: 'Env tables match their schemas'
         run: 'pnpm check:env-docs'
 
+      # Reads the registry's advisory database, so a new advisory can fail a pull request that
+      # touched no dependency: fix it with the `/audit` skill, not by skipping this.
+      - name: 'No high-severity advisory in production dependencies'
+        run: 'pnpm check:audit'
+
+      # What `check:audit` lets through — moderate and low — would pile up unseen: listed in the
+      # summary with a warning, never failed on. Runs only once that step passed, so all it can find
+      # is below high.
+      - name: 'Advisories below high, reported'
+        continue-on-error: true
+        run: |
+          pnpm audit --prod --json > "$RUNNER_TEMP/audit.json" || true
+          count=$(jq '.advisories | length' "$RUNNER_TEMP/audit.json")
+          [ "$count" -gt 0 ] || exit 0
+          echo "::warning title=Dependency advisories::${count} moderate or low advisories in production dependencies; run /audit"
+          {
+            echo '### Dependency advisories below high'
+            echo
+            echo '| Severity | Package | Vulnerable | Patched | Advisory |'
+            echo '| -------- | ------- | ---------- | ------- | -------- |'
+            jq -r '.advisories[] | "| \(.severity) | \(.module_name) | `\(.vulnerable_versions)` | `\(.patched_versions)` | [\(.github_advisory_id)](\(.url)) |"' "$RUNNER_TEMP/audit.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: 'Entities match the migration snapshots'
         run: 'pnpm migrate:check'
 
       # Only `migration:create` may move a snapshot (see backend/CLAUDE.md). One changed without a
-      # migration beside it would make the next `migrate:create` drop whatever it lost.
+      # migration beside it would make the next `migrate:create` drop whatever it lost. Judged by
+      # content, so reformatting a snapshot is no change.
       - name: 'Every snapshot change comes with a migration'
         env:
           BASE_SHA: '${{ github.event.pull_request.base.sha }}'
-        run: |
-          changed() {
-            git diff --name-only --no-renames "$@"
-          }
-          failed=0
-          while IFS= read -r snapshot; do
-            [ -n "$snapshot" ] || continue
-            dir=$(dirname "$snapshot")
-            if [ -z "$(changed --diff-filter=A "$BASE_SHA...HEAD" -- "$dir/*.migration.ts")" ]; then
-              echo "::error file=$snapshot::The snapshot changed without a new migration in $dir. Generate one with \`pnpm migrate:create\`."
-              failed=1
-            fi
-          done < <(changed --diff-filter=AM "$BASE_SHA...HEAD" -- 'backend/apps/*/src/migrations/.snapshot-*.json')
-          exit "$failed"
+        run: 'bash scripts/snapshot-migrations.sh "$BASE_SHA"'
 
       # Where the hits came from, in the job summary; a warning when the remote cache was out of
       # reach. Before the remote cache action's post step, which revokes the token.

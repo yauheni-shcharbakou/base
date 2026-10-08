@@ -26,7 +26,7 @@ by an existing ADR (extend the rule in `CLAUDE.md` instead).
    in this repo.
 3. **Update the index** in `docs/adr/README.md` — one table row: number, linked title, status,
    packages.
-4. **Link it from the owning `CLAUDE.md`.** Find the file that states the *rule* this ADR explains,
+4. **Link it from the owning `CLAUDE.md`.** Find the file that states the _rule_ this ADR explains,
    and add a blockquote line right after it:
    ```markdown
    > **Why parking and not dropping:** [docs/adr/0005-parking-unrouted-events.md](../../../docs/adr/0005-parking-unrouted-events.md)

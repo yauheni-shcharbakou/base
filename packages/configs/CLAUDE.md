@@ -4,20 +4,25 @@ Guidance for working inside `packages/configs`. For monorepo-wide conventions (w
 
 ## What this is
 
-Centralized **ESLint** (flat config, factory functions), **tsconfig** and **tsdown** presets for every workspace. There is no build: no `src`, no `dist`, no runtime output — just config files. Consumers wire them directly (`extends` for tsconfig, `import` a factory for eslint and tsdown), so editing a preset affects everyone at once.
+Centralized **ESLint** (flat config, factory functions), **tsconfig**, **tsdown** and **Vitest** presets for every workspace. There is no build: no `src`, no `dist`, no runtime output — just config files. Consumers wire them directly (`extends` for tsconfig, `import` a factory for eslint, tsdown and vitest), so editing a preset affects everyone at once.
 
 Because the presets are read from outside the packages that use them, `packages/configs/**` is listed in the root `turbo.json` `globalDependencies` — otherwise an edit here would never reach a build hash.
 
 ## tsconfig presets (`tsconfig/`)
 
-| File | Extended by | Notes |
-|------|-------------|-------|
-| `app/nest.tsconfig.json` | backend apps (auth, storage, api-gateway) | NodeNext, decorators, `strict` **off** (strictNullChecks/noImplicitAny off) |
-| `app/refine.tsconfig.json` | frontend/apps/admin | `strict` **on**, jsx preserve, next plugin, noEmit |
-| `package/base.tsconfig.json` | leaf packages `@packages/*`, `@frontend/proto` | `strict` **on**, bundler resolution |
-| `package/nest.tsconfig.json` | all `@backend/packages/*` | extends `base`, but adds decorators/NodeNext and **drops** `strict` |
+| File                         | Extended by                                    | Notes                                                                                                        |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `app/nest.tsconfig.json`     | backend apps (auth, storage, api-gateway)      | NodeNext, decorators, `strict` **off** (explicitly)                                                          |
+| `app/refine.tsconfig.json`   | frontend/apps/admin                            | `strict` **on**, ES2017, bundler resolution, jsx preserve, next plugin, noEmit                               |
+| `package/base.tsconfig.json` | leaf packages `@packages/*`, `@frontend/proto` | `strict` **on**, bundler resolution                                                                          |
+| `package/nest.tsconfig.json` | all `@backend/packages/*`                      | extends `base`, adds decorators/NodeNext, turns off `strictNullChecks`/`noImplicitAny`/`strictBindCallApply` |
 
-Gotcha: backend configs are intentionally non-strict (`strict` off), even though `package/nest` extends the strict `base` and overrides it. Package presets are strict, app-nest is not.
+Gotchas (TypeScript 6 defaults):
+
+- **`types` defaults to `[]`**, so every preset lists `["node"]`; a workspace that needs more ambient types (the admin's `jest`) sets the whole array itself — `types` replaces, it does not merge.
+- **`strict` defaults to `true`**, so `app/nest` says `false` outright. `package/nest` stays partly strict: it inherits `strict: true` from `base` and turns off only the three flags above.
+- **`rootDir` defaults to the config's directory**: an app that emits pins it in its `tsconfig.build.json` (see the root `CLAUDE.md`, _Tests_).
+- `moduleResolution: node` and `target: es5` are deprecated: use `bundler`/`nodenext` and ES2015+ (no `ignoreDeprecations` — TypeScript 7 removes them).
 
 ## ESLint presets (`eslint/`)
 
@@ -29,6 +34,7 @@ Both enable `prettier/prettier: 'error'`. The nest preset runs in type-checked m
 The one rule it does enforce beyond formatting is **`import-x/no-extraneous-dependencies`** (`eslint-plugin-import-x`, wired rule-by-rule rather than via `flatConfigs.recommended`, which would also switch on `no-unresolved`): a package must declare what it imports, and `src/` may not reach into devDependencies (`compiler/`, `test/` and specs may). It is the lint-side counterpart of the tsdown factory — see the section above for what an undeclared import costs.
 
 Two things it needs to work here:
+
 - **`eslint-import-resolver-typescript` is required, not an optimisation.** `@modules/…`, `@common/…` and `@compiler/…` are tsconfig path aliases that match the scoped-package pattern; unresolved, every one of the ~400 such imports reads as an undeclared external package.
 - **Type-only imports of a `@types/*` package must say `import type`.** A plain `import { Request } from 'express'` in `api-gateway` resolves to `@types/express` in devDependencies and is reported; `import type` is skipped (`includeTypes` is left at its default) and is the correct form anyway.
 
@@ -37,6 +43,7 @@ Two things it needs to work here:
 The admin app's `lint` script had to move off `next lint` for this: it runs ESLint but does not surface this rule's errors, and it is deprecated (removed in Next 16 — its own output says so). It is now a plain `eslint "src/**/*.{ts,tsx}" --fix`, like every other workspace.
 
 Wiring in a consumer:
+
 ```js
 // backend/*/eslint.config.mjs
 import nestConfig from '@packages/configs/eslint/nest.config.mjs';
@@ -47,7 +54,7 @@ export default nestConfig(import.meta.url);
 
 `nodePackageConfig(import.meta.url, overrides?)` — the single build config for every package that ships a `dist/`. Same shape as `nestConfig`: the argument is **required**, because the factory turns it into the caller's directory and reads the `package.json` sitting next to it.
 
-That manifest is the whole point. Externals (`deps.neverBundle`) come from the **package's own** dependencies + devDependencies + peerDependencies. Each config used to read the *root* manifest instead, which silently let a package import something it never declared — `@backend/pg` reached for `ulid` and `change-case-all` that way. Such an import breaks under a non-hoisting node-linker and, now that the factory reads the local manifest, gets **bundled into `dist/`** instead: dropping `zod` from `@backend/grpc` grows its bundle from 20 KB to 468 KB. `import-x/no-extraneous-dependencies` (below) is the lint-side half of the same rule.
+That manifest is the whole point. Externals (`deps.neverBundle`) come from the **package's own** dependencies + devDependencies + peerDependencies. Each config used to read the _root_ manifest instead, which silently let a package import something it never declared — `@backend/pg` reached for `ulid` and `change-case-all` that way. Such an import breaks under a non-hoisting node-linker and, now that the factory reads the local manifest, gets **bundled into `dist/`** instead: dropping `zod` from `@backend/grpc` grows its bundle from 20 KB to 468 KB. `import-x/no-extraneous-dependencies` (below) is the lint-side half of the same rule.
 
 ```ts
 // backend/*/tsdown.config.mts — the common case
@@ -62,6 +69,34 @@ Defaults are `entry: 'src/index.ts'`, `format: ['cjs']`, `dts: true`. `overrides
 - `@backend/event-bus` passes named entries for its second, build-time `compiler` entrypoint.
 
 A package that needs an external the factory cannot see is a package with an undeclared dependency — declare it in its `package.json` rather than hand-adding to `neverBundle`. The factory reads dependency **names**, not versions, so a `"catalog:"` specifier works exactly like a literal one.
+
+## Vitest preset (`vitest/nest.config.mjs`)
+
+`nestVitestConfig(import.meta.url, test?)` — the whole test config of every backend workspace, unit
+and e2e alike. The argument is **required**: its directory is the root the spec globs and the
+`@/`, `@modules/`, `@common/` aliases resolve against. `test` is merged over the defaults
+(`environment: 'node'`, `include: ['src/**/*.spec.ts']`) — an e2e config passes its own `include`,
+`env`, `globalSetup` and timeouts.
+
+The factory also sets the reporters. In CI `github-actions` stays for the failure annotations with its
+own job summary off, and when `VITEST_REPORT_DIR` is set a `json` reporter writes
+`<package>.<unit|e2e>.json` there (the config file's name picks which; `/` in a scoped name becomes
+`__`). `.github/actions/vitest-report` reads those into the one table of the job summary — a suite
+that skipped for want of a server shows as skipped there. A suite with no specs
+(`--passWithNoTests`) still writes an empty report, shown as `—`.
+
+Specs are compiled by **swc** (`unplugin-swc`, legacy decorators plus decorator metadata), not by
+Vite's own transform, which emits no `design:paramtypes` — and without them Nest's DI resolves every
+constructor parameter to `undefined`.
+
+```ts
+// backend/*/vitest.config.mts
+import nestVitestConfig from '@packages/configs/vitest/nest.config.mjs';
+
+export default nestVitestConfig(import.meta.url);
+```
+
+> **Why Vitest, and why swc:** [docs/adr/0040-backend-specs-on-vitest.md](../../docs/adr/0040-backend-specs-on-vitest.md)
 
 ## Layer-direction guard (`eslint/layer-guard.mjs`)
 

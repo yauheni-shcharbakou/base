@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { CallHandler, ExecutionContext, Logger } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { lastValueFrom, of, throwError } from 'rxjs';
@@ -21,11 +22,11 @@ const intercept = (context: ExecutionContext, handler: CallHandler): Promise<unk
 
 describe('RedisControllerInterceptor', () => {
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('passes a non-rpc context straight through', async () => {

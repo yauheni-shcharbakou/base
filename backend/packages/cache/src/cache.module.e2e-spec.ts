@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, inject, it } from 'vitest';
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import type Redis from 'ioredis';
@@ -8,10 +9,16 @@ const NAMESPACE = 'cache-module';
 const KEY_PREFIX = process.env.CACHE_KEY_PREFIX ?? 'cache-e2e';
 const OWN_PREFIX = `${KEY_PREFIX}:${NAMESPACE}:`;
 
-// Set by test/cache-server.setup.js, before jest forked this worker. Read synchronously so the
+declare module 'vitest' {
+  export interface ProvidedContext {
+    /** Whether `test/cache-server.setup.ts` found a Redis to run against. */
+    cacheServer: boolean;
+  }
+}
+
+// Probed by `test/cache-server.setup.ts` before the workers start. Read at module scope so the
 // suite can pick `describe` vs `describe.skip` — a serverless run reports as skipped, not green.
-const hasServer = process.env.CACHE_E2E_SERVER === '1';
-const describeWithServer = hasServer ? describe : describe.skip;
+const describeWithServer = describe.skipIf(!inject('cacheServer'));
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 

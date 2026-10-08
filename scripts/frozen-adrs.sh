@@ -19,20 +19,25 @@
 repo="$(dirname "${BASH_SOURCE[0]}")/.."
 base=origin/main
 usage='usage: frozen-adrs.sh [--repo <dir>] [--base <ref>]'
+usage_error() {
+  echo "$usage" >&2
+  exit 2
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --repo)
-      repo=${2:?$usage}
+      [ -n "${2:-}" ] || usage_error
+      repo=$2
       shift 2
       ;;
     --base)
-      base=${2:?$usage}
+      [ -n "${2:-}" ] || usage_error
+      base=$2
       shift 2
       ;;
     *)
-      echo "$usage" >&2
-      exit 2
+      usage_error
       ;;
   esac
 done

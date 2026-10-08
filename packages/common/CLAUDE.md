@@ -4,7 +4,7 @@ Guidance for working inside `packages/common`. For monorepo-wide conventions (wo
 
 ## What this package is
 
-The lowest-level shared library: **framework-agnostic** (no NestJS, no React) helpers imported by *both* backend services/packages and the frontend admin. Keep it that way — only add code safe to import from any runtime. Dependencies: `zod` (env validation) and `@grpc/grpc-js`, **types only** — the stream helper's stream type and the status-table key. The admin's browser bundle imports this package, so a value import of grpc-js here would pull the Node client into it; use `import type`.
+The lowest-level shared library: **framework-agnostic** (no NestJS, no React) helpers imported by _both_ backend services/packages and the frontend admin. Keep it that way — only add code safe to import from any runtime. Dependencies: `zod` (env validation) and `@grpc/grpc-js`, **types only** — the stream helper's stream type and the status-table key. The admin's browser bundle imports this package, so a value import of grpc-js here would pull the Node client into it; use `import type`.
 
 Single barrel — everything re-exports through `src/index.ts`. Always import via `@packages/common`, never deep paths.
 

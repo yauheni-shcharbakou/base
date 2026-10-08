@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import 'reflect-metadata';
 import { CacheService, CacheStore, MemoryCacheStore } from '@backend/cache';
 import { Logger } from '@nestjs/common';
@@ -29,8 +30,8 @@ describe('CacheThrottlerStorage', () => {
 
   afterEach(() => {
     storage.onApplicationShutdown();
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('counts in the cache and blocks past the limit until the window ends', async () => {
@@ -51,20 +52,20 @@ describe('CacheThrottlerStorage', () => {
   });
 
   it('starts a new window once the old one has passed', async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     await hit('default:user:u1');
     await hit('default:user:u1');
     await hit('default:user:u1');
 
-    jest.advanceTimersByTime(TTL);
+    vi.advanceTimersByTime(TTL);
 
     await expect(hit('default:user:u1')).resolves.toMatchObject({ totalHits: 1, isBlocked: false });
   });
 
   // The cache key builder drops blank `:` segments, which would fold these two into one.
   it('keeps IPv6 trackers apart', async () => {
-    const increment = jest.spyOn(store, 'increment');
+    const increment = vi.spyOn(store, 'increment');
 
     await hit('default:ip:2001:db8::1');
     await hit('default:ip:2001:db8::1');
@@ -78,7 +79,7 @@ describe('CacheThrottlerStorage', () => {
 
   // "Uncounted" must not mean "allowed": the limit falls back to this process.
   it('keeps limiting in-process when the cache fails', async () => {
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     storage = new CacheThrottlerStorage(buildCache(new BrokenStore()));
 
     await hit('default:ip:203.0.113.7');

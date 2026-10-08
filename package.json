@@ -3,15 +3,16 @@
   "private": true,
   "author": "Yauheni Shcharbakou <iipekolict@gmail.com>",
   "license": "MIT",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "scripts": {
     "compile": "turbo run compile",
     "compile:proto": "turbo run compile --filter=\"@*/proto\"",
     "compile:event-bus": "turbo run compile --filter=\"@backend/event-bus*\"",
     "compile:env-docs": "turbo run compile --filter=@packages/env-docs",
+    "check:audit": "pnpm audit --prod --audit-level=high",
     "check:env-docs": "pnpm --filter=@packages/env-docs run check",
     "check:docs": "bash scripts/docs-invariants.sh",
-    "check:scripts": "bash scripts/release-notes.test.sh && bash scripts/classify-changes.test.sh && bash scripts/check-railway-exposure.test.sh && bash scripts/released-entries.test.sh && bash scripts/frozen-adrs.test.sh",
+    "check:scripts": "bash scripts/release-notes.test.sh && bash scripts/classify-changes.test.sh && bash scripts/check-railway-exposure.test.sh && bash scripts/released-entries.test.sh && bash scripts/frozen-adrs.test.sh && bash scripts/stale-overrides.test.sh && bash scripts/audit-paths.test.sh && bash scripts/snapshot-migrations.test.sh",
     "check:railway": "tsc -p .railway/tsconfig.json",
     "dev": "turbo run dev --filter=\"backend.*\" --filter=\"frontend.*\"",
     "dev:backend": "turbo run dev --filter=\"backend.*\"",
@@ -57,7 +58,7 @@
     "docker": "docker compose -f docker-compose.yml --profile all up --build"
   },
   "devDependencies": {
-    "@turbo/gen": "2.10.2",
+    "@turbo/gen": "2.11.7",
     "@types/node": "22.19.17",
     "dotenv-cli": "11.0.0",
     "eslint": "9.39.2",
@@ -65,11 +66,11 @@
     "prettier": "catalog:",
     "railway": "3.12.0",
     "tsdown": "catalog:",
-    "turbo": "2.10.2",
+    "turbo": "2.11.7",
     "typescript": "catalog:"
   },
   "engines": {
-    "node": ">=22.22.0"
+    "node": ">=22.22.3"
   },
-  "packageManager": "pnpm@11.9.0+sha512.bd682d5d03fe525ef7c9fd6780c6884d1e756ac4c9c9fe00c538782824310dcf90e3ddc4f53835f06dfaebd5085e41855e0bcbb3b60de2ac5bbab89e5036f03b"
+  "packageManager": "pnpm@12.9.1+sha512.06b055fff5cd20dc12781de173ced3310ce0951bf2ec620211a16045d5444d5c93a663210764ef29a653a610459ba0368f0e74f84d80c54723cf95aae7bc0d6d"
 }

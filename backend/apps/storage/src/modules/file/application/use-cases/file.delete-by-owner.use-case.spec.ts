@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FileDropService } from '@modules/file/application/services/file.drop.service';
 import { FileRepository, FileWithMedia } from '@modules/file/domain/repositories/file.repository';
 import { FileDeleteByOwnerUseCase } from './file.delete-by-owner.use-case';
@@ -7,13 +8,13 @@ const USER_ID = 'owner';
 const batch = (...ids: string[]) => ids.map((id) => ({ id })) as FileWithMedia[];
 
 describe('FileDeleteByOwnerUseCase', () => {
-  let repository: { getManyByOwner: jest.Mock };
-  let dropService: { drop: jest.Mock };
+  let repository: { getManyByOwner: Mock };
+  let dropService: { drop: Mock };
   let useCase: FileDeleteByOwnerUseCase;
 
   beforeEach(() => {
-    repository = { getManyByOwner: jest.fn() };
-    dropService = { drop: jest.fn().mockResolvedValue(true) };
+    repository = { getManyByOwner: vi.fn() };
+    dropService = { drop: vi.fn().mockResolvedValue(true) };
     useCase = new FileDeleteByOwnerUseCase(
       repository as unknown as FileRepository,
       dropService as unknown as FileDropService,

@@ -1,3 +1,4 @@
+import { describe, expect, it, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type { RedisMediatorService } from '../mediators';
 import { RedisQueueRegistry } from '../utils';
@@ -69,7 +70,7 @@ describe('RedisTopologyReporter', () => {
 
   describe('onApplicationBootstrap', () => {
     it('logs the counts as an estimate, with the breakdown', () => {
-      const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+      const log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
 
       buildReporter({ mediatorWorkers: 4, consumerWorkers: 4 }).onApplicationBootstrap();
 

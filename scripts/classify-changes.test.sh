@@ -8,8 +8,7 @@
 # Run by `pnpm check:scripts`, in CI's `check` job. Needs bash alone.
 cd "$(dirname "${BASH_SOURCE[0]}")/.." || exit 2
 
-passed=0
-failed=0
+. scripts/lib/spec.sh
 
 # classifies <name> <expected "code docs railway"> <path>... — the paths go in one per line; none
 # at all is an empty diff.
@@ -18,12 +17,7 @@ classifies() {
   shift 2
   actual=$(printf '%s\n' "$@" | { [ "$#" -gt 0 ] && cat || true; } | bash scripts/classify-changes.sh | sed 's/^[a-z]*=//' | tr '\n' ' ')
   actual=${actual% }
-  if [ "$actual" = "$expected" ]; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: ${name} — got \"${actual}\" (code docs railway), expected \"${expected}\""
-    failed=$((failed + 1))
-  fi
+  if [ "$actual" = "$expected" ]; then pass; else fail "got \"${actual}\" (code docs railway), expected \"${expected}\""; fi
 }
 
 classifies 'a source file is code' 'true false false' backend/apps/auth/src/main.ts
@@ -40,8 +34,4 @@ classifies 'one code path makes it code' 'true false true' .railway/railway.ts p
 classifies 'the workflow is code' 'true false false' .github/workflows/check.yaml
 classifies 'an empty diff is code' 'true false false'
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "classify-changes: ${passed} specs passed."
+finish classify-changes

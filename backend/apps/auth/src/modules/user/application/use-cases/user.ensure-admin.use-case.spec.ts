@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestAuth } from '@backend/proto';
 import { UserRepository } from '@modules/user/domain/repositories/user.repository';
 import { ConflictException, InternalServerErrorException } from '@nestjs/common';
@@ -15,13 +16,13 @@ const createdAdmin: NestAuth.User = {
 };
 
 describe('UserEnsureAdminUseCase', () => {
-  let isExists: jest.Mock;
-  let createOne: jest.Mock;
+  let isExists: Mock;
+  let createOne: Mock;
   let useCase: UserEnsureAdminUseCase;
 
   beforeEach(() => {
-    isExists = jest.fn().mockResolvedValue(false);
-    createOne = jest.fn().mockResolvedValue(right(createdAdmin));
+    isExists = vi.fn().mockResolvedValue(false);
+    createOne = vi.fn().mockResolvedValue(right(createdAdmin));
 
     useCase = new UserEnsureAdminUseCase(
       { isExists } as unknown as UserRepository,

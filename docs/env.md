@@ -53,9 +53,9 @@ packages validate is still written down once.
 
 <!-- env-table:end -->
 
-`NODE_ENV` accepts `test` only so a jest spec that transitively imports a config module does not die
-at import time; consumers compare it against `development` / `production` alone. `PORT` falls back
-to `10000` in `commonConfig()` rather than in the schema.
+`NODE_ENV` accepts `test` only so a spec — Vitest and Jest both set it — that transitively imports
+a config module does not die at import time; consumers compare it against `development` /
+`production` alone. `PORT` falls back to `10000` in `commonConfig()` rather than in the schema.
 
 ### `DatabaseValidationSchema`
 
@@ -78,7 +78,7 @@ more reason the two adapters are never wired at once.
 
 <!-- env-table:start src=backend/packages/common/src/common/infrastructure/configs/common.config.ts -->
 
-Nothing of its own — the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Nothing of its own — the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 
@@ -86,7 +86,7 @@ Nothing of its own — the shared shape `NodeValidationSchema` from `@packages/c
 
 <!-- env-table:start src=backend/packages/pg/src/core/infrastructure/configs/pg.config.ts -->
 
-Nothing of its own — the shared shapes `NodeValidationSchema` and `DatabaseValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Nothing of its own — the shared shapes `NodeValidationSchema` and `DatabaseValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 
@@ -97,7 +97,7 @@ the CLI can run a migration from source.
 
 <!-- env-table:start src=backend/packages/mongo/src/core/infrastructure/configs/mongo.config.ts -->
 
-Nothing of its own — the shared shape `DatabaseValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Nothing of its own — the shared shape `DatabaseValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 
@@ -157,7 +157,7 @@ where ioredis' default A-record lookup fails with `ENOTFOUND`. Force `6` if reco
 flaky on such a network.
 
 The e2e suite pins `REDIS_QUEUE_PREFIX=bull-e2e`, `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e` and a
-short retry ladder from a jest `globalSetup` — the config validates env at module load, so an
+short retry ladder from `vitest.e2e.config.mts`'s `env` — the config validates env at module load, so an
 override set any later would be read by nobody.
 
 ### `@backend/event-bus-nats`
@@ -350,7 +350,7 @@ domain events.
 | `DEFAULT_EMAIL`    | email  | `admin@gmail.com` |
 | `DEFAULT_PASSWORD` | string | `string123`       |
 
-Plus the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under *Shared shapes*.
+Plus the shared shape `NodeValidationSchema` from `@packages/common`, tabulated under _Shared shapes_.
 
 <!-- env-table:end -->
 

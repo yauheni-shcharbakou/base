@@ -1,7 +1,7 @@
 import { DocumentPreviewUndecodableError } from '@modules/document/domain/services/document.preview.service';
 import { PdfjsDocumentPreviewServiceImpl } from '@modules/document/infrastructure/services/pdfjs.document.preview.service.impl';
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import sharp from 'sharp';
 
 /** A one-page PDF of the given size in points, a black square drawn on it. */
@@ -36,7 +36,8 @@ class ImpatientPreviewService extends PdfjsDocumentPreviewServiceImpl {
 
 /**
  * The real renderer — pdf.js and `@napi-rs/canvas` in a worker thread. It needs no server, but it
- * runs here, on `node:test`: pdf.js is ESM only, which Jest's runtime cannot load (ADR-0017).
+ * runs with the e2e suite: the worker is a real thread loading `.ts` through `@swc-node/register`,
+ * which `vitest.e2e.config.mts` puts in the workers' `execArgv`.
  */
 describe('PdfjsDocumentPreviewServiceImpl', () => {
   const service = new PdfjsDocumentPreviewServiceImpl();

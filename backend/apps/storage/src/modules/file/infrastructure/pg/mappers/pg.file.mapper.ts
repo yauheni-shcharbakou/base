@@ -8,6 +8,17 @@ import {
 import { ObjectQuery } from '@mikro-orm/core';
 
 export class PgFileMapper extends PgMapper<PgFileEntity, NestStorage.File, NestStorage.FileQuery> {
+  // The cleanup paths read a file with its image and video (`FileWithMedia`). Never a storage
+  // object, which leads to its folder and every sibling there.
+  protected readonly populate = ['image', 'video'];
+  protected readonly exclude = [
+    'storageObject',
+    'image.storageObject',
+    'image.file',
+    'video.storageObject',
+    'video.file',
+  ];
+
   protected readonly computedFilters = {
     isPlaced: isPlacedFilter<PgFileEntity>(),
     isBacking: isBackingFilter<PgFileEntity>(),

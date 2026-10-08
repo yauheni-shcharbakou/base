@@ -18,14 +18,7 @@ guard=scripts/check-railway-exposure.sh
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-passed=0
-failed=0
-
-pass() { passed=$((passed + 1)); }
-fail() {
-  echo "FAIL: ${name} — $1"
-  failed=$((failed + 1))
-}
+. scripts/lib/spec.sh
 
 # run <name> <allow-list json> <graph json>: output in $tmp/out, exit code in $status.
 run() {
@@ -102,8 +95,4 @@ echo 'not json' | bash "$guard" "$tmp/allow.json" >"$tmp/out" 2>&1
 status=$?
 fails
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "check-railway-exposure: ${passed} assertions passed."
+finish check-railway-exposure assertions

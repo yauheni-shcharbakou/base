@@ -1,13 +1,14 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { FileEventBus, FilePurgeType } from '@backend/event-bus';
 import { Logger } from '@nestjs/common';
 import { FilePurgeService } from './file.purge.service';
 
 describe('FilePurgeService', () => {
-  let eventBus: { emitManyPurge: jest.Mock };
+  let eventBus: { emitManyPurge: Mock };
   let service: FilePurgeService;
 
   beforeEach(() => {
-    eventBus = { emitManyPurge: jest.fn().mockResolvedValue([]) };
+    eventBus = { emitManyPurge: vi.fn().mockResolvedValue([]) };
     service = new FilePurgeService(eventBus as unknown as FileEventBus);
   });
 
@@ -82,7 +83,7 @@ describe('FilePurgeService', () => {
   // The rows are already gone when this runs, so a failed emit cannot undo the delete — it is
   // logged with the keys and swallowed rather than failing the caller's request.
   it('logs a failed emit instead of throwing', async () => {
-    const logError = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const logError = vi.spyOn(Logger.prototype, 'error').mockReturnValue(undefined);
     eventBus.emitManyPurge.mockRejectedValue(new Error('Redis is down'));
 
     await expect(

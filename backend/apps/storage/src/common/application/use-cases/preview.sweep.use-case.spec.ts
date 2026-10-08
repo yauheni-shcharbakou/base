@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import { Either, left, right } from '@sweet-monads/either';
 import { PreviewSweepSettings, PreviewSweepUseCase } from './preview.sweep.use-case';
@@ -14,9 +15,9 @@ interface Row {
 const row = (n: number): Row => ({ id: `row-${n}` });
 
 describe('PreviewSweepUseCase', () => {
-  let getRows: jest.Mock;
-  let makePreview: jest.Mock;
-  let countPreviewAttempt: jest.Mock;
+  let getRows: Mock;
+  let makePreview: Mock;
+  let countPreviewAttempt: Mock;
   let useCase: PreviewSweepUseCase<Row>;
 
   // The sweep over whatever the three mocks answer for.
@@ -42,20 +43,20 @@ describe('PreviewSweepUseCase', () => {
     new SweepUseCase({ limit: LIMIT, graceMinutes: GRACE_MINUTES, maxAttempts, breakerThreshold });
 
   beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(NOW);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.useFakeTimers().setSystemTime(NOW);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
-    getRows = jest.fn().mockResolvedValue([]);
+    getRows = vi.fn().mockResolvedValue([]);
     // `right(true)`: a preview made of an original the provider gave.
-    makePreview = jest.fn().mockResolvedValue(right(true));
-    countPreviewAttempt = jest.fn().mockResolvedValue(right(false));
+    makePreview = vi.fn().mockResolvedValue(right(true));
+    countPreviewAttempt = vi.fn().mockResolvedValue(right(false));
     useCase = create();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('reads the rows READY for longer than the grace, up to the limit', async () => {
@@ -184,7 +185,7 @@ describe('PreviewSweepUseCase', () => {
     });
 
     it('warns of a threshold no batch is long enough for', () => {
-      const warn = jest.spyOn(Logger.prototype, 'warn');
+      const warn = vi.spyOn(Logger.prototype, 'warn');
 
       create(MAX_ATTEMPTS, LIMIT + 1);
 

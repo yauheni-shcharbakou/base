@@ -12,8 +12,7 @@ script="$PWD/scripts/released-entries.sh"
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-passed=0
-failed=0
+. scripts/lib/spec.sh
 
 released='# Changelog
 
@@ -53,12 +52,7 @@ expects() {
   local name=$1 expected=$2 actual
   env GITHUB_ACTIONS="${3:-}" bash "$script" --repo "$scratch/repo" >/dev/null 2>&1
   actual=$?
-  if [ "$actual" = "$expected" ]; then
-    passed=$((passed + 1))
-  else
-    echo "FAIL: ${name} — exited ${actual}, expected ${expected}"
-    failed=$((failed + 1))
-  fi
+  if [ "$actual" = "$expected" ]; then pass; else fail "exited ${actual}, expected ${expected}"; fi
 }
 
 repo "$released" "$released" v1.1.0
@@ -98,8 +92,17 @@ repo "$released" "$released"
 expects 'no tags outside CI hold nothing' 0
 expects 'no tags in CI fail' 1 1
 
-if [ "$failed" -gt 0 ]; then
-  echo "${failed} failed, ${passed} passed."
-  exit 1
-fi
-echo "released-entries: ${passed} specs passed."
+usage='usage: released-entries.sh [--repo <dir>]'
+# refuses <name> <arg>...: a usage error — exit 2 and the usage line alone on stderr.
+refuses() {
+  local name=$1 output actual
+  shift
+  output=$(bash "$script" "$@" 2>&1 >/dev/null)
+  actual=$?
+  matches 2 "$usage" "$actual" "$output"
+}
+
+refuses '--repo needs a directory' --repo
+refuses 'an unknown option' --nope
+
+finish released-entries

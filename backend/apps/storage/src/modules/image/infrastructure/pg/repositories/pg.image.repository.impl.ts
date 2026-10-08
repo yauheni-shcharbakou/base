@@ -150,7 +150,7 @@ export class PgImageRepositoryImpl
             uploadStatus: NestStorage.FileUploadStatus.READY,
             updatedAt: { $lt: readyBefore },
           },
-        } as FilterQuery<PgImageEntity>,
+        },
         { populate: ['file'], orderBy: { id: 'asc' }, limit },
       );
 

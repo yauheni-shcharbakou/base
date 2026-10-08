@@ -14,9 +14,9 @@
     "compile": "tsx compiler/main.ts",
     "build": "pnpm format:generated --log-level error && tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.mts",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
@@ -43,28 +43,13 @@
     "@nestjs/testing": "catalog:",
     "@packages/compiler-utils": "workspace:*",
     "@packages/configs": "workspace:*",
-    "@types/jest": "catalog:",
     "@types/lodash": "catalog:",
     "@types/pug": "catalog:",
     "prettier": "catalog:",
     "pug": "catalog:",
     "ts-morph": "catalog:",
     "tsx": "catalog:",
-    "jest": "catalog:",
-    "ts-jest": "catalog:"
-  },
-  "jest": {
-    "moduleFileExtensions": ["js", "json", "ts"],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": { "isolatedModules": true, "module": "commonjs", "moduleResolution": "node10" } }]
-    },
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/$1"
-    },
-    "collectCoverageFrom": ["**/*.(t|j)s"],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

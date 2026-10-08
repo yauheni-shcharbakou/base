@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { EventEmitter } from 'events';
 import { Logger } from '@nestjs/common';
 import { CacheConnectionService } from './cache.connection.service';
@@ -5,8 +6,8 @@ import { CacheConnectionService } from './cache.connection.service';
 /** Enough of an ioredis client to drive the three things this service reacts to. */
 class FakeRedis extends EventEmitter {
   status = 'connecting';
-  quit = jest.fn(() => Promise.resolve('OK'));
-  disconnect = jest.fn();
+  quit = vi.fn(() => Promise.resolve('OK'));
+  disconnect = vi.fn();
 
   becomeReady(): void {
     this.status = 'ready';
@@ -16,9 +17,9 @@ class FakeRedis extends EventEmitter {
 
 const clients: FakeRedis[] = [];
 
-jest.mock('ioredis', () => ({
+vi.mock('ioredis', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => {
+  default: vi.fn().mockImplementation(function () {
     const client = new FakeRedis();
     clients.push(client);
 
@@ -33,18 +34,18 @@ const buildService = (): { service: CacheConnectionService; client: FakeRedis } 
 };
 
 describe('CacheConnectionService', () => {
-  let error: jest.SpyInstance;
-  let log: jest.SpyInstance;
+  let error: MockInstance;
+  let log: MockInstance;
 
   beforeEach(() => {
     clients.length = 0;
-    error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    error = vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    log = vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   /**

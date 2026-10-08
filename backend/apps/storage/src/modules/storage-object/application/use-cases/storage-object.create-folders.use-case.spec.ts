@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import {
@@ -9,8 +10,8 @@ import { left, right } from '@sweet-monads/either';
 import { StorageObjectCreateFoldersUseCase } from './storage-object.create-folders.use-case';
 
 describe('StorageObjectCreateFoldersUseCase', () => {
-  let repository: { withTreeLock: jest.Mock; saveMany: jest.Mock };
-  let validation: { validatePlacement: jest.Mock; resolveFreeName: jest.Mock };
+  let repository: { withTreeLock: Mock; saveMany: Mock };
+  let validation: { validatePlacement: Mock; resolveFreeName: Mock };
   let useCase: StorageObjectCreateFoldersUseCase;
 
   const create = (paths: string[]) => useCase.execute({ userId: 'owner', parent: 'target', paths });
@@ -19,15 +20,15 @@ describe('StorageObjectCreateFoldersUseCase', () => {
     let nextId = 0;
 
     repository = {
-      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
+      withTreeLock: vi.fn((_userId: string, work: () => Promise<unknown>) => work()),
       // Each saved row gets an id, as `pgId` gives it when the entity is built.
-      saveMany: jest.fn((rows: StorageObjectCreate[]) =>
+      saveMany: vi.fn((rows: StorageObjectCreate[]) =>
         Promise.resolve(right(rows.map((row) => ({ ...row, id: `id-${(nextId += 1)}` })))),
       ),
     };
     validation = {
-      validatePlacement: jest.fn().mockResolvedValue(right({ isPublic: false })),
-      resolveFreeName: jest.fn(({ name }: { name: string }) => Promise.resolve(name)),
+      validatePlacement: vi.fn().mockResolvedValue(right({ isPublic: false })),
+      resolveFreeName: vi.fn(({ name }: { name: string }) => Promise.resolve(name)),
     };
 
     useCase = new StorageObjectCreateFoldersUseCase(

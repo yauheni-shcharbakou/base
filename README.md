@@ -8,10 +8,10 @@
 
 <p align="center">
   <a href="https://github.com/yauheni-shcharbakou/base/actions/workflows/main.yaml"><img alt="Main" src="https://github.com/yauheni-shcharbakou/base/actions/workflows/main.yaml/badge.svg?branch=main"></a>
-  <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D22.22-339933?logo=node.js&logoColor=white">
-  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-11.9.0-F69220?logo=pnpm&logoColor=white">
-  <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-2.10-EF4444?logo=turborepo&logoColor=white">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white">
+  <img alt="Node" src="https://img.shields.io/badge/node-%3E%3D22.22.3-339933?logo=node.js&logoColor=white">
+  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-12.9.1-F69220?logo=pnpm&logoColor=white">
+  <img alt="Turborepo" src="https://img.shields.io/badge/Turborepo-2.11-EF4444?logo=turborepo&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
 
@@ -98,8 +98,8 @@ flowchart LR
 
 ### Requirements
 
-- Node.js 22.22.0+
-- pnpm 11.9.0
+- Node.js 22.22.3+
+- pnpm 12.9.1
 - Installed `protobuf` compiler (for development and gRPC compiler only)
 - Installed `docker` and `docker compose` (optional)
 
@@ -110,7 +110,7 @@ flowchart LR
 > - Turborepo + pnpm workspaces (shared versions in a pnpm catalog)
 > - TypeScript
 > - Protobuf / gRPC (custom codegen)
-> - Jest, plus `node:test` for the database specs
+> - Vitest (backend), Jest (admin panel)
 
 > Admin panel
 >
@@ -150,7 +150,7 @@ scripts/ # repo-level checks run by CI
 turbo/
   generators/ # directory with custom code generators
 .github/
-  actions/ # composite actions the workflows share: setup, protoc, the turbo cache report
+  actions/ # composite actions the workflows share: setup, protoc, the turbo cache report, the Vitest report
   workflows/ # CI: check.yaml on pull requests, main.yaml on main
 ```
 
@@ -193,7 +193,7 @@ On **Railway**, set them per service before redeploying (`validateEnv` fails fas
 The managed **Redis** database is declared in `.railway/railway.ts`, and all three backend services
 point at it with a reference variable — `REDIS_URL: Redis.env.REDIS_URL` on `backend.auth` and
 `backend.storage` (event bus; auth also caches in it) and on `backend.api-gateway` (rate-limit
-counters). It is the *private* URL: the public one goes through a TCP proxy, which costs egress on
+counters). It is the _private_ URL: the public one goes through a TCP proxy, which costs egress on
 every blocking command a BullMQ worker issues.
 
 Railway's private network (`*.railway.internal`) is IPv6-only in environments created before
@@ -278,6 +278,7 @@ pnpm lint # eslint --fix
 pnpm check:docs # docs layout: links, ADR index, workspace names, the changelog entry of the root version, released entries and merged ADRs unchanged
 pnpm check:scripts # specs of the repo-level scripts
 pnpm check:env-docs # docs/env.md still matches the zod schemas
+pnpm check:audit # fail on a high or critical advisory in a production dependency
 pnpm check:railway # tsc over .railway/railway.ts, which is no workspace
 ```
 

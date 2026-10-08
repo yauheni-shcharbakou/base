@@ -10,11 +10,6 @@ export { PROTO_INCLUDE_ROOT, PROTO_SRC_ROOT, PROTOC_PATH } from './constants';
 export { ContextService } from './services';
 export type { TransformTaskClass } from './tasks';
 export { CommonTask, RemoveOptionalityTask, TransformTask } from './tasks';
-export type {
-  OnFilePayload,
-  OnFolderPayload,
-  ProtoContext,
-  ProtoContextService,
-} from './types';
+export type { OnFilePayload, OnFolderPayload, ProtoContext, ProtoContextService } from './types';
 export type { ProtocParams } from './utils';
 export { getProtocPluginPath, runProtoc } from './utils';

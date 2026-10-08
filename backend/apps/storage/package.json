@@ -9,22 +9,22 @@
     "prod": "pnpm start:prod",
     "build": "nest build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "format": "prettier --write \"src/**/*.ts\" --config ../../../.prettierrc",
+    "format": "prettier --write \"src/**/*.{ts,json}\" --config ../../../.prettierrc",
     "start": "dotenv -- nest start",
     "start:dev": "dotenv -- nest start --watch",
     "start:debug": "dotenv -- nest start --debug --watch",
     "start:prod": "mikro-orm migration:up --config dist/mikro-orm.config.js && node dist/main",
     "orm": "dotenv -- mikro-orm",
     "migrate": "pnpm orm migration:up",
-    "migrate:create": "pnpm orm migration:create",
+    "migrate:create": "sh -c 'pnpm orm migration:create \"$@\" && prettier --write src/migrations --config ../../../.prettierrc' --",
     "migrate:check": "pnpm orm migration:check",
     "storage:copy-zone": "dotenv -e scripts/.env.migration -- tsx scripts/copy-storage-zone.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "node --no-experimental-strip-types -r ts-node/register/transpile-only -r tsconfig-paths/register --test \"test/*.e2e-spec.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:debug": "vitest run --inspect-brk --no-file-parallelism",
+    "test:e2e": "vitest run --config vitest.e2e.config.mts",
     "reset": "rm -rf .turbo dist node_modules",
     "reset:modules": "rm -rf node_modules"
   },
@@ -61,7 +61,7 @@
     "pdfjs-dist": "catalog:",
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
-    "sharp": "0.34.5",
+    "sharp": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -72,18 +72,18 @@
     "@swc-node/register": "catalog:",
     "@swc/core": "catalog:",
     "@types/express": "catalog:",
-    "@types/jest": "catalog:",
     "@types/lodash": "catalog:",
     "@types/supertest": "catalog:",
-    "jest": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "source-map-support": "catalog:",
     "supertest": "catalog:",
-    "ts-jest": "catalog:",
     "ts-loader": "catalog:",
     "ts-node": "catalog:",
     "tsconfig-paths": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "mikro-orm": {
     "configPaths": [
@@ -91,41 +91,5 @@
       "./dist/mikro-orm.config.js"
     ],
     "tsLoader": "swc"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "moduleNameMapper": {
-      "^@modules/(.*)$": "<rootDir>/modules/$1",
-      "^@common/(.*)$": "<rootDir>/common/$1",
-      "^@/(.*)$": "<rootDir>/$1"
-    },
-    "transform": {
-      "^.+\\.(t|j)s$": [
-        "ts-jest",
-        {
-          "diagnostics": {
-            "ignoreCodes": [
-              151002
-            ]
-          },
-          "tsconfig": {
-            "isolatedModules": true,
-            "module": "commonjs",
-            "moduleResolution": "node10"
-          }
-        }
-      ]
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }

@@ -35,15 +35,15 @@ project needs, grouped by area. That is why there is no release tool in this rep
 2. **Collect what changed, from the most reliable source down.** Commit subjects come last: they
    include work that was added and reverted, or fixed, inside the same range.
 
-   | Source | Tells you |
-   |---|---|
-   | `git diff --name-status main...HEAD -- docs/adr` | every structural decision, with its reason — link each one |
-   | `git diff main...HEAD -- packages/proto/pkg` | added, changed and **removed** RPCs, messages, fields |
-   | `git diff main...HEAD -- backend/packages/event-bus/src/strategy` | added and removed events, payload shapes |
-   | `git diff --name-status main...HEAD -- '**/src/migrations'` | schema changes |
-   | `git diff main...HEAD -- docs/env.md '**/.env.example' docker-compose.yml` | new, renamed, removed and newly required variables |
-   | `git diff --name-status --diff-filter=D main...HEAD` | what was removed |
-   | the commit log | everything else — features, fixes, tooling |
+   | Source                                                                     | Tells you                                                  |
+   | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+   | `git diff --name-status main...HEAD -- docs/adr`                           | every structural decision, with its reason — link each one |
+   | `git diff main...HEAD -- packages/proto/pkg`                               | added, changed and **removed** RPCs, messages, fields      |
+   | `git diff main...HEAD -- backend/packages/event-bus/src/strategy`          | added and removed events, payload shapes                   |
+   | `git diff --name-status main...HEAD -- '**/src/migrations'`                | schema changes                                             |
+   | `git diff main...HEAD -- docs/env.md '**/.env.example' docker-compose.yml` | new, renamed, removed and newly required variables         |
+   | `git diff --name-status --diff-filter=D main...HEAD`                       | what was removed                                           |
+   | the commit log                                                             | everything else — features, fixes, tooling                 |
 
 3. **Pick the version.** Semantic Versioning, read for a deployed monorepo rather than a library:
 
@@ -65,10 +65,14 @@ project needs, grouped by area. That is why there is no release tool in this rep
 
    Two to five sentences: what this release is about.
 
-   ### Upgrade notes      ← major only: what a deployment must do, one bullet per action
+   ### Upgrade notes ← major only: what a deployment must do, one bullet per action
+
    ### Added
+
    ### Changed
+
    ### Removed
+
    ### Fixed
    ```
 
@@ -119,9 +123,14 @@ project needs, grouped by area. That is why there is no release tool in this rep
 
    - **Stage by name, never `git add -A`.** Whatever else is uncommitted in the tree is not the
      release: leave it where it is and say so in the report.
-   - **A prepared branch gets a second commit, never an amend.** When step 1 found the entry
-     already there and extended it, the earlier release commit may be pushed; the new one carries
-     the same subject.
+   - **A prepared branch: amend only what nobody else has.** When step 1 found the entry already
+     there and extended it (or changed its version), look at the earlier release commit:
+     - **unpushed and still `HEAD`** (`git branch -r --contains <hash>` prints nothing) — fold the
+       change into it with `git commit --amend -m 'chore: release X.Y.Z'`: a branch should not carry
+       two release commits, least of all for two different versions;
+     - **pushed, or with other commits on top** — a second commit with the subject
+       `chore: release X.Y.Z`. Rewriting a pushed commit needs a force push, and folding one under
+       later work rewrites that work too.
    - Report the commit's hash, and whether the branch is ahead of its remote.
 
 ## What this skill does not do

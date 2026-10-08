@@ -58,7 +58,7 @@ the service is the single place that decides what a failure means.
   invalidation stalls production. SCAN is per-node, so this clears one node only; the repository
   runs a single Redis.
 - `MemoryCacheStore` is a `Map` with **lazy** expiry (checked on read, no timers — a `setTimeout`
-  per key keeps jest from exiting). A key nobody reads again holds its memory until
+  per key keeps a test run from exiting). A key nobody reads again holds its memory until
   `deleteByPrefix`. Dev and tests only.
 - **A value crosses the cache as JSON**, whichever adapter is running, so a `Date` field comes back
   an ISO **string** even where the type says `Date` — the same property `@backend/event-bus`
@@ -149,7 +149,7 @@ CacheModule.forRoot({ namespace: 'auth', driver: 'memory' }); // explicit overri
 
 `CacheConnectionService.onApplicationShutdown` only sends `QUIT` when the client is `ready`. `quit()`
 is a command, not a socket operation: on a client that is still connecting it waits in the offline
-queue, which on a shutdown *because* Redis went away means waiting forever. Either way it then calls
+queue, which on a shutdown _because_ Redis went away means waiting forever. Either way it then calls
 `disconnect()`, or a process that closed mid-connect would keep an open handle and never exit. The
 e2e suite covers both paths.
 
@@ -177,7 +177,7 @@ last module loaded wins — which once handed the event bus this package's conne
 
 ```bash
 pnpm build            # tsdown → dist
-pnpm test             # unit jest; single file: pnpm test -- cache.service
+pnpm test             # unit vitest; single file: pnpm test -- cache.service
 pnpm test:e2e         # server-backed suite; auto-skips when no Redis answers
 pnpm dev / test:watch / lint / format / reset
 ```
@@ -204,11 +204,11 @@ its window really expires, and that shutdown closes the socket from both the
 not wait for the socket, and with no offline queue an early command answers as a miss rather than
 being held — a suite asserting real server behaviour has to start from a connected client.
 
-`test/cache-server.setup.js` is a jest `globalSetup`, not a `beforeAll`, for the same two timing
-reasons as the event bus': the config validates env at module load, so overrides must be in place
-before the spec is imported, and the server probe has to land in `process.env` for the spec to pick
-`describe` vs `describe.skip` synchronously — without a server jest reports the suite as *skipped*
-rather than passing on an empty run. It pins `CACHE_KEY_PREFIX=cache-e2e` so the suite cannot touch
-a local dev run's keys, and `CACHE_TTL=2` so an expiry can be waited out. The probe is a raw socket:
-a failed ioredis connection leaves reconnect machinery that keeps jest from exiting, on exactly the
-path that has to stay quiet.
+The setup follows the event bus' for the same two timing reasons: the config validates env at
+module load, so the overrides sit in `vitest.e2e.config.mts`'s `env`, and `test/cache-server.setup.ts`
+(a Vitest `globalSetup`) probes the server and `provide`s the answer, which the spec reads with
+`inject('cacheServer')` to pick `describe` vs `describe.skip` — without a server the suite reports
+as _skipped_ rather than passing on an empty run. The config pins `CACHE_KEY_PREFIX=cache-e2e` so the
+suite cannot touch a local dev run's keys, and `CACHE_TTL=2` so an expiry can be waited out. The
+probe is a raw socket: a failed ioredis connection leaves reconnect machinery that keeps the run
+from exiting, on exactly the path that has to stay quiet.

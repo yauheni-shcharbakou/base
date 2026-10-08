@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { NestStorage } from '@backend/proto';
 import { StorageObjectValidationService } from '@modules/storage-object/application/services/storage-object.validation.service';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
@@ -21,32 +22,32 @@ const byId = (id: string): NestStorage.StorageObjectQuery => ({ id, ids: [] });
 
 describe('StorageObjectUpdateOneUseCase', () => {
   let repository: {
-    withTreeLock: jest.Mock;
-    getOne: jest.Mock;
-    getAllChildrenIds: jest.Mock;
-    updateAndCascadePublic: jest.Mock;
+    withTreeLock: Mock;
+    getOne: Mock;
+    getAllChildrenIds: Mock;
+    updateAndCascadePublic: Mock;
   };
   let validation: {
-    validatePlacement: jest.Mock;
-    validateNameIsFree: jest.Mock;
-    resolveFreeName: jest.Mock;
-    validateVisibility: jest.Mock;
+    validatePlacement: Mock;
+    validateNameIsFree: Mock;
+    resolveFreeName: Mock;
+    validateVisibility: Mock;
   };
   let useCase: StorageObjectUpdateOneUseCase;
 
   beforeEach(() => {
     repository = {
-      withTreeLock: jest.fn((_userId: string, work: () => Promise<unknown>) => work()),
-      getOne: jest.fn().mockResolvedValue(right(folder)),
-      getAllChildrenIds: jest.fn().mockResolvedValue(right(new Set(['child-folder']))),
-      updateAndCascadePublic: jest.fn().mockResolvedValue(right(folder)),
+      withTreeLock: vi.fn((_userId: string, work: () => Promise<unknown>) => work()),
+      getOne: vi.fn().mockResolvedValue(right(folder)),
+      getAllChildrenIds: vi.fn().mockResolvedValue(right(new Set(['child-folder']))),
+      updateAndCascadePublic: vi.fn().mockResolvedValue(right(folder)),
     };
 
     validation = {
-      validatePlacement: jest.fn().mockResolvedValue(right({ isPublic: true })),
-      validateNameIsFree: jest.fn(({ name }: { name: string }) => Promise.resolve(right(name))),
-      resolveFreeName: jest.fn(({ name }: { name: string }) => Promise.resolve(name)),
-      validateVisibility: jest.fn().mockResolvedValue(right(undefined)),
+      validatePlacement: vi.fn().mockResolvedValue(right({ isPublic: true })),
+      validateNameIsFree: vi.fn(({ name }: { name: string }) => Promise.resolve(right(name))),
+      resolveFreeName: vi.fn(({ name }: { name: string }) => Promise.resolve(name)),
+      validateVisibility: vi.fn().mockResolvedValue(right(undefined)),
     };
 
     useCase = new StorageObjectUpdateOneUseCase(

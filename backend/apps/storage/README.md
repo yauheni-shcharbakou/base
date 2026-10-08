@@ -26,8 +26,8 @@ env `BUNNY_STORAGE_CDN_ZONE` (served as `https://<name>.b-cdn.net`).
 
 - [x] `Token authentication`
 - [ ] `Token IP validation` — keep it off in every environment: the signed URLs carry no address,
-  so a zone that validates one rejects them all
-  ([ADR-0025](../../../docs/adr/0025-read-urls-bound-to-no-client-address.md))
+      so a zone that validates one rejects them all
+      ([ADR-0025](../../../docs/adr/0025-read-urls-bound-to-no-client-address.md))
 
 `Url token authentication Key` => env `BUNNY_STORAGE_CDN_PRIVATE_KEY`
 

@@ -1,6 +1,6 @@
 # CLAUDE.md — @backend/proto
 
-Guidance for working inside `backend/packages/proto`. The contract flow, the three generated flavors, and how Transports/controllers are wired are in the root `CLAUDE.md` *Protobuf codegen pipeline* and *Backend service architecture* sections — read those first. This file covers what is specific to this package.
+Guidance for working inside `backend/packages/proto`. The contract flow, the three generated flavors, and how Transports/controllers are wired are in the root `CLAUDE.md` _Protobuf codegen pipeline_ and _Backend service architecture_ sections — read those first. This file covers what is specific to this package.
 
 ## What this is
 

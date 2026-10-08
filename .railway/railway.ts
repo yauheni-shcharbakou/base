@@ -96,7 +96,11 @@ export default defineRailway(() => {
     deploy: { restartPolicyType: 'ON_FAILURE', restartPolicyMaxRetries: 3 },
     replicas: { 'europe-west4-drams3a': 1 },
     networking: { privateNetworkEndpoint: SERVICE.ADMIN },
-    env: { BACKEND_GRPC_URL: privateGrpcUrl(SERVICE.API_GATEWAY), NODE_ENV: 'production', PORT: '10000' },
+    env: {
+      BACKEND_GRPC_URL: privateGrpcUrl(SERVICE.API_GATEWAY),
+      NODE_ENV: 'production',
+      PORT: '10000',
+    },
   });
   const backendApiGateway = service(SERVICE.API_GATEWAY, {
     source: base,

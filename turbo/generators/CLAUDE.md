@@ -10,10 +10,10 @@ A Turborepo + **plop** generator that scaffolds new workspace **packages** (not 
 
 Two prompts: **name** (no slashes/spaces) and **type** (`default` | `backend` | `frontend`). The type selects both the destination root and the template set:
 
-| type | destination | scope |
-|------|-------------|-------|
-| `default` | `packages/<name>` | `@packages/<name>` |
-| `backend` | `backend/packages/<name>` | `@backend/<name>` |
+| type       | destination                | scope              |
+| ---------- | -------------------------- | ------------------ |
+| `default`  | `packages/<name>`          | `@packages/<name>` |
+| `backend`  | `backend/packages/<name>`  | `@backend/<name>`  |
 | `frontend` | `frontend/packages/<name>` | `@frontend/<name>` |
 
 `name` is `dashCase`d for the folder and `@scope/name`. The action is `addMany`, copying `templates/<type>/**/*` (dotfiles included) into the destination, then the root script runs `pnpm install` to link the new workspace.
@@ -23,6 +23,7 @@ Two prompts: **name** (no slashes/spaces) and **type** (`default` | `backend` | 
 ## Templates (`package/templates/<type>/`)
 
 All three extend the `@packages/configs` tsconfig/eslint presets, build with `tsdown`, and declare `typecheck` (`tsc --noEmit` — tsdown does not check types). Differences:
+
 - **default** — minimal `@packages/*`: esm + cjs, no `lint` script, no eslint config, no runtime deps. `format` path is `../../`.
 - **backend** — `@backend/*`: nest tsconfig preset + `eslint.config.mjs` (`nestConfig` + `layerGuard()`, a no-op until the package has layer folders) + `lint`; deps `@backend/proto`, `@nestjs/common`, `@nestjs/config`, `@packages/common`, `reflect-metadata`, `rxjs`; cjs-only (no `module`); `turbo.json` keeps specs out of the build inputs.
 - **frontend** — `@frontend/*`: esm + cjs, eslint (`nextConfig(import.meta.url)` — the argument is required) + `lint`, dep `@packages/common`.

@@ -1,14 +1,15 @@
 # CLAUDE.md — @backend/event-bus-redis
 
 Guidance for working inside `backend/packages/event-bus-redis`. Read first: the root `CLAUDE.md`
-*Event-bus codegen pipeline* section, `backend/packages/event-bus/CLAUDE.md` (the abstract ports,
+_Event-bus codegen pipeline_ section, `backend/packages/event-bus/CLAUDE.md` (the abstract ports,
 the naming rules and the **bus-wide semantics** — JSON payloads, at-least-once, error messages), and
 `backend/CLAUDE.md` (shared package conventions). This file is the Redis/BullMQ runtime.
 
 **Status: the live transport.** `backend.auth` and `backend.storage` run on it (`RedisModule.forRoot`
-+ `REDIS_MICROSERVICE_OPTIONS`, subscribers under `interface/redis/`); `@backend/event-bus-nats` is
-dormant. `docker-compose.yml` runs a `redis` service in the `local`/`all` profiles and passes
-`REDIS_URL` to both services. `backend.api-gateway` uses no event bus at all.
+
+- `REDIS_MICROSERVICE_OPTIONS`, subscribers under `interface/redis/`); `@backend/event-bus-nats` is
+  dormant. `docker-compose.yml` runs a `redis` service in the `local`/`all` profiles and passes
+  `REDIS_URL` to both services. `backend.api-gateway` uses no event bus at all.
 
 ## Dual nature
 
@@ -91,9 +92,7 @@ Concrete adapter for the abstract ports of `@backend/event-bus`:
 ```ts
 @RedisController({ consumer: 'storage.file' })
 @RedisVideoTransport.ControllerMethods()
-export class RedisFileController
-  implements RedisVideoEventController, RedisUserCreateEventHandler
-{
+export class RedisFileController implements RedisVideoEventController, RedisUserCreateEventHandler {
   async onUploaded(event: NestStorage.Video): Promise<void> {}
   async onUploadFinish(event: NestStorage.Video): Promise<void> {}
   async onUploadFail(event: NestStorage.Video): Promise<void> {}
@@ -165,7 +164,7 @@ blocking commands) plus ioredis' offline queue means a command against a dead br
 and forever. Every path that a caller or the process itself waits on is therefore bounded:
 
 - **Boot** — `RedisConnectionService.waitUntilReady(REDIS_READY_TIMEOUT)` runs before the first
-  command, at the head of `RedisEventBusServer.listen()` *and* of the mediator's bootstrap hook.
+  command, at the head of `RedisEventBusServer.listen()` _and_ of the mediator's bootstrap hook.
   Two places, because an `onlyEmitting` service registers no microservice and runs only the hook.
   A rejection reaches `main.ts`, which logs it and exits 1.
 - **Emit** — `RedisQueueClient.emit`/`emitMany` are raced against `REDIS_COMMAND_TIMEOUT` and throw,
@@ -202,7 +201,7 @@ unnamespaced factory merges into one flat store where the last module loaded win
 
 ```bash
 pnpm build            # format:generated → tsdown → dist
-pnpm test             # unit jest; single file: pnpm test -- redis.queue.constants
+pnpm test             # unit vitest; single file: pnpm test -- redis.queue.constants
 pnpm test:e2e         # server-backed suite; auto-skips when no Redis answers
 pnpm dev / test:watch / lint / format / format:generated / reset
 ```
@@ -233,17 +232,17 @@ pnpm test:e2e
 - `redis.parking.e2e-spec.ts` reproduces the first-boot race on `storage.file.purge`: an
   `onlyEmitting` app emits with nobody subscribed, a second app registers for the first time and gets
   the replay, a third restart gets nothing.
-- `test/redis-server.setup.js` is a jest `globalSetup`, not a `beforeAll`, for two reasons that both
-  come down to timing: `redis.config.ts` validates env at module load, so the overrides have to be
-  set before the spec is imported; and the server probe has to land in `process.env` before the
-  workers fork, so the spec can pick `describe` vs `describe.skip` synchronously. Without a server
-  jest reports the suites as *skipped* rather than passing on an empty run.
-- The setup pins `REDIS_QUEUE_PREFIX=bull-e2e` and `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e`, so the
+- Two things happen before a spec is imported, both for timing: `redis.config.ts` validates env at
+  module load, so the overrides are in `vitest.e2e.config.mts`'s `env`; and
+  `test/redis-server.setup.ts`, a Vitest `globalSetup`, probes the server and `provide`s the answer,
+  so each spec picks `describe` vs `describe.skip` through `inject('redisServer')` at module scope.
+  Without a server the suites report as _skipped_ rather than passing on an empty run.
+- The config pins `REDIS_QUEUE_PREFIX=bull-e2e` and `REDIS_EVENT_BUS_NAMESPACE=event-bus-e2e`, so the
   suite cannot touch a local dev run's queues and registries, and `REDIS_JOB_ATTEMPTS=3` with
   `REDIS_JOB_BACKOFF_DELAY=100` so the retry ladder takes milliseconds instead of minutes.
-- It probes with a raw socket rather than ioredis: a failed client connection leaves reconnect
-  machinery behind that keeps jest from exiting, and the skip path is exactly the one that has to
-  stay quiet.
+- The setup probes with a raw socket rather than ioredis: a failed client connection leaves
+  reconnect machinery behind that keeps the run from exiting, and the skip path is exactly the one
+  that has to stay quiet.
 - Each spec wipes only **its own** event's keys in `beforeAll` — a blanket wipe of the prefixes would
   let two files in parallel workers destroy each other's state. Keys are left behind afterwards, so a
   failed run can be inspected.

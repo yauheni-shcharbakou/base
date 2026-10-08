@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import type Redis from 'ioredis';
@@ -13,12 +14,15 @@ import { RedisEventBusServer } from './redis.server';
 const workerInstances: {
   name: string;
   processor: (job: Job) => Promise<void>;
-  close: jest.Mock;
+  close: Mock;
 }[] = [];
 
-jest.mock('bullmq', () => ({
-  Worker: jest.fn().mockImplementation((name: string, processor: (job: Job) => Promise<void>) => {
-    const worker = { name, processor, on: jest.fn(), close: jest.fn(() => Promise.resolve()) };
+vi.mock('bullmq', () => ({
+  Worker: vi.fn().mockImplementation(function (
+    name: string,
+    processor: (job: Job) => Promise<void>,
+  ) {
+    const worker = { name, processor, on: vi.fn(), close: vi.fn(() => Promise.resolve()) };
 
     workerInstances.push(worker);
 
@@ -42,10 +46,10 @@ const buildDeps = (subscriptions: RedisQueueSubscription[] = []) => {
   subscriptions.forEach((subscription) => registry.append(subscription));
 
   const subscriptionRegistry = {
-    publish: jest.fn(() => Promise.resolve<RedisQueueSubscription[]>([])),
+    publish: vi.fn(() => Promise.resolve<RedisQueueSubscription[]>([])),
   };
 
-  const parking = { replay: jest.fn(() => Promise.resolve()) };
+  const parking = { replay: vi.fn(() => Promise.resolve()) };
 
   return { registry, subscriptionRegistry, parking };
 };
@@ -89,12 +93,12 @@ const listen = (server: RedisEventBusServer): Promise<unknown> => {
 
 describe('RedisEventBusServer', () => {
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   beforeEach(() => {
@@ -108,7 +112,7 @@ describe('RedisEventBusServer', () => {
       deps.subscriptionRegistry.publish.mockResolvedValue([subscription]);
 
       const server = buildServer(deps);
-      addHandler(server, subscription.queueName, jest.fn());
+      addHandler(server, subscription.queueName, vi.fn());
 
       await expect(listen(server)).resolves.toBeUndefined();
 
@@ -123,7 +127,7 @@ describe('RedisEventBusServer', () => {
       const deps = buildDeps([subscription]);
 
       const server = buildServer(deps);
-      addHandler(server, subscription.queueName, jest.fn());
+      addHandler(server, subscription.queueName, vi.fn());
 
       await listen(server);
       await server.close();
@@ -141,9 +145,12 @@ describe('RedisEventBusServer', () => {
       const server = buildServer(deps, () =>
         Promise.reject(new Error('Redis connection "auth-redis-client" was not ready')),
       );
-      addHandler(server, subscription.queueName, jest.fn());
+      addHandler(server, subscription.queueName, vi.fn());
 
-      await expect(listen(server)).resolves.toThrow('was not ready');
+      await expect(listen(server)).resolves.toHaveProperty(
+        'message',
+        expect.stringContaining('was not ready'),
+      );
       expect(deps.subscriptionRegistry.publish).not.toHaveBeenCalled();
       expect(workerInstances).toHaveLength(0);
     });
@@ -155,10 +162,13 @@ describe('RedisEventBusServer', () => {
       const deps = buildDeps();
 
       const server = buildServer(deps);
-      addHandler(server, 'auth.user.create', jest.fn());
+      addHandler(server, 'auth.user.create', vi.fn());
 
-      await expect(listen(server)).resolves.toThrow(
-        'Redis event pattern "auth.user.create" is not bound to a consumer',
+      await expect(listen(server)).resolves.toHaveProperty(
+        'message',
+        expect.stringContaining(
+          'Redis event pattern "auth.user.create" is not bound to a consumer',
+        ),
       );
     });
 
@@ -166,8 +176,11 @@ describe('RedisEventBusServer', () => {
       const subscription = buildSubscription('auth.user.create', 'storage.file');
       const deps = buildDeps([subscription]);
 
-      await expect(listen(buildServer(deps))).resolves.toThrow(
-        'No handler registered for the Redis queue "auth.user.create@storage.file"',
+      await expect(listen(buildServer(deps))).resolves.toHaveProperty(
+        'message',
+        expect.stringContaining(
+          'No handler registered for the Redis queue "auth.user.create@storage.file"',
+        ),
       );
     });
 
@@ -197,7 +210,7 @@ describe('RedisEventBusServer', () => {
     };
 
     it('passes the payload and a job context to the handler', async () => {
-      const handler = jest.fn();
+      const handler = vi.fn();
 
       await runJob(handler, { id: '7', data: { id: 'user-1' }, attemptsMade: 2 } as Job);
 
@@ -214,7 +227,7 @@ describe('RedisEventBusServer', () => {
     // factory on subscription, so this fails if the server merely returns the observable —
     // which is what would ack the job before the controller logic ever ran.
     it('subscribes to an observable result', async () => {
-      const ran = jest.fn();
+      const ran = vi.fn();
 
       await runJob(() =>
         defer(() => {

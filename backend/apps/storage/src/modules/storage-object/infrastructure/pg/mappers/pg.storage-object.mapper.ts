@@ -1,6 +1,6 @@
 import { PgMapper } from '@backend/pg';
 import { PgStorageObjectEntity } from '@common/infrastructure/pg/entities/pg.storage-object.entity';
-import { ObjectQuery, wrap } from '@mikro-orm/core';
+import { ObjectQuery } from '@mikro-orm/core';
 import { StorageObject } from '@modules/storage-object/domain/entities/storage-object.interface';
 import { StorageObjectQuery } from '@modules/storage-object/domain/repositories/storage-object.repository';
 import _ from 'lodash';
@@ -14,6 +14,22 @@ export class PgStorageObjectMapper extends PgMapper<
   StorageObject,
   StorageObjectQuery
 > {
+  // `StorageObjectPopulated` holds the media a read asked for. `parentId` is what the contract
+  // carries: `parent` leads into its `children`, which the unit of work fills with every sibling it
+  // inserts, so a batch of n cost n² (10 s for a thousand folders).
+  protected readonly populate = ['file', 'image', 'video'];
+  protected readonly exclude = [
+    'parent',
+    'children',
+    'file.storageObject',
+    'file.image',
+    'file.video',
+    'image.storageObject',
+    'image.file',
+    'video.storageObject',
+    'video.file',
+  ];
+
   transformQuery({
     isPublic,
     isFolder,
@@ -60,9 +76,5 @@ export class PgStorageObjectMapper extends PgMapper<
     }
 
     return result;
-  }
-
-  stringify(entity: PgStorageObjectEntity): StorageObject {
-    return _.omit(wrap(entity).toObject(), ['children']) as StorageObject;
   }
 }

@@ -12,6 +12,11 @@ export class PgVideoMapper extends PgMapper<
   NestStorage.Video,
   NestStorage.VideoQuery
 > {
+  // As in the image mapper: the contract (`Video`, `VideoPopulated`) holds the file and nothing past
+  // it.
+  protected readonly populate = ['file'];
+  protected readonly exclude = ['storageObject', 'file.storageObject', 'file.image', 'file.video'];
+
   // A list also filters on `isPlaced` and on the backing file's `uploadStatus`.
   protected readonly computedFilters = {
     isPlaced: isPlacedFilter<PgVideoEntity>(),

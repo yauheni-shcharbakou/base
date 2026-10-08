@@ -1,3 +1,4 @@
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 import type Redis from 'ioredis';
@@ -15,10 +16,10 @@ const subscription: RedisQueueSubscription = {
 
 const buildPipeline = () => {
   const pipeline = {
-    rpush: jest.fn(() => pipeline),
-    ltrim: jest.fn(() => pipeline),
-    expire: jest.fn(() => pipeline),
-    exec: jest.fn(() => Promise.resolve([])),
+    rpush: vi.fn(() => pipeline),
+    ltrim: vi.fn(() => pipeline),
+    expire: vi.fn(() => pipeline),
+    exec: vi.fn(() => Promise.resolve([])),
   };
 
   return pipeline;
@@ -26,14 +27,14 @@ const buildPipeline = () => {
 
 const buildDeps = (entries: string[] = []) => {
   const pipeline = buildPipeline();
-  const addBulk = jest.fn(() => Promise.resolve([]));
+  const addBulk = vi.fn(() => Promise.resolve([]));
 
   const connection = {
-    pipeline: jest.fn(() => pipeline),
-    lrange: jest.fn(() => Promise.resolve(entries)),
+    pipeline: vi.fn(() => pipeline),
+    lrange: vi.fn(() => Promise.resolve(entries)),
   };
 
-  const client = { getQueue: jest.fn(() => ({ addBulk }) as unknown as Queue) };
+  const client = { getQueue: vi.fn(() => ({ addBulk }) as unknown as Queue) };
 
   return { pipeline, addBulk, connection, client };
 };
@@ -53,12 +54,12 @@ const buildService = (
 describe('RedisParkingService', () => {
   beforeAll(() => {
     // The service logs a warning per skipped entry and a line per replay — keep the output clean.
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('park', () => {

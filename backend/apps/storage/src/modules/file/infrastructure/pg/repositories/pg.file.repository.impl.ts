@@ -102,7 +102,7 @@ export class PgFileRepositoryImpl
       { populate: ['video', 'image'], limit },
     );
 
-    return this.mapper.stringifyMany(entities) as FileWithMedia[];
+    return this.mapper.stringifyMany(entities);
   }
 
   // Straight to the table, like `setPreview`: `updateMany` reads the rows and then writes them,
@@ -113,7 +113,7 @@ export class PgFileRepositoryImpl
         {
           uploadStatus: NestStorage.FileUploadStatus.PENDING,
           createdAt: { $lte: createdBefore },
-        } as FilterQuery<PgFileEntity>,
+        },
         { uploadStatus: NestStorage.FileUploadStatus.FAILED, updatedAt: new Date() },
       );
 
@@ -137,7 +137,7 @@ export class PgFileRepositoryImpl
       { populate: ['video', 'image'], limit },
     );
 
-    return this.mapper.stringifyMany(entities) as FileWithMedia[];
+    return this.mapper.stringifyMany(entities);
   }
 
   async getManyWithoutPreview(
@@ -155,7 +155,7 @@ export class PgFileRepositoryImpl
           updatedAt: { $lt: readyBefore },
           previewProviderId: null,
           previewFailedAt: null,
-        } as FilterQuery<PgFileEntity>,
+        },
         { orderBy: { id: 'asc' }, limit },
       );
 
